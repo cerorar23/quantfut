@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de pronósticos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:{{rootH}};overflow:{{rootOv}};box-sizing:border-box;position:relative;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+
+<header style="height:56px;flex:none;display:flex;align-items:center;gap:4px;padding:0 14px 0 6px;border-bottom:1px solid var(--b)">
+<a href="Menu.dc.html" aria-label="Volver al menú" style="width:44px;height:44px;display:grid;place-items:center;color:var(--mu)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div style="flex-grow:1"><div style="font:700 18px var(--d);letter-spacing:.1em">GUÍA DE PRONÓSTICOS</div></div>
+<span style="font:700 12px var(--m);color:var(--fa)">{{counter}}</span>
+</header>
+
+<main style="flex-grow:1;min-height:0;overflow-y:{{scrollOv}};padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+<p style="margin:0;color:var(--mu);font-size:13px">Aprende a leer los datos antes de decidir.</p>
+<div role="tablist" aria-label="Temas" style="display:flex;gap:6px;overflow-x:auto;flex:none">
+<sc-for list="{{chips}}" as="ch" hint-placeholder-count="6">
+<button onClick="{{ch.pick}}" style="flex:none;min-height:40px;padding:0 12px;cursor:pointer;white-space:nowrap;border:1px solid {{ch.bd}};background:{{ch.bg}};color:{{ch.c}};font:700 12px var(--d);letter-spacing:.08em">{{ch.n}}</button>
+</sc-for>
+</div>
+
+<section style="display:{{s1}};flex:none;border:1px solid var(--bs);background:var(--p);clip-path:var(--cut2);padding:16px;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// PROBABILIDAD</div><h2 style="margin:2px 0 0;font:700 22px/1.1 var(--d);letter-spacing:.03em">UNA PROBABILIDAD NO ES UNA CERTEZA</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px">
+<div style="display:flex;gap:10px">
+<span style="width:54px;height:54px;display:grid;place-items:center;border:1px solid #05ffa1;background:rgba(5,255,161,.1);color:#05ffa1;clip-path:var(--cut)"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span>
+<span style="width:54px;height:54px;display:grid;place-items:center;border:1px solid #05ffa1;background:rgba(5,255,161,.1);color:#05ffa1;clip-path:var(--cut)"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span>
+<span style="width:54px;height:54px;display:grid;place-items:center;border:1px solid #05ffa1;background:rgba(5,255,161,.1);color:#05ffa1;clip-path:var(--cut)"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span>
+<span style="width:54px;height:54px;display:grid;place-items:center;border:1px dashed #939ab0;color:#939ab0;clip-path:var(--cut)"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+</div>
+<div style="font:700 20px var(--m);color:var(--cy)">75 % = 3 DE CADA 4</div>
+</div>
+<p style="margin:0;color:var(--mu)">Si un pronóstico tiene 75 % de probabilidad, el modelo espera que se cumpla cerca de 3 de cada 4 veces que se repita una situación así. Eso significa que 1 de cada 4 no se cumplirá. Ningún dato garantiza un resultado concreto.</p>
+</section>
+
+<section style="display:{{s2}};flex:none;border:1px solid var(--bs);background:var(--p);clip-path:var(--cut2);padding:16px;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// CUOTA</div><h2 style="margin:2px 0 0;font:700 22px/1.1 var(--d);letter-spacing:.03em">LA CUOTA ES UN PRECIO, NO UNA OPINIÓN DEL MODELO</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:14px;display:flex;flex-direction:column;gap:10px">
+<div><div style="display:flex;justify-content:space-between;font:700 11px var(--d);letter-spacing:.12em;color:var(--fa)"><span>PROBABILIDAD DEL MODELO</span><span style="font:700 14px var(--m);color:var(--cy)">62%</span></div><div style="height:10px;background:rgba(255,255,255,.06);margin-top:4px"><div style="width:62%;height:10px;background:#00f0ff"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font:700 11px var(--d);letter-spacing:.12em;color:var(--fa)"><span>LA QUE IMPLICA LA CUOTA 1.80</span><span style="font:700 14px var(--m);color:#d1d4de">56%</span></div><div style="height:10px;background:rgba(255,255,255,.06);margin-top:4px"><div style="width:56%;height:10px;background:#d1d4de"></div></div></div>
+<div style="font-size:12px;color:var(--mu)">Comparar ambas ayuda a ver si el precio es razonable.</div>
+</div>
+<p style="margin:0;color:var(--mu)">La cuota la fija una casa de apuestas e incluye su margen. Comparar la probabilidad del modelo con la que implica la cuota ayuda a ver si el precio es razonable; no asegura que el resultado llegue.</p>
+</section>
+
+<section style="display:{{s3}};flex:none;border:1px solid var(--bs);background:var(--p);clip-path:var(--cut2);padding:16px;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// ALTA PROBABILIDAD</div><h2 style="margin:2px 0 0;font:700 22px/1.1 var(--d);letter-spacing:.03em">CADA PRONÓSTICO SE SELLA ANTES DEL PARTIDO</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:14px">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;position:relative">
+<div style="position:absolute;left:16%;right:16%;top:21px;height:2px;background:linear-gradient(90deg,#05ffa1,#747d99)"></div>
+<div style="text-align:center;position:relative"><span style="width:44px;height:44px;display:inline-grid;place-items:center;border:1px solid #05ffa1;background:#12141d;color:#05ffa1"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 018 0v4"></path></svg></span><div style="font:700 11px var(--d);letter-spacing:.1em;margin-top:6px">PUBLICADO</div><div style="font:500 10px var(--m);color:var(--fa)">con su cuota</div></div>
+<div style="text-align:center;position:relative"><span style="width:44px;height:44px;display:inline-grid;place-items:center;border:1px solid #747d99;background:#12141d;color:#b2b7c7"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2"></path></svg></span><div style="font:700 11px var(--d);letter-spacing:.1em;margin-top:6px">PARTIDO</div><div style="font:500 10px var(--m);color:var(--fa)">sin cambios</div></div>
+<div style="text-align:center;position:relative"><span style="width:44px;height:44px;display:inline-grid;place-items:center;border:1px solid #747d99;background:#12141d;color:#b2b7c7"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span><div style="font:700 11px var(--d);letter-spacing:.1em;margin-top:6px">RESULTADO</div><div style="font:500 10px var(--m);color:var(--fa)">al historial</div></div>
+</div>
+</div>
+<p style="margin:0;color:var(--mu)">Se publican con su probabilidad y su cuota de referencia antes de empezar y no se pueden editar. Por eso puedes comparar el acierto histórico real con el que se prometía.</p>
+</section>
+
+<section style="display:{{s4}};flex:none;border:1px solid var(--bs);background:var(--p);clip-path:var(--cut2);padding:16px;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// PARLEY</div><h2 style="margin:2px 0 0;font:700 22px/1.1 var(--d);letter-spacing:.03em">MÁS SELECCIONES, MENOS PROBABILIDAD</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;justify-content:center;gap:8px;font:700 18px var(--m)"><span style="color:#b2b7c7">80%</span><span style="color:#747d99">×</span><span style="color:#b2b7c7">75%</span><span style="color:#747d99">×</span><span style="color:#b2b7c7">70%</span><span style="color:#747d99">=</span><span style="color:#00f0ff;text-shadow:0 0 14px rgba(0,240,255,.45)">42%</span></div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:80%;height:8px;background:#747d99"></div></div>
+<div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:60%;height:8px;background:#747d99"></div></div>
+<div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:42%;height:8px;background:#00f0ff"></div></div>
+</div>
+</div>
+<p style="margin:0;color:var(--mu)">En una combinada, la probabilidad conjunta es el producto de la de cada selección, así que baja rápido al añadir partidos. Una cuota alta suele reflejar justo eso.</p>
+</section>
+
+<section style="display:{{s5}};flex:none;border:1px solid var(--bs);background:var(--p);clip-path:var(--cut2);padding:16px;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// RETO ESCALERA</div><h2 style="margin:2px 0 0;font:700 22px/1.1 var(--d);letter-spacing:.03em">SE AVANZA UN ESCALÓN CADA VEZ</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:14px">
+<div style="display:flex;align-items:flex-end;gap:6px;height:96px">
+<div style="flex:1;height:20%;background:#05ffa1"></div><div style="flex:1;height:38%;background:#05ffa1"></div><div style="flex:1;height:56%;background:#05ffa1"></div><div style="flex:1;height:74%;background:#00f0ff;box-shadow:0 0 16px rgba(0,240,255,.5)"></div><div style="flex:1;height:92%;border:1px dashed #747d99;box-sizing:border-box"></div>
+</div>
+<div style="display:flex;gap:6px;margin-top:6px;font:700 10px var(--d);letter-spacing:.1em;color:var(--fa)"><span style="flex:1;text-align:center">1 ✓</span><span style="flex:1;text-align:center">2 ✓</span><span style="flex:1;text-align:center">3 ✓</span><span style="flex:1;text-align:center;color:var(--cy)">4 EN JUEGO</span><span style="flex:1;text-align:center">5</span></div>
+</div>
+<p style="margin:0;color:var(--mu)">Cada reto va por pasos y el siguiente solo cuenta si se cumple el anterior. Mira el avance y el historial, incluidos los retos fallidos, antes de seguir uno.</p>
+</section>
+
+<section style="display:{{s6}};flex:none;border:1px solid rgba(252,238,10,.45);background:var(--p);clip-path:var(--cut2);padding:16px;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--ye)">// RESPONSABILIDAD</div><h2 style="margin:2px 0 0;font:700 22px/1.1 var(--d);letter-spacing:.03em">ES INFORMACIÓN Y ENTRETENIMIENTO</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:14px;display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:14px">
+<span style="width:64px;height:64px;display:grid;place-items:center;border:2px solid #fcee0a;color:#fcee0a;font:700 22px var(--m);clip-path:var(--cut)">18+</span>
+<div style="display:flex;flex-direction:column;gap:6px;font-size:13px"><span>Solo con dinero que puedas perder</span><span>Solo si eres mayor de edad</span><span>Si deja de ser un pasatiempo, pide ayuda</span></div>
+</div>
+<p style="margin:0;color:var(--mu)">QuantFut no es una casa de apuestas ni asegura ganancias. Si decides apostar, hazlo solo con dinero que puedas perder y solo si eres mayor de edad. Si el juego deja de ser un pasatiempo, pide ayuda.</p>
+</section>
+</main>
+
+<footer style="flex:none;padding:10px 14px 14px;border-top:1px solid var(--b);background:var(--p);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+<button onClick="{{prev}}" style="min-height:48px;cursor:pointer;border:1px solid var(--bs);background:rgba(0,240,255,.05);color:var(--cy);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">ANTERIOR</button>
+<button onClick="{{next}}" style="min-height:48px;border:0;cursor:pointer;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">SIGUIENTE</button>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"full":{"editor":"text","default":""},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const full = this.props.full === '1' || this.props.full === 1 || this.props.full === true;
+const sel = (this.state || {}).topic || 0;
+const N = ['PROBABILIDAD', 'CUOTA', 'ALTA PROBABILIDAD', 'PARLEY', 'RETO ESCALERA', 'RESPONSABILIDAD'];
+const show = (i) => (full || sel === i) ? 'flex' : 'none';
+return {
+rootH: full ? 'auto' : '844px', rootOv: full ? 'visible' : 'hidden', scrollOv: full ? 'visible' : 'auto',
+counter: full ? '6 TEMAS' : (sel + 1) + ' / 6',
+chips: N.map((n, i) => ({ n: n, pick: () => this.setState({ topic: i }), c: (full || sel === i) ? '#00f0ff' : '#b2b7c7', bd: (full || sel === i) ? '#00f0ff' : 'rgba(0,240,255,.2)', bg: (full || sel === i) ? 'rgba(0,240,255,.1)' : 'transparent' })),
+s1: show(0), s2: show(1), s3: show(2), s4: show(3), s5: show(4), s6: show(5),
+prev: () => this.setState({ topic: Math.max(0, sel - 1) }),
+next: () => this.setState({ topic: Math.min(5, sel + 1) })
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Bienvenida</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+
+<header style="height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 16px">
+<span style="font:700 12px var(--m);color:var(--fa)">{{counter}}</span>
+<a href="Acceso.dc.html" style="min-height:44px;padding:0 14px;display:flex;align-items:center;text-decoration:none;color:var(--mu);font:700 13px var(--d);letter-spacing:.12em">SALTAR</a>
+</header>
+
+<div style="position:relative;height:360px;flex:none;display:grid;place-items:center">
+<div aria-hidden="true" style="position:absolute;inset:10px 0 0 0;background:radial-gradient(ellipse at 50% 45%,rgba(0,240,255,.16),transparent 62%)"></div>
+
+<sc-if value="{{p0}}" hint-placeholder-val="{{true}}">
+<div style="position:relative;width:340px;height:300px">
+<div style="position:absolute;left:6px;top:50px;width:104px;height:150px;border:1px solid var(--b);background:var(--p);clip-path:var(--cut);transform:rotate(-6deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:64px;height:64px;object-fit:contain"><span style="font:700 12px var(--d);letter-spacing:.14em;color:var(--mu)">FÚTBOL</span></div>
+<div style="position:absolute;right:6px;top:50px;width:104px;height:150px;border:1px solid var(--b);background:var(--p);clip-path:var(--cut);transform:rotate(6deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px"><img alt="" src="/_blob/c1cdfced4be0b368a59a4a6b87f01ce5" style="width:64px;height:64px;object-fit:cover;border-radius:50%;border:2px solid rgba(0,240,255,.55)"><span style="font:700 12px var(--d);letter-spacing:.14em;color:var(--mu)">TENIS</span></div>
+<div style="position:absolute;left:112px;top:20px;width:116px;height:174px;border:1px solid var(--cy);background:var(--p2);clip-path:var(--cut);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;box-shadow:0 0 36px rgba(0,240,255,.3)"><img alt="" src="/_blob/bfd80f71d11b27f23208aba8ff962867" style="width:76px;height:76px;object-fit:contain"><span style="font:700 13px var(--d);letter-spacing:.14em;color:var(--cy)">NBA</span></div>
+<div style="position:absolute;left:30px;right:30px;bottom:24px;display:flex;gap:3px;height:8px"><div style="flex-grow:58;background:#00f0ff"></div><div style="flex-grow:24;background:#747d99"></div><div style="flex-grow:18;background:#d1d4de"></div></div>
+</div>
+</sc-if>
+
+<sc-if value="{{p1}}" hint-placeholder-val="{{false}}">
+<div style="position:relative;width:340px;display:flex;flex-direction:column;align-items:center;gap:12px">
+<svg viewBox="-34 0 308 196" width="330" height="212" role="img" aria-label="Perfil comparado de dos equipos">
+<polygon points="{{r4}}" fill="none" stroke="rgba(0,240,255,.2)"></polygon>
+<polygon points="{{r3}}" fill="none" stroke="rgba(0,240,255,.14)"></polygon>
+<polygon points="{{r2}}" fill="none" stroke="rgba(0,240,255,.14)"></polygon>
+<polygon points="{{r1}}" fill="none" stroke="rgba(0,240,255,.14)"></polygon>
+<path d="{{rax}}" fill="none" stroke="rgba(0,240,255,.2)"></path>
+<polygon points="{{rb}}" fill="rgba(209,212,222,.16)" stroke="#d1d4de" stroke-width="2" stroke-dasharray="4 3"></polygon>
+<polygon points="{{ra}}" fill="rgba(0,240,255,.26)" stroke="#00f0ff" stroke-width="2"></polygon>
+<text x="120" y="16" text-anchor="middle" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">ATAQUE</text>
+<text x="196" y="76" text-anchor="start" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">CREACIÓN</text>
+<text x="170" y="180" text-anchor="start" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">REMATE</text>
+<text x="70" y="180" text-anchor="end" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">CÓRNERS</text>
+<text x="44" y="76" text-anchor="end" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">DEFENSA</text>
+</svg>
+<div style="display:flex;gap:6px">
+<span style="padding:6px 10px;border:1px solid var(--bs);background:rgba(0,240,255,.08);color:var(--cy);font:700 11px var(--d);letter-spacing:.1em">FORMA</span>
+<span style="padding:6px 10px;border:1px solid var(--b);color:var(--mu);font:700 11px var(--d);letter-spacing:.1em">CARA A CARA</span>
+<span style="padding:6px 10px;border:1px solid var(--b);color:var(--mu);font:700 11px var(--d);letter-spacing:.1em">ESTADÍSTICAS</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{p2}}" hint-placeholder-val="{{false}}">
+<div style="position:relative;width:340px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+<sc-for list="{{chips}}" as="ch" hint-placeholder-count="6">
+<div style="border:1px solid {{ch.bd}};background:{{ch.bg}};border-radius:14px;padding:10px;display:flex;align-items:center;gap:10px">
+<div style="position:relative;width:42px;height:42px;flex:none"><div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient({{ch.c}} {{ch.p}}%,rgba(255,255,255,.14) 0)"></div><div style="position:absolute;inset:4px;border-radius:50%;background:#10151f;display:grid;place-items:center;font:700 11px var(--m)">{{ch.p}}</div></div>
+<span style="font:700 12px/1.15 var(--d);letter-spacing:.08em">{{ch.n}}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{p3}}" hint-placeholder-val="{{false}}">
+<div style="position:relative;width:340px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:14px;border:1px solid var(--bs);background:var(--p);padding:14px;clip-path:var(--cut2)">
+<div style="position:relative;flex:none;width:76px;height:76px;border-radius:50%;background:conic-gradient(#05ffa1 0 76%,#ff2a6d 0)"><div style="position:absolute;inset:8px;border-radius:50%;background:#12141d;display:grid;place-items:center;font:700 18px var(--m)">76%</div></div>
+<div><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">ACIERTO REGISTRADO</div><div style="font:700 13px var(--m);color:var(--gr)">16 aciertos</div><div style="font:700 13px var(--m);color:var(--mg)">5 fallos</div></div>
+</div>
+<div style="border:1px solid var(--b);background:var(--p)">
+<div style="min-height:44px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--ln)"><span style="width:26px;height:26px;display:grid;place-items:center;border:1px solid #05ffa1;color:#05ffa1"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span><span style="font-size:13px">Mallorca – Córdoba · Más de 1,5</span><span style="font:700 12px var(--m);color:var(--gr)">GANADO</span></div>
+<div style="min-height:44px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--ln)"><span style="width:26px;height:26px;display:grid;place-items:center;border:1px solid #05ffa1;color:#05ffa1"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span><span style="font-size:13px">Fritz – Musetti · Gana Fritz</span><span style="font:700 12px var(--m);color:var(--gr)">GANADO</span></div>
+<div style="min-height:44px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;padding:0 12px"><span style="width:26px;height:26px;display:grid;place-items:center;border:1px solid #ff2a6d;color:#ff2a6d"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span><span style="font-size:13px">Heat – Lakers · Más de 220,5</span><span style="font:700 12px var(--m);color:var(--mg)">FALLADO</span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{p4}}" hint-placeholder-val="{{false}}">
+<div style="position:relative;width:340px;display:flex;flex-direction:column;align-items:center;gap:14px">
+<span style="width:84px;height:84px;display:grid;place-items:center;border:1px solid var(--bs);background:rgba(0,240,255,.08);clip-path:var(--cut);box-shadow:0 0 36px rgba(0,240,255,.28)"><svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6zM12 8v5M12 16v.5"></path></svg></span>
+<div style="width:100%;border:1px solid var(--b);background:var(--p);padding:14px;clip-path:var(--cut2)">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 34px/1 var(--m);color:var(--cy)">62%</span><span style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">PROBABILIDAD</span></div>
+<div style="display:flex;gap:3px;margin-top:10px"><span style="flex:1;height:10px;background:#00f0ff"></span><span style="flex:1;height:10px;background:#00f0ff"></span><span style="flex:1;height:10px;background:#00f0ff"></span><span style="flex:1;height:10px;background:#00f0ff"></span><span style="flex:1;height:10px;background:#00f0ff"></span><span style="flex:1;height:10px;background:#00f0ff"></span><span style="flex:1;height:10px;border:1px dashed #747d99;box-sizing:border-box"></span><span style="flex:1;height:10px;border:1px dashed #747d99;box-sizing:border-box"></span><span style="flex:1;height:10px;border:1px dashed #747d99;box-sizing:border-box"></span><span style="flex:1;height:10px;border:1px dashed #747d99;box-sizing:border-box"></span></div>
+<div style="margin-top:10px;font:700 12px var(--d);letter-spacing:.12em;color:var(--ye)">NO ES UNA CERTEZA</div>
+</div>
+</div>
+</sc-if>
+</div>
+
+<main style="flex-grow:1;min-height:0;padding:0 24px;display:flex;flex-direction:column;gap:10px">
+<h1 style="margin:0;font:700 34px/1.02 var(--d);letter-spacing:.02em;white-space:pre-line;text-transform:uppercase">{{title}}</h1>
+<p style="margin:0;color:var(--mu);font-size:14px">{{body}}</p>
+</main>
+
+<footer style="flex:none;padding:10px 24px 22px;display:flex;flex-direction:column;gap:14px">
+<div role="tablist" aria-label="Pantalla de bienvenida" style="display:flex;justify-content:center;gap:6px">
+<sc-for list="{{dots}}" as="dt" hint-placeholder-count="5"><span style="width:{{dt.w}}px;height:6px;background:{{dt.bg}}"></span></sc-for>
+</div>
+<sc-if value="{{notLast}}" hint-placeholder-val="{{true}}">
+<button onClick="{{next}}" style="min-height:54px;border:0;cursor:pointer;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 17px var(--d);letter-spacing:.1em;clip-path:var(--cut);box-shadow:0 8px 28px rgba(5,255,161,.16)">SIGUIENTE</button>
+</sc-if>
+<sc-if value="{{isLast}}" hint-placeholder-val="{{false}}">
+<a href="Acceso.dc.html" style="min-height:54px;display:grid;place-items:center;text-decoration:none;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 17px var(--d);letter-spacing:.1em;clip-path:var(--cut);box-shadow:0 8px 28px rgba(5,255,161,.16)">EMPEZAR</a>
+</sc-if>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"page":{"editor":"text","default":""},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const fixed = this.props.page !== undefined && this.props.page !== '' && this.props.page !== null;
+const page = fixed ? Math.max(0, Math.min(4, Number(this.props.page))) : ((this.state || {}).page || 0);
+const T = [
+['Fútbol, NBA y tenis,\ncon otra perspectiva', 'Descubre el lado estadístico del deporte: partidos, análisis y pronósticos del proyecto que ya conoces en la web.'],
+['Cada partido,\ncon más contexto', 'La forma reciente, el cara a cara y las estadísticas ayudan a entender lo que puede pasar. Empieza por los datos.'],
+['Más mercados.\nMás información.', 'Goles, córners y hándicap en fútbol, props de jugadores en la NBA y juegos en el tenis. Conoce qué mide cada análisis antes de interpretar una selección.'],
+['Los resultados,\na la vista', 'Un pronóstico también se entiende después del partido. El historial permite comparar estimaciones con resultados.'],
+['Todo empieza\npor informarte', 'Una probabilidad no es una certeza. Explora el contenido, revisa el contexto y forma tu propio criterio.']
+];
+const pt = (k, v) => { const a = (-90 + 72 * k) * Math.PI / 180; return (120 + 70 * v * Math.cos(a)).toFixed(1) + ',' + (100 + 70 * v * Math.sin(a)).toFixed(1); };
+const poly = (vs) => vs.map((v, k) => pt(k, v)).join(' ');
+const ring = (r) => poly([r, r, r, r, r]);
+const chips = [['CÓRNERS', 61, '#ff8a3d'], ['HÁNDICAP ASIÁTICO', 82, '#a78bfa'], ['DOBLE OPORTUNIDAD', 79, '#c6f432'], ['PROPS DE JUGADORES NBA', 58, '#4c9dff'], ['JUEGOS TOTALES · TENIS', 54, '#2bd99f'], ['AMBOS MARCAN', 59, '#ffb020']].map((x) => ({
+n: x[0], p: x[1], c: x[2], bd: x[2] + '66', bg: 'linear-gradient(150deg,' + x[2] + '2e,' + x[2] + '0d 62%),#10151f'
+}));
+const dots = [0, 1, 2, 3, 4].map((i) => ({ w: i === page ? 26 : 6, bg: i === page ? '#00f0ff' : '#3a3f55' }));
+return {
+p0: page === 0, p1: page === 1, p2: page === 2, p3: page === 3, p4: page === 4,
+title: T[page][0], body: T[page][1],
+counter: (page + 1) + ' / 5',
+dots: dots, chips: chips,
+notLast: page < 4, isLast: page === 4,
+next: () => this.setState({ page: Math.min(4, page + 1) }),
+r1: ring(0.25), r2: ring(0.5), r3: ring(0.75), r4: ring(1),
+rax: [0, 1, 2, 3, 4].map((k) => 'M120,100 L' + pt(k, 1)).join(' '),
+ra: poly([0.78, 0.7, 0.62, 0.58, 0.82]), rb: poly([0.62, 0.74, 0.72, 0.7, 0.45])
+};
+}
+}
+</script>
+</body>
+</html>

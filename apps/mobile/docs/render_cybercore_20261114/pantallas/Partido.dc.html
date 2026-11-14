@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ficha de partido</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.im{background:center/contain no-repeat content-box;padding:5px;box-sizing:border-box}
+.ph{background:center 12%/cover no-repeat;border:1px solid rgba(0,240,255,.35);box-sizing:border-box}
+.i-ath{background-image:url(/_blob/9da85345e94e5f91f11240ac38d5c58d)}
+.i-esp{background-image:url(/_blob/afab1ff9f1c954d5ecc8200c3dcf500d)}
+.i-nyk{background-image:url(/_blob/cf44a5a61913d439a6928335e67150eb)}
+.i-mia{background-image:url(/_blob/10fda615cda9a0af6884ca922825e90b)}
+.i-alc{background-image:url(/_blob/93372743515ef3f3b1a897cc2669b845)}
+.i-zve{background-image:url(/_blob/4e1d40a719ca20a5cf7c8a7c3cbc8642)}
+.i-brunson{background-image:url(/_blob/ee10ef692188fd86766c8bf80836b37f)}
+.i-herro{background-image:url(/_blob/10cf38659154112f7b81a1dd0b4c3d8b)}
+.i-towns{background-image:url(/_blob/1aa5591b0d28d45302cd1f125d1712fe)}
+.i-bam{background-image:url(/_blob/e1fe13dda9032357d0d9f123c2a5138d)}
+</style>
+</helmet>
+<div style="width:390px;height:{{rootH}};box-sizing:border-box;position:relative;overflow:{{rootOv}};display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+<header style="height:56px;flex:none;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;border-bottom:1px solid var(--b)">
+<div style="flex-grow:1;min-width:0">
+<div style="font:700 13px var(--d);letter-spacing:.14em;color:var(--gr)">{{league}}</div>
+<div style="font:500 11px var(--m);color:var(--fa)">{{when}}</div>
+</div>
+<a href="Main.dc.html" aria-label="Cerrar" style="width:44px;height:44px;display:grid;place-items:center;color:var(--mu)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+</header>
+<main style="flex-grow:1;min-height:0;overflow-y:{{scrollOv}};padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+<section style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.035) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:11px">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center">
+<img alt="" src="{{a.src}}" style="width:58px;height:58px;{{a.css}}">
+<strong style="font-size:15px">{{a.name}}</strong>
+<span style="font:500 10px var(--m);color:var(--fa)">{{a.sub}}</span>
+</div>
+<div style="text-align:center">
+<div style="font:700 38px/1 var(--m);color:var(--cy);text-shadow:0 0 18px rgba(0,240,255,.45)">{{big}}</div>
+<div style="margin-top:6px;font:700 12px var(--d);letter-spacing:.12em;color:var(--mu)">{{bigLabel}}</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center">
+<img alt="" src="{{b.src}}" style="width:58px;height:58px;{{b.css}}">
+<strong style="font-size:15px">{{b.name}}</strong>
+<span style="font:500 10px var(--m);color:var(--fa)">{{b.sub}}</span>
+</div>
+</div>
+<div style="display:flex;gap:3px;height:6px">
+<sc-for list="{{probs}}" as="p" hint-placeholder-count="3"><div style="flex-grow:{{p.v}};background:{{p.c}}"></div></sc-for>
+</div>
+<div style="display:flex;justify-content:space-between;font:500 11px var(--m);color:var(--mu)">
+<sc-for list="{{probs}}" as="p" hint-placeholder-count="3"><span>{{p.l}} · {{p.v}}%</span></sc-for>
+</div>
+</section>
+<div role="tablist" aria-label="Secciones del partido" style="flex:none;display:grid;grid-template-columns:{{tabCols}};padding:4px;border:1px solid var(--b);background:rgba(3,9,17,.72)">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button onClick="{{t.pick}}" style="min-height:40px;padding:0;border:0;cursor:pointer;font:700 {{tabFont}} var(--d);letter-spacing:.03em;color:{{t.c}};background:{{t.bg}};box-shadow:{{t.sh}}">{{t.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{isPred}}" hint-placeholder-val="{{true}}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="border:1px solid rgba(5,255,161,.4);background:rgba(5,255,161,.06);padding:12px 14px;clip-path:var(--cut);display:flex;align-items:center;gap:12px">
+<div style="flex-grow:1;min-width:0">
+<div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--gr)">PICK DESTACADO · GRATIS</div>
+<div style="font:700 20px var(--d)">{{f.sel}}</div>
+<div style="font:500 11px var(--m);color:var(--mu)">cuota al publicar {{f.odd}}</div>
+</div>
+<div style="font:700 30px var(--m);color:var(--gr)">{{f.p}}</div>
+</div>
+<span style="font:700 13px var(--d);letter-spacing:.14em">MERCADOS DEL MODELO</span>
+<div style="border:1px solid var(--b);background:var(--p)">
+<sc-for list="{{markets}}" as="m" hint-placeholder-count="3">
+<div style="min-height:58px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--ln)">
+<div style="display:flex;align-items:center;gap:10px;min-width:0">
+<span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="{{m.s1}}" style="width:32px;height:32px;{{m.c1}}"><img alt="" src="{{m.s2}}" style="width:32px;height:32px;margin-left:-6px;{{m.c2}}"></span>
+<div><div style="font-size:11px;color:var(--fa)">{{m.name}}</div><div style="font:700 16px var(--d);color:var(--gr);filter:{{m.blur}}">{{m.sel}}</div></div>
+</div>
+<div style="text-align:right"><div style="font:700 17px/1.2 var(--m);color:{{m.c}}">{{m.right}}</div><div style="font:500 11px var(--m);color:var(--mu)">{{m.odd}}</div><div style="font-size:10px;color:var(--fa)">{{m.book}}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isProps}}" hint-placeholder-val="{{false}}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div role="group" aria-label="Estadística" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+<button style="height:44px;padding:0;border:1px solid var(--cy);background:rgba(0,240,255,.1);color:var(--cy);font:700 11px var(--m);cursor:pointer">TODOS</button>
+<button style="height:44px;padding:0;border:1px solid var(--ln);background:none;color:var(--mu);font:500 11px var(--m);cursor:pointer">PUNTOS</button>
+<button style="height:44px;padding:0;border:1px solid var(--ln);background:none;color:var(--mu);font:500 11px var(--m);cursor:pointer">REBOTES</button>
+<button style="height:44px;padding:0;border:1px solid var(--ln);background:none;color:var(--mu);font:500 11px var(--m);cursor:pointer">ASIST.</button>
+<button style="height:44px;padding:0;border:1px solid var(--ln);background:none;color:var(--mu);font:500 11px var(--m);cursor:pointer">TRIPLES</button>
+</div>
+<sc-for list="{{props}}" as="pr" hint-placeholder-count="4">
+<div style="border:1px solid var(--b);background:var(--p);padding:9px 12px;clip-path:var(--cut);display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:10px">
+<div aria-hidden="true" style="position:relative;width:52px;height:52px"><img alt="" src="{{pr.src}}" style="width:52px;height:52px;background:#181a25;{{pr.css}}"><img alt="" src="{{pr.tsrc}}" style="position:absolute;right:-8px;bottom:-6px;width:26px;height:26px;background:#12141d;{{pr.tcss}}"></div>
+<div style="min-width:0">
+<div style="font-weight:700;font-size:15px;line-height:1.2">{{pr.n}}</div>
+<div style="font:700 16px var(--d);color:var(--gr);filter:{{pr.blur}}">{{pr.sel}}</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><div style="display:flex;height:6px"><div style="width:{{pr.wOn}};background:repeating-linear-gradient(90deg,#05ffa1 0 8px,transparent 8px 10px)"></div><div style="width:{{pr.wOff}};background:repeating-linear-gradient(90deg,#2a2d3a 0 8px,transparent 8px 10px)"></div></div><span style="font-size:10px;color:var(--fa)">{{pr.last}}</span></div>
+</div>
+<div style="text-align:right"><div style="font:700 20px/1.2 var(--m);color:{{pr.c}}">{{pr.right}}</div><div style="font:500 11px var(--m);color:var(--mu)">{{pr.odd}}</div><div style="font-size:10px;color:var(--fa)">{{pr.book}}</div></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isAnNba}}" hint-placeholder-val="{{false}}">
+<div style="display:flex;flex-direction:column;gap:14px">
+
+<div role="navigation" aria-label="Secciones del análisis" style="position:sticky;top:0;z-index:3;margin:-4px 0 0;padding:6px 0;background:rgba(7,8,12,.96);display:flex;gap:6px;overflow-x:auto">
+<a href="#nb-prob" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--bs);background:rgba(0,240,255,.06);color:var(--cy);font:700 12px var(--d);letter-spacing:.06em">PROBABILIDAD</a><a href="#nb-comp" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">COMPARATIVA</a><a href="#nb-forma" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">FORMA</a><a href="#nb-h2h" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">CARA A CARA</a><a href="#nb-tabla" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">CLASIFICACIÓN</a><a href="#nb-disp" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">DISPONIBILIDAD</a>
+</div>
+
+<section id="nb-prob" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// MODELO QUANTFUT</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">PROBABILIDAD DE GANAR</h2></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px">
+<div style="border:1px solid var(--bs);background:rgba(0,240,255,.07);padding:12px 8px;text-align:center;box-shadow:0 0 22px rgba(0,240,255,.14)"><img alt="" src="{{nb.a.logo}}" style="width:64px;height:64px;object-fit:contain"><div style="font-weight:700">{{nb.a.name}}</div><div style="font:700 34px/1.1 var(--m);color:var(--cy);text-shadow:0 0 18px rgba(0,240,255,.45)">{{nb.pa}}%</div><div style="font:700 10px var(--d);letter-spacing:.14em;color:var(--fa)">VISITANTE · {{nb.a.rec}}</div></div>
+<div style="border:1px solid var(--ln);padding:12px 8px;text-align:center"><img alt="" src="{{nb.b.logo}}" style="width:64px;height:64px;object-fit:contain"><div style="font-weight:700">{{nb.b.name}}</div><div style="font:700 34px/1.1 var(--m);color:#d1d4de">{{nb.pb}}%</div><div style="font:700 10px var(--d);letter-spacing:.14em;color:var(--fa)">LOCAL · {{nb.b.rec}}</div></div>
+</div>
+<div style="display:flex;gap:3px;height:10px"><div style="flex-grow:{{nb.pa}};background:#00f0ff"></div><div style="flex-grow:{{nb.pb}};background:#747d99"></div></div>
+<span style="font:700 12px var(--d);letter-spacing:.14em">FACTORES DEL PARTIDO</span>
+<div style="border:1px solid var(--ln)">
+<sc-for list="{{nb.factors}}" as="f" hint-placeholder-count="4">
+<div style="min-height:56px;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--ln)">
+<img alt="" src="{{f.src}}" style="width:30px;height:30px;object-fit:contain">
+<span><strong style="display:block;font-size:13px">{{f.t}}</strong><span style="font-size:12px;color:var(--mu)">{{f.s}}</span></span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="nb-comp" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// TEMPORADA 2026-27</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">COMPARATIVA</h2></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:8px"><img alt="" src="{{nb.comp.a.logo}}" style="width:30px;height:30px;object-fit:contain"><span><strong style="display:block">{{nb.comp.a.name}}</strong><span style="display:block;width:22px;height:3px;background:#00f0ff"></span></span></span>
+<span style="font:500 10px var(--m);color:var(--fa);text-align:center">{{nb.comp.cap}}</span>
+<span style="display:flex;align-items:center;gap:8px;justify-content:flex-end;text-align:right"><span><strong style="display:block">{{nb.comp.b.name}}</strong><span style="display:block;width:22px;height:3px;background:#d1d4de;margin-left:auto"></span></span><img alt="" src="{{nb.comp.b.logo}}" style="width:30px;height:30px;object-fit:contain"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--ln);padding:8px 10px">
+<div style="display:flex;gap:4px;flex:none">
+<sc-for list="{{nb.comp.dots}}" as="dt" hint-placeholder-count="7"><span style="width:14px;height:14px;background:{{dt.c}};clip-path:var(--cut)"></span></sc-for>
+</div>
+<span style="font-size:12px;color:var(--mu)">{{nb.comp.domCap}}</span>
+</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{nb.comp.rows}}" as="rw" hint-placeholder-count="7">
+<div style="padding:8px 0;border-top:1px solid var(--ln)">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;gap:6px">
+<span style="font:{{rw.fa}} 16px var(--m);color:{{rw.ta}}">{{rw.va}}</span>
+<span style="font:700 11px var(--d);letter-spacing:.12em;color:var(--mu);text-align:center">{{rw.l}}</span>
+<span style="text-align:right;font:{{rw.fb}} 16px var(--m);color:{{rw.tb}}">{{rw.vb}}</span>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px;margin-top:5px">
+<div style="display:flex;justify-content:flex-end;background:rgba(255,255,255,.05);height:6px"><div style="width:{{rw.wa}}%;background:{{rw.ca}}"></div></div>
+<div style="background:rgba(255,255,255,.05);height:6px"><div style="width:{{rw.wb}}%;background:{{rw.cb}}"></div></div>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="nb-forma" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// ÚLTIMOS 6 PARTIDOS</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">FORMA</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:10px 10px 12px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{nb.fa.logo}}" style="width:28px;height:28px;object-fit:contain">{{nb.fa.name}}</span>
+<span style="text-align:right"><span style="display:block;font:700 13px var(--m);color:var(--cy)">{{nb.fa.rec}}</span><span style="font:500 11px var(--m);color:var(--mu)">{{nb.fa.avg}}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px">
+<sc-for list="{{nb.fa.ms}}" as="m" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+<span style="font:500 9px var(--m);color:var(--fa);white-space:nowrap">{{m.o}}</span>
+<div style="width:100%;max-width:40px;height:34px;display:grid;place-items:center;border:{{m.bd}};background:{{m.bg}};color:{{m.c}};font:700 16px var(--d);clip-path:var(--cut);box-shadow:{{m.sh}}">{{m.r}}</div>
+<span style="font:700 10px var(--m)">{{m.s}}</span>
+<div style="width:100%;display:flex;flex-direction:column;align-items:center">
+<div style="height:22px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--ln);width:100%"><div style="width:14px;height:{{m.up}}px;background:#05ffa1"></div></div>
+<div style="height:22px;display:flex;align-items:flex-start;justify-content:center"><div style="width:14px;height:{{m.dn}}px;background:#ff2a6d"></div></div>
+</div>
+<span style="font:700 10px var(--m);color:{{m.c}}">{{m.d}}</span>
+<span style="font:700 9px var(--d);letter-spacing:.1em;color:var(--cy);min-height:11px">{{m.tag}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.08em">{{nb.fa.racha}}</span></div>
+</div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:10px 10px 12px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{nb.fb.logo}}" style="width:28px;height:28px;object-fit:contain">{{nb.fb.name}}</span>
+<span style="text-align:right"><span style="display:block;font:700 13px var(--m);color:var(--cy)">{{nb.fb.rec}}</span><span style="font:500 11px var(--m);color:var(--mu)">{{nb.fb.avg}}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px">
+<sc-for list="{{nb.fb.ms}}" as="m" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+<span style="font:500 9px var(--m);color:var(--fa);white-space:nowrap">{{m.o}}</span>
+<div style="width:100%;max-width:40px;height:34px;display:grid;place-items:center;border:{{m.bd}};background:{{m.bg}};color:{{m.c}};font:700 16px var(--d);clip-path:var(--cut);box-shadow:{{m.sh}}">{{m.r}}</div>
+<span style="font:700 10px var(--m)">{{m.s}}</span>
+<div style="width:100%;display:flex;flex-direction:column;align-items:center">
+<div style="height:22px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--ln);width:100%"><div style="width:14px;height:{{m.up}}px;background:#05ffa1"></div></div>
+<div style="height:22px;display:flex;align-items:flex-start;justify-content:center"><div style="width:14px;height:{{m.dn}}px;background:#ff2a6d"></div></div>
+</div>
+<span style="font:700 10px var(--m);color:{{m.c}}">{{m.d}}</span>
+<span style="font:700 9px var(--d);letter-spacing:.1em;color:var(--cy);min-height:11px">{{m.tag}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.08em">{{nb.fb.racha}}</span></div>
+</div>
+<div style="display:flex;gap:12px;font:500 10px var(--m);color:var(--fa)"><span><span style="display:inline-block;width:8px;height:8px;background:#05ffa1"></span> MARGEN EN VICTORIA</span><span><span style="display:inline-block;width:8px;height:8px;background:#ff2a6d"></span> MARGEN EN DERROTA</span></div>
+</section>
+
+<section id="nb-h2h" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// ÚLTIMOS 10 PARTIDOS</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">CARA A CARA</h2></div></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px">
+<div style="display:flex;align-items:center;gap:8px"><img alt="" src="{{nb.a.logo}}" style="width:34px;height:34px;object-fit:contain"><span style="font:700 30px/1 var(--m);color:var(--cy)">{{nb.h.a}}</span></div>
+<span style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">VICTORIAS</span>
+<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><span style="font:700 30px/1 var(--m);color:#d1d4de">{{nb.h.b}}</span><img alt="" src="{{nb.b.logo}}" style="width:34px;height:34px;object-fit:contain"></div>
+</div>
+<div style="display:flex;gap:3px;height:10px"><div style="flex-grow:{{nb.h.a}};background:#00f0ff"></div><div style="flex-grow:{{nb.h.b}};background:#d1d4de"></div></div>
+<div style="border:1px solid var(--ln);padding:8px 10px;display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 11px var(--d);letter-spacing:.12em;color:var(--fa)">PUNTOS TOTALES POR PARTIDO</span><span style="font:700 18px var(--m);color:var(--cy)">{{nb.h.avg}}</span></div>
+<div style="border:1px solid var(--ln)">
+<sc-for list="{{nb.h.rows}}" as="g" hint-placeholder-count="4">
+<div style="min-height:50px;display:grid;grid-template-columns:70px minmax(0,1fr) 40px;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--ln)">
+<span style="font:500 10px var(--m);color:var(--fa)">{{g.d}}</span>
+<span style="display:flex;align-items:center;justify-content:center;gap:10px"><img alt="" src="{{g.l}}" style="width:26px;height:26px;object-fit:contain"><span style="font:700 15px var(--m)">{{g.s}}</span><img alt="" src="{{g.v}}" style="width:26px;height:26px;object-fit:contain"></span>
+<span style="height:26px;display:grid;place-items:center;border:1px solid var(--bs);color:var(--cy);font:700 12px var(--d)">{{g.w}}</span>
+</div>
+</sc-for>
+</div>
+<button onClick="{{nb.goH2h}}" style="min-height:44px;cursor:pointer;border:1px solid var(--bs);background:rgba(0,240,255,.05);color:var(--cy);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">VER TODOS EN H2H</button>
+</section>
+
+<section id="nb-tabla" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// CONFERENCIA ESTE · 15 EQUIPOS</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">CLASIFICACIÓN</h2></div>
+<div style="position:relative;height:84px">
+<div style="position:absolute;left:{{nb.mxa}}%;top:0;transform:translateX(-50%);text-align:center"><img alt="" src="{{nb.a.logo}}" style="width:34px;height:34px;object-fit:contain"><div style="width:2px;height:14px;background:#00f0ff;margin:0 auto"></div></div>
+<div style="position:absolute;left:{{nb.mxb}}%;top:0;transform:translateX(-50%);text-align:center"><img alt="" src="{{nb.b.logo}}" style="width:34px;height:34px;object-fit:contain"><div style="width:2px;height:14px;background:#d1d4de;margin:0 auto"></div></div>
+<div style="position:absolute;left:0;right:0;top:56px;display:flex;gap:2px">
+<sc-for list="{{nb.seg}}" as="sg" hint-placeholder-count="15"><div style="flex:1;height:22px;display:grid;place-items:center;background:{{sg.c}};color:{{sg.t}};font:700 9px var(--m);outline:{{sg.ol}};outline-offset:1px">{{sg.n}}</div></sc-for>
+</div>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;font:500 10px var(--m);color:var(--fa)"><span><span style="display:inline-block;width:8px;height:8px;background:#00f0ff"></span> PLAYOFFS DIRECTOS (1–6)</span><span><span style="display:inline-block;width:8px;height:8px;background:#747d99"></span> PLAY-IN (7–10)</span><span><span style="display:inline-block;width:8px;height:8px;background:#2a2d3a"></span> FUERA (11–15)</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+<div style="border:1px solid var(--bs);background:rgba(0,240,255,.06);padding:10px"><div style="font:700 11px var(--d);letter-spacing:.12em;color:var(--fa)">{{nb.a.name}}</div><div style="font:700 22px var(--m);color:var(--cy)">{{nb.a.rank}}</div><div style="font:500 11px var(--m);color:var(--mu)">{{nb.a.rec}} · {{nb.a.pct}}</div><div style="font:500 10px var(--m);color:var(--fa);margin-top:2px">{{nb.a.last}}</div></div>
+<div style="border:1px solid var(--ln);padding:10px"><div style="font:700 11px var(--d);letter-spacing:.12em;color:var(--fa)">{{nb.b.name}}</div><div style="font:700 22px var(--m);color:#d1d4de">{{nb.b.rank}}</div><div style="font:500 11px var(--m);color:var(--mu)">{{nb.b.rec}} · {{nb.b.pct}}</div><div style="font:500 10px var(--m);color:var(--fa);margin-top:2px">{{nb.b.last}}</div></div>
+</div>
+<div style="border:1px solid rgba(0,240,255,.4);background:rgba(0,240,255,.07);padding:8px 10px;font-size:13px">{{nb.gap}}</div>
+</section>
+
+<section id="nb-disp" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// REPORTE OFICIAL DE LESIONES</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">DISPONIBILIDAD</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:12px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{nb.da.logo}}" style="width:28px;height:28px;object-fit:contain">{{nb.da.name}}</span>
+<span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);background:rgba(5,255,161,.08);color:var(--gr);font:700 11px var(--d);letter-spacing:.1em">REPORTE APLICADO</span>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--mu)">{{nb.da.dn}}</span><span style="font:700 18px var(--m);color:{{nb.da.dc}}">{{nb.da.dm}} min</span></div>
+<div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:{{nb.da.dw}}%;height:8px;background:{{nb.da.dc}}"></div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid {{nb.da.rc}};color:{{nb.da.rc}};font:700 11px var(--d);letter-spacing:.08em">{{nb.da.rest}}</span></div>
+</div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:12px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{nb.db.logo}}" style="width:28px;height:28px;object-fit:contain">{{nb.db.name}}</span>
+<span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);background:rgba(5,255,161,.08);color:var(--gr);font:700 11px var(--d);letter-spacing:.1em">REPORTE APLICADO</span>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--mu)">{{nb.db.dn}}</span><span style="font:700 18px var(--m);color:{{nb.db.dc}}">{{nb.db.dm}} min</span></div>
+<div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:{{nb.db.dw}}%;height:8px;background:{{nb.db.dc}}"></div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid {{nb.db.rc}};color:{{nb.db.rc}};font:700 11px var(--d);letter-spacing:.08em">{{nb.db.rest}}</span></div>
+</div>
+<p style="margin:0;font-size:11px;color:var(--fa)">Los minutos de bajas suman los minutos medios de los jugadores que aparecen en el reporte. Si un equipo no envía su reporte, se avisa aquí.</p>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{isAnTen}}" hint-placeholder-val="{{false}}">
+<div style="display:flex;flex-direction:column;gap:14px">
+
+<div role="navigation" aria-label="Secciones del análisis" style="position:sticky;top:0;z-index:3;margin:-4px 0 0;padding:6px 0;background:rgba(7,8,12,.96);display:flex;gap:6px;overflow-x:auto">
+<a href="#tn-prob" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--bs);background:rgba(0,240,255,.06);color:var(--cy);font:700 12px var(--d);letter-spacing:.06em">PROBABILIDAD</a><a href="#tn-forma" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">FORMA</a><a href="#tn-sup" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">SUPERFICIE</a><a href="#tn-h2h" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">CARA A CARA</a><a href="#tn-modelo" style="flex:none;min-height:40px;padding:0 12px;display:grid;place-items:center;text-decoration:none;white-space:nowrap;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">MODELO</a>
+</div>
+
+<section id="tn-prob" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// MODELO QUANTFUT</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">PROBABILIDAD DE GANAR</h2></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px">
+<div style="border:1px solid var(--bs);background:rgba(0,240,255,.07);padding:12px 8px;text-align:center;box-shadow:0 0 22px rgba(0,240,255,.14)"><img alt="" src="{{tn.a.photo}}" style="width:76px;height:76px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"><div style="font-weight:700;margin-top:4px">{{tn.a.name}}</div><div style="font:700 34px/1.1 var(--m);color:var(--cy);text-shadow:0 0 18px rgba(0,240,255,.45)">{{tn.pa}}%</div><div style="font:500 11px var(--m);color:var(--mu)">{{tn.a.rank}} · {{tn.a.pts}} {{tn.a.mv}}</div><div style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">{{tn.a.age}} AÑOS · {{tn.a.country}}</div></div>
+<div style="border:1px solid var(--ln);padding:12px 8px;text-align:center"><img alt="" src="{{tn.b.photo}}" style="width:76px;height:76px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"><div style="font-weight:700;margin-top:4px">{{tn.b.name}}</div><div style="font:700 34px/1.1 var(--m);color:#d1d4de">{{tn.pb}}%</div><div style="font:500 11px var(--m);color:var(--mu)">{{tn.b.rank}} · {{tn.b.pts}} {{tn.b.mv}}</div><div style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">{{tn.b.age}} AÑOS · {{tn.b.country}}</div></div>
+</div>
+<div style="display:flex;gap:3px;height:10px"><div style="flex-grow:{{tn.pa}};background:#00f0ff"></div><div style="flex-grow:{{tn.pb}};background:#747d99"></div></div>
+<div style="border:1px solid rgba(0,240,255,.4);background:rgba(0,240,255,.07);padding:8px 10px;font-size:13px">{{tn.gap}}</div>
+</section>
+
+<section id="tn-forma" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// ÚLTIMOS PARTIDOS</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">FORMA</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:10px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{tn.fa.photo}}" style="width:34px;height:34px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%">{{tn.fa.name}}</span>
+<span style="text-align:right"><span style="display:block;font:700 13px var(--m);color:var(--cy)">{{tn.fa.rec}}</span><span style="font:500 10px var(--m);color:var(--mu)">ÚLTIMOS 10</span></span>
+</div>
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;margin-bottom:8px"><span style="font:700 10px var(--d);letter-spacing:.14em;color:var(--fa)">ÍNDICE DE FORMA</span><div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:{{tn.fa.idx}}%;height:8px;background:linear-gradient(90deg,#00f0ff,#05ffa1)"></div></div><span style="font:700 14px var(--m)">{{tn.fa.idx}}</span></div>
+<div style="border-top:1px solid var(--ln)">
+<sc-for list="{{tn.fa.ms}}" as="m" hint-placeholder-count="5">
+<div style="min-height:44px;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;border-bottom:1px solid var(--ln)">
+<span style="width:30px;height:30px;display:grid;place-items:center;border:1px solid {{m.c}};background:{{m.bg}};color:{{m.c}};font:700 15px var(--d);clip-path:var(--cut)">{{m.r}}</span>
+<span style="min-width:0"><strong style="display:block;font-size:13px">{{m.o}}</strong><span style="font-size:11px;color:var(--fa)">{{m.rd}}</span></span>
+<span style="font:700 11px var(--m);text-align:right">{{m.s}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.08em">{{tn.fa.streak}}</span><span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">{{tn.fa.t3}}</span><span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">{{tn.fa.tbk}}</span></div>
+</div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:10px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{tn.fb.photo}}" style="width:34px;height:34px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%">{{tn.fb.name}}</span>
+<span style="text-align:right"><span style="display:block;font:700 13px var(--m);color:var(--cy)">{{tn.fb.rec}}</span><span style="font:500 10px var(--m);color:var(--mu)">ÚLTIMOS 10</span></span>
+</div>
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;margin-bottom:8px"><span style="font:700 10px var(--d);letter-spacing:.14em;color:var(--fa)">ÍNDICE DE FORMA</span><div style="height:8px;background:rgba(255,255,255,.06)"><div style="width:{{tn.fb.idx}}%;height:8px;background:linear-gradient(90deg,#00f0ff,#05ffa1)"></div></div><span style="font:700 14px var(--m)">{{tn.fb.idx}}</span></div>
+<div style="border-top:1px solid var(--ln)">
+<sc-for list="{{tn.fb.ms}}" as="m" hint-placeholder-count="5">
+<div style="min-height:44px;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;border-bottom:1px solid var(--ln)">
+<span style="width:30px;height:30px;display:grid;place-items:center;border:1px solid {{m.c}};background:{{m.bg}};color:{{m.c}};font:700 15px var(--d);clip-path:var(--cut)">{{m.r}}</span>
+<span style="min-width:0"><strong style="display:block;font-size:13px">{{m.o}}</strong><span style="font-size:11px;color:var(--fa)">{{m.rd}}</span></span>
+<span style="font:700 11px var(--m);text-align:right">{{m.s}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.08em">{{tn.fb.streak}}</span><span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">{{tn.fb.t3}}</span><span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">{{tn.fb.tbk}}</span></div>
+</div>
+</section>
+
+<section id="tn-sup" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px"><div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// HOY SE JUEGA EN</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">SUPERFICIE</h2></div><span style="padding:4px 10px;border:1px solid var(--cy);background:rgba(0,240,255,.1);color:var(--cy);font:700 13px var(--d);letter-spacing:.12em">PISTA DURA</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:8px"><img alt="" src="{{tn.a.photo}}" style="width:30px;height:30px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"><span><strong style="display:block">{{tn.a.short}}</strong><span style="display:block;width:22px;height:3px;background:#00f0ff"></span></span></span>
+<span style="font:500 10px var(--m);color:var(--fa)">% DE VICTORIAS</span>
+<span style="display:flex;align-items:center;gap:8px;justify-content:flex-end;text-align:right"><span><strong style="display:block">{{tn.b.short}}</strong><span style="display:block;width:22px;height:3px;background:#d1d4de;margin-left:auto"></span></span><img alt="" src="{{tn.b.photo}}" style="width:30px;height:30px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"></span>
+</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{tn.sup}}" as="rw" hint-placeholder-count="4">
+<div style="padding:8px 8px;border:1px solid {{rw.bd}};background:{{rw.bg}};margin-bottom:6px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font:700 11px var(--d);letter-spacing:.12em;color:{{rw.lc}}">{{rw.l}}</span><span style="display:{{rw.hoyD}};padding:1px 6px;background:var(--cy);color:#03110f;font:700 10px var(--d);letter-spacing:.1em">HOY</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;gap:6px">
+<span style="font:{{rw.fa}} 16px var(--m);color:{{rw.ta}}">{{rw.va}}<span style="font:500 10px var(--m);color:var(--fa)"> {{rw.ra}}</span></span><span></span>
+<span style="text-align:right;font:{{rw.fb}} 16px var(--m);color:{{rw.tb}}">{{rw.vb}}<span style="font:500 10px var(--m);color:var(--fa)"> {{rw.rb}}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px;margin-top:5px">
+<div style="display:flex;justify-content:flex-end;background:rgba(255,255,255,.05);height:6px"><div style="width:{{rw.wa}}%;background:{{rw.ca}}"></div></div>
+<div style="background:rgba(255,255,255,.05);height:6px"><div style="width:{{rw.wb}}%;background:{{rw.cb}}"></div></div>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="tn-h2h" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// HISTORIAL DIRECTO</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">CARA A CARA</h2></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;border:1px dashed var(--ln);padding:16px 10px">
+<div style="text-align:center"><img alt="" src="{{tn.a.photo}}" style="width:64px;height:64px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"><div style="font-weight:700;font-size:13px;margin-top:4px">{{tn.a.short}}</div></div>
+<div style="text-align:center"><div style="font:700 32px/1 var(--m);color:var(--cy)">0 – 0</div><div style="font:700 10px var(--d);letter-spacing:.14em;color:var(--fa);margin-top:4px">PRIMER DUELO</div></div>
+<div style="text-align:center"><img alt="" src="{{tn.b.photo}}" style="width:64px;height:64px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"><div style="font-weight:700;font-size:13px;margin-top:4px">{{tn.b.short}}</div></div>
+</div>
+<p style="margin:0;font-size:12px;color:var(--mu)">Nunca se han enfrentado. Sin historial directo, el modelo se apoya en su forma reciente y en su rendimiento sobre pista dura.</p>
+</section>
+
+<section id="tn-modelo" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// LO QUE ESPERA EL MODELO</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">MODELO</h2></div>
+
+<div style="border:1px solid var(--ln);padding:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">DURACIÓN DEL PARTIDO</span><span style="font:500 10px var(--m);color:var(--fa)">SETS</span></div>
+<div style="display:flex;gap:3px;height:12px"><div style="flex-grow:{{tn.m.s2}};background:#00f0ff"></div><div style="flex-grow:{{tn.m.s3}};background:#d1d4de"></div></div>
+<div style="display:flex;justify-content:space-between;margin-top:6px;font:700 13px var(--m)"><span style="color:var(--cy)">{{tn.m.s2}}% en 2 sets</span><span style="color:#d1d4de">{{tn.m.s3}}% en 3 sets</span></div>
+</div>
+
+<div style="border:1px solid var(--ln);padding:10px">
+<div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa);margin-bottom:8px">{{tn.a.short}} GANA CADA SET</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end;height:112px">
+<sc-for list="{{tn.m.sets}}" as="st" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><span style="font:700 14px var(--m);color:{{st.c}}">{{st.p}}%</span><div style="width:100%;max-width:56px;height:{{st.h}}px;background:{{st.c}};opacity:{{st.o}}"></div><span style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa);margin-top:4px">{{st.l}}</span></div>
+</sc-for>
+</div>
+<p style="margin:8px 0 0;font-size:11px;color:var(--fa)">El 3.er set solo se juega si hay empate 1–1.</p>
+</div>
+
+<div style="border:1px solid var(--ln);padding:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><span style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">JUEGOS TOTALES · PROBABILIDAD DE «MÁS DE»</span></div>
+<div style="display:flex;align-items:flex-end;gap:5px;height:118px">
+<sc-for list="{{tn.m.games}}" as="gm" hint-placeholder-count="8">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><span style="font:700 10px var(--m);color:{{gm.c}}">{{gm.p}}</span><div style="width:100%;height:{{gm.h}}px;background:{{gm.c}};opacity:{{gm.o}}"></div><span style="font:500 9px var(--m);color:var(--fa);margin-top:4px">{{gm.l}}</span></div>
+</sc-for>
+</div>
+<p style="margin:8px 0 0;font-size:12px;color:var(--mu)">{{tn.m.gcap}}</p>
+</div>
+
+<div style="border:1px solid var(--ln);padding:10px">
+<div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa);margin-bottom:8px">HÁNDICAP DE JUEGOS · {{tn.a.short}}</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<sc-for list="{{tn.m.hand}}" as="hd" hint-placeholder-count="3">
+<div style="border:1px solid var(--b);padding:8px 4px;text-align:center"><div style="font:700 12px var(--m);color:var(--mu)">{{hd.l}}</div><div style="font:700 20px var(--m);color:var(--cy)">{{hd.p}}%</div></div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+<div style="border:1px solid var(--ln);padding:10px;text-align:center"><div style="font:700 20px var(--m);color:var(--cy)">{{tn.m.tb}}%</div><div style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">HABRÁ TIE-BREAK</div></div>
+<div style="border:1px solid var(--ln);padding:10px;text-align:center"><div style="font:700 20px var(--m);color:var(--cy)">{{tn.m.line}}</div><div style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">JUEGOS ESPERADOS</div></div>
+</div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{isAnFut}}" hint-placeholder-val="{{false}}">
+<div style="display:flex;flex-direction:column;gap:14px">
+
+<div role="navigation" aria-label="Secciones del análisis" style="position:sticky;top:0;z-index:3;margin:-4px 0 0;padding:6px 0;background:rgba(7,8,12,.96);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+<a href="#an-res" style="min-height:40px;display:grid;place-items:center;text-decoration:none;border:1px solid var(--bs);background:rgba(0,240,255,.06);color:var(--cy);font:700 12px var(--d);letter-spacing:.06em">RESUMEN</a>
+<a href="#an-forma" style="min-height:40px;display:grid;place-items:center;text-decoration:none;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">FORMA</a>
+<a href="#an-h2h" style="min-height:40px;display:grid;place-items:center;text-decoration:none;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">CARA A CARA</a>
+<a href="#an-tabla" style="min-height:40px;display:grid;place-items:center;text-decoration:none;border:1px solid var(--b);color:var(--mu);font:700 12px var(--d);letter-spacing:.06em">TABLA</a>
+</div>
+
+<section id="an-res" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// PROMEDIOS · ÚLTIMOS 10</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">CÓMO LLEGAN</h2></div>
+<div role="group" aria-label="Alcance" style="display:flex;padding:3px;border:1px solid var(--b);background:rgba(3,9,17,.72)">
+<button onClick="{{an.setTodos}}" style="min-height:36px;padding:0 10px;border:0;cursor:pointer;font:700 12px var(--d);letter-spacing:.06em;color:{{an.c1}};background:{{an.b1}}">TODOS</button>
+<button onClick="{{an.setCf}}" style="min-height:36px;padding:0 10px;border:0;cursor:pointer;font:700 12px var(--d);letter-spacing:.06em;color:{{an.c2}};background:{{an.b2}}">CASA · FUERA</button>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:8px"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:30px;height:30px;object-fit:contain"><span><strong style="display:block">Mallorca</strong><span style="display:block;width:22px;height:3px;background:#00f0ff"></span></span></span>
+<span style="font:500 10px var(--m);color:var(--fa);text-align:center">{{an.scopeCap}}</span>
+<span style="display:flex;align-items:center;gap:8px;justify-content:flex-end;text-align:right"><span><strong style="display:block">Córdoba</strong><span style="display:block;width:22px;height:3px;background:#d1d4de;margin-left:auto"></span></span><img alt="" src="/_blob/afab1ff9f1c954d5ecc8200c3dcf500d" style="width:30px;height:30px;object-fit:contain"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--ln);padding:8px 10px">
+<div style="display:flex;gap:4px;flex:none">
+<sc-for list="{{an.dots}}" as="dt" hint-placeholder-count="10"><span style="width:14px;height:14px;background:{{dt.c}};clip-path:var(--cut)"></span></sc-for>
+</div>
+<span style="font-size:12px;color:var(--mu)">{{an.domCap}}</span>
+</div>
+<svg viewBox="-34 0 308 196" width="100%" role="img" aria-label="Perfil comparado: ataque, creación, remate, córners y defensa" style="display:block;max-width:330px;margin:0 auto">
+<polygon points="{{an.g4}}" fill="none" stroke="rgba(0,240,255,.16)"></polygon>
+<polygon points="{{an.g3}}" fill="none" stroke="rgba(0,240,255,.12)"></polygon>
+<polygon points="{{an.g2}}" fill="none" stroke="rgba(0,240,255,.12)"></polygon>
+<polygon points="{{an.g1}}" fill="none" stroke="rgba(0,240,255,.12)"></polygon>
+<path d="{{an.axes}}" fill="none" stroke="rgba(0,240,255,.16)"></path>
+<polygon points="{{an.pb}}" fill="rgba(209,212,222,.16)" stroke="#d1d4de" stroke-width="2" stroke-dasharray="4 3"></polygon>
+<polygon points="{{an.pa}}" fill="rgba(0,240,255,.24)" stroke="#00f0ff" stroke-width="2"></polygon>
+<text x="120" y="16" text-anchor="middle" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">ATAQUE</text>
+<text x="196" y="76" text-anchor="start" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">CREACIÓN</text>
+<text x="170" y="180" text-anchor="start" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">REMATE</text>
+<text x="70" y="180" text-anchor="end" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">CÓRNERS</text>
+<text x="44" y="76" text-anchor="end" fill="#b2b7c7" font-size="11" font-weight="700" letter-spacing="1.5">DEFENSA</text>
+</svg>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{an.rows}}" as="rw" hint-placeholder-count="10">
+<div style="padding:8px 0;border-top:1px solid var(--ln)">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;gap:6px">
+<span style="font:{{rw.fa}} 16px var(--m);color:{{rw.ta}}">{{rw.va}}</span>
+<span style="font:700 11px var(--d);letter-spacing:.12em;color:var(--mu);text-align:center">{{rw.l}}</span>
+<span style="text-align:right;font:{{rw.fb}} 16px var(--m);color:{{rw.tb}}">{{rw.vb}}</span>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px;margin-top:5px">
+<div style="display:flex;justify-content:flex-end;background:rgba(255,255,255,.05);height:6px"><div style="width:{{rw.wa}}%;background:{{rw.ca}}"></div></div>
+<div style="background:rgba(255,255,255,.05);height:6px"><div style="width:{{rw.wb}}%;background:{{rw.cb}}"></div></div>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section id="an-forma" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// ÚLTIMOS 5 PARTIDOS</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">FORMA</h2></div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:10px 10px 12px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{an.ta.crest}}" style="width:28px;height:28px;object-fit:contain">{{an.ta.name}}</span>
+<span style="text-align:right"><span style="display:block;font:700 13px var(--m);color:var(--cy)">{{an.ta.pts}} PTS DE 15</span><span style="font:500 11px var(--m);color:var(--mu)">{{an.ta.rec}}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+<sc-for list="{{an.ta.ms}}" as="m" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+<img alt="" src="{{m.src}}" style="width:24px;height:24px;object-fit:contain">
+<div style="width:100%;max-width:50px;height:38px;display:grid;place-items:center;border:{{m.bd}};background:{{m.bg}};color:{{m.c}};font:700 17px var(--d);clip-path:var(--cut);box-shadow:{{m.sh}}">{{m.r}}</div>
+<span style="font:700 12px var(--m)">{{m.s}}</span>
+<span style="font:500 10px var(--m);color:var(--fa)">{{m.v}}</span>
+<span style="font:700 10px var(--d);letter-spacing:.1em;color:var(--cy);min-height:12px">{{m.tag}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+<span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.08em">{{an.ta.racha}}</span>
+<span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">{{an.ta.gol}}</span>
+</div>
+</div>
+<div style="border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:10px 10px 12px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700"><img alt="" src="{{an.tb.crest}}" style="width:28px;height:28px;object-fit:contain">{{an.tb.name}}</span>
+<span style="text-align:right"><span style="display:block;font:700 13px var(--m);color:var(--cy)">{{an.tb.pts}} PTS DE 15</span><span style="font:500 11px var(--m);color:var(--mu)">{{an.tb.rec}}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+<sc-for list="{{an.tb.ms}}" as="m" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+<img alt="" src="{{m.src}}" style="width:24px;height:24px;object-fit:contain">
+<div style="width:100%;max-width:50px;height:38px;display:grid;place-items:center;border:{{m.bd}};background:{{m.bg}};color:{{m.c}};font:700 17px var(--d);clip-path:var(--cut);box-shadow:{{m.sh}}">{{m.r}}</div>
+<span style="font:700 12px var(--m)">{{m.s}}</span>
+<span style="font:500 10px var(--m);color:var(--fa)">{{m.v}}</span>
+<span style="font:700 10px var(--d);letter-spacing:.1em;color:var(--cy);min-height:12px">{{m.tag}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+<span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.08em">{{an.tb.racha}}</span>
+<span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">{{an.tb.gol}}</span>
+</div>
+</div>
+</section>
+
+<section id="an-h2h" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// {{an.h.n}} PARTIDOS</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">CARA A CARA</h2></div><span style="font:500 10px var(--m);color:var(--fa)">VISTO DESDE MALLORCA</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px">
+<div style="display:flex;align-items:center;gap:8px"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:34px;height:34px;object-fit:contain"><span><span style="display:block;font:700 30px/1 var(--m);color:var(--cy)">{{an.h.a}}</span><span style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">VICTORIAS</span></span></div>
+<div style="text-align:center"><span style="display:block;font:700 22px/1 var(--m);color:var(--mu)">{{an.h.d}}</span><span style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">EMPATES</span></div>
+<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;text-align:right"><span><span style="display:block;font:700 30px/1 var(--m);color:#d1d4de">{{an.h.b}}</span><span style="font:700 10px var(--d);letter-spacing:.12em;color:var(--fa)">VICTORIAS</span></span><img alt="" src="/_blob/afab1ff9f1c954d5ecc8200c3dcf500d" style="width:34px;height:34px;object-fit:contain"></div>
+</div>
+<div style="display:flex;gap:3px;height:10px"><div style="flex-grow:{{an.h.a}};background:#00f0ff"></div><div style="flex-grow:{{an.h.d}};background:#747d99"></div><div style="flex-grow:{{an.h.b}};background:#d1d4de"></div></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+<div style="border:1px solid var(--ln);padding:8px 6px;text-align:center"><div style="font:700 16px var(--m);color:var(--cy)">{{an.h.g}}</div><div style="font:700 10px var(--d);letter-spacing:.1em;color:var(--fa)">GOLES POR PARTIDO</div></div>
+<div style="border:1px solid var(--ln);padding:8px 6px;text-align:center"><div style="font:700 16px var(--m);color:var(--cy)">{{an.h.bt}}</div><div style="font:700 10px var(--d);letter-spacing:.1em;color:var(--fa)">AMBOS MARCAN</div></div>
+<div style="border:1px solid var(--ln);padding:8px 6px;text-align:center"><div style="font:700 16px var(--m);color:var(--cy)">{{an.h.o}}</div><div style="font:700 10px var(--d);letter-spacing:.1em;color:var(--fa)">MÁS DE 2,5</div></div>
+</div>
+<div style="border:1px solid var(--ln)">
+<sc-for list="{{an.h.rows}}" as="g" hint-placeholder-count="3">
+<div style="min-height:50px;display:grid;grid-template-columns:62px minmax(0,1fr) 34px;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--ln)">
+<span style="font:500 11px var(--m);color:var(--fa)">{{g.d}}</span>
+<span style="display:flex;align-items:center;justify-content:center;gap:10px"><img alt="" src="{{g.l}}" style="width:26px;height:26px;object-fit:contain"><span style="font:700 16px var(--m)">{{g.s}}</span><img alt="" src="{{g.v}}" style="width:26px;height:26px;object-fit:contain"></span>
+<span style="height:28px;display:grid;place-items:center;border:1px solid {{g.c}};color:{{g.c}};font:700 14px var(--d)">{{g.r}}</span>
+</div>
+</sc-for>
+</div>
+<button onClick="{{an.goH2h}}" style="min-height:44px;cursor:pointer;border:1px solid var(--bs);background:rgba(0,240,255,.05);color:var(--cy);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">VER LOS {{an.h.n}} PARTIDOS</button>
+</section>
+
+<section id="an-tabla" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// LALIGA 2 · JORNADA 13</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">CLASIFICACIÓN</h2></div></div>
+<div style="display:flex;align-items:center;gap:8px;border:1px solid rgba(0,240,255,.4);background:rgba(0,240,255,.07);padding:8px 10px;font-size:13px"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:24px;height:24px;object-fit:contain"><span>{{an.gap}}</span><img alt="" src="/_blob/afab1ff9f1c954d5ecc8200c3dcf500d" style="width:24px;height:24px;object-fit:contain;margin-left:auto"></span></div>
+<div style="border:1px solid var(--ln)">
+<div style="display:grid;grid-template-columns:4px 26px minmax(0,1fr) 28px 34px 36px 58px;align-items:center;gap:6px;min-height:30px;border-bottom:1px solid var(--ln);font:700 10px var(--d);letter-spacing:.1em;color:var(--fa)"><span></span><span style="text-align:center">#</span><span>EQUIPO</span><span style="text-align:center">PJ</span><span style="text-align:center">DG</span><span style="text-align:center">PTS</span><span style="text-align:center">FORMA</span></div>
+<sc-for list="{{an.tabla}}" as="tr" hint-placeholder-count="7">
+<div style="display:{{tr.sepD}};text-align:center;color:var(--fa);font:700 14px var(--m);line-height:14px;padding:2px 0;border-bottom:1px solid var(--ln)">···</div>
+<div style="display:{{tr.rowD}};grid-template-columns:4px 26px minmax(0,1fr) 28px 34px 36px 58px;align-items:center;gap:6px;min-height:42px;border-bottom:1px solid var(--ln);background:{{tr.bg}}">
+<span style="align-self:stretch;background:{{tr.z}}"></span>
+<span style="text-align:center;font:700 13px var(--m);color:{{tr.pc}}">{{tr.p}}</span>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><img alt="" src="{{tr.src}}" style="width:22px;height:22px;object-fit:contain;flex:none"><span style="font-size:13px;font-weight:{{tr.fw}};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{tr.n}}</span></span>
+<span style="text-align:center;font:500 12px var(--m);color:var(--mu)">{{tr.pj}}</span>
+<span style="text-align:center;font:500 12px var(--m);color:var(--mu)">{{tr.dg}}</span>
+<span style="text-align:center;font:700 14px var(--m)">{{tr.pt}}</span>
+<span style="display:flex;gap:2px;justify-content:center"><span style="width:8px;height:14px;background:{{tr.f1}}"></span><span style="width:8px;height:14px;background:{{tr.f2}}"></span><span style="width:8px;height:14px;background:{{tr.f3}}"></span><span style="width:8px;height:14px;background:{{tr.f4}}"></span><span style="width:8px;height:14px;background:{{tr.f5}}"></span></span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;font:500 10px var(--m);color:var(--fa)"><span><span style="display:inline-block;width:8px;height:8px;background:#05ffa1"></span> ASCENSO</span><span><span style="display:inline-block;width:8px;height:8px;background:#00f0ff"></span> PLAY-OFF</span><span><span style="display:inline-block;width:8px;height:8px;background:#ff2a6d"></span> DESCENSO</span></div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{isStats}}" hint-placeholder-val="{{false}}">
+<div style="border:1px solid var(--b);background:var(--p);padding:4px 12px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--ln)">
+<span style="display:flex;align-items:center;gap:8px;font-weight:600"><img alt="" src="{{a.src}}" style="width:28px;height:28px;{{a.css}}">{{a.name}}</span>
+<span style="display:flex;align-items:center;gap:8px;font-weight:600">{{b.name}}<img alt="" src="{{b.src}}" style="width:28px;height:28px;{{b.css}}"></span>
+</div>
+<sc-for list="{{stats}}" as="r" hint-placeholder-count="5">
+<div style="min-height:50px;display:grid;grid-template-columns:56px minmax(0,1fr) 56px;align-items:center;gap:8px;border-bottom:1px solid var(--ln)">
+<span style="font:700 14px var(--m);color:var(--cy)">{{r.a}}</span>
+<div>
+<div style="text-align:center;font:700 12px var(--d);letter-spacing:.1em;color:var(--mu)">{{r.l}}</div>
+<div style="display:flex;gap:3px;height:4px;margin-top:6px"><div style="flex-grow:{{r.wa}};background:var(--cy)"></div><div style="flex-grow:{{r.wb}};background:#747d99"></div></div>
+</div>
+<span style="text-align:right;font:700 14px var(--m);color:var(--mu)">{{r.b}}</span>
+</div>
+</sc-for>
+<p style="margin:8px 0;font-size:11px;color:var(--fa)">Promedios de la temporada en curso.</p>
+</div>
+</sc-if>
+<sc-if value="{{isH2h}}" hint-placeholder-val="{{false}}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px">
+<sc-for list="{{h2hSum}}" as="h" hint-placeholder-count="3">
+<div style="border:1px solid var(--b);background:var(--p);padding:10px;text-align:center"><img alt="" src="{{h.src}}" style="width:44px;height:44px;margin:0 auto 6px;{{h.css}}"><div style="font:700 26px/1.1 var(--m);color:var(--cy)">{{h.v}}</div><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">{{h.l}}</div></div>
+</sc-for>
+</div>
+<span style="font:700 13px var(--d);letter-spacing:.14em">ÚLTIMOS ENFRENTAMIENTOS</span>
+<div style="border:1px solid var(--b);background:var(--p)">
+<sc-for list="{{h2h}}" as="g" hint-placeholder-count="4">
+<div style="min-height:48px;display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--ln)">
+<span style="font:500 11px var(--m);color:var(--fa)">{{g.d}}</span>
+<span style="font-weight:600">{{g.s}}</span>
+<span style="display:flex;align-items:center;gap:6px"><img alt="" src="{{g.src}}" style="width:28px;height:28px;{{g.css}}"><span style="padding:2px 8px;font:700 11px var(--m);color:var(--cy);border:1px solid var(--b)">{{g.w}}</span></span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isAlerts}}" hint-placeholder-val="{{false}}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-if value="{{hasAlerts}}" hint-placeholder-val="{{true}}">
+<div style="border:1px solid var(--b);background:var(--p)">
+<sc-for list="{{alerts}}" as="al" hint-placeholder-count="3">
+<div style="min-height:68px;display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--ln)">
+<span style="position:relative;display:block;width:44px;height:44px"><img alt="" src="{{al.src}}" style="width:44px;height:44px;{{al.css}}"><span style="position:absolute;inset:0;display:{{al.iniD}};place-items:center;border:1px solid rgba(0,240,255,.35);background:linear-gradient(150deg,#1f2230,#12141d);font:700 14px var(--m);color:var(--cy)">{{al.ini}}</span><img alt="" src="{{al.tsrc}}" style="position:absolute;right:-6px;bottom:-6px;width:20px;height:20px;background:#12141d;{{al.tcss}}"></span>
+<div style="min-width:0"><div style="font-weight:700;font-size:14px">{{al.n}}</div><div style="font-size:12px;color:var(--mu)">{{al.why}}</div><div style="display:{{al.retD}};font:500 11px var(--m);color:var(--fa);margin-top:2px">{{al.ret}}</div></div>
+<span style="padding:3px 8px;font:700 11px var(--d);letter-spacing:.12em;color:{{al.c}};border:1px solid {{al.c}}">{{al.st}}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noAlerts}}" hint-placeholder-val="{{false}}">
+<div style="border:1px dashed var(--ln);padding:28px 16px;text-align:center;color:var(--mu)"><div style="font:700 16px var(--d);letter-spacing:.1em;color:var(--gr)">SIN ALERTAS</div><div style="margin-top:6px;font-size:12px">No hay bajas ni dudas registradas para este partido.</div></div>
+</sc-if>
+<sc-if value="{{showLineups}}" hint-placeholder-val="{{false}}">
+<section id="an-onces" style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.03) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px"><div><div style="font:700 11px var(--d);letter-spacing:.16em;color:var(--cy)">// ALINEACIONES</div><h2 style="margin:2px 0 0;font:700 22px var(--d);letter-spacing:.04em">ÚLTIMO ONCE CONOCIDO</h2></div><span style="padding:3px 8px;border:1px solid var(--bs);color:var(--cy);font:700 12px var(--m)">{{lu.form}}</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mu)"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:22px;height:22px;object-fit:contain">Mallorca · {{lu.cap}}</div>
+<div style="position:relative;height:400px;border:1px solid rgba(5,255,161,.35);background:linear-gradient(180deg,#0a1d16,#08140f)">
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(5,255,161,.25)"></div>
+<div style="position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;border:1px solid rgba(5,255,161,.25)"></div>
+<div style="position:absolute;left:24%;right:24%;top:0;height:70px;border:1px solid rgba(5,255,161,.25);border-top:0"></div>
+<div style="position:absolute;left:24%;right:24%;bottom:0;height:70px;border:1px solid rgba(5,255,161,.25);border-bottom:0"></div>
+<sc-for list="{{lu.players}}" as="p" hint-placeholder-count="11">
+<div style="position:absolute;left:{{p.x}}%;top:{{p.y}}%;transform:translate(-50%,-50%);width:64px;text-align:center">
+<div style="position:relative;width:42px;height:42px;margin:0 auto"><img alt="" src="{{p.src}}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;object-position:center 12%;border:2px solid #00f0ff;background:#fff;display:block;box-sizing:border-box"><span style="position:absolute;right:-6px;bottom:-4px;min-width:18px;height:18px;padding:0 3px;box-sizing:border-box;display:grid;place-items:center;background:#07080c;border:1px solid #00f0ff;color:#00f0ff;font:700 10px var(--m)">{{p.num}}</span></div>
+<div style="margin-top:3px;font:700 10px var(--m);color:#f0f1f5;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{p.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:10px;border:1px dashed var(--ln);padding:12px"><img alt="" src="/_blob/afab1ff9f1c954d5ecc8200c3dcf500d" style="width:32px;height:32px;object-fit:contain;flex:none"><span><strong style="display:block;font-size:14px">Córdoba · sin alineación guardada</strong><span style="font-size:12px;color:var(--mu)">El once se confirma una hora antes del partido y aparecerá aquí con foto.</span></span></div>
+</section>
+</sc-if>
+<div style="padding:8px 10px;border:1px solid var(--ln);background:#040508;color:var(--mu);font:500 11px var(--m)">&gt; COMPROBADO 13-nov 15:30 · se actualiza cada hora</div>
+</div>
+</sc-if>
+</main>
+<div style="flex:none;padding:10px 14px 14px;border-top:1px solid var(--b);background:var(--p);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px">
+<a href="Desbloquear.dc.html" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-decoration:none;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 15px var(--d);letter-spacing:.08em;clip-path:var(--cut)"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 018 0v4"></path></svg>DESBLOQUEAR TODO · 40</a>
+<a href="Vip.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;color:var(--ye);border:1px solid rgba(252,238,10,.5);background:rgba(252,238,10,.08);font:700 15px var(--d);letter-spacing:.08em;clip-path:var(--cut)">VIP</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"full":{"editor":"text","default":""},"sport":{"editor":"enum","options":["fut","nba","ten"],"default":"fut"},"tab":{"editor":"enum","options":["pred","props","stats","h2h","alerts"],"default":"pred"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const sport = this.props.sport || 'fut';
+const SRC = {
+ath: '/_blob/9da85345e94e5f91f11240ac38d5c58d', esp: '/_blob/afab1ff9f1c954d5ecc8200c3dcf500d',
+nyk: '/_blob/cf44a5a61913d439a6928335e67150eb', mia: '/_blob/10fda615cda9a0af6884ca922825e90b',
+alc: '/_blob/93372743515ef3f3b1a897cc2669b845', zve: '/_blob/4e1d40a719ca20a5cf7c8a7c3cbc8642',
+brunson: '/_blob/ee10ef692188fd86766c8bf80836b37f', det: '/_blob/bfd80f71d11b27f23208aba8ff962867', cade: '/_blob/fc3dff5676a4ff417341754d6b94a621', duren: '/_blob/7c86d15fdc0d605dc4b566f88e922312', fritz: '/_blob/c1cdfced4be0b368a59a4a6b87f01ce5', tirante: '/_blob/34c6447ff06248aad6c47ec3e792fe40', herro: '/_blob/10cf38659154112f7b81a1dd0b4c3d8b',
+towns: '/_blob/1aa5591b0d28d45302cd1f125d1712fe', bam: '/_blob/e1fe13dda9032357d0d9f123c2a5138d'
+};
+const PH = 'display:block;box-sizing:border-box;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%';
+const LG = 'display:block;box-sizing:border-box;object-fit:contain;padding:3px';
+const im = (k, id) => (id && SRC[id]) ? { src: SRC[id], css: k === 'ph' ? PH : LG } : { src: SRC.ath, css: 'display:none' };
+const tab = s.tab || this.props.tab || 'pred';
+const D = {
+fut: {
+league: 'LALIGA 2 · JORNADA 15', when: 'SÁB 14-NOV · 17:30',
+a: { k: 'im', i: 'ath', name: 'Mallorca', sub: 'G E E G E' }, b: { k: 'im', i: 'esp', name: 'Córdoba', sub: 'G E G G P' },
+big: '52%', bigLabel: 'GANA MALLORCA',
+probs: [['1', 52, '#00f0ff'], ['X', 27, '#747d99'], ['2', 21, '#d1d4de']],
+f: { sel: 'Más de 1,5 goles', p: '78%', odd: '1.30 · BetMGM 16:07' }, mk: ['@1.85', 'Pinnacle · 17:07'],
+markets: [['Resultado', 'Gana Mallorca', '52%', true, 'im', 'ath', '', ''], ['Doble oportunidad', '1X', '79%', false, 'im', 'ath', '', ''], ['Ambos marcan', 'Sí', '58%', false, 'im', 'ath', 'im', 'esp']],
+stats: [['GOLES A FAVOR', '1,8', '1,4', 18, 14], ['GOLES EN CONTRA', '0,9', '1,2', 9, 12], ['XG POR PARTIDO', '1,7', '1,3', 17, 13], ['TIROS A PUERTA', '5,1', '4,0', 51, 40], ['CÓRNERS', '5,9', '4,8', 59, 48]],
+h2hSum: [['MALLORCA', '4', 'im', 'ath'], ['EMPATES', '2', 'im', ''], ['CÓRDOBA', '1', 'im', 'esp']],
+h2h: [['abr 2026', 'Córdoba 1–2 Mallorca', 'MAL', 'im', 'ath'], ['nov 2025', 'Mallorca 1–1 Córdoba', 'EMP', 'im', ''], ['feb 2025', 'Mallorca 1–0 Córdoba', 'MAL', 'im', 'ath'], ['sep 2024', 'Córdoba 1–1 Mallorca', 'EMP', 'im', '']],
+alerts: [
+['Martin Valjent', 'DEF · Mallorca', 'SELECCIÓN', '#fcee0a', 'av', '', 'Con su selección · vuelve a mediados de nov.', 'ath'],
+['Zito Luvumbo', 'DEL · Mallorca', 'SELECCIÓN', '#fcee0a', 'av', '', 'Con su selección · vuelve a mediados de nov.', 'ath'],
+['Manu Morlanes', 'MED · Mallorca', 'LESIÓN', '#ff2a6d', 'av', '', 'Vuelve a principios de dic.', 'ath'],
+['Jacobo Marti', 'Córdoba', 'LESIÓN', '#ff2a6d', 'av', '', 'Vuelve a principios de may. 2027', 'esp'],
+['Kevin Medina', 'Córdoba', 'VUELVE', '#05ffa1', 'av', '', 'Ya entrena con el grupo', 'esp']]
+},
+nba: {
+league: 'NBA · TEMPORADA REGULAR', when: 'SÁB 14-NOV · 20:00 · MIAMI',
+a: { k: 'im', i: 'det', name: 'Pistons', sub: 'VISITANTE · 8-3' }, b: { k: 'im', i: 'mia', name: 'Heat', sub: 'LOCAL · 6-6' },
+big: '62%', bigLabel: 'GANA DETROIT',
+probs: [['DET', 62, '#00f0ff'], ['MIA', 38, '#747d99']],
+f: { sel: 'Pistons ganan', p: '62%', odd: '1.62 · FanDuel 17:07' }, mk: ['@1.62', 'FanDuel · 17:07'],
+props: [
+['Cade Cunningham', 'cade', 'det', 'Puntos · Más de 25,5', '61%', '@1.88', 'FanDuel · 17:07', 4, true],
+['Jalen Duren', 'duren', 'det', 'Rebotes · Más de 10,5', '59%', '@1.91', 'DraftKings · 17:05', 4, true],
+['Tyler Herro', 'herro', 'mia', 'Triples · Más de 2,5', '57%', '@1.95', 'BetMGM · 16:58', 3, false],
+['Bam Adebayo', 'bam', 'mia', 'Rebotes · Más de 9,5', '56%', '@2.02', 'FanDuel · 17:07', 3, false]],
+markets: [['Ganador', 'Pistons', '62%', true, 'im', 'det', '', ''], ['Hándicap', 'Pistons −4,5', '54%', false, 'im', 'det', '', ''], ['Total de puntos', 'Menos de 226,5', '58%', false, 'im', 'det', 'im', 'mia']],
+stats: [],
+h2hSum: [['PISTONS', '5', 'im', 'det'], ['HEAT', '5', 'im', 'mia']],
+h2h: [['oct 2026', 'Heat 111–128 Pistons', 'DET', 'im', 'det'], ['mar 2026', 'Heat 121–110 Pistons', 'MIA', 'im', 'mia'], ['ene 2026', 'Pistons 112–118 Heat', 'MIA', 'im', 'mia'], ['nov 2025', 'Heat 135–138 Pistons', 'DET', 'im', 'det']],
+alerts: [['Miami Heat', '2 jugadores en el reporte · 31 min de bajas', 'APLICADO', '#05ffa1', 'im', 'mia'], ['Detroit Pistons', '1 jugador en el reporte · 12 min de bajas', 'APLICADO', '#05ffa1', 'im', 'det']]
+},
+ten: {
+league: 'ATP · ESTOCOLMO · FINAL', when: 'SÁB 14-NOV · 12:00 UTC · PISTA DURA',
+a: { k: 'ph', i: 'fritz', name: 'Fritz', sub: '29 AÑOS · N.º 12' }, b: { k: 'ph', i: 'tirante', name: 'Tirante', sub: '25 AÑOS · N.º 53' },
+big: '82%', bigLabel: 'GANA FRITZ',
+probs: [['FRI', 82, '#00f0ff'], ['TIR', 18, '#747d99']],
+f: { sel: 'Gana Fritz', p: '82%', odd: '1.22 · Pinnacle 08:10' }, mk: ['@1.22', 'Pinnacle · 08:10'],
+markets: [['Ganador', 'Fritz', '82%', true, 'ph', 'fritz', '', ''], ['Total de juegos', 'Más de 20,5', '54%', false, 'ph', 'fritz', 'ph', 'tirante'], ['Primer set', 'Fritz', '77%', false, 'ph', 'fritz', '', '']],
+stats: [],
+h2hSum: [['FRITZ', '0', 'ph', 'fritz'], ['TIRANTE', '0', 'ph', 'tirante']],
+h2h: [['—', 'Primer duelo entre ambos', '0–0', 'ph', 'fritz']],
+alerts: [['Taylor Fritz', 'Sin incidencias en los últimos 7 días', 'SIN ALERTAS', '#05ffa1', 'ph', 'fritz'], ['Thiago Tirante', 'Sin incidencias en los últimos 7 días', 'SIN ALERTAS', '#05ffa1', 'ph', 'tirante']]
+}
+};
+const d = D[sport] || D.fut;
+const tabList = sport === 'nba'
+? [['pred', 'PRONÓSTICO'], ['props', 'PROPS'], ['stats', 'ANÁLISIS'], ['h2h', 'H2H'], ['alerts', 'ALERTAS']]
+: [['pred', 'PRONÓSTICO'], ['stats', 'ANÁLISIS'], ['h2h', 'H2H'], ['alerts', 'ALERTAS']];
+const tabs = tabList.map((x) => ({
+label: x[1],
+pick: () => this.setState({ tab: x[0] }),
+c: x[0] === tab ? '#00f0ff' : '#b2b7c7',
+bg: x[0] === tab ? 'rgba(0,240,255,.1)' : 'transparent',
+sh: x[0] === tab ? 'inset 0 -2px #00f0ff' : 'none'
+}));
+
+const MALc = '/_blob/9da85345e94e5f91f11240ac38d5c58d', CORc = '/_blob/afab1ff9f1c954d5ecc8200c3dcf500d';
+const RIV = { cad: '/_blob/05547c47e6be17a6d8e0672608fda793', leg: '/_blob/26ab7ff29aa1917e2b41d56db0830fab', eib: '/_blob/e9fb4f6ca6e38fc82a80d85533a963e7', lpa: '/_blob/9fa7b50fe217dfaf23c58d2a60265371', gir: '/_blob/85a49bb7d75e433efd1368a459cc7158', ceu: '/_blob/61a80cb9265bade28041dc8879ebfdb9', cel: '/_blob/53d8656e546fb8efb8fcdd5acf7f01d0', eld: '/_blob/8a3da2674305bc5cb6316bb1f821779c', gra: '/_blob/d0ebf60165f16fb39cb0ca3702b41c79', val: '/_blob/da6f2c877d18ba35a8d4350664c395f9' };
+
+let NB = null;
+let TN = null;
+const mkRows = (A, B, MET, fmtOf, widthOf) => {
+let winsA = 0;
+const dots = [];
+const rows = MET.map((m) => {
+const va = A[m[1]], vb = B[m[1]];
+const better = Math.abs(va - vb) < 0.0001 ? 0 : ((va > vb) !== m[3] ? 1 : 2);
+if (better === 1) winsA++;
+dots.push({ c: better === 1 ? '#00f0ff' : (better === 2 ? '#d1d4de' : '#3a3f55') });
+const w = widthOf(m, va, vb);
+return {
+l: m[0], va: fmtOf(m, va), vb: fmtOf(m, vb), wa: w[0], wb: w[1],
+ca: better === 2 ? 'rgba(0,240,255,.35)' : '#00f0ff', cb: better === 1 ? 'rgba(209,212,222,.35)' : '#d1d4de',
+fa: better === 1 ? '700' : '500', fb: better === 2 ? '700' : '500',
+ta: better === 1 ? '#00f0ff' : '#b2b7c7', tb: better === 2 ? '#f0f1f5' : '#b2b7c7'
+};
+});
+return { rows: rows, dots: dots, winsA: winsA };
+};
+const resCol = { G: '#05ffa1', P: '#ff2a6d', E: '#b2b7c7' };
+if (sport === 'nba') {
+const DET = '/_blob/bfd80f71d11b27f23208aba8ff962867', MIA = '/_blob/10fda615cda9a0af6884ca922825e90b';
+const A = { win: 0.727, ah: 0.833, pf: 115.5, pa: 107.8, df: 7.7, l6: 0.667, rest: 1 };
+const B = { win: 0.5, ah: 0.4, pf: 117.2, pa: 120.1, df: -2.9, l6: 0.667, rest: 0 };
+const MET = [['RÉCORD', 'win', 'pct', false], ['VISITANTE · LOCAL', 'ah', 'pct', false], ['PUNTOS A FAVOR', 'pf', 'n1', false], ['PUNTOS EN CONTRA', 'pa', 'n1', true], ['DIFERENCIAL', 'df', 'sg', false], ['ÚLTIMOS 6', 'l6', 'pct', false], ['DESCANSO (DÍAS)', 'rest', 'n0', false]];
+const fmtOf = (m, v) => m[2] === 'pct' ? Math.round(v * 100) + '%' : (m[2] === 'n0' ? String(v) : (m[2] === 'sg' ? (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1).replace('.', ',') : v.toFixed(1).replace('.', ',')));
+const widthOf = (m, va, vb) => {
+if (m[2] === 'sg') return [Math.max(4, Math.min(100, (va + 15) / 30 * 100)), Math.max(4, Math.min(100, (vb + 15) / 30 * 100))];
+const top = Math.max(va, vb, 0.0001) * 1.08;
+return [Math.max(4, Math.round(va / top * 100)), Math.max(4, Math.round(vb / top * 100))];
+};
+const R = mkRows(A, B, MET, fmtOf, widthOf);
+const TC = { CLE: 1, UTA: 1, SAC: 1, GSW: 1, LAC: 1, LAL: 1, WAS: 1, PHI: 1, CHA: 1, BKN: 1 };
+const mkG = (list) => list.map((x, i, arr) => {
+const r = x[4], marg = x[2] - x[3], last = i === arr.length - 1;
+const col = resCol[r];
+return { o: (x[1] === 'L' ? 'vs ' : '@ ') + x[0], r: r, s: x[2] + '–' + x[3], c: col, bd: (last ? '2px' : '1px') + ' solid ' + col, bg: r === 'G' ? 'rgba(5,255,161,.12)' : 'rgba(255,42,109,.12)', sh: last ? '0 0 14px ' + col + '55' : 'none', up: r === 'G' ? Math.max(3, Math.round(Math.min(marg, 30) / 30 * 22)) : 0, dn: r === 'P' ? Math.max(3, Math.round(Math.min(-marg, 30) / 30 * 22)) : 0, d: (marg > 0 ? '+' : '−') + Math.abs(marg), tag: last ? 'ÚLTIMO' : '' };
+});
+const fa = { name: 'Pistons', logo: DET, rec: '4–2', avg: '120,3 – 111,5 pts', racha: 'RACHA: 2 VICTORIAS', ms: mkG([['BKN', 'V', 110, 94, 'G'], ['CHA', 'V', 124, 91, 'G'], ['PHI', 'L', 106, 112, 'P'], ['LAL', 'L', 116, 121, 'P'], ['WAS', 'L', 122, 111, 'G'], ['WAS', 'V', 144, 140, 'G']]) };
+const fb = { name: 'Heat', logo: MIA, rec: '4–2', avg: '116,0 – 118,7 pts', racha: 'RACHA: 3 VICTORIAS', ms: mkG([['LAL', 'V', 117, 138, 'P'], ['LAC', 'V', 117, 116, 'G'], ['GSW', 'V', 100, 120, 'P'], ['SAC', 'V', 114, 108, 'G'], ['UTA', 'V', 115, 109, 'G'], ['CLE', 'L', 133, 121, 'G']]) };
+const seg = [];
+for (let i = 1; i <= 15; i++) {
+const mine = i === 3 || i === 6;
+seg.push({ n: i, c: i <= 6 ? '#00f0ff' : (i <= 10 ? '#747d99' : '#2a2d3a'), t: i <= 6 ? '#03110f' : (i <= 10 ? '#07080c' : '#939ab0'), ol: mine ? '2px solid ' + (i === 3 ? '#05ffa1' : '#f0f1f5') : 'none' });
+}
+const gauge = (m) => ({ dw: Math.min(100, Math.round(m / 100 * 100)), dc: m < 20 ? '#05ffa1' : (m < 50 ? '#fcee0a' : '#ff2a6d') });
+const da = Object.assign({ name: 'Pistons', logo: DET, dn: '1 jugador en el reporte', dm: 12, rest: 'DESCANSÓ 1 DÍA', rc: '#05ffa1' }, gauge(12));
+const db = Object.assign({ name: 'Heat', logo: MIA, dn: '2 jugadores en el reporte', dm: 31, rest: 'BACK-TO-BACK · JUGÓ AYER', rc: '#ff2a6d' }, gauge(31));
+NB = {
+pa: 62, pb: 38,
+a: { name: 'Pistons', logo: DET, rec: '8–3', rank: '3.º de 15', pct: '72,7 %', last: 'Temp. pasada 60–22' },
+b: { name: 'Heat', logo: MIA, rec: '6–6', rank: '6.º de 15', pct: '50,0 %', last: 'Temp. pasada 43–39' },
+factors: [
+{ src: DET, t: 'Mejor récord', s: 'Detroit 8–3 · Miami 6–6' },
+{ src: DET, t: 'Rinde fuera de casa', s: 'Detroit 5–1 de visitante · Miami 2–3 en casa' },
+{ src: DET, t: 'Más descanso', s: 'Miami jugó ayer (back-to-back)' },
+{ src: MIA, t: 'Mejor racha', s: 'Miami lleva 3 victorias seguidas · Detroit 2' }
+],
+comp: { a: { name: 'Pistons', logo: DET }, b: { name: 'Heat', logo: MIA }, cap: 'TEMPORADA 2026-27', dots: R.dots, rows: R.rows, domCap: 'Detroit mejor en ' + R.winsA + ' de 7' },
+fa: fa, fb: fb,
+h: { a: 5, b: 5, avg: '230,7', rows: [['23 OCT 2026', MIA, '111–128', DET, 'DET'], ['08 MAR 2026', MIA, '121–110', DET, 'MIA'], ['01 ENE 2026', DET, '112–118', MIA, 'MIA'], ['29 NOV 2025', MIA, '135–138', DET, 'DET']].map((x) => ({ d: x[0], l: x[1], s: x[2], v: x[3], w: x[4] })) },
+mxa: (3 - 0.5) / 15 * 100, mxb: (6 - 0.5) / 15 * 100, seg: seg,
+gap: 'Detroit está 3 puestos por encima de Miami en el Este.',
+da: da, db: db,
+goH2h: () => this.setState({ tab: 'h2h' })
+};
+}
+if (sport === 'ten') {
+const FR = '/_blob/c1cdfced4be0b368a59a4a6b87f01ce5', TI = '/_blob/34c6447ff06248aad6c47ec3e792fe40';
+const RD = { 'Semifinals': 'Semifinal', 'Round of 16': 'Octavos', 'Quarterfinals': 'Cuartos', 'Round of 64': 'Ronda de 64', 'Round of 32': 'Ronda de 32', 'Semi-finals': 'Semifinal', 'Qualification Final': 'Final de clasificación' };
+const mkM = (list) => list.map((x) => ({ r: x[0], c: resCol[x[0]], bg: x[0] === 'G' ? 'rgba(5,255,161,.12)' : 'rgba(255,42,109,.12)', o: 'vs ' + x[1], rd: RD[x[2]] + ' · ' + x[3], s: x[4] }));
+const fa = { name: 'Taylor Fritz', photo: FR, rec: '7–3', idx: 75, streak: 'RACHA: 2 VICTORIAS', t3: '22 % a 3 sets', tbk: '33 % con tie-break', ms: mkM([['G', 'L. Musetti', 'Semifinals', 'Estocolmo', '6-4 6-2'], ['G', 'C. Norrie', 'Round of 16', 'Estocolmo', '7-5 6-3'], ['P', 'C. Alcaraz', 'Quarterfinals', 'París', '7-6 5-7 3-6'], ['G', 'A. Fils', 'Round of 16', 'París', '6-3 6-4'], ['G', 'B. Bonzi', 'Round of 64', 'París', '3-6 6-3 6-4']]) };
+const fb = { name: 'Thiago A. Tirante', photo: TI, rec: '4–3', idx: 67, streak: 'RACHA: 3 VICTORIAS', t3: '29 % a 3 sets', tbk: '57 % con tie-break', ms: mkM([['G', 'A. Tabilo', 'Semifinals', 'Estocolmo', '7-5 7-6'], ['G', 'A. Shevchenko', 'Quarterfinals', 'Estocolmo', '7-6 6-7 6-3'], ['G', 'J. Munar', 'Round of 32', 'Estocolmo', '7-6 6-3'], ['P', 'M. Bellucci', 'Qualification Final', 'París', '4-6 4-6'], ['G', 'Z. Svajda', 'Semi-finals', 'París', '3-6 6-1 6-4']]) };
+const sup = [['DURA · CARRERA', true, 64, 59, '346–192', '80–55'], ['DURA · ESTA TEMPORADA', true, 62, 58, '23–14', '15–11'], ['TIERRA BATIDA', false, 55, 56, '63–52', '175–135'], ['HIERBA', false, 66, 38, '64–33', '6–10']].map((x) => {
+const win = x[2] === x[3] ? 0 : (x[2] > x[3] ? 1 : 2);
+return { l: x[0], hoyD: x[1] ? 'inline-block' : 'none', lc: x[1] ? '#00f0ff' : '#939ab0', bd: x[1] ? 'rgba(0,240,255,.4)' : 'rgba(116,125,153,.22)', bg: x[1] ? 'rgba(0,240,255,.06)' : 'transparent', va: x[2] + '%', vb: x[3] + '%', ra: x[4], rb: x[5], wa: x[2], wb: x[3], ca: win === 2 ? 'rgba(0,240,255,.35)' : '#00f0ff', cb: win === 1 ? 'rgba(209,212,222,.35)' : '#d1d4de', fa: win === 1 ? '700' : '500', fb: win === 2 ? '700' : '500', ta: win === 1 ? '#00f0ff' : '#b2b7c7', tb: win === 2 ? '#f0f1f5' : '#b2b7c7' };
+});
+const sets = [['SET 1', 77], ['SET 2', 77], ['SET 3', 20]].map((x) => ({ l: x[0], p: x[1], h: Math.round(x[1] / 100 * 70), c: x[1] >= 50 ? '#00f0ff' : '#747d99', o: x[1] >= 50 ? '1' : '.8' }));
+const games = [['18,5', 72], ['20,5', 54], ['21,5', 49], ['22,5', 40], ['23,5', 34], ['24,5', 33], ['26,5', 26]].map((x) => ({ l: x[0], p: x[1] + '%', h: Math.round(x[1] / 100 * 80), c: x[1] >= 50 ? '#00f0ff' : '#747d99', o: x[1] >= 50 ? '1' : '.85' }));
+TN = {
+pa: 82, pb: 18,
+a: { name: 'Taylor Fritz', short: 'Fritz', photo: FR, rank: 'N.º 12', pts: '3.095 pts', mv: '▲', age: 29, country: 'EE. UU.' },
+b: { name: 'Thiago A. Tirante', short: 'Tirante', photo: TI, rank: 'N.º 53', pts: '1.023 pts', mv: '▼', age: 25, country: 'ARGENTINA' },
+gap: 'Fritz está 41 puestos por encima en el ranking ATP.',
+fa: fa, fb: fb, sup: sup,
+m: { s2: 71, s3: 29, sets: sets, games: games, gcap: 'Con 20,5 juegos el modelo da 54 %; con 21,5, 49 %: espera un partido de unos 21 juegos.', hand: [{ l: '−1,5', p: 78 }, { l: '−3,5', p: 62 }, { l: '−5,5', p: 33 }], tb: 40, line: '≈ 21' }
+};
+}
+let AN = null;
+let LU = null;
+if (sport === 'fut') {
+const sc = s.scope || 'todos';
+const A = sc === 'todos' ? { gf: 1.3, gc: 0.5, xf: 1.6, xc: 1.26, t: 13.3, sp: 4.2, c: 5.8, bt: 40, o: 30, cs: 50 } : { gf: 2.0, gc: 0.6, xf: 2.05, xc: 0.79, t: 15.6, sp: 5.4, c: 5.8, bt: 40, o: 60, cs: 40 };
+const B = sc === 'todos' ? { gf: 1.7, gc: 1.5, xf: 1.87, xc: 1.92, t: 16.1, sp: 5.3, c: 6.6, bt: 60, o: 70, cs: 30 } : { gf: 1.5, gc: 1.83, xf: 1.56, xc: 2.4, t: 14.2, sp: 4.5, c: 5.0, bt: 83, o: 83, cs: 17 };
+const MET = [['GOLES A FAVOR', 'gf', false, 1], ['GOLES EN CONTRA', 'gc', true, 1], ['xG A FAVOR', 'xf', false, 2], ['xG EN CONTRA', 'xc', true, 2], ['TIROS', 't', false, 1], ['TIROS A PUERTA', 'sp', false, 1], ['CÓRNERS', 'c', false, 1], ['AMBOS MARCAN', 'bt', false, 0], ['MÁS DE 2,5 GOLES', 'o', false, 0], ['PORTERÍA A CERO', 'cs', false, 0]];
+const fmt = (v, d) => (d === 0 ? String(Math.round(v)) + '%' : v.toFixed(d).replace('.', ','));
+let winsA = 0;
+const dots = [];
+const rows = MET.map((m) => {
+const va = A[m[1]], vb = B[m[1]];
+const top = Math.max(va, vb) * 1.08;
+const better = Math.abs(va - vb) < 0.0001 ? 0 : ((va > vb) !== m[2] ? 1 : 2);
+if (better === 1) winsA++;
+dots.push({ c: better === 1 ? '#00f0ff' : (better === 2 ? '#d1d4de' : '#3a3f55') });
+return {
+l: m[0], va: fmt(va, m[3]), vb: fmt(vb, m[3]),
+wa: Math.max(3, Math.round(va / top * 100)), wb: Math.max(3, Math.round(vb / top * 100)),
+ca: better === 2 ? 'rgba(0,240,255,.35)' : '#00f0ff', cb: better === 1 ? 'rgba(209,212,222,.35)' : '#d1d4de',
+fa: better === 1 ? '700' : '500', fb: better === 2 ? '700' : '500',
+ta: better === 1 ? '#00f0ff' : '#b2b7c7', tb: better === 2 ? '#f0f1f5' : '#b2b7c7'
+};
+});
+const norm = (T) => [Math.min(T.gf / 2.5, 1), Math.min(T.xf / 2.5, 1), Math.min(T.sp / 7, 1), Math.min(T.c / 9, 1), 1 - Math.min(T.gc / 2.5, 1)].map((v) => Math.max(0.08, v));
+const pt = (k, v) => { const a = (-90 + 72 * k) * Math.PI / 180; return (120 + 70 * v * Math.cos(a)).toFixed(1) + ',' + (100 + 70 * v * Math.sin(a)).toFixed(1); };
+const poly = (vs) => vs.map((v, k) => pt(k, v)).join(' ');
+const na = norm(A), nb = norm(B);
+const ring = (r) => poly([r, r, r, r, r]);
+const axes = [0, 1, 2, 3, 4].map((k) => 'M120,100 L' + pt(k, 1)).join(' ');
+const mk = (list) => list.slice().reverse().map((x, i, arr) => {
+const r = x[0];
+const col = r === 'G' ? '#05ffa1' : (r === 'E' ? '#b2b7c7' : '#ff2a6d');
+const last = i === arr.length - 1;
+return { src: RIV[x[1]], r: r, s: x[2], v: x[3] === 'L' ? 'CASA' : 'FUERA', tag: last ? 'ÚLTIMO' : '', c: col, bd: (last ? '2px' : '1px') + ' solid ' + col, bg: r === 'G' ? 'rgba(5,255,161,.12)' : (r === 'E' ? 'rgba(178,183,199,.10)' : 'rgba(255,42,109,.12)'), sh: last ? '0 0 14px ' + col + '55' : 'none' };
+});
+const ta = { name: 'Mallorca', crest: MALc, pts: 9, rec: 'G2 · E3 · P0', racha: '5 SIN PERDER', gol: '7 GF · 4 GC', ms: mk([['G', 'cad', '2–1', 'L'], ['E', 'leg', '1–1', 'V'], ['E', 'eib', '1–1', 'V'], ['G', 'lpa', '3–1', 'L'], ['E', 'gir', '0–0', 'V']]) };
+const tb = { name: 'Córdoba', crest: CORc, pts: 10, rec: 'G3 · E1 · P1', racha: '4 SIN PERDER', gol: '9 GF · 4 GC', ms: mk([['G', 'ceu', '3–0', 'L'], ['E', 'cel', '2–2', 'V'], ['G', 'eib', '2–0', 'L'], ['G', 'leg', '1–0', 'V'], ['P', 'eld', '1–2', 'V']]) };
+const resCol = { G: '#05ffa1', E: '#b2b7c7', P: '#ff2a6d' };
+const h = {
+n: 6, a: 2, d: 1, b: 3, g: '2,8', bt: '50%', o: '50%',
+rows: [['31 MAR 2019', CORc, '3–2', MALc, 'P'], ['11 NOV 2018', MALc, '3–0', CORc, 'G'], ['23 ABR 2017', MALc, '1–1', CORc, 'E']].map((x) => ({ d: x[0], l: x[1], s: x[2], v: x[3], r: x[4], c: resCol[x[4]] }))
+};
+const fcol = (c) => c === 'W' ? '#05ffa1' : (c === 'D' ? '#747d99' : '#ff2a6d');
+const TB = [[3, 'Eibar', RIV.eib, 12, '+7', 23, 'DLDLW', 'c'], [4, 'Granada CF', RIV.gra, 12, '+6', 23, 'WWWWW', 'c'], [5, 'Mallorca', MALc, 12, '+8', 22, 'WDDWD', 'c', 1], [0], [9, 'Las Palmas', RIV.lpa, 13, '−2', 20, 'WWWLL', 'n'], [10, 'Córdoba', CORc, 13, '0', 19, 'WDWWL', 'n', 1], [11, 'Valladolid', RIV.val, 13, '+2', 18, 'WWLLW', 'n']];
+const tabla = TB.map((r) => {
+if (r.length === 1) return { sepD: 'block', rowD: 'none', f1: '', f2: '', f3: '', f4: '', f5: '' };
+const f = r[6].split('').reverse();
+return { sepD: 'none', rowD: 'grid', p: r[0], n: r[1], src: r[2], pj: r[3], dg: r[4], pt: r[5], z: r[7] === 'c' ? '#00f0ff' : 'transparent', bg: r[8] ? 'rgba(0,240,255,.10)' : 'transparent', fw: r[8] ? '700' : '500', pc: r[8] ? '#00f0ff' : '#b2b7c7', f1: fcol(f[0]), f2: fcol(f[1]), f3: fcol(f[2]), f4: fcol(f[3]), f5: fcol(f[4]) };
+});
+AN = {
+c1: sc === 'todos' ? '#00f0ff' : '#b2b7c7', b1: sc === 'todos' ? 'rgba(0,240,255,.12)' : 'transparent',
+c2: sc !== 'todos' ? '#00f0ff' : '#b2b7c7', b2: sc !== 'todos' ? 'rgba(0,240,255,.12)' : 'transparent',
+setTodos: () => this.setState({ scope: 'todos' }), setCf: () => this.setState({ scope: 'cf' }),
+scopeCap: sc === 'todos' ? 'ÚLTIMOS 10 · 10' : 'EN CASA · FUERA',
+dots: dots, domCap: 'Mallorca mejor en ' + winsA + ' de 10',
+g1: ring(0.25), g2: ring(0.5), g3: ring(0.75), g4: ring(1), axes: axes, pa: poly(na), pb: poly(nb),
+rows: rows, ta: ta, tb: tb, h: h, tabla: tabla, gap: 'Mallorca 5.º · 22 pts · +3 sobre Córdoba (10.º, 19 pts)',
+goH2h: () => this.setState({ tab: 'h2h' })
+};
+const XI = [['L. Roman', 'G', 1, '/_blob/05914e7f26589ee70f2b602e55ca070a'], ['P. Maffeo', 'D', 23, '/_blob/68d9fad67201d079b20526c177e7e444'], ['M. Valjent', 'D', 24, '/_blob/db64ae22b0af1995b83cd874f849a26f'], ['O. Mascarell', 'D', 5, '/_blob/105d7afd90042b6b2fe28624bbcd33af'], ['T. Lato', 'D', 3, '/_blob/c9ff947eaacd0aa61d8aa1fbe20a2dfe'], ['Samu Costa', 'M', 12, '/_blob/3271fade0842934ebd5230f4b9358be1'], ['S. Darder', 'M', 10, '/_blob/a72af6d834150a73cbaceab413d2e620'], ['M. Morlanes', 'M', 8, '/_blob/b927dcbff529a08db62c04aea9126d84'], ['P. Torre', 'M', 20, '/_blob/de8e75b7bdaa7ffd2848d331b87a586b'], ['T. Asano', 'F', 11, '/_blob/3485c14b3606948f207b10b080998d11'], ['V. Muriqi', 'F', 7, '/_blob/f4d6d5fed2cda059e2a0e2a46c2a2da8']];
+const lines = [1, 4, 3, 1, 2];
+const ys = [89, 70, 49, 33, 13];
+let idx = 0;
+const players = [];
+lines.forEach((cnt, li) => {
+for (let i = 0; i < cnt; i++) {
+const p = XI[idx++];
+players.push({ n: p[0], num: p[2], src: p[3], x: Math.round((i + 1) / (cnt + 1) * 100), y: ys[li] });
+}
+});
+LU = { form: '4-3-1-2', cap: 'último once, vs Oviedo · 23 may', players: players };
+}
+const full = this.props.full === '1' || this.props.full === 1 || this.props.full === true;
+return {
+an: AN, lu: LU, nb: NB, tn: TN, isAnFut: tab === 'stats' && sport === 'fut', isAnNba: tab === 'stats' && sport === 'nba', isAnTen: tab === 'stats' && sport === 'ten', showLineups: sport === 'fut',
+rootH: full ? 'auto' : '844px', rootOv: full ? 'visible' : 'hidden', scrollOv: full ? 'visible' : 'auto',
+league: d.league, when: d.when, a: Object.assign({}, d.a, im(d.a.k, d.a.i)), b: Object.assign({}, d.b, im(d.b.k, d.b.i)), big: d.big, bigLabel: d.bigLabel, f: d.f, tabs,
+tabCols: 'repeat(' + tabList.length + ',minmax(0,1fr))', tabFont: tabList.length > 4 ? '11px' : '12px',
+isProps: tab === 'props',
+props: (d.props || []).map((r) => ({
+n: r[0], src: im('ph', r[1]).src, css: im('ph', r[1]).css, tsrc: im('im', r[2]).src, tcss: im('im', r[2]).css, sel: r[3],
+right: r[8] ? r[4] : 'VIP', c: r[8] ? '#00f0ff' : '#fcee0a',
+odd: r[8] ? r[5] : '', book: r[8] ? r[6] : 'con monedas o VIP',
+blur: r[8] ? 'none' : 'blur(6px)',
+wOn: r[7] * 10 + 'px', wOff: (5 - r[7]) * 10 + 'px', last: r[7] + ' de los últimos 5'
+})),
+probs: d.probs.map((p) => ({ l: p[0], v: p[1], c: p[2] })),
+markets: d.markets.map((m) => ({
+name: m[0], sel: m[1], right: m[3] ? m[2] : 'VIP',
+c: m[3] ? '#00f0ff' : '#fcee0a',
+bd: m[3] ? 'rgba(0,240,255,.2)' : 'rgba(252,238,10,.45)',
+blur: m[3] ? 'none' : 'blur(6px)',
+odd: m[3] ? d.mk[0] : '', book: m[3] ? d.mk[1] : 'con monedas o VIP',
+s1: im(m[4], m[5]).src, c1: im(m[4], m[5]).css, s2: im(m[6], m[7]).src, c2: im(m[6], m[7]).css
+})),
+stats: d.stats.map((r) => ({ l: r[0], a: r[1], b: r[2], wa: r[3], wb: r[4] })),
+h2hSum: d.h2hSum.map((h) => Object.assign({ l: h[0], v: h[1] }, im(h[2], h[3]))),
+h2h: d.h2h.map((g) => Object.assign({ d: g[0], s: g[1], w: g[2] }, im(g[3], g[4]))),
+alerts: d.alerts.map((x) => Object.assign({ n: x[0], why: x[1], st: x[2], c: x[3], ret: x[6] || '', retD: x[6] ? 'block' : 'none', ini: x[0].split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(), iniD: x[4] === 'av' ? 'grid' : 'none', tsrc: im('im', x[7]).src, tcss: im('im', x[7]).css }, im(x[4], x[5]))),
+hasAlerts: d.alerts.length > 0, noAlerts: d.alerts.length === 0,
+isPred: tab === 'pred', isStats: false, isH2h: tab === 'h2h', isAlerts: tab === 'alerts'
+};
+}
+}
+</script>
+</body>
+</html>
