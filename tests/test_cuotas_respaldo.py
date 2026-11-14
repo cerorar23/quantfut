@@ -341,3 +341,10 @@ def test_auto_con_clave_de_pago_vencida_usa_el_tope_diario_gratuito(entorno, mon
     red = Red()
     caida = lambda path, params: (401, {}, None)  # noqa: E731
     assert cr.auto(get=caida, now=NOW)["estado"] == "tope_diario" and red.llamadas == []
+
+
+def test_hueco_por_mercado_futbol_pide_respaldo_sin_totales():
+    from qf.ingest import cuotas_respaldo_futbol as rf
+    uno = {"h2h:home:None", "h2h:draw:None", "h2h:away:None"}
+    assert not rf._tiene_basicos(uno) and not rf._tiene_basicos(set())
+    assert rf._tiene_basicos(uno | {"totals:over:2.5"})
