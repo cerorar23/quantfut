@@ -113,8 +113,10 @@ Future<void> pumpShell(WidgetTester tester) async {
 
 /// Etiqueta de la barra inferior (hay textos iguales fuera de ella, p. ej. «Home»).
 Finder navLabel(String label) => find.descendant(
-  of: find.byType(BottomNavigationBar),
-  matching: find.text(label),
+  of: find.byType(QfBottomNav),
+  matching: find.byWidgetPredicate(
+    (w) => w is Text && (w.data == label || w.data == label.toUpperCase()),
+  ),
 );
 
 void main() {
@@ -146,9 +148,17 @@ void main() {
       expect(navLabel(l10n.navHome), findsOneWidget);
       expect(find.text(l10n.homeTicketsTitle), findsOneWidget);
 
-      await tester.tap(navLabel(l10n.navPredictions));
+      await tester.tap(navLabel(l10n.navPicks));
       await tester.pumpAndSettle();
-      expect(find.text(l10n.streamLadder), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              (w.data == l10n.streamLadder ||
+                  w.data == l10n.streamLadder.toUpperCase()),
+        ),
+        findsOneWidget,
+      );
       // El texto del pronóstico se genera en el idioma actual desde market/selection/line.
       expect(
         find.text(l10n.selGoals('over', code == 'en' ? '2.5' : '2,5')),

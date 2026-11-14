@@ -268,7 +268,9 @@ class _RewardsScreenState extends State<RewardsScreen>
     final signedIn = data?['signed_in'] == true;
     return Scaffold(
       backgroundColor: QfColors.bg,
-      appBar: AppBar(
+      appBar: widget.embedded
+          ? null
+          : AppBar(
         backgroundColor: QfColors.bg,
         foregroundColor: QfColors.text,
         automaticallyImplyLeading: !widget.embedded,

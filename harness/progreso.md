@@ -1,7 +1,41 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
-## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F1 completada (`app/rediseno-f1-fundaciones`)
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F2 completada (`app/rediseno-f2-cascara`)
+
+- **Objetivo de F2 alcanzado:** Cabecera de 56 dp, barra inferior `QfBottomNav` de 64 dp con etiqueta `navPicks` («Picks»), selector de deporte `SportSelector` CyberCore y selector de sección `PredictionsSwitcher` segmentado implementados y probados.
+- **Cabecera (`lib/product/live_shell.dart`):**
+  - Altura 56 dp, fondo `QfColors.bg`, borde inferior de 1 dp en `QfColors.border`.
+  - Botón de menú `☰` de 44x44 dp con clave `ValueKey('home-menu')`, icono 22 dp en `QfColors.muted`, conservando la llamada a `showMoreSheet(context, onMySports: openMySports)`.
+  - Logomarca tipográfica `QUANT` (blanco/texto) + `FUT` (cian) en Rajdhani 21 dp bold con letterSpacing 2.8.
+  - Chip de monedas en miniatura `_CoinsChip`: altura 44 dp con `CutCornerBorder(cut: 8)`, fondo `yellow` 8%, borde `yellow` 40%, icono `Icons.toll` de 16 dp y saldo en JetBrains Mono 13 dp bold; oculto cuando la pestaña activa es Coins (`tab == 3`).
+  - Botón de acceso VIP: 44x44 dp con icono `Icons.workspace_premium` en `QfColors.yellow`.
+  - Botón de refresco: `Icons.refresh` en `QfColors.primary`.
+- **Barra inferior (`QfBottomNav`):**
+  - Barra propia de 64 dp de altura con fondo `QfColors.surface` y borde superior de 1 dp en `QfColors.border`.
+  - 5 destinos con los mismos índices (0: Inicio, 1: Picks, 2: Mercados, 3: Coins, 4: Perfil) y preservando analítica `services?.screen(...)` y refresco de monedas al salir de Coins.
+  - Etiqueta del 2.º destino actualizada a la nueva clave `navPicks` («Picks» en todos los idiomas).
+  - Estado activo: subrayado superior de 2 dp en `QfColors.cyan`, fondo `QfColors.cyan` 7%, icono 22 dp cian y texto uppercase en Rajdhani 11 dp bold con letterSpacing 0.88.
+  - Estado inactivo: fondo transparente, icono en `QfColors.muted` y texto uppercase en Rajdhani 11 dp semibold.
+- **Selector de deporte (`lib/product/sport_selector.dart`):**
+  - Chips de 44 dp con `CutCornerBorder(cut: 8)`.
+  - Activo: fondo cian, borde cian, icono/texto/marca en `QfColors.onGreen` y contador en JetBrains Mono 11 bold.
+  - Inactivo: fondo surface, borde border, texto en `QfColors.text2` y contador en `QfColors.muted`.
+  - Conserva `ValueKey('sport-selected-mark')`, fila desplazable + botón «Más» para >4 deportes y sin cambio de pestaña.
+- **Selector de tipo (`lib/product/predictions_switcher.dart`):**
+  - Segmentado tipo `QfTabs` de 44 dp de altura con `CutCornerBorder(cut: 8)`.
+  - Deslizador animado con clave `ValueKey('streams-indicator')` en color cian primario.
+  - Segmentos interactivos con claves `ValueKey('streams-$id')`, preservando `order`, `swipe()` y badges numéricos en mono.
+- **Localización (l10n):**
+  - Añadida clave `navPicks` con traducción a los 6 idiomas (`es: "Picks"`, `en: "Picks"`, `pt: "Picks"`, `fr: "Picks"`, `it: "Picks"`, `de: "Picks"`).
+  - Regenerado `AppLocalizations` mediante `flutter gen-l10n`.
+- **Suites de pruebas:**
+  - `product_navigation_test.dart`: 42 pruebas pasando (incluyendo navegación entre pestañas, persistencia de deporte y pruebas a 360 dp en los 6 idiomas sin desbordes).
+  - `l10n_runtime_test.dart`: 8 pruebas pasando en los 6 idiomas.
+  - `home_screen_test.dart`: 24 pruebas pasando.
+  - Verificación global: 580 pruebas pasando al 100% (`580/580 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F3a — Pantalla Inicio (`HomeTab`, destacado del día fuerte, tarjetas de acierto y monedas, franja 5 días y agenda).
 
 - **Objetivo de F1 alcanzado:** Tokens CyberCore, familias tipográficas Exo 2 / JetBrains Mono / Rajdhani, paleta de colores y componentes visuales reutilizables listos y probados sin romper ninguna de las pantallas heredadas.
 - **Fuentes:**

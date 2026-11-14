@@ -1214,6 +1214,10 @@
   "navCoins": "Coins",
   "navHome": "Inicio",
   "navMarkets": "Mercados",
+  "navPicks": "Picks",
+  "@navPicks": {
+    "description": "Etiqueta de la pestaña Picks en la barra de navegación inferior"
+  },
   "navPredictions": "Predicciones",
   "navProfile": "Perfil",
   "nbaSealHeading": "CUÁNDO SE AGREGA EL PRONÓSTICO",

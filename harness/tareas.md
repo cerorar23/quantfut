@@ -3344,7 +3344,7 @@ Plan: `apps/mobile/docs/PLAN_REDISENO_CYBERCORE_20261114.md` y `apps/mobile/docs
 Referencia visual: `apps/mobile/docs/render_cybercore_20261114/` (36 láminas).
 - [x] **F0 · Preparación (14-nov-2026):** worktree `qf-app-rediseno`, línea base medida (545 tests pasando, `flutter analyze` limpio), fixtures reales copiadas (`ficha_futbol_real.json`, etc.), tareas y progreso inicializados.
 - [x] **F1 · Fundaciones (14-nov-2026):** tokens `QfColors`, tipografías Exo 2 y JetBrains Mono Bold, widgets base (`QfButton`, `QfTabs`, `QfCard`, `QfBadge`, `QfSwitch`, `QfCheckbox`, `QfCharts`, `QfBottomSheet`, `QfDialogCard`, `QfStandingsTable`), contrastes WCAG >= 4.5:1, galería visual 360/390 dp y 574 tests pasando en verde. PR en `app/rediseno-f1-fundaciones`.
-- [ ] **F2 · Cáscara:** cabecera 56 dp, `QfBottomNav` 64 dp con `navPicks`, selector de deportes y `PredictionsSwitcher`.
+- [x] **F2 · Cáscara (14-nov-2026):** cabecera 56 dp (marca QUANTFUT, chip de monedas `_CoinsChip` y corona VIP), barra inferior `QfBottomNav` 64 dp con etiqueta `navPicks` («Picks»), `SportSelector` CyberCore (chips 44 dp con marcas y contadores) y `PredictionsSwitcher` segmentado. 580 tests pasando. PR en `app/rediseno-f2-cascara`.
 - [ ] **F3a · Inicio:** destacado del día fuerte, tarjetas de acierto y monedas, franja 5 días y agenda.
 - [ ] **F3b · Predicciones:** alta probabilidad, escalera (5 segmentos) y parley con pie fijo de desbloqueo.
 - [ ] **F3c · Mercados y detalle:** hero radar, rejilla 2 columnas con anillos de familia y detalle `MarketScaffold`.

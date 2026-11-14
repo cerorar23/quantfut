@@ -260,10 +260,18 @@ void main() {
   }
 
   Future<void> navigate(WidgetTester tester, String label) async {
+    final target = label == 'Predicciones' ? 'Picks' : label;
     await tester.tap(
       find.descendant(
-        of: find.byType(BottomNavigationBar),
-        matching: find.text(label),
+        of: find.byType(QfBottomNav),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              (w.data == target ||
+                  w.data == target.toUpperCase() ||
+                  w.data == label ||
+                  w.data == label.toUpperCase()),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -301,7 +309,7 @@ void main() {
     await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
     for (final (label, shown) in [
       ('Inicio', true),
-      ('Predicciones', true),
+      ('Picks', true),
       ('Mercados', true),
       ('Coins', false),
       ('Perfil', false),
@@ -415,6 +423,18 @@ void main() {
           expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active $sport');
         }
       }
+    });
+    testWidgets('a 360 dp la barra de navegación no se desborda ni recorta ($code)', (tester) async {
+      await AppLocale.instance.select(code);
+      addTearDown(AppLocale.instance.reset);
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      tester.view.physicalSize = const Size(360, 640);
+      await tester.pumpAndSettle();
+      expect(find.byType(QfBottomNav), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
     });
   }
   testWidgets('si el fútbol falla, el selector sigue y NBA no muestra el error', (tester) async {
@@ -1014,7 +1034,7 @@ void main() {
     expect(find.byType(RewardsScreen), findsOneWidget);
     expect(find.text('Menú'), findsNothing);
     expect(find.text('Monedas'), findsNothing);
-    expect(find.text('Coins'), findsNWidgets(2));
+    expect(find.text('COINS'), findsOneWidget);
     expect(find.text('Inicia sesión'), findsOneWidget);
     expect(find.text('Día 7'), findsOneWidget);
     await capture(tester, 'coins');

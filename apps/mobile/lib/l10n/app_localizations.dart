@@ -2464,6 +2464,12 @@ abstract class AppLocalizations {
   /// **'Mercados'**
   String get navMarkets;
 
+  /// Etiqueta de la pestaña Picks en la barra de navegación inferior
+  ///
+  /// In es, this message translates to:
+  /// **'Picks'**
+  String get navPicks;
+
   /// No description provided for @navPredictions.
   ///
   /// In es, this message translates to:

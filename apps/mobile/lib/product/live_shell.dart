@@ -777,43 +777,68 @@ class _ProductShellState extends State<ProductShell>
   Widget build(BuildContext context) => Theme(
     data: qfTheme(),
     child: Scaffold(
-      appBar: tab == 3
-          ? null
-          : AppBar(
-              backgroundColor: QfColors.bg,
-              leading: IconButton(
-                key: const ValueKey('home-menu'),
-                tooltip: context.l10n.homeMenuTooltip,
-                onPressed: () => showMoreSheet(context, onMySports: openMySports),
-                icon: const Icon(Icons.menu),
+      appBar: AppBar(
+        toolbarHeight: 56,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: QfColors.bg,
+        shape: const Border(
+          bottom: BorderSide(
+            color: QfColors.border,
+            width: 1,
+          ),
+        ),
+        leading: SizedBox(
+          width: 44,
+          height: 44,
+          child: IconButton(
+            key: const ValueKey('home-menu'),
+            tooltip: context.l10n.homeMenuTooltip,
+            onPressed: () => showMoreSheet(context, onMySports: openMySports),
+            icon: const Icon(Icons.menu, color: QfColors.muted, size: 22),
+          ),
+        ),
+        title: const Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'QUANT',
+                style: TextStyle(color: QfColors.text),
               ),
-              title: Text(
-                '// ${_brand.toUpperCase()}',
-                style: const TextStyle(
-                  color: QfColors.text,
-                  fontFamily: qfDisplay,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 22,
-                  letterSpacing: 1.2,
-                ),
+              TextSpan(
+                text: 'FUT',
+                style: TextStyle(color: QfColors.cyan),
               ),
-              actions: [
-                _CoinsChip(
-                  coins: coins,
-                  onTap: () => setState(() => tab = 3),
-                ),
-                IconButton(
-                  tooltip: context.l10n.tooltipVip,
-                  onPressed: data == null ? null : vip,
-                  icon: const Icon(Icons.workspace_premium, color: liveGold),
-                ),
-                IconButton(
-                  tooltip: context.l10n.commonRefresh,
-                  onPressed: busy ? null : reload,
-                  icon: const Icon(Icons.refresh, color: QfColors.primary),
-                ),
-              ],
+            ],
+          ),
+          style: TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 21,
+            letterSpacing: 2.8,
+          ),
+        ),
+        actions: [
+          if (tab != 3)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: _CoinsChip(
+                coins: coins,
+                onTap: () => setState(() => tab = 3),
+              ),
             ),
+          IconButton(
+            tooltip: context.l10n.tooltipVip,
+            onPressed: data == null ? null : vip,
+            icon: const Icon(Icons.workspace_premium, color: QfColors.yellow, size: 22),
+          ),
+          IconButton(
+            tooltip: context.l10n.commonRefresh,
+            onPressed: busy ? null : reload,
+            icon: const Icon(Icons.refresh, color: QfColors.primary, size: 22),
+          ),
+        ],
+      ),
       body: tab == 3
           ? RewardsScreen(api: api, embedded: true)
           : tab == 4
@@ -832,17 +857,7 @@ class _ProductShellState extends State<ProductShell>
               ),
             )
           : mainBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: QfColors.surface,
-        selectedItemColor: QfColors.primary,
-        unselectedItemColor: QfColors.muted,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        selectedLabelStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w700),
-        unselectedLabelStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w600),
+      bottomNavigationBar: QfBottomNav(
         currentIndex: tab,
         onTap: (i) {
           if (i == tab) return;
@@ -856,23 +871,23 @@ class _ProductShellState extends State<ProductShell>
           );
         },
         items: [
-          BottomNavigationBarItem(
+          QfBottomNavItem(
             icon: const Icon(Icons.grid_view),
             label: context.l10n.navHome,
           ),
-          BottomNavigationBarItem(
+          QfBottomNavItem(
             icon: const Icon(Icons.track_changes),
-            label: context.l10n.navPredictions,
+            label: context.l10n.navPicks,
           ),
-          BottomNavigationBarItem(
+          QfBottomNavItem(
             icon: const Icon(Icons.insights),
             label: context.l10n.navMarkets,
           ),
-          BottomNavigationBarItem(
+          QfBottomNavItem(
             icon: const Icon(Icons.toll),
             label: context.l10n.navCoins,
           ),
-          BottomNavigationBarItem(
+          QfBottomNavItem(
             icon: const Icon(Icons.person_outline),
             label: context.l10n.navProfile,
           ),
@@ -880,6 +895,135 @@ class _ProductShellState extends State<ProductShell>
       ),
     ),
   );
+}
+
+class QfBottomNavItem {
+  const QfBottomNavItem({
+    required this.icon,
+    required this.label,
+    this.key,
+  });
+
+  final Widget icon;
+  final String label;
+  final Key? key;
+}
+
+class QfBottomNav extends StatelessWidget {
+  const QfBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+    required this.items,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final List<QfBottomNavItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: QfColors.surface,
+        border: Border(
+          top: BorderSide(
+            color: QfColors.border,
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int i = 0; i < items.length; i++)
+                Expanded(
+                  child: _QfBottomNavItemView(
+                    item: items[i],
+                    selected: i == currentIndex,
+                    onTap: () => onTap(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QfBottomNavItemView extends StatelessWidget {
+  const _QfBottomNavItemView({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final QfBottomNavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = QfColors.cyan;
+    final inactiveColor = QfColors.muted;
+    final color = selected ? activeColor : inactiveColor;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: item.label,
+      child: Material(
+        color: selected
+            ? QfColors.cyan.withValues(alpha: 0.07)
+            : Colors.transparent,
+        child: InkWell(
+          key: item.key,
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: selected ? QfColors.cyan : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconTheme(
+                  data: IconThemeData(
+                    color: color,
+                    size: 22,
+                  ),
+                  child: item.icon,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: qfDisplay,
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    letterSpacing: 0.88,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Saldo de monedas en miniatura en la cabecera; al tocarlo abre la pestaña Coins.
@@ -894,21 +1038,37 @@ class _CoinsChip extends StatelessWidget {
     child: InkWell(
       key: const ValueKey('header-coins'),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      customBorder: const CutCornerBorder(cut: 8),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: ShapeDecoration(
+          color: QfColors.yellow.withValues(alpha: 0.08),
+          shape: CutCornerBorder(
+            cut: 8,
+            side: BorderSide(
+              color: QfColors.yellow.withValues(alpha: 0.40),
+              width: 1,
+            ),
+          ),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.toll, color: liveGold, size: 20),
-            const SizedBox(width: 4),
-            liveText(coins?.toString() ?? '—', bold: true, size: 14, color: liveGold),
+            const Icon(Icons.toll, color: QfColors.yellow, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              coins?.toString() ?? '—',
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: QfColors.yellow,
+              ),
+            ),
           ],
         ),
       ),
     ),
   );
 }
-
-/// Marca de la cabecera; no se traduce.
-const _brand = 'QuantFut';

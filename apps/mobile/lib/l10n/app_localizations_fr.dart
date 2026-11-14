@@ -1427,6 +1427,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navMarkets => 'Marchés';
 
   @override
+  String get navPicks => 'Picks';
+
+  @override
   String get navPredictions => 'Pronostics';
 
   @override
