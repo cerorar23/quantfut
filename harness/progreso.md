@@ -1,6 +1,44 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4a completada (`app/rediseno-f4a-match-shell`)
+
+- **Objetivo de F4a alcanzado:** Contenedor unificado `MatchShell` implementado para el detalle de partido en fútbol (`LiveMatchDetail`) y deportes generales como NBA y Tenis (`SportDetail`), compartiendo cabecera top bar 56 dp, hero en 3 columnas CyberCore, barra de pestañas segmentadas `MatchTabs` y barra fija inferior de acción `MatchBottomBar`.
+- **Contenedor unificado (`lib/product/match_shell.dart`):**
+  - `MatchTopBar`: altura fija de 56 dp, competición en `qfDisplay` 13 bold verde con kicker sutil, fecha/hora mono 11 y botón de cierre `IconButton` (44x44 dp) con icono `Icons.close` en `QfColors.text2`.
+  - `MatchHero`:
+    - Rejilla central en 3 columnas: lado A (escudo/foto 58 dp + nombre `qfDisplay` 15 bold + subtexto), centro (gran probabilidad en JetBrains Mono 38 px bold cian con resplandor `Shadow(color: 0x7300F0FF, blurRadius: 18)`, etiqueta en `qfDisplay` 12 y `centerExtra` para score o `@`), lado B (escudo/foto 58 dp + nombre + subtexto).
+    - Barra segmentada de probabilidad de 6 dp con separador de 3 dp y proporciones reales del modelo (`probs`).
+    - Leyenda antidesborde inferior con `Expanded` y texto mono 11 centrado/alineado a los extremos con `TextOverflow.ellipsis`.
+    - Insignias de cabecera (`badges`) y créditos de fotografía (`credits`).
+  - `MatchTabs`: barra de pestañas segmentadas CyberCore con selector visual cian al 10% y borde cian de 1.5 dp, etiqueta en `qfDisplay` 12/11 bold, e insignia de alerta en magenta con `ValueKey('alerts-tab-badge')`.
+  - `MatchBottomBar`: barra fija inferior persistente con botón primario de desbloqueo (flex 2, degradado verde `qfGreenGradient`, icono de candado, texto `DESBLOQUEAR TODO · {cost}`) y botón secundario VIP (flex 1, amarillo).
+  - `MatchShell`: estructura reutilizable que admite cuerpo con scroll (`children`) o cuerpo propio con scroll gestionado por la pestaña activa (`body`).
+- **Adaptación de detalle de fútbol (`lib/product/live_detail.dart`):**
+  - Migrado a `MatchShell`, `MatchTopBar`, `MatchHero`, `MatchTabs`, `MatchBottomBar`.
+  - Cálculo de probabilidades 1X2 del modelo o del pronóstico destacado para alimentar `MatchHero`.
+  - Preserva intactos todos los flujos y componentes internos: `LiveScoreStrip`, `ForecastPanel`, `MatchMarkets`, `MatchStatistics`, `AlertsTab`, y alineaciones tácticas.
+- **Adaptación de detalle de NBA y Tenis (`lib/product/sport_detail.dart`):**
+  - Migrado a `MatchShell` con cabecera `MatchHero` (escudos NBA 58 dp, fotos de tenis 58 dp, probabilidad central, etiqueta de ganador, score o `@` central).
+  - Pestañas dinámicas: 5 pestañas para NBA (`[Pronósticos, Props, Análisis, H2H, Alertas]`) y 4 para otros deportes como tenis (`[Pronósticos, Análisis, H2H, Alertas]`).
+  - Navegación interna adaptada a los índices de pestañas según la presencia de Props.
+- **Visuales de partido (`lib/product/match_visuals.dart`):**
+  - Actualizados `MatchTeams` y `LockedVipMatchCard` a tokens CyberCore (`qfDisplay`, `qfMono`, `CutCornerBorder`, `QfColors`).
+  - Preservadas claves de prueba como `ValueKey('locked-vip-cta')`.
+- **Localización (l10n):**
+  - Claves agregadas a los 6 idiomas (`es, en, pt, fr, it, de`): `detailTabProps` ("Props"), `detailUnlockAll` ("DESBLOQUEAR TODO · {cost}").
+- **Suites de pruebas:**
+  - `match_facts_test.dart`: 11 pruebas pasando (100% verde).
+  - `sport_detail_test.dart`: 4 pruebas pasando (100% verde).
+  - `alerts_tab_test.dart`: 4 pruebas pasando (100% verde).
+  - `live_score_strip_test.dart`: 5 pruebas pasando (100% verde).
+  - `generic_sport_ui_test.dart`: 18 pruebas pasando (100% verde).
+  - `detail_no_sealed_test.dart`: 2 pruebas pasando (100% verde).
+  - `product_navigation_test.dart`: 42 pruebas pasando (100% verde).
+  - Suite completa de la app: 593 pruebas pasando al 100% (`593/593 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F4b — Pestaña Pronóstico + Props NBA (`MatchForecastTab`, selector de props, cuotas y casas).
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F3b completada (`app/rediseno-f3b-predicciones`)
 
 - **Objetivo de F3b alcanzado:** Pantalla de Predicciones CyberCore implementada en sus 3 secciones (Alta probabilidad, Reto Escalera, Parley) con diseño idéntico a `Predicciones.dc.html` y barra de acción fija inferior con `DESBLOQUEAR · {coste}` (verde) y `VIP` (amarillo).

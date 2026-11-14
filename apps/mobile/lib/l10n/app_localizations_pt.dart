@@ -489,7 +489,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailTabPredictions => 'Prognósticos';
 
   @override
+  String get detailTabProps => 'Props';
+
+  @override
   String get detailTabStats => 'Análise';
+
+  @override
+  String detailUnlockAll(Object cost) {
+    return 'DESBLOQUEAR TUDO · $cost';
+  }
 
   @override
   String get detailVipPickNotice => 'Este jogo tem um prognóstico VIP';

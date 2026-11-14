@@ -394,7 +394,20 @@
   },
   "detailTabH2h": "H2H",
   "detailTabPredictions": "Pronósticos",
+  "detailTabProps": "Props",
+  "@detailTabProps": {
+    "description": "Pestaña de props de jugador en la ficha de partido de NBA"
+  },
   "detailTabStats": "Análisis",
+  "detailUnlockAll": "DESBLOQUEAR TODO · {cost}",
+  "@detailUnlockAll": {
+    "description": "Botón para desbloquear todos los pronósticos del partido",
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
   "detailVipPickNotice": "Este partido tiene un pronóstico VIP",
   "dictAwayDefault": "el visitante",
   "dictHomeDefault": "el local",

@@ -6,6 +6,7 @@ import '../l10n/app_locale.dart';
 import 'home_sport.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'match_shell.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'quote_label.dart';
@@ -26,6 +27,7 @@ Future<void> showSportDetail(
   required ImageCatalog images,
   QuotesOverlay quotes = QuotesOverlay.empty,
   VoidCallback? onVip,
+  VoidCallback? onUnlock,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -38,7 +40,14 @@ Future<void> showSportDetail(
       // Un deporte del catálogo sin pantalla propia (llegó por el contrato) usa la ficha genérica.
       child: event.generic
           ? GenericSportDetail(api: api, event: event, images: images, onVip: onVip)
-          : SportDetail(api: api, event: event, images: images, quotes: quotes),
+          : SportDetail(
+              api: api,
+              event: event,
+              images: images,
+              quotes: quotes,
+              onVip: onVip,
+              onUnlock: onUnlock,
+            ),
     ),
   ),
 );
@@ -50,6 +59,8 @@ class SportDetail extends StatefulWidget {
     required this.event,
     required this.images,
     this.quotes = QuotesOverlay.empty,
+    this.onVip,
+    this.onUnlock,
   });
   final QuantFutApi api;
   final SportEvent event;
@@ -57,6 +68,8 @@ class SportDetail extends StatefulWidget {
 
   /// Cuotas de referencia del deporte; vacías si no llegaron.
   final QuotesOverlay quotes;
+  final VoidCallback? onVip;
+  final VoidCallback? onUnlock;
   @override
   State<SportDetail> createState() => _SportDetailState();
 }
@@ -91,107 +104,79 @@ class _SportDetailState extends State<SportDetail> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final labels = [
-      l10n.detailTabPredictions,
-      l10n.detailTabStats,
-      l10n.detailTabH2h,
-      l10n.detailTabAlerts,
-    ];
-    return Material(
-      color: QfColors.bg,
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              tooltip: l10n.commonClose,
-              onPressed: () => Navigator.maybePop(context),
-              icon: const Icon(Icons.close, color: QfColors.text2),
-            ),
+    final labels = nba
+        ? [
+            l10n.detailTabPredictions,
+            l10n.detailTabProps,
+            l10n.detailTabStats,
+            l10n.detailTabH2h,
+            l10n.detailTabAlerts,
+          ]
+        : [
+            l10n.detailTabPredictions,
+            l10n.detailTabStats,
+            l10n.detailTabH2h,
+            l10n.detailTabAlerts,
+          ];
+
+    Widget body() {
+      if (nba) {
+        return switch (tab) {
+          0 => _Predictions(
+            api: widget.api,
+            event: e,
+            images: widget.images,
+            accent: accent,
+            quotes: widget.quotes,
           ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              children: [
-                _Header(api: widget.api, event: e, images: widget.images),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    for (var i = 0; i < labels.length; i++)
-                      Expanded(
-                        child: _TabButton(
-                          label: labels[i],
-                          selected: tab == i,
-                          color: QfColors.primary,
-                          onTap: () => setState(() => tab = i),
-                        ),
-                      ),
-                  ],
-                ),
-                const Divider(height: 1, color: QfColors.border),
-                const SizedBox(height: 16),
-                switch (tab) {
-                  0 => _Predictions(
-                    api: widget.api,
-                    event: e,
-                    images: widget.images,
-                    accent: accent,
-                    quotes: widget.quotes,
-                  ),
-                  1 => SportAnalysis(stats: stats, event: e),
-                  2 => SportH2h(stats: stats, event: e),
-                  _ => SportAlerts(event: e),
-                },
-              ],
-            ),
+          1 => _Predictions(
+            api: widget.api,
+            event: e,
+            images: widget.images,
+            accent: accent,
+            quotes: widget.quotes,
           ),
-        ],
+          2 => SportAnalysis(stats: stats, event: e),
+          3 => SportH2h(stats: stats, event: e),
+          _ => SportAlerts(event: e),
+        };
+      }
+      return switch (tab) {
+        0 => _Predictions(
+          api: widget.api,
+          event: e,
+          images: widget.images,
+          accent: accent,
+          quotes: widget.quotes,
+        ),
+        1 => SportAnalysis(stats: stats, event: e),
+        2 => SportH2h(stats: stats, event: e),
+        _ => SportAlerts(event: e),
+      };
+    }
+
+    return MatchShell(
+      header: MatchTopBar(
+        league: e.league,
+        when: kickoffText(e.start),
+        onClose: () => Navigator.maybePop(context),
       ),
+      hero: _Header(api: widget.api, event: e, images: widget.images),
+      tabs: MatchTabs(
+        labels: labels,
+        index: tab,
+        onChanged: (i) => setState(() => tab = i),
+      ),
+      body: body(),
+      bottomBar: widget.onVip != null || widget.onUnlock != null
+          ? MatchBottomBar(
+              cost: 40,
+              onUnlock: widget.onUnlock,
+              onVip: widget.onVip,
+            )
+          : null,
     );
   }
-}
-
-class _TabButton extends StatelessWidget {
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Semantics(
-    selected: selected,
-    button: true,
-    child: InkWell(
-      onTap: onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: selected ? color : QfColors.text2,
-                ),
-              ),
-            ),
-            Container(height: 3, color: selected ? color : Colors.transparent),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 // ---- Cabecera --------------------------------------------------------------------------
@@ -246,92 +231,124 @@ class _Header extends StatelessWidget {
         if (p != null) credits.add((name, p));
       }
     }
-    Widget side(String name) => Expanded(
-      child: Column(
+    final score = event.score;
+
+    String? bigProb;
+    String? bigLabel;
+    List<MatchProbabilityPart>? probParts;
+    if (pHome != null) {
+      if (nba) {
+        final favHome = pHome >= 0.5;
+        final favLabel = favHome ? homeLabel : awayLabel;
+        final p = favHome ? pHome : (1 - pHome);
+        bigProb = '${(p * 100).round()}%';
+        bigLabel = l10n.selHomeWins(favLabel);
+        probParts = [
+          MatchProbabilityPart(
+            label: awayLabel,
+            percent: (1 - pHome) * 100,
+            color: (1 - pHome) >= pHome ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+          MatchProbabilityPart(
+            label: homeLabel,
+            percent: pHome * 100,
+            color: pHome >= (1 - pHome) ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+        ];
+      } else {
+        final favHome = pHome >= 0.5;
+        final favSurname = _surname(favHome ? event.home : event.away);
+        final p = favHome ? pHome : (1 - pHome);
+        bigProb = '${(p * 100).round()}%';
+        bigLabel = l10n.selHomeWins(favSurname);
+        probParts = [
+          MatchProbabilityPart(
+            label: _surname(event.home).toUpperCase(),
+            percent: pHome * 100,
+            color: pHome >= (1 - pHome) ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+          MatchProbabilityPart(
+            label: _surname(event.away).toUpperCase(),
+            percent: (1 - pHome) * 100,
+            color: (1 - pHome) >= pHome ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+        ];
+      }
+    }
+
+    Widget? centerExtra;
+    if (nba) {
+      centerExtra = Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          eventAvatar(api, images, event, name, size: nba ? 48 : 56),
-          const SizedBox(height: 6),
           Text(
-            name,
+            '$awayLabel @ $homeLabel',
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontFamily: qfDisplay,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: QfColors.text,
+              fontFamily: qfMono,
+              fontSize: 13,
+              color: QfColors.text2,
             ),
           ),
-        ],
-      ),
-    );
-    final score = event.score;
-    return QfCard(
-      accent: accent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              QfBadge(event.league, color: accent),
-              if (!nba && surface != null && _surfaceLabel(l10n, surface) != null)
-                QfBadge(_surfaceLabel(l10n, surface)!, color: QfColors.text2),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              side(nba ? event.away : event.home),
-              Padding(
-                padding: const EdgeInsets.only(top: 14, left: 6, right: 6),
-                child: Text(
-                  nba ? '$awayLabel @ $homeLabel' : (score ?? ''),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: qfMono,
-                    fontSize: 13,
-                    color: QfColors.text2,
-                  ),
-                ),
-              ),
-              side(nba ? event.home : event.away),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            kickoffText(event.start),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: QfColors.text2),
-          ),
-          if (nba && score != null) ...[
+          if (score != null) ...[
             const SizedBox(height: 4),
             Text(
               score,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: qfMono, color: QfColors.text),
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: QfColors.text,
+              ),
             ),
-          ],
-          if (pHome != null) ...[
-            const SizedBox(height: 12),
-            ProbabilityBar(
-              parts: nba
-                  ? [(awayLabel, 1 - pHome), (homeLabel, pHome)]
-                  : [
-                      (_surname(event.home), pHome),
-                      (_surname(event.away), 1 - pHome),
-                    ],
-            ),
-          ],
-          for (final (name, photo) in credits) ...[
-            const SizedBox(height: 8),
-            _Credit(name: name, photo: photo),
           ],
         ],
+      );
+    } else if (score != null) {
+      centerExtra = Text(
+        score,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontFamily: qfMono,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: QfColors.text,
+        ),
+      );
+    }
+
+    final badges = [
+      QfBadge(event.league, color: accent),
+      if (!nba && surface != null && _surfaceLabel(l10n, surface) != null)
+        QfBadge(_surfaceLabel(l10n, surface)!.toUpperCase(), color: QfColors.text2),
+    ];
+
+    final sideAName = nba ? awayLabel : event.home;
+    final sideBName = nba ? homeLabel : event.away;
+
+    return MatchHero(
+      sideA: MatchHeroSide(
+        name: sideAName,
+        image: eventAvatar(api, images, event, nba ? event.away : event.home, size: 58),
+        sub: nba
+            ? (event.availability?['away_record'] as String? ?? 'VISITANTE')
+            : (event.surface != null ? _surfaceLabel(l10n, event.surface!) : null),
       ),
+      sideB: MatchHeroSide(
+        name: sideBName,
+        image: eventAvatar(api, images, event, nba ? event.home : event.away, size: 58),
+        sub: nba ? (event.availability?['home_record'] as String? ?? 'LOCAL') : null,
+      ),
+      bigProb: bigProb,
+      bigLabel: bigLabel,
+      centerExtra: centerExtra,
+      probs: probParts,
+      badges: badges,
+      credits: [
+        for (final (name, photo) in credits)
+          _Credit(name: name, photo: photo),
+      ],
     );
   }
 }

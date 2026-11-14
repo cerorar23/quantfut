@@ -904,11 +904,23 @@ abstract class AppLocalizations {
   /// **'Pronósticos'**
   String get detailTabPredictions;
 
+  /// Pestaña de props de jugador en la ficha de partido de NBA
+  ///
+  /// In es, this message translates to:
+  /// **'Props'**
+  String get detailTabProps;
+
   /// No description provided for @detailTabStats.
   ///
   /// In es, this message translates to:
   /// **'Análisis'**
   String get detailTabStats;
+
+  /// Botón para desbloquear todos los pronósticos del partido
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEAR TODO · {cost}'**
+  String detailUnlockAll(Object cost);
 
   /// No description provided for @detailVipPickNotice.
   ///
