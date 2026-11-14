@@ -1,6 +1,43 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F3a completada (`app/rediseno-f3a-inicio`)
+
+- **Objetivo de F3a alcanzado:** Pantalla de Inicio CyberCore (`HomeTab`, `_CoinsCard`, `_HitCard`, `_TicketCard`), tarjeta destacada del día (`HomeHero`), tira de 5 días (`DayStrip`) y agenda compacta CyberCore (`MatchRow`, `AgendaDay`, `home_sport.dart`) implementados y verificados.
+- **Destacado del día (`lib/product/home_hero.dart`):**
+  - Implementado con `QfCard(cut: 16, strong: true, glow: true)`.
+  - Kicker en `QfColors.green` («DESTACADO DEL DÍA») + subtítulo de competición/fecha en `QfColors.muted` con protección antidesborde para 320 px y multilingüe.
+  - Fila central con escudos/fotos redondas de 58 dp (`TeamCrest` / `QfAvatar`), probabilidad en JetBrains Mono 40 px bold cian con resplandor (`glowColor: 0x7300F0FF`, blur 18) y descripción del pick.
+  - Barra de 2-3 partes con proporciones reales y leyenda inferior.
+  - Botón de acción verde de ancho completo: `VER PRONÓSTICO GRATIS` con `qfGreenGradient`, `CutCornerBorder(cut: 8)`, texto en Rajdhani 15 dp bold e icono chevron derecho.
+- **Tarjetas resumen en 2 columnas y boletos (`lib/product/live_home.dart`):**
+  - Fila en 2 columnas con altura equiparable:
+    - Tarjeta izquierda (`_HitCard`): acierto en 30 días del deporte elegido (`homeHitTitle`), porcentaje verde en mono 24 bold y detalle de picks sellados (`picksTrustDetail`).
+    - Tarjeta derecha (`_CoinsCard`): saldo en JetBrains Mono 24 bold amarillo y subtítulo dinámico con plurales `homeCoinsUnlocks` («Te alcanza para N desbloqueos»).
+  - Boletos del día: tarjetas con `CutCornerBorder(cut: 8)`, fondo `QfColors.surface` y protección de desborde a 320 px en cuotas `@ cuota`.
+  - Avisos (banner de Remote Config y modo mantenimiento): tarjeta cian con `CutCornerBorder(cut: 8)` e icono de información.
+- **Tira de días y Agenda (`lib/product/home_agenda.dart`):**
+  - `DayStrip`: tira persistente con botones de 44 dp con `CutCornerBorder(cut: 8)`, estado activo con fondo cian 10% y borde cian 1 dp, semántica accesible, contadores por día y claves `day-search`, `day-picker`, `day-{dateKey}`.
+  - `DayHeader`: encabezado con barra indicadora cian y fecha formateada con `dayLabel`.
+  - `MatchRow`: fila compacta de 52 dp según diseño CyberCore:
+    - Columna 1: hora en mono 12 dp.
+    - Columna 2: escudos solapados de 30 dp, texto «Local – Visitante» en negrita y nombre de competición debajo.
+    - Columna 3: badge verde de probabilidad con borde y fondo sutil, candado VIP amarillo, etiqueta «desde HH:MM» o marcador si ya terminó.
+- **Deportes adicionales (NBA y tenis en `lib/product/home_sport.dart`):**
+  - Adaptados a la misma anatomía CyberCore: escudos/fotos 58 dp en el destacado, `_EventRow` con miniaturas 30 dp solapadas y badge mono verde.
+- **Localización (l10n):**
+  - Claves añadidas a los 6 idiomas (`es, en, pt, fr, it, de`): `homeViewFreePick`, `homeHitTitle`, `homeCoinsUnlocks`, `homeAgendaTitle`.
+  - Pruebas `l10n_test.dart` y `l10n_runtime_test.dart` en verde.
+- **Suites de pruebas:**
+  - `home_screen_test.dart`: 25 pruebas pasando (100% verde).
+  - `home_sport_test.dart`: 17 pruebas pasando (100% verde).
+  - `featured_pick_test.dart`: 9 pruebas pasando (100% verde).
+  - `published_history_test.dart`: 3 pruebas pasando (100% verde).
+  - `product_navigation_test.dart`: 42 pruebas pasando (100% verde).
+  - Verificación global de la app: 581 pruebas pasando al 100% (`581/581 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F3b — Predicciones (`HighProbabilityView`, `PickTile`, `LadderChallengeCard` con barra de 5 segmentos, `ParleyTab` y barra fija inferior de desbloqueo/VIP).
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F2 completada (`app/rediseno-f2-cascara`)
 
 - **Objetivo de F2 alcanzado:** Cabecera de 56 dp, barra inferior `QfBottomNav` de 64 dp con etiqueta `navPicks` («Picks»), selector de deporte `SportSelector` CyberCore y selector de sección `PredictionsSwitcher` segmentado implementados y probados.

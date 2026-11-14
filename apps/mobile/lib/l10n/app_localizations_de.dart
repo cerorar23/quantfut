@@ -866,10 +866,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get historyWebSince => 'Webverlauf seit dem 26.10.2026';
 
   @override
+  String get homeAgendaTitle => 'Spielplan';
+
+  @override
   String get homeBannerClose => 'Hinweis schließen';
 
   @override
   String get homeByDate => 'Spiele nach Datum und Uhrzeit';
+
+  @override
+  String homeCoinsUnlocks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Reicht für $count Freischaltungen',
+      one: 'Reicht für 1 Freischaltung',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get homeFeatured => 'Tipp des Tages';
@@ -885,6 +899,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeForecastPending => 'Prognose ausstehend';
+
+  @override
+  String get homeHitTitle => 'Trefferquote · 30 Tage';
 
   @override
   String get homeMenuTooltip => 'Menü';
@@ -930,6 +947,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTomorrow => 'Morgen';
+
+  @override
+  String get homeViewFreePick => 'Kostenlosen Tipp ansehen';
 
   @override
   String get imageCredits =>

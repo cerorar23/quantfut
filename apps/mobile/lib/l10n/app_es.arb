@@ -692,11 +692,24 @@
     "description": "Tema 6 de la guía."
   },
   "historyWebSince": "Historial web desde el 26/10/2026",
+  "homeAgendaTitle": "Agenda",
+  "@homeAgendaTitle": {
+    "description": "Título de la sección de agenda"
+  },
   "homeBannerClose": "Cerrar aviso",
   "@homeBannerClose": {
     "description": "Cierra el aviso de la parte superior."
   },
   "homeByDate": "Partidos por fecha y horario",
+  "homeCoinsUnlocks": "{count, plural, one{Te alcanza para 1 desbloqueo} other{Te alcanza para {count} desbloqueos}}",
+  "@homeCoinsUnlocks": {
+    "description": "Desbloqueos posibles con el saldo de monedas",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "homeFeatured": "Destacado del día",
   "@homeFeatured": {
     "description": "Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido."
@@ -720,6 +733,10 @@
   "homeForecastPending": "Pronóstico pendiente",
   "@homeForecastPending": {
     "description": "Etiqueta accesible del candado de un partido sin pronóstico todavía."
+  },
+  "homeHitTitle": "Acierto · 30 días",
+  "@homeHitTitle": {
+    "description": "Título de la tarjeta de acierto en los últimos 30 días"
   },
   "homeMenuTooltip": "Menú",
   "@homeMenuTooltip": {
@@ -779,6 +796,10 @@
   "homeTomorrow": "Mañana",
   "@homeTomorrow": {
     "description": "Encabezado del día de mañana en la agenda."
+  },
+  "homeViewFreePick": "Ver pronóstico gratis",
+  "@homeViewFreePick": {
+    "description": "Botón del destacado del día para ver el pronóstico gratis"
   },
   "imageCredits": "Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.",
   "imageUnavailable": "Imagen no disponible",

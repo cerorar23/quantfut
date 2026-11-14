@@ -856,10 +856,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyWebSince => 'Web history since 26 Oct 2026';
 
   @override
+  String get homeAgendaTitle => 'Schedule';
+
+  @override
   String get homeBannerClose => 'Dismiss notice';
 
   @override
   String get homeByDate => 'Matches by date and time';
+
+  @override
+  String homeCoinsUnlocks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Enough for $count unlocks',
+      one: 'Enough for 1 unlock',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get homeFeatured => 'Pick of the day';
@@ -874,6 +888,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeForecastPending => 'Forecast pending';
+
+  @override
+  String get homeHitTitle => 'Hit rate · 30 days';
 
   @override
   String get homeMenuTooltip => 'Menu';
@@ -919,6 +936,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeTomorrow => 'Tomorrow';
+
+  @override
+  String get homeViewFreePick => 'View free pick';
 
   @override
   String get imageCredits =>

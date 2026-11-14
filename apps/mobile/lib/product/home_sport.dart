@@ -414,7 +414,7 @@ class _HomeSportState extends State<HomeSport> {
       widget.images,
       e,
       name,
-      size: 66,
+      size: 58,
     );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -427,6 +427,9 @@ class _HomeSportState extends State<HomeSport> {
               // NBA: visitante @ local.
               left: big(e, nba ? e.away : e.home),
               right: big(e, nba ? e.home : e.away),
+              homeName: nba ? e.away : e.home,
+              awayName: nba ? e.home : e.away,
+              meta: '${e.league} · ${localDate(DateFormat.MMMEd, e.start.toLocal())} ${localDate(DateFormat.Hm, e.start.toLocal())}',
               title: nba ? '${e.away} @ ${e.home}' : '${e.home} · ${e.away}',
               probability: realPercent(m.probability),
               pick: sportPickText(l10n, m),
@@ -570,35 +573,52 @@ class _EventRow extends StatelessWidget {
     final finished = e.status == 'finished' && e.score != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: QfCard(
-        onTap: onOpen,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Text(
-                localDate(DateFormat.Hm, e.start.toLocal()),
-                style: const TextStyle(
-                  fontFamily: qfMono,
-                  fontSize: 13,
-                  color: QfColors.text,
+      child: Material(
+        color: QfColors.surface,
+        shape: const CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.border)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    localDate(DateFormat.Hm, e.start.toLocal()),
+                    style: const TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: QfColors.muted,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  for (final name in sides)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      child: Row(
-                        children: [
-                          avatar(name),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              name,
+                Expanded(
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: avatar(sides[0]),
+                      ),
+                      Transform.translate(
+                        offset: const Offset(-6, 0),
+                        child: SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: avatar(sides[1]),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              nba ? '${sides[0]} @ ${sides[1]}' : '${sides[0]} – ${sides[1]}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -607,29 +627,52 @@ class _EventRow extends StatelessWidget {
                                 fontSize: 13,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (finished)
+                  Text(
+                    e.score!,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 13,
+                      color: QfColors.text2,
+                    ),
+                  )
+                else if (m != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: QfColors.green.withValues(alpha: .4)),
+                      color: QfColors.green.withValues(alpha: .09),
+                    ),
+                    child: Text(
+                      realPercent(m.probability),
+                      style: const TextStyle(
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: QfColors.green,
                       ),
                     ),
-                ],
-              ),
+                  )
+                else
+                  const Text(
+                    '—',
+                    style: TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 12,
+                      color: QfColors.muted,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 64,
-              child: Text(
-                finished ? e.score! : (m == null ? '—' : realPercent(m.probability)),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                style: TextStyle(
-                  fontFamily: qfMono,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 15,
-                  color: finished ? QfColors.text2 : QfColors.primary,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -279,7 +279,7 @@ void main() {
 
   // El destacado del día ocupa la parte alta de Inicio: la agenda queda más abajo.
   Future<void> scrollToAgenda(WidgetTester tester) => tester.scrollUntilVisible(
-    find.text('Equipo A'),
+    find.textContaining('Equipo A – Equipo B'),
     200,
     scrollable: find
         .descendant(
@@ -638,8 +638,8 @@ void main() {
     await open(tester, ProductShell(api: api));
     expect(api.homes, 1);
     await scrollToAgenda(tester);
-    expect(find.text('Equipo A'), findsOneWidget);
-    expect(find.text('Liga de prueba'), findsOneWidget);
+    expect(find.textContaining('Equipo A'), findsWidgets);
+    expect(find.text('Liga de prueba'), findsWidgets);
     await capture(tester, 'home');
     for (final label in [
       'Predicciones',
@@ -676,7 +676,7 @@ void main() {
       ];
     await open(tester, ProductShell(api: api));
     await tester.scrollUntilVisible(
-      find.text('Equipo A'),
+      find.textContaining('Directo FC'),
       200,
       scrollable: find
           .descendant(
@@ -685,9 +685,9 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Equipo A'), findsOneWidget); // por jugar
-    expect(find.text('Directo FC'), findsOneWidget); // en juego
-    expect(find.text('Terminado FC'), findsNothing);
+    expect(find.textContaining('Equipo A'), findsWidgets); // por jugar
+    expect(find.textContaining('Directo FC'), findsOneWidget); // en juego
+    expect(find.textContaining('Terminado FC'), findsNothing);
     expect(find.textContaining('Resultado: 5'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
@@ -1015,13 +1015,13 @@ void main() {
     final api = FixtureApi()..fail = true;
     await open(tester, ProductShell(api: api));
     expect(find.text('Sin conexión'), findsOneWidget);
-    expect(find.text('Equipo A'), findsNothing);
+    expect(find.textContaining('Equipo A'), findsNothing);
     api.fail = false;
     await tester.tap(find.text('Reintentar'));
     await tester.pumpAndSettle();
     expect(api.homes, 2);
     await scrollToAgenda(tester);
-    expect(find.text('Equipo A'), findsOneWidget);
+    expect(find.textContaining('Equipo A'), findsWidgets);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

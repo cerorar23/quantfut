@@ -1582,6 +1582,12 @@ abstract class AppLocalizations {
   /// **'Historial web desde el 26/10/2026'**
   String get historyWebSince;
 
+  /// Título de la sección de agenda
+  ///
+  /// In es, this message translates to:
+  /// **'Agenda'**
+  String get homeAgendaTitle;
+
   /// Cierra el aviso de la parte superior.
   ///
   /// In es, this message translates to:
@@ -1593,6 +1599,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Partidos por fecha y horario'**
   String get homeByDate;
+
+  /// Desbloqueos posibles con el saldo de monedas
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{Te alcanza para 1 desbloqueo} other{Te alcanza para {count} desbloqueos}}'**
+  String homeCoinsUnlocks(int count);
 
   /// Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido.
   ///
@@ -1617,6 +1629,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pronóstico pendiente'**
   String get homeForecastPending;
+
+  /// Título de la tarjeta de acierto en los últimos 30 días
+  ///
+  /// In es, this message translates to:
+  /// **'Acierto · 30 días'**
+  String get homeHitTitle;
 
   /// Botón que abre el menú Más.
   ///
@@ -1683,6 +1701,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Mañana'**
   String get homeTomorrow;
+
+  /// Botón del destacado del día para ver el pronóstico gratis
+  ///
+  /// In es, this message translates to:
+  /// **'Ver pronóstico gratis'**
+  String get homeViewFreePick;
 
   /// No description provided for @imageCredits.
   ///

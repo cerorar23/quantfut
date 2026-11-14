@@ -865,10 +865,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get historyWebSince => 'Historial web desde el 26/10/2026';
 
   @override
+  String get homeAgendaTitle => 'Agenda';
+
+  @override
   String get homeBannerClose => 'Cerrar aviso';
 
   @override
   String get homeByDate => 'Partidos por fecha y horario';
+
+  @override
+  String homeCoinsUnlocks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Te alcanza para $count desbloqueos',
+      one: 'Te alcanza para 1 desbloqueo',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get homeFeatured => 'Destacado del día';
@@ -884,6 +898,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeForecastPending => 'Pronóstico pendiente';
+
+  @override
+  String get homeHitTitle => 'Acierto · 30 días';
 
   @override
   String get homeMenuTooltip => 'Menú';
@@ -929,6 +946,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeTomorrow => 'Mañana';
+
+  @override
+  String get homeViewFreePick => 'Ver pronóstico gratis';
 
   @override
   String get imageCredits =>
