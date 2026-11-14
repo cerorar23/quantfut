@@ -139,14 +139,19 @@ def cuotas_de_cache(entradas: Mapping, match_id: str, hasta: datetime, soft_book
 
 # --- huecos --------------------------------------------------------------------------------------------------
 
+def _tiene_basicos(claves: set) -> bool:
+    """Hueco por mercado (15-nov-2026): un partido con 1X2 pero sin ninguna línea de totales también pide respaldo."""
+    return {"h2h:home:None", "h2h:draw:None", "h2h:away:None"} <= claves and any(k.startswith("totals:over:") for k in claves)
+
+
 def huecos(now: datetime, *, propline_ok=None) -> list[dict]:
-    """Partidos que empiezan en las próximas 36 h sin cuota de 1X2 de PropLine para los suscriptores."""
+    """Partidos que empiezan en las próximas 36 h sin 1X2 o sin totales de PropLine para los suscriptores."""
     from qf.api import partido_mercados as pm
     filas = query("""SELECT m.match_id, m.league_id, m.kickoff_utc, l.odds_api_key
                      FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
                      WHERE m.status = 'scheduled' AND m.kickoff_utc > %s AND m.kickoff_utc <= %s
                      ORDER BY m.kickoff_utc""", (now, now + VENTANA))
-    ok = propline_ok or (lambda mid: {"h2h:home:None", "h2h:draw:None", "h2h:away:None"} <= set(pm.cuotas_casas(mid)))
+    ok = propline_ok or (lambda mid: _tiene_basicos(set(pm.cuotas_casas(mid))))
     return [dict(f) for f in filas if not ok(f["match_id"])]
 
 

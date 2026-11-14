@@ -795,3 +795,13 @@ def test_doble_oportunidad_ambigua_no_se_adivina():
     assert _selecciones(e) == {}
     e = _doble("Arsenal", "Chelsea", [("Arsenal / Draw", -250), ("Draw / Chelsea", -140)])
     assert _selecciones(e) == {}
+
+
+def test_football_guarda_draw_no_bet_sin_empate():
+    from qf.ingest.propline_ingest import football_rows
+    e = event()
+    e["bookmakers"][0]["markets"].append(dict(key="draw_no_bet", period=None, outcomes=[
+        dict(name=e["home_team"], side="home", price=-310), dict(name=e["away_team"], side="away", price=250),
+        dict(name="Draw", side="draw", price=100)]))
+    rows = football_rows(e, "match", NOW, pl.parse_time(e["commence_time"]), "hourly:1")
+    assert {(r[2], r[3]) for r in rows if r[2] == "draw_no_bet"} == {("draw_no_bet", "home"), ("draw_no_bet", "away")}
