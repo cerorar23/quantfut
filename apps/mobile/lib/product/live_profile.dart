@@ -215,6 +215,7 @@ class _LiveProfileScreenState extends State<LiveProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          liveHeading(l10n.profileTitle),
           // Tarjeta de cuenta CyberCore (§5.6)
           Container(
             key: const ValueKey('profile-account-card'),

@@ -208,18 +208,51 @@ class QfSwitch extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
+    this.width = 52.0,
+    this.height = 30.0,
+    this.thumbSize = 22.0,
+    this.minTouchTarget = false,
     this.semanticLabel,
   });
 
   final bool value;
   final ValueChanged<bool>? onChanged;
+  final double width;
+  final double height;
+  final double thumbSize;
+  final bool minTouchTarget;
   final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    const width = 52.0;
-    const height = 30.0;
-    const thumbSize = 22.0;
+    final inner = Container(
+      width: width,
+      height: height,
+      padding: const EdgeInsets.all(3),
+      decoration: ShapeDecoration(
+        color: value ? QfColors.cyan.withValues(alpha: .18) : QfColors.surface2,
+        shape: CutCornerBorder(
+          cut: 6,
+          side: BorderSide(
+            color: value ? QfColors.cyan : QfColors.slate.withValues(alpha: .4),
+            width: 1,
+          ),
+        ),
+      ),
+      child: AnimatedAlign(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          width: thumbSize,
+          height: thumbSize,
+          decoration: ShapeDecoration(
+            color: value ? QfColors.cyan : QfColors.slate,
+            shape: const CutCornerBorder(cut: 4),
+          ),
+        ),
+      ),
+    );
 
     return Semantics(
       label: semanticLabel,
@@ -227,39 +260,15 @@ class QfSwitch extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onChanged == null ? null : () => onChanged!(!value),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 52, minHeight: 44),
-          child: Center(
-            child: Container(
-              width: width,
-              height: height,
-              padding: const EdgeInsets.all(3),
-              decoration: ShapeDecoration(
-                color: value ? QfColors.cyan.withValues(alpha: .18) : QfColors.surface2,
-                shape: CutCornerBorder(
-                  cut: 6,
-                  side: BorderSide(
-                    color: value ? QfColors.cyan : QfColors.slate.withValues(alpha: .4),
-                    width: 1,
-                  ),
+        child: minTouchTarget
+            ? ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: width < 44.0 ? 44.0 : width,
+                  minHeight: height < 44.0 ? 44.0 : height,
                 ),
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeInOut,
-                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  width: thumbSize,
-                  height: thumbSize,
-                  decoration: ShapeDecoration(
-                    color: value ? QfColors.cyan : QfColors.slate,
-                    shape: const CutCornerBorder(cut: 4),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+                child: Center(child: inner),
+              )
+            : inner,
       ),
     );
   }

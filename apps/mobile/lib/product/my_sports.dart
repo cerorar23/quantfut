@@ -230,6 +230,7 @@ class _SportRow extends StatelessWidget {
             semanticLabel: l10n.profileMySportsShow(name),
             value: shown,
             onChanged: onToggle,
+            minTouchTarget: true,
           ),
         ],
       ),

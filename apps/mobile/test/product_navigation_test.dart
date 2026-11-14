@@ -598,7 +598,7 @@ void main() {
               .first,
         )
         .position;
-    final title = find.byKey(const ValueKey('profile-account-card'));
+    final title = find.text('Perfil y configuración');
     final section = find.byKey(const ValueKey('my-sports'));
     Future<void> viaMenu() async {
       await tester.tap(find.byKey(const ValueKey('home-menu')));

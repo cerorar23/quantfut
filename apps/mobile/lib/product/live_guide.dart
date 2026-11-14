@@ -190,7 +190,7 @@ class _GuideScreenState extends State<GuideScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        head.toUpperCase(),
+                        head,
                         style: const TextStyle(
                           fontFamily: qfDisplay,
                           fontWeight: FontWeight.w700,

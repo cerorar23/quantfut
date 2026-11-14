@@ -613,19 +613,16 @@ void main() {
     // Acordeón: el primer tema abierto, el resto plegado hasta tocarlo.
     expect(find.textContaining('3 de cada 4'), findsOneWidget);
     expect(find.textContaining('no es una casa de apuestas'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.text('Es información y entretenimiento'),
-      300,
-    );
-    await tester.tap(find.text('Es información y entretenimiento'));
+    await tester.ensureVisible(find.byKey(const ValueKey('guide-topic-5')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.textContaining('no es una casa de apuestas'),
-      300,
-    );
+    await tester.tap(find.byKey(const ValueKey('guide-topic-5')));
+    await tester.pumpAndSettle();
     expect(find.textContaining('no es una casa de apuestas'), findsOneWidget);
     // La guía no promete ganancias: «garantiza» solo aparece negado («Ningún dato garantiza»).
-    await tester.scrollUntilVisible(find.textContaining('3 de cada 4'), -300);
+    await tester.ensureVisible(find.byKey(const ValueKey('guide-topic-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('guide-topic-0')));
+    await tester.pumpAndSettle();
     final matches = tester
         .widgetList<Text>(find.textContaining('garantiza'))
         .toList();

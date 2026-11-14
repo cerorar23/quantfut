@@ -350,7 +350,7 @@ class _MoreSheet extends StatelessWidget {
                         border: Border.all(color: QfColors.border),
                       ),
                       child: Text(
-                        l10n.accessTerms.toUpperCase(),
+                        l10n.accessTerms,
                         style: const TextStyle(
                           fontFamily: qfDisplay,
                           fontWeight: FontWeight.w700,
@@ -377,7 +377,7 @@ class _MoreSheet extends StatelessWidget {
                         border: Border.all(color: QfColors.border),
                       ),
                       child: Text(
-                        l10n.accessPrivacy.toUpperCase(),
+                        l10n.accessPrivacy,
                         style: const TextStyle(
                           fontFamily: qfDisplay,
                           fontWeight: FontWeight.w700,
