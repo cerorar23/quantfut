@@ -472,7 +472,7 @@ class _Hero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.rewardsMyCoins.toUpperCase(),
+                  l10n.rewardsMyCoins,
                   style: const TextStyle(
                     fontFamily: qfDisplay,
                     fontWeight: FontWeight.w700,
