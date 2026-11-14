@@ -265,6 +265,19 @@ export async function loadNbaStats(eventId, fetcher = fetch) {
   } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
 }
 
+// Disponibilidad de jugadores de un partido de NBA (bajas por lesión, suspensiones, estados y motivos
+// del parte oficial de la NBA en PDF; API v2, /nba/v1/partido/{id}/disponibilidad).
+export async function loadNbaAvailability(eventId, fetcher = fetch) {
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`/nba/v1/partido/${encodeURIComponent(eventId)}/disponibilidad`, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Sin disponibilidad');
+    const data = await response.json();
+    if (data?.partido_id !== Number(eventId) && String(data?.partido_id) !== String(eventId)) throw new Error('Formato inesperado');
+    return { status: 'ready', data };
+  } catch { return { status: 'error', data: null }; } finally { clearTimeout(timer); }
+}
+
 export async function loadResults(fetcher=fetch) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {

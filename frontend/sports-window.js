@@ -6,7 +6,7 @@ import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLi
 
 export function createSportWindow(ctx) {
   const { state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel,
-    ensureSport, ensureImages, nbaCode } = ctx;
+    ensureSport, ensureImages, ensureNbaAvailability, nbaCode } = ctx;
   const ROW_LIMIT = 24;
   const SPORT_NAME = { nba: 'NBA', tenis: 'Tenis' };
   // Deporte del catálogo sin pantalla propia (Fase 4 · 4.4): todo lo que no es nba ni tenis (el fútbol no llega a esta ventana). `ctx.generico(id)` lo da app.js:
@@ -410,7 +410,192 @@ export function createSportWindow(ctx) {
     return `<div class="win-panel-box"><p class="eyebrow">JUEGOS TOTALES</p>${totals.length ? totals.map(m => bar(m.selection, m.probability)).join('') : '<p class="win-sub">Sin mercados de juegos publicados.</p>'}</div><div class="win-panel-box"><p class="eyebrow">GANADOR DE CADA SET</p>${setWinners.length ? setWinners.map(m => bar(`${m.selection}`, m.probability, m.label.replace('Ganador de set · ', ''))).join('') : '<p class="win-sub">Sin mercados de sets publicados.</p>'}</div>`;
   }
 
+  function formatPlayerShort(name) {
+    if (!name) return '—';
+    const n = String(name).trim();
+    if (n.includes(',')) {
+      const [last, first] = n.split(',').map(s => s.trim());
+      const initial = first ? `${first[0]}. ` : '';
+      return `${initial}${last}`;
+    }
+    const parts = n.split(/\s+/);
+    if (parts.length > 1) {
+      return `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
+    }
+    return n;
+  }
+
+  function injuryStatus(estado, motivo = '') {
+    const e = String(estado || '').trim().toLowerCase();
+    const m = String(motivo || '').toLowerCase();
+    if (m.includes('suspension')) {
+      return { tipo: 'suspended', label: 'Suspendido' };
+    }
+    switch (e) {
+      case 'out':
+        return { tipo: 'out', label: 'Lesionado' };
+      case 'doubtful':
+        return { tipo: 'doubtful', label: 'Poco probable' };
+      case 'questionable':
+        return { tipo: 'questionable', label: 'En duda' };
+      case 'probable':
+        return { tipo: 'probable', label: 'Probable' };
+      case 'available':
+        return { tipo: 'available', label: 'Disponible' };
+      default:
+        return { tipo: 'out', label: estado || 'Baja' };
+    }
+  }
+
+  function traducirParte(txt) {
+    let res = txt
+      .replace(/left\s+ankle/gi, 'tobillo izq.')
+      .replace(/right\s+ankle/gi, 'tobillo der.')
+      .replace(/bilateral\s+ankle/gi, 'tobillo bilateral')
+      .replace(/left\s+knee/gi, 'rodilla izq.')
+      .replace(/right\s+knee/gi, 'rodilla der.')
+      .replace(/bilateral\s+knee/gi, 'rodilla bilateral')
+      .replace(/left\s+foot/gi, 'pie izq.')
+      .replace(/right\s+foot/gi, 'pie der.')
+      .replace(/left\s+heel/gi, 'talón izq.')
+      .replace(/right\s+heel/gi, 'talón der.')
+      .replace(/left\s+hamstring/gi, 'isquiotibiales izq.')
+      .replace(/right\s+hamstring/gi, 'isquiotibiales der.')
+      .replace(/left\s+quad(?:riceps)?/gi, 'cuádriceps izq.')
+      .replace(/right\s+quad(?:riceps)?/gi, 'cuádriceps der.')
+      .replace(/left\s+calf/gi, 'pantorrilla izq.')
+      .replace(/right\s+calf/gi, 'pantorrilla der.')
+      .replace(/left\s+groin/gi, 'ingle izq.')
+      .replace(/right\s+groin/gi, 'ingle der.')
+      .replace(/left\s+hip/gi, 'cadera izq.')
+      .replace(/right\s+hip/gi, 'cadera der.')
+      .replace(/left\s+shoulder/gi, 'hombro izq.')
+      .replace(/right\s+shoulder/gi, 'hombro der.')
+      .replace(/left\s+wrist/gi, 'muñeca izq.')
+      .replace(/right\s+wrist/gi, 'muñeca der.')
+      .replace(/left\s+thumb/gi, 'pulgar izq.')
+      .replace(/right\s+thumb/gi, 'pulgar der.')
+      .replace(/left\s+hand/gi, 'mano izq.')
+      .replace(/right\s+hand/gi, 'mano der.')
+      .replace(/left\s+elbow/gi, 'codo izq.')
+      .replace(/right\s+elbow/gi, 'codo der.')
+      .replace(/left\s+eye/gi, 'ojo izq.')
+      .replace(/right\s+eye/gi, 'ojo der.')
+      .replace(/lower\s+back/gi, 'espalda baja')
+      .replace(/mid\s+back/gi, 'espalda media')
+      .replace(/upper\s+back/gi, 'espalda alta');
+
+    const dic = [
+      [/left/gi, 'izq.'], [/right/gi, 'der.'], [/bilateral/gi, 'bilateral'],
+      [/ankle/gi, 'tobillo'], [/knee/gi, 'rodilla'], [/foot/gi, 'pie'],
+      [/heel/gi, 'talón'], [/hamstring/gi, 'isquiotibiales'], [/quad/gi, 'cuádriceps'],
+      [/calf/gi, 'pantorrilla'], [/groin/gi, 'ingle'], [/hip/gi, 'cadera'],
+      [/back/gi, 'espalda'], [/shoulder/gi, 'hombro'], [/wrist/gi, 'muñeca'],
+      [/thumb/gi, 'pulgar'], [/finger/gi, 'dedo'], [/hand/gi, 'mano'],
+      [/elbow/gi, 'codo'], [/neck/gi, 'cuello'], [/eye/gi, 'ojo'],
+      [/sprain/gi, 'esguince'], [/strain/gi, 'distensión'], [/soreness/gi, 'molestias'],
+      [/contusion/gi, 'contusión'], [/fracture/gi, 'fractura'], [/surgery/gi, 'cirugía'],
+      [/tear/gi, 'desgarro'], [/inflammation/gi, 'inflamación'], [/tightness/gi, 'sobrecarga'],
+      [/illness/gi, 'enfermedad'], [/recovery/gi, 'recuperación'],
+      [/injury\s+management/gi, 'gestión de carga'], [/rest/gi, 'descanso']
+    ];
+    for (const [re, rep] of dic) res = res.replace(re, rep);
+    res = res.replace(/;\s*/g, ' · ').trim();
+    return res ? res.charAt(0).toUpperCase() + res.slice(1) : '';
+  }
+
+  function traducirMotivo(raw) {
+    if (!raw) return '';
+    const txt = String(raw).trim();
+    if (/suspension/i.test(txt)) {
+      if (/league\s+suspension/i.test(txt)) return 'Suspensión de la liga';
+      if (/team\s+suspension/i.test(txt)) return 'Suspensión del equipo';
+      return 'Suspensión disciplinaria';
+    }
+    if (/g\s*league/i.test(txt)) {
+      if (/two-way/i.test(txt)) return 'Contrato Two-Way (G League)';
+      if (/assignment/i.test(txt)) return 'Asignado a G League';
+      return 'G League';
+    }
+    if (/health\s+and\s+safety/i.test(txt)) return 'Protocolos de salud y seguridad';
+    if (/personal\s+reasons/i.test(txt)) return 'Motivos personales';
+    if (/not\s+with\s+team/i.test(txt)) return 'No está con el equipo';
+    if (/^Injury\/Illness\s*-\s*Rest$/i.test(txt) || /^Rest$/i.test(txt)) return 'Descanso programado';
+    const clean = txt.replace(/^Injury\/Illness\s*-\s*/i, '');
+    return traducirParte(clean);
+  }
+
+  function injuryPlayerCard(p) {
+    const st = injuryStatus(p.estado, p.motivo);
+    const short = formatPlayerShort(p.nombre);
+    const motivoEs = traducirMotivo(p.motivo);
+    const initials = String(p.nombre || '?').split(/[\s,]+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const photo = p.nba_id ? `https://cdn.nba.com/headshots/nba/latest/260x190/${esc(p.nba_id)}.png`
+      : (p.id ? `/web/imagenes/jugadores/nba/${esc(p.id)}.png` : null);
+    const avatar = photo
+      ? `<span class="win-pk-avatar is-photo"><img src="${esc(photo)}" alt="" loading="lazy" decoding="async" onerror="this.parentElement.className='win-pk-avatar is-mono is-tone-1';this.parentElement.textContent='${esc(initials)}';"></span>`
+      : `<span class="win-pk-avatar is-mono is-tone-1" aria-hidden="true">${esc(initials)}</span>`;
+
+    return `<div class="win-injury-card"><div class="win-injury-avatar-wrap">${avatar}</div><div class="win-injury-info"><div class="win-injury-name-row"><strong class="win-injury-name" title="${esc(p.nombre)}">${esc(short)}</strong></div><div class="win-injury-status is-${st.tipo}"><span class="win-injury-icon">+</span><span>${esc(st.label)}</span></div><div class="win-injury-reason" title="${esc(p.motivo || '')}">${esc(motivoEs || p.motivo || 'Sin motivo reportado')}</div></div></div>`;
+  }
+
+  function nbaAvailabilityView(event, data) {
+    let homeTeam, awayTeam;
+    if (data.local && data.visitante) {
+      const swapped = normal(data.local.nombre) === normal(event.away);
+      homeTeam = swapped ? data.visitante : data.local;
+      awayTeam = swapped ? data.local : data.visitante;
+    } else if (Array.isArray(data.teams) && data.teams.length >= 2) {
+      const swapped = normal(data.teams[0].nombre || data.teams[0].name) === normal(event.away);
+      homeTeam = swapped ? data.teams[1] : data.teams[0];
+      awayTeam = swapped ? data.teams[0] : data.teams[1];
+    } else {
+      homeTeam = { nombre: event.home, jugadores: data.players?.filter(p => p.team === event.home || p.lado === 'local') || [] };
+      awayTeam = { nombre: event.away, jugadores: data.players?.filter(p => p.team === event.away || p.lado === 'visitante') || [] };
+    }
+
+    const reportUrl = data.reporte_url || data.report_url;
+    const reportTime = data.reporte_timestamp_utc || data.report_timestamp_utc;
+
+    const renderTeam = (team, roleName) => {
+      const jug = team.jugadores || team.players || [];
+      const bajasCount = jug.filter(p => ['out', 'suspended'].includes(injuryStatus(p.estado, p.motivo).tipo)).length;
+      const dudasCount = jug.length - bajasCount;
+      const badgeText = jug.length === 0 ? 'Plantilla completa'
+        : bajasCount > 0 ? `${bajasCount} ${bajasCount === 1 ? 'baja' : 'bajas'}${dudasCount > 0 ? ` · ${dudasCount} en duda` : ''}`
+        : `${dudasCount} en duda`;
+
+      let content = '';
+      if (team.reporte_no_enviado) {
+        content = '<p class="win-sub win-injury-pending">⏳ Reporte aún no enviado a la liga por el equipo (Not Yet Submitted).</p>';
+      } else if (jug.length === 0) {
+        content = '<p class="win-sub win-injury-none">✓ Sin suspensiones ni bajas por lesión en el reporte oficial.</p>';
+      } else {
+        content = `<div class="win-injury-grid">${jug.map(injuryPlayerCard).join('')}</div>`;
+      }
+
+      return `<div class="win-panel-box win-injury-team-box"><div class="win-injury-team-header"><div class="win-injury-team-title">${mark(team.nombre, 'nba')}<div><strong>${esc(team.nombre)}</strong><small>${roleName}</small></div></div><span class="win-injury-badge ${bajasCount > 0 ? 'has-bajas' : ''}">${esc(badgeText)}</span></div>${content}</div>`;
+    };
+
+    const header = `<div class="win-panel-box"><div class="win-injuries-header"><p class="eyebrow">LESIONES Y SUSPENSIONES</p><div class="win-injuries-meta">${reportTime ? `<span>Actualizado: ${realDate(reportTime)} ${realTime(reportTime)}</span>` : ''}${typeof reportUrl === 'string' && reportUrl.startsWith('https://') ? `<a class="win-pdf-link" href="${esc(reportUrl)}" target="_blank" rel="noopener noreferrer">📄 Parte oficial NBA (PDF) ↗</a>` : ''}</div></div><p class="win-sub">Reporte oficial de disponibilidad emitido por la NBA antes del encuentro.</p></div>`;
+
+    const mb = data.metricas_bajas || (data.missing_points_home != null ? data : null);
+    const impact = mb ? `<div class="win-panel-box win-impact-box"><p class="eyebrow">IMPACTO ESTIMADO EN EL MODELO POR BAJAS</p>${kv(`Puntos · ${esc(event.home)}`, num(mb.missing_points_home))}${kv(`Puntos · ${esc(event.away)}`, num(mb.missing_points_away))}${kv(`Minutos · ${esc(event.home)}`, num(mb.missing_minutes_home))}${kv(`Minutos · ${esc(event.away)}`, num(mb.missing_minutes_away))}</div>` : '';
+
+    return `${header}${renderTeam(homeTeam, 'Local')}${renderTeam(awayTeam, 'Visitante')}${impact}`;
+  }
+
   function availability(event) {
+    if (event.sport === 'nba') {
+      const avEntry = ctx.ensureNbaAvailability?.(event.id);
+      if (avEntry?.status === 'loading') {
+        return '<div class="win-panel-box"><p class="eyebrow">DISPONIBILIDAD</p><p class="win-sub">Consultando el reporte oficial de lesiones de la NBA…</p></div>';
+      }
+      const avData = (avEntry?.status === 'ready' && avEntry.data) ? avEntry.data : event.availability;
+      if (avData && (avData.local || avData.visitante || Array.isArray(avData.teams) || Array.isArray(avData.players))) {
+        return nbaAvailabilityView(event, avData);
+      }
+    }
     const a = event.availability;
     if (!a) return '<div class="win-panel-box"><p class="eyebrow">DISPONIBILIDAD</p><p class="win-sub">Este partido no trae reporte de lesiones del motor.</p></div>';
     const label = a.state === 'reporte_aplicado' ? 'Reporte oficial aplicado' : String(a.state || 'Sin dato').replace(/_/g, ' ');

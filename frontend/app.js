@@ -4,7 +4,7 @@ import { createMembershipUI } from './membership.js?v=preferencias-20261108';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
 import { createRealViews } from './real-views.js?v=generica-20261113b';
-import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
+import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
 import { createSportWindow } from './sports-window.js?v=generica-20261113';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
@@ -413,6 +413,7 @@ function ensureTennisStats(id) {
   return entry;
 }
 const nbaStatsCache = new Map();
+const nbaAvailabilityCache = new Map();
 const nbaMarketsCache = new Map(), nbaMarketLanes = Array.from({ length: 4 }, () => Promise.resolve());
 let nbaMarketLane = 0;
 function ensureNbaMarkets(event) {
@@ -434,6 +435,13 @@ function ensureNbaStats(id) {
   const entry = { status: 'loading', data: null }, generation = realGeneration;
   nbaStatsCache.set(id, entry);
   loadNbaStats(id).then(result => { if (generation !== realGeneration) return; nbaStatsCache.set(id, result); rerenderIfIdle(); });
+  return entry;
+}
+function ensureNbaAvailability(id) {
+  if (nbaAvailabilityCache.has(id)) return nbaAvailabilityCache.get(id);
+  const entry = { status: 'loading', data: null }, generation = realGeneration;
+  nbaAvailabilityCache.set(id, entry);
+  loadNbaAvailability(id).then(result => { if (generation !== realGeneration) return; nbaAvailabilityCache.set(id, result); rerenderIfIdle(); });
   return entry;
 }
 function ensureResults() {
@@ -1339,7 +1347,7 @@ const realViews = createRealViews({ state, esc, sportList, badge, ensureHome:ens
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
   ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
 
-const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode,
+const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaAvailability, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode,
   ensureDetalle, generico: datosDeporteGenerico, aviso: bloque => datosAviso(bloque, pageLang()) });
 
 function modalMarkup() {
@@ -1706,7 +1714,7 @@ async function refreshPublicData({ silent = false } = {}) {
   const request = ++publicRequest;
   if (!silent || !publicData) {
     publicData = null;
-    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); detalleCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
+    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); detalleCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaAvailabilityCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
     render();
   }
   const result = await loadPublicData(publicFetch);

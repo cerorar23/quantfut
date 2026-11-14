@@ -171,6 +171,16 @@ def estadisticas(partido_id: int, fecha: date) -> dict | None:
     return datos if isinstance(datos, dict) else None
 
 
+def disponibilidad(partido_id: int) -> dict | None:
+    """Bajas, lesiones y suspensiones del reporte oficial de la NBA para ese partido."""
+    try:
+        datos = _con_cache(f"disponibilidad:{partido_id}", TTL_VIVO_S,
+                           f"/nba/v1/partido/{int(partido_id)}/disponibilidad")
+    except NbaNoDisponible:
+        return None
+    return datos if isinstance(datos, dict) else None
+
+
 # --- Identidad de la URL -------------------------------------------------------------------------
 
 def slug_texto(nombre: str) -> str:
