@@ -1750,6 +1750,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}'**
   String ladderActiveCount(int count);
 
+  /// No description provided for @ladderActiveReto.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalera · Reto activo'**
+  String get ladderActiveReto;
+
   /// Etiqueta bajo el multiplicador del saldo del reto.
   ///
   /// In es, this message translates to:
@@ -1852,11 +1858,23 @@ abstract class AppLocalizations {
   /// **'Falta elegir el siguiente escalón; puede tardar días. El reto sigue vivo.'**
   String get ladderNoteToPick;
 
+  /// No description provided for @ladderOddsAccumulated.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota acumulada'**
+  String get ladderOddsAccumulated;
+
   /// Escalones que faltan para cerrar el reto.
   ///
   /// In es, this message translates to:
   /// **'{remaining, plural, one{falta 1} other{faltan {remaining}}}'**
   String ladderRemaining(int remaining);
+
+  /// No description provided for @ladderRestartHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Si un escalón falla, la escalera vuelve a empezar.'**
+  String get ladderRestartHint;
 
   /// Despliega los escalones de un reto.
   ///
@@ -1875,6 +1893,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Por elegir'**
   String get ladderStatusToPick;
+
+  /// No description provided for @ladderStepOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalón {current} de {goal}'**
+  String ladderStepOf(int current, int goal);
+
+  /// No description provided for @ladderStepProb.
+  ///
+  /// In es, this message translates to:
+  /// **'Prob. de este escalón'**
+  String get ladderStepProb;
 
   /// No description provided for @ladderTitle.
   ///
@@ -2596,11 +2626,23 @@ abstract class AppLocalizations {
   /// **'Hasta {count} parlays · cuota {min}–{max}'**
   String parleyChipLine(int count, String min, String max);
 
+  /// No description provided for @parleyCombOddsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota combinada'**
+  String get parleyCombOddsLabel;
+
   /// No description provided for @parleyDayCount.
   ///
   /// In es, this message translates to:
   /// **'{count, plural, one{{count} parlay} other{{count} parlays}}'**
   String parleyDayCount(int count);
+
+  /// No description provided for @parleyDaySelections.
+  ///
+  /// In es, this message translates to:
+  /// **'Parley del día · {count} selecciones'**
+  String parleyDaySelections(int count);
 
   /// No description provided for @parleyDaySettled.
   ///
@@ -2662,6 +2704,12 @@ abstract class AppLocalizations {
   /// **'{percent} de probabilidad conjunta · {legs, plural, one{{legs} pata} other{{legs} patas}}'**
   String parleyJointProb(String percent, int legs);
 
+  /// No description provided for @parleyJointProbLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Prob. conjunta'**
+  String get parleyJointProbLabel;
+
   /// No description provided for @parleyLoadError.
   ///
   /// In es, this message translates to:
@@ -2685,6 +2733,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Hoy no hay parlays'**
   String get parleyNoneTitle;
+
+  /// No description provided for @parleyNotCertaintyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Una probabilidad no es una certeza: de cada 3 parleys como este se espera acertar 1.'**
+  String get parleyNotCertaintyHint;
 
   /// No description provided for @parleyOddsBetween.
   ///
@@ -3987,6 +4041,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Inicia sesión en Perfil para usar tus monedas.'**
   String get shellSignInForCoins;
+
+  /// No description provided for @shellUnlockAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquear · {cost}'**
+  String shellUnlockAction(Object cost);
 
   /// No description provided for @shellUnlockBody.
   ///

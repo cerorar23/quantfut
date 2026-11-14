@@ -1,7 +1,45 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
-## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F3a completada (`app/rediseno-f3a-inicio`)
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F3b completada (`app/rediseno-f3b-predicciones`)
+
+- **Objetivo de F3b alcanzado:** Pantalla de Predicciones CyberCore implementada en sus 3 secciones (Alta probabilidad, Reto Escalera, Parley) con diseño idéntico a `Predicciones.dc.html` y barra de acción fija inferior con `DESBLOQUEAR · {coste}` (verde) y `VIP` (amarillo).
+- **Alta Probabilidad (`lib/product/live_picks.dart`, `live_widgets.dart`):**
+  - `_TrustCard`: tarjeta de acierto histórico con `CutCornerBorder(cut: 10)`, borde verde sutil, tasa real destacada en mono 28 bold y eliminación de la línea de sello redundante.
+  - `PickTile`: anatomía CyberCore con kicker meta (liga · hora) en mono 11, insignia `GRATIS` (verde) o `VIP` (amarillo), escudos/avatares solapados de 36 dp, nombre del partido en 15 px bold, selección en Rajdhani 17 cian, probabilidad en JetBrains Mono 26 bold cian, cuota al publicar en mono amarillo y enlace al análisis detallado.
+  - `LockedPicksGroup`: contenedor de pronósticos VIP agrupados con `CutCornerBorder(cut: 10)`, borde y acento amarillo, botón de acción `liveButton` con `CutCornerBorder(cut: 8)`, y difuminado `LockedBlur` de selecciones protegidas.
+- **Reto Escalera (`lib/product/live_ladder.dart`):**
+  - `LadderChallengeCard`: tarjeta principal con `CutCornerBorder(cut: 16)`, cabecera con `ESCALERA · RETO ACTIVO` y `ESCALÓN N DE M` en cian mono.
+  - `_StepBar`: barra de segmentos de 10 dp de altura con gap de 4 dp: escalones ganados en verde (`#05FFA1`), escalón en juego en cian (`#00F0FF`) con resplandor `BoxShadow(color: Color(0x9900F0FF), blurRadius: 10)`, y pendientes en color de pista (`#2A2D3A`).
+  - Tarjetas de métrica en rejilla de 2 columnas: `CUOTA ACUMULADA` y `PROB. DE ESTE ESCALÓN` en mono 22 bold cian.
+  - Nota de pie: «Si un escalón falla, la escalera vuelve a empezar».
+  - `LadderHistoryCard` y `_SettledStep`: adaptados con `CutCornerBorder` y paleta CyberCore.
+- **Parley del día (`lib/product/live_parley.dart`):**
+  - `_TicketCard`: contenedor con `CutCornerBorder(cut: 16)`, cabecera con `PARLEY DEL DÍA · N SELECCIONES` y chips `ESCALÓN N` / estado.
+  - `_Leg`: selecciones con etiqueta de deporte mono (FUT, NBA, TEN), equipos, mercado en Rajdhani 14 cian, cuota en mono amarillo, probabilidad y resultado.
+  - Rejilla de métricas de 2 columnas: `PROB. CONJUNTA` (mono 22 bold cian) y `CUOTA COMBINADA` (mono 22 bold).
+  - Nota de probabilidad: «Una probabilidad no es una certeza: de cada 3 parleys como este se espera acertar 1».
+  - Soporte completo para Parley v2 (fútbol, tenis y NBA).
+- **Barra fija inferior de acción (`lib/product/live_shell.dart`):**
+  - Barra persistente sobre `QfBottomNav` visible en la pestaña Predicciones (`tab == 1`):
+    - Botón primario (flex 2): `DESBLOQUEAR · {coste}` con degradado verde `qfGreenGradient`, texto oscuro Rajdhani 15 bold, icono de candado y `CutCornerBorder(cut: 8)`. Desencadena el flujo de desbloqueo o solicitud de monedas si son insuficientes.
+    - Botón secundario (flex 1): `VIP` con borde y texto amarillo sobre fondo amarillo al 8% y `CutCornerBorder(cut: 8)`. Abre la pantalla VIP.
+    - El diálogo de confirmación de desbloqueo migró su acción principal de ámbar a verde (`QfColors.primary`).
+- **Localización (l10n):**
+  - Claves agregadas en los 6 idiomas (`es, en, pt, fr, it, de`): `ladderActiveReto`, `ladderStepOf`, `ladderOddsAccumulated`, `ladderStepProb`, `ladderRestartHint`, `parleyDaySelections`, `parleyJointProbLabel`, `parleyCombOddsLabel`, `parleyNotCertaintyHint`, `shellUnlockAction`.
+- **Suites de pruebas:**
+  - `predictions_ui_test.dart`: 14 pruebas pasando (100% verde).
+  - `live_ladder_test.dart`: 18 pruebas pasando (100% verde).
+  - `ladder_progress_test.dart`: 7 pruebas pasando (100% verde).
+  - `live_parley_test.dart`: 7 pruebas pasando (100% verde).
+  - `pick_labels_test.dart`: 5 pruebas pasando (100% verde).
+  - `sport_predictions_test.dart`: 8 pruebas pasando (100% verde).
+  - `product_navigation_test.dart`: 42 pruebas pasando (100% verde).
+  - `home_screen_test.dart`: 25 pruebas pasando (100% verde).
+  - `l10n_test.dart`: 6 pruebas pasando (100% verde).
+  - Verificación global de la app: 581 pruebas pasando al 100% (`581/581 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F3c — Mercados y detalle (`MarketsDashboard`, `MarketsHero`, `MarketTile`, `MarketTilesGrid`, `MarketScaffold`).
 
 - **Objetivo de F3a alcanzado:** Pantalla de Inicio CyberCore (`HomeTab`, `_CoinsCard`, `_HitCard`, `_TicketCard`), tarjeta destacada del día (`HomeHero`), tira de 5 días (`DayStrip`) y agenda compacta CyberCore (`MatchRow`, `AgendaDay`, `home_sport.dart`) implementados y verificados.
 - **Destacado del día (`lib/product/home_hero.dart`):**

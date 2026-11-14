@@ -983,6 +983,9 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get ladderActiveReto => 'Scalata · Sfida attiva';
+
+  @override
   String get ladderBalance => 'saldo attuale';
 
   @override
@@ -1049,6 +1052,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Manca da scegliere il prossimo gradino; può richiedere giorni. La sfida è ancora viva.';
 
   @override
+  String get ladderOddsAccumulated => 'Quota accumulata';
+
+  @override
   String ladderRemaining(int remaining) {
     String _temp0 = intl.Intl.pluralLogic(
       remaining,
@@ -1060,6 +1066,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get ladderRestartHint =>
+      'Se un gradino fallisce, la scalata ricomincia.';
+
+  @override
   String get ladderShowSteps => 'Mostra i gradini';
 
   @override
@@ -1067,6 +1077,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get ladderStatusToPick => 'Da scegliere';
+
+  @override
+  String ladderStepOf(int current, int goal) {
+    return 'Gradino $current di $goal';
+  }
+
+  @override
+  String get ladderStepProb => 'Prob. di questo gradino';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -1512,6 +1530,9 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get parleyCombOddsLabel => 'Quota combinata';
+
+  @override
   String parleyDayCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1520,6 +1541,11 @@ class AppLocalizationsIt extends AppLocalizations {
       one: '$count multipla',
     );
     return '$_temp0';
+  }
+
+  @override
+  String parleyDaySelections(int count) {
+    return 'Multipla del giorno · $count selezioni';
   }
 
   @override
@@ -1567,6 +1593,9 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get parleyJointProbLabel => 'Prob. congiunta';
+
+  @override
   String get parleyLoadError => 'Impossibile caricare la Multipla.';
 
   @override
@@ -1579,6 +1608,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get parleyNoneTitle => 'Oggi non ci sono multiple';
+
+  @override
+  String get parleyNotCertaintyHint =>
+      'Una probabilità non è una certezza: su ogni 3 multiple di questo tipo si prevede di azzeccarne 1.';
 
   @override
   String parleyOddsBetween(String min, String max) {
@@ -2439,6 +2472,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get shellSignInForCoins =>
       'Accedi da Profilo per usare le tue monete.';
+
+  @override
+  String shellUnlockAction(Object cost) {
+    return 'Sblocca · $cost';
+  }
 
   @override
   String shellUnlockBody(Object cost) {

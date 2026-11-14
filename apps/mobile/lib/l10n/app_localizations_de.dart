@@ -984,6 +984,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get ladderActiveReto => 'Leiter · Aktive Herausforderung';
+
+  @override
   String get ladderBalance => 'aktuelles Guthaben';
 
   @override
@@ -1050,6 +1053,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die nächste Stufe steht noch aus; das kann Tage dauern. Die Challenge läuft weiter.';
 
   @override
+  String get ladderOddsAccumulated => 'Akkumulierte Quote';
+
+  @override
   String ladderRemaining(int remaining) {
     String _temp0 = intl.Intl.pluralLogic(
       remaining,
@@ -1061,6 +1067,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get ladderRestartHint =>
+      'Wenn eine Stufe fehlschlägt, beginnt die Leiter von vorn.';
+
+  @override
   String get ladderShowSteps => 'Stufen anzeigen';
 
   @override
@@ -1068,6 +1078,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ladderStatusToPick => 'Auswahl offen';
+
+  @override
+  String ladderStepOf(int current, int goal) {
+    return 'Stufe $current von $goal';
+  }
+
+  @override
+  String get ladderStepProb => 'Wahrsch. dieser Stufe';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -1502,6 +1520,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get parleyCombOddsLabel => 'Kombi-Quote';
+
+  @override
   String parleyDayCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1510,6 +1531,11 @@ class AppLocalizationsDe extends AppLocalizations {
       one: '$count Kombiwette',
     );
     return '$_temp0';
+  }
+
+  @override
+  String parleyDaySelections(int count) {
+    return 'Kombi des Tages · $count Auswahlen';
   }
 
   @override
@@ -1557,6 +1583,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get parleyJointProbLabel => 'Gemeinsame Wahrsch.';
+
+  @override
   String get parleyLoadError => 'Die Kombiwette konnte nicht geladen werden.';
 
   @override
@@ -1569,6 +1598,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get parleyNoneTitle => 'Heute gibt es keine Kombiwetten';
+
+  @override
+  String get parleyNotCertaintyHint =>
+      'Eine Wahrscheinlichkeit ist keine Gewissheit: Bei je 3 solchen Kombis wird erwartet, 1 zu treffen.';
 
   @override
   String parleyOddsBetween(String min, String max) {
@@ -2429,6 +2462,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get shellSignInForCoins =>
       'Melde dich im Profil an, um deine Münzen zu nutzen.';
+
+  @override
+  String shellUnlockAction(Object cost) {
+    return 'Freischalten · $cost';
+  }
 
   @override
   String shellUnlockBody(Object cost) {

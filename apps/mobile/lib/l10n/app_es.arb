@@ -824,6 +824,7 @@
       }
     }
   },
+  "ladderActiveReto": "Escalera · Reto activo",
   "ladderBalance": "saldo actual",
   "@ladderBalance": {
     "description": "Etiqueta bajo el multiplicador del saldo del reto."
@@ -914,6 +915,7 @@
   "@ladderNoteToPick": {
     "description": "Explica que a un reto le falta elegir el siguiente escalón y sigue activo."
   },
+  "ladderOddsAccumulated": "Cuota acumulada",
   "ladderRemaining": "{remaining, plural, one{falta 1} other{faltan {remaining}}}",
   "@ladderRemaining": {
     "description": "Escalones que faltan para cerrar el reto.",
@@ -923,6 +925,7 @@
       }
     }
   },
+  "ladderRestartHint": "Si un escalón falla, la escalera vuelve a empezar.",
   "ladderShowSteps": "Ver escalones",
   "@ladderShowSteps": {
     "description": "Despliega los escalones de un reto."
@@ -935,6 +938,18 @@
   "@ladderStatusToPick": {
     "description": "Estado de un reto al que le falta elegir el siguiente escalón."
   },
+  "ladderStepOf": "Escalón {current} de {goal}",
+  "@ladderStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "ladderStepProb": "Prob. de este escalón",
   "ladderTitle": "Reto #{id} · {steps, plural, one{{steps} escalón} other{{steps} escalones}}",
   "@ladderTitle": {
     "placeholders": {
@@ -1323,8 +1338,17 @@
       }
     }
   },
+  "parleyCombOddsLabel": "Cuota combinada",
   "parleyDayCount": "{count, plural, one{{count} parlay} other{{count} parlays}}",
   "@parleyDayCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parleyDaySelections": "Parley del día · {count} selecciones",
+  "@parleyDaySelections": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -1367,6 +1391,7 @@
       }
     }
   },
+  "parleyJointProbLabel": "Prob. conjunta",
   "parleyLoadError": "No se pudo cargar el Parley.",
   "parleyNoHistory": "Aún no hay historial de parlays. Aparecerá aquí cuando se liquide el primero.",
   "@parleyNoHistory": {
@@ -1374,6 +1399,7 @@
   },
   "parleyNoneBody": "El modelo no publica un parley si no encuentra uno dentro de las reglas.",
   "parleyNoneTitle": "Hoy no hay parlays",
+  "parleyNotCertaintyHint": "Una probabilidad no es una certeza: de cada 3 parleys como este se espera acertar 1.",
   "parleyOddsBetween": "Cuota entre {min} y {max}",
   "@parleyOddsBetween": {
     "placeholders": {
@@ -2243,6 +2269,14 @@
   },
   "shellNewAlert": "Nuevo aviso de QuantFut",
   "shellSignInForCoins": "Inicia sesión en Perfil para usar tus monedas.",
+  "shellUnlockAction": "Desbloquear · {cost}",
+  "@shellUnlockAction": {
+    "placeholders": {
+      "cost": {
+        "type": "Object"
+      }
+    }
+  },
   "shellUnlockBody": "Se descontarán {cost} monedas de tu saldo. El acceso corresponde a este pronóstico.",
   "@shellUnlockBody": {
     "placeholders": {

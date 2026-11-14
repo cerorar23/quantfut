@@ -420,7 +420,7 @@ class _ProductShellState extends State<ProductShell>
       context: context,
       builder: (c) => qfAlert(
         icon: Icons.lock_open,
-        iconColor: QfColors.cta,
+        iconColor: QfColors.primary,
         title: context.l10n.shellUnlockTitle,
         content: Text(context.l10n.shellUnlockBody(cost ?? '—')),
         actions: [
@@ -429,10 +429,9 @@ class _ProductShellState extends State<ProductShell>
             onPressed: () => Navigator.pop(c, false),
             child: Text(context.l10n.commonCancel),
           ),
-          // La única acción ámbar del diálogo.
           FilledButton(
             key: const ValueKey('unlock-confirm'),
-            style: qfFilled(QfColors.cta),
+            style: qfFilled(QfColors.primary),
             onPressed: () => Navigator.pop(c, true),
             child: Text(context.l10n.commonConfirm),
           ),
@@ -773,6 +772,14 @@ class _ProductShellState extends State<ProductShell>
     );
   }
 
+  JsonMap? get _firstLockedPick {
+    final list = jsonRows(data?['predicciones']);
+    for (final p in list) {
+      if (p['locked'] == true) return p;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) => Theme(
     data: qfTheme(),
@@ -857,44 +864,169 @@ class _ProductShellState extends State<ProductShell>
               ),
             )
           : mainBody(),
-      bottomNavigationBar: QfBottomNav(
-        currentIndex: tab,
-        onTap: (i) {
-          if (i == tab) return;
-          final leavingCoins = tab == 3;
-          setState(() => tab = i);
-          if (leavingCoins) unawaited(loadCoins()); // el saldo pudo cambiar allí
-          unawaited(
-            services?.screen(
-              const ['home', 'predictions', 'markets', 'rewards', 'profile'][i],
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (tab == 1)
+            _PicksBottomBar(
+              cost: (jsonMap(data?['rewards'])['unlock_cost'] as num?)?.toInt() ?? 40,
+              onUnlock: () {
+                final pick = _firstLockedPick;
+                if (pick != null) {
+                  unlock(pick);
+                } else if (!api.signedIn) {
+                  liveNotice(context, context.l10n.shellSignInForCoins);
+                  setState(() => tab = 4);
+                } else {
+                  needCoins();
+                }
+              },
+              onVip: vip,
             ),
-          );
-        },
-        items: [
-          QfBottomNavItem(
-            icon: const Icon(Icons.grid_view),
-            label: context.l10n.navHome,
-          ),
-          QfBottomNavItem(
-            icon: const Icon(Icons.track_changes),
-            label: context.l10n.navPicks,
-          ),
-          QfBottomNavItem(
-            icon: const Icon(Icons.insights),
-            label: context.l10n.navMarkets,
-          ),
-          QfBottomNavItem(
-            icon: const Icon(Icons.toll),
-            label: context.l10n.navCoins,
-          ),
-          QfBottomNavItem(
-            icon: const Icon(Icons.person_outline),
-            label: context.l10n.navProfile,
+          QfBottomNav(
+            currentIndex: tab,
+            onTap: (i) {
+              if (i == tab) return;
+              final leavingCoins = tab == 3;
+              setState(() => tab = i);
+              if (leavingCoins) unawaited(loadCoins()); // el saldo pudo cambiar allí
+              unawaited(
+                services?.screen(
+                  const ['home', 'predictions', 'markets', 'rewards', 'profile'][i],
+                ),
+              );
+            },
+            items: [
+              QfBottomNavItem(
+                icon: const Icon(Icons.grid_view),
+                label: context.l10n.navHome,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.track_changes),
+                label: context.l10n.navPicks,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.insights),
+                label: context.l10n.navMarkets,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.toll),
+                label: context.l10n.navCoins,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.person_outline),
+                label: context.l10n.navProfile,
+              ),
+            ],
           ),
         ],
       ),
     ),
   );
+}
+
+class _PicksBottomBar extends StatelessWidget {
+  const _PicksBottomBar({
+    required this.cost,
+    required this.onUnlock,
+    required this.onVip,
+  });
+
+  final int cost;
+  final VoidCallback onUnlock;
+  final VoidCallback onVip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Container(
+      decoration: const BoxDecoration(
+        color: QfColors.surface,
+        border: Border(top: BorderSide(color: QfColors.border)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 48,
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CutCornerBorder(cut: 8),
+                  clipBehavior: Clip.antiAlias,
+                  child: Ink(
+                    decoration: const BoxDecoration(
+                      gradient: qfGreenGradient,
+                    ),
+                    child: InkWell(
+                      onTap: onUnlock,
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.lock_open,
+                              size: 18,
+                              color: Color(0xFF03110F),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.shellUnlockAction(cost),
+                              style: const TextStyle(
+                                fontFamily: qfDisplay,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                letterSpacing: 1.2,
+                                color: Color(0xFF03110F),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 1,
+              child: SizedBox(
+                height: 48,
+                child: Material(
+                  color: const Color(0x14FCEE0A),
+                  shape: const CutCornerBorder(
+                    cut: 8,
+                    side: BorderSide(color: Color(0x80FCEE0A)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: onVip,
+                    child: const Center(
+                      child: Text(
+                        'VIP',
+                        style: TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          letterSpacing: 1.2,
+                          color: QfColors.yellow,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class QfBottomNavItem {

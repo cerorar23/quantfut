@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
+import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'sport_images.dart';
 
@@ -69,8 +70,8 @@ Widget liveButton(
       backgroundColor: color,
       foregroundColor: color == QfColors.yellow ? QfColors.onYellow : QfColors.onGreen,
       minimumSize: const Size(44, 48),
-      padding: const EdgeInsets.all(14),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      shape: const CutCornerBorder(cut: 8),
     ),
     onPressed: action,
     child: Text(
@@ -78,7 +79,8 @@ Widget liveButton(
       style: const TextStyle(
         fontFamily: qfDisplay,
         fontWeight: FontWeight.w700,
-        letterSpacing: 1.1,
+        fontSize: 15,
+        letterSpacing: 0.8,
       ),
     ),
   ),
