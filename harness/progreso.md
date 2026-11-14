@@ -1,6 +1,18 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Inicio del Rediseño CyberCore de la app Flutter (Fase F0 completada)
+
+- **Planes de referencia:** `apps/mobile/docs/PLAN_REDISENO_CYBERCORE_20261114.md` (especificación de diseño, tokens, widgets y contratos) y `apps/mobile/docs/PLAN_REDISENO_FASES_20261114.md` (fases F0 a F8 con criterios de aceptación y dependencias).
+- **Referencia visual:** 36 capturas de pantalla aprobadas por el titular en `apps/mobile/docs/render_cybercore_20261114/capturas/` y especificación numérica dp en `pantallas/*.dc.html`.
+- **Línea base medida (F0):**
+  - Entorno: Flutter 3.47.7 (Dart 3.13.5) en Windows.
+  - `flutter analyze --no-pub`: 0 avisos / 0 errores (limpio).
+  - `flutter test --no-pub`: 545 pruebas pasando (545/545 passed).
+  - Fixtures de datos reales del render copiadas a `apps/mobile/test/fixtures/` para pruebas unitarias de las fichas deportivas (`ficha_futbol_real.json`, `nba_cartelera_real.json`, `nba_estadisticas_real.json`, `tenis_estadisticas_real.json`, `tenis_evento_real.json`).
+  - Verificación del script de traducciones `apps/mobile/tool/l10n_add.py` y regla de 6 idiomas (es, en, pt, fr, it, de).
+- **Siguiente paso:** Fase F1 (tokens CyberCore, fuentes Exo 2 / JetBrains Mono Bold, widgets base y suite de galería a 360 dp).
+
 ## 13-nov-2026 · Worker reconstruido desde `main` (`quantfut-worker:a54955d2`): escalera y parley fallaban con fútbol
 
 - **Causa:** mezcla de versiones en el worker. Sobre la imagen del 6-nov se habían copiado archivos sueltos; `escalera_datos.py` (nuevo) llamaba a `alta_prob_datos._snapshot()` con un cuarto argumento que el `alta_prob_datos.py` del 31-oct no acepta. Fallaban el reto escalera y el parley del día en el job de las 09:00 y, cada 5 minutos, el reemplazo intradía. Solo con partidos de fútbol en la ventana: la pausa de selecciones lo tapó del 9 al 12.

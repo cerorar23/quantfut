@@ -3338,3 +3338,28 @@ Implementado en `feat/control-configuracion-web`:
   - Traductores dinámicos (`idiomas.registrar_traductor`) en `rutas_web.py` y `legal.py`: las páginas SPA o legales aún sin traducir no emiten `hreflang` ni entran en `sitemap-paginas.xml` hasta tener contenido en PostgreSQL.
   - Pruebas locales: `npm --prefix frontend run check` (`238/238`), `tests/test_web_config.py` (`10 passed, 2 skipped` sin PG local) y `scripts/test_local_windows.ps1` (`2671 passed, 130 skipped`).
 - [x] **Desplegado el 11-nov 21:05 UTC (imagen `quantfut-api:f73f7df2`, `db/110_web_config.sql`, `DEPLOYS.md`):** aplicadas la migración (`es: 22`, `en: 10`, `pt: 10` sembradas conservando `en=preview` y `pt=off`), imagen limpia `quantfut-api:f73f7df2` (`rutas: 292`) y copia de `frontend/{app.js,rutas.js,conversion.css}`; verificado dominio real (`/`..`/verificacion/`, `/web/config`, `/robots.txt`, `/en/*` `noindex`, `/pt/*` `404`, Cloudflare Access en `/control/configuracion`, `OK: 365 lotes verificados`). Queda únicamente en manos del titular rotar la clave APIMart compartida en chat y guardarla en `/control/configuracion` (o `APIMART_API_KEY` en `.env`) cuando quiera activar la traducción automática.
+
+## Rediseño CyberCore de la app (14-nov-2026)
+Plan: `apps/mobile/docs/PLAN_REDISENO_CYBERCORE_20261114.md` y `apps/mobile/docs/PLAN_REDISENO_FASES_20261114.md`.
+Referencia visual: `apps/mobile/docs/render_cybercore_20261114/` (36 láminas).
+- [x] **F0 · Preparación (14-nov-2026):** worktree `qf-app-rediseno`, línea base medida (545 tests pasando, `flutter analyze` limpio), fixtures reales copiadas (`ficha_futbol_real.json`, etc.), tareas y progreso inicializados.
+- [ ] **F1 · Fundaciones:** tokens `QfColors`, tipografías Exo 2 y JetBrains Mono Bold, widgets base (`QfButton`, `QfTabs`, `QfCard`, etc.) y pruebas (`qf_gallery_test`).
+- [ ] **F2 · Cáscara:** cabecera 56 dp, `QfBottomNav` 64 dp con `navPicks`, selector de deportes y `PredictionsSwitcher`.
+- [ ] **F3a · Inicio:** destacado del día fuerte, tarjetas de acierto y monedas, franja 5 días y agenda.
+- [ ] **F3b · Predicciones:** alta probabilidad, escalera (5 segmentos) y parley con pie fijo de desbloqueo.
+- [ ] **F3c · Mercados y detalle:** hero radar, rejilla 2 columnas con anillos de familia y detalle `MarketScaffold`.
+- [ ] **F3d · Coins y Movimientos:** hero de saldo amarillo, asistencia con 7 casillas y nueva pantalla `Movimientos`.
+- [ ] **F3e · Perfil, Preferencias, Avisos, Menú y Guía:** cuenta, mis deportes con switch y orden, hoja ☰ y guía ilustrada.
+- [ ] **F4a · Contenedor de ficha:** `MatchShell` unificado para fútbol, NBA y tenis.
+- [ ] **F4b · Pronóstico y Props NBA:** ficha pronóstico y nueva pestaña Props con filtro por estadística.
+- [ ] **F4c · Análisis de fútbol:** resumen "cómo llegan" con radar y comparativa, forma, cara a cara y tabla.
+- [ ] **F4d · Análisis de NBA:** probabilidad, comparativa 7 filas, forma con margen, H2H, clasificación 15 casillas y disponibilidad.
+- [ ] **F4e · Análisis de tenis:** probabilidad con fotos 76 dp, forma, superficie, H2H y modelo con barras de juegos.
+- [ ] **F4f · Alertas y alineaciones:** filas de baja con motivo traducido y `QfPitch` con alineaciones tácticas.
+- [ ] **F4g · H2H:** cara a cara con estado "primer duelo" (0-0).
+- [ ] **F5a · Desbloquear:** `QfBottomSheet` con saldo y sin saldo (atajos ganar monedas y salida VIP).
+- [ ] **F5b · VIP:** 3 planes radio, prueba de ayer + 7 días, comparación gratis vs VIP y pie fijo con CTA verde.
+- [ ] **F5c · Idioma, Bienvenida y Acceso:** selección de idioma con órbitas, 5 pantallas de bienvenida ilustradas y acceso Google.
+- [ ] **F5d · Actualización y Privacidad:** diálogos `QfDialogCard` para actualización obligatoria/opcional y privacidad.
+- [ ] **F6 · Imágenes (cliente):** retratos redondos con aro cian 2 dp, escudos/logos cuadrados sin recorte, catálogo e iniciales.
+- [ ] **F8 · Cierre y release:** pasada completa l10n (6 idiomas), retiro de andamios, versión `1.2.0+13` y QA final.
