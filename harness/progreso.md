@@ -1,6 +1,13 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Ingesto de PropLine: doble oportunidad en todos sus formatos y 19 alias que faltaban (`quantfut-worker:8613290c`)
+
+- **Causa:** dos pérdidas silenciosas entre el archivo de PropLine (que sí traía las cuotas, con Pinnacle) y `odds_snapshots`. El ingesto no leía la doble oportunidad de las casas que la nombran «X / Draw» o «Draw Or X», y 19 nombres de clubes no tenían alias. Mi diagnóstico previo («PropLine no cubre esas ligas») era falso: el archivo guarda LaLiga 2, Serie B, Allsvenskan y Suiza cada 6 h desde el 25-oct; la captura cada 6 h es de las ligas no prioritarias (presupuesto de 4.500 peticiones/día).
+- **Decisión clave:** el parser lee la estructura del mercado (tres resultados, uno sin empate) y asigna el local por parecido de nombre con el evento, con margen y mínimo; ante la duda no escribe fila. Es preferible perder una fila que invertir 1X y X2: una asignación cruzada publicaría una probabilidad al revés con cuota de otro lado. Se validó con todo el archivo real contra el 1X2 de la misma casa, no solo con ejemplos.
+- **Pendiente de decisión (no tocado):** el límite del ajuste de goles (`MAX_RESIDUO_AJUSTE = 0,01`, de 5-oct sin medición documentada) deja sin candidatos de goles al 36 % de los partidos con cuotas; con 0,02 la línea del 80 % pasaría de 65 % a 96 % de partidos con pick. El acierto de los candidatos con residuo 0,01–0,02 fue 76,7 % frente a 79,8 % de los de dentro (prometido 77,6 %/77,7 %), con 12 días de datos y candidatos correlacionados: no concluye. Hace falta la prueba formal (`eval/alta_prob_calibracion.py`) antes de cambiarlo.
+- **Sin verificar:** el job diario de las 09:00 UTC del 14-nov con estas filas.
+
 ## 13-nov-2026 · Worker reconstruido desde `main` (`quantfut-worker:a54955d2`): escalera y parley fallaban con fútbol
 
 - **Causa:** mezcla de versiones en el worker. Sobre la imagen del 6-nov se habían copiado archivos sueltos; `escalera_datos.py` (nuevo) llamaba a `alta_prob_datos._snapshot()` con un cuarto argumento que el `alta_prob_datos.py` del 31-oct no acepta. Fallaban el reto escalera y el parley del día en el job de las 09:00 y, cada 5 minutos, el reemplazo intradía. Solo con partidos de fútbol en la ventana: la pausa de selecciones lo tapó del 9 al 12.

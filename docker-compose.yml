@@ -58,7 +58,7 @@ services:
 
   worker:
     build: .
-    image: quantfut-worker:a54955d2
+    image: quantfut-worker:8613290c
     env_file: .env
     environment:
       # Registro público de la cadena (comprometer-revelar, 18-oct).
