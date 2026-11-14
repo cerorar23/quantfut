@@ -1875,6 +1875,9 @@
   },
   "rewardsInviteTitle": "Invita a tus amigos",
   "rewardsInviterCode": "Código de quien te invitó",
+  "rewardsLedgerBalance": "Saldo",
+  "rewardsLedgerEarlier": "Anteriores",
+  "rewardsLedgerEarned": "Ganadas",
   "rewardsLedgerEmpty": "Todavía no hay movimientos.",
   "rewardsLedgerLess": "Ver menos",
   "@rewardsLedgerLess": {
@@ -1884,6 +1887,7 @@
   "@rewardsLedgerMore": {
     "description": "Despliega más movimientos."
   },
+  "rewardsLedgerSpent": "Gastadas",
   "rewardsLedgerTitle": "Mis movimientos",
   "rewardsMissing": "{missing, plural, one{Falta {missing} moneda para tu próximo desbloqueo.} other{Faltan {missing} monedas para tu próximo desbloqueo.}}",
   "@rewardsMissing": {

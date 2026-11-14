@@ -3568,6 +3568,24 @@ abstract class AppLocalizations {
   /// **'Código de quien te invitó'**
   String get rewardsInviterCode;
 
+  /// No description provided for @rewardsLedgerBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldo'**
+  String get rewardsLedgerBalance;
+
+  /// No description provided for @rewardsLedgerEarlier.
+  ///
+  /// In es, this message translates to:
+  /// **'Anteriores'**
+  String get rewardsLedgerEarlier;
+
+  /// No description provided for @rewardsLedgerEarned.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganadas'**
+  String get rewardsLedgerEarned;
+
   /// No description provided for @rewardsLedgerEmpty.
   ///
   /// In es, this message translates to:
@@ -3585,6 +3603,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver más'**
   String get rewardsLedgerMore;
+
+  /// No description provided for @rewardsLedgerSpent.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastadas'**
+  String get rewardsLedgerSpent;
 
   /// No description provided for @rewardsLedgerTitle.
   ///

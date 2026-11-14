@@ -2124,6 +2124,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get rewardsInviterCode => 'Código de quien te invitó';
 
   @override
+  String get rewardsLedgerBalance => 'Saldo';
+
+  @override
+  String get rewardsLedgerEarlier => 'Anteriores';
+
+  @override
+  String get rewardsLedgerEarned => 'Ganadas';
+
+  @override
   String get rewardsLedgerEmpty => 'Todavía no hay movimientos.';
 
   @override
@@ -2131,6 +2140,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rewardsLedgerMore => 'Ver más';
+
+  @override
+  String get rewardsLedgerSpent => 'Gastadas';
 
   @override
   String get rewardsLedgerTitle => 'Mis movimientos';
