@@ -113,7 +113,7 @@ def football_rows(event, match_id, observed, kickoff, tag, allowed_books=None):
             continue
         market, side = q["market"], q["side"]
         selection = None
-        if market in ("h2h", "spreads") and q["team"] is None:
+        if market in ("h2h", "spreads", "draw_no_bet") and q["team"] is None:  # draw_no_bet: sin empate, solo local/visitante
             if side in (("home", "away", "draw") if market == "h2h" else ("home", "away")):
                 selection = side
         elif market in ("totals", "total_corners", "total_cards", "team_corners"):

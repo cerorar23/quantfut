@@ -26,7 +26,11 @@ LINEAS = frozenset({"main", "alternate"})      # los «milestone» (10+ puntos) 
 PERIODOS = {None: 0, "q1": 1, "q2": 2, "q3": 3, "q4": 4, "h1": 101, "h2": 102}
 JUGADOR = frozenset({"player_points", "player_rebounds", "player_assists", "player_threes", "player_steals",
                      "player_blocks", "player_points_rebounds_assists", "player_points_rebounds",
-                     "player_points_assists", "player_rebounds_assists"})
+                     "player_points_assists", "player_rebounds_assists",
+                     # 15-nov-2026: mercados que el archivo de PropLine ya traía y no se guardaban (cobertura de props).
+                     "player_turnovers", "player_blocks_steals", "player_offensive_rebounds", "player_defensive_rebounds",
+                     "player_field_goals_made", "player_field_goals_attempted", "player_free_throws_made",
+                     "player_free_throws_attempted", "player_threes_attempted", "player_twos_made", "player_twos_attempted"})
 ESPECIALES = {"player_double_double": "si", "player_triple_double": "si", "player_first_basket": "primero"}
 HORIZONTE = timedelta(hours=48)
 CIERRE = timedelta(minutes=60)
