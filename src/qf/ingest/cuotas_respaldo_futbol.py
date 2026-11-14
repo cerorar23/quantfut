@@ -268,9 +268,11 @@ def nivel4(cli: "crd.Cliente", pend: list[dict], entries: dict, intentos: dict, 
 
 def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, salida=print, key=None, sp_key=None,
            sp_call=None, sp_raiz=None, cache_path=None, info=None, lista_huecos=None, regiones=None, rd_key=None,
-           rd_call=None, rd_sleep=None, resolutor=None) -> dict:
+           rd_call=None, rd_sleep=None, resolutor=None, suelo_creditos=cr.SUELO) -> dict:
     now = now or datetime.now(timezone.utc)
-    key = key if key is not None else getattr(settings, "odds_api_respaldo_key", None)
+    if key is None:
+        key, gratis = cr.resolver_clave(getattr(settings, "odds_api_respaldo_key", None))
+        suelo_creditos = cr.SUELO_GRATIS if gratis else suelo_creditos
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     cache = ruta_cache(cache_path if cache_path is not None else None)
     rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
@@ -289,7 +291,7 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
         return {"estado": "seco" if not ejecutar else "sin_huecos", "huecos": len(pend)}
     intentos = cr.leer_intentos(cache)
     n2 = n3 = 0
-    cli = cr.Cliente(get or cr._transporte(key or ""), cr.Presupuesto(max_creditos), regiones or settings.odds_api_regions)
+    cli = cr.Cliente(get or cr._transporte(key or ""), cr.Presupuesto(max_creditos, suelo=suelo_creditos), regiones or settings.odds_api_regions)
     if key and max_creditos > 0:
         try:
             cli.saldo()
