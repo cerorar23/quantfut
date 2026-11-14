@@ -293,3 +293,51 @@ def test_auto_saldo_bajo_el_suelo_alerta(entorno, monkeypatch):
     alertas = []
     llama(cache, Red(saldo=505), alertas)
     assert len(alertas) == 1
+
+
+# --- clave gratuita de respaldo (plan de pago vencido) --------------------------------------------------------------
+
+def _sondeo(status, restante=None):
+    return lambda path, params: (status, {} if restante is None else {"x-requests-remaining": str(restante)}, [])
+
+
+def test_resolver_clave_sin_clave_gratuita_no_cambia_nada(monkeypatch):
+    monkeypatch.setattr(cr, "settings", SimpleNamespace(odds_api_gratis_key=None))
+    assert cr.resolver_clave("pago") == ("pago", False)
+    assert cr.resolver_clave(None) == (None, False)
+
+
+def test_resolver_clave_usa_la_de_pago_mientras_responda(monkeypatch):
+    monkeypatch.setattr(cr, "settings", SimpleNamespace(odds_api_gratis_key="gratis"))
+    assert cr.resolver_clave("pago", _sondeo(200, 90_000)) == ("pago", False)
+
+
+@pytest.mark.parametrize("sondeo", [_sondeo(401), _sondeo(429, 0), _sondeo(200, 0)])
+def test_resolver_clave_pasa_a_la_gratuita_si_la_de_pago_falla(monkeypatch, sondeo):
+    monkeypatch.setattr(cr, "settings", SimpleNamespace(odds_api_gratis_key="gratis"))
+    assert cr.resolver_clave("pago", sondeo) == ("gratis", True)
+
+
+def test_resolver_clave_pasa_a_la_gratuita_sin_red_o_sin_clave_de_pago(monkeypatch):
+    monkeypatch.setattr(cr, "settings", SimpleNamespace(odds_api_gratis_key="gratis"))
+
+    def rota(path, params):
+        raise OSError("sin red")
+
+    assert cr.resolver_clave("pago", rota) == ("gratis", True)
+    assert cr.resolver_clave(None) == ("gratis", True)
+
+
+def test_presupuesto_gratuito_no_tiene_suelo_de_500():
+    p = cr.Presupuesto(100, saldo=480, suelo=cr.SUELO_GRATIS)
+    p.cobra(14)  # con el suelo de pago (500) esto paraba
+    with pytest.raises(cr.Parar):
+        cr.Presupuesto(100, saldo=480).cobra(14)
+
+
+def test_auto_con_clave_de_pago_vencida_usa_el_tope_diario_gratuito(entorno, monkeypatch):
+    archive, cs, cache = entorno
+    activa(monkeypatch, cache, odds_api_respaldo_key="pago", odds_api_gratis_key="gratis", cuotas_respaldo_diario_gratis=0)
+    red = Red()
+    caida = lambda path, params: (401, {}, None)  # noqa: E731
+    assert cr.auto(get=caida, now=NOW)["estado"] == "tope_diario" and red.llamadas == []

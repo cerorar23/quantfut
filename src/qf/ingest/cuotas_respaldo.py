@@ -54,7 +54,8 @@ ESPERA_REINTENTO = timedelta(hours=1)
 SP_DEPORTE = {"nba": "basketball", "tenis": "tennis"}
 SP_MERCADOS = ("winner", "game_total", "games_total")
 RD_MERCADOS = ("winner", "game_total", "games_total", "games_handicap")
-SUELO = 500                         # no gastar si el saldo quedaría por debajo
+SUELO = 500                         # no gastar si el saldo quedaría por debajo (plan de pago)
+SUELO_GRATIS = 0                    # el plan gratuito (500/mes) no tiene colchón: se gasta hasta el tope diario
 MAX_CREDITOS = 300
 TOLERANCIA = timedelta(minutes=30)  # comienzo del evento de The Odds API frente al sellado
 VIGENCIA = timedelta(days=5)        # las entradas más viejas se podan al escribir
@@ -205,17 +206,37 @@ def _transporte(key: str) -> Callable:
     return get
 
 
+def resolver_clave(key, get=None):
+    """(clave, es_gratis). Con clave gratuita configurada, la de pago se usa mientras responda 200 y tenga saldo
+    (lectura /v4/sports, no cuesta créditos); si falla (401/429, plan vencido o saldo 0), pasa a la gratuita."""
+    gratis = getattr(settings, "odds_api_gratis_key", None)
+    if not gratis:
+        return key, False
+    if gratis == key:
+        return key, True
+    if key:
+        try:
+            status, headers, _ = (get or _transporte(key))("/v4/sports", {})
+            h = {str(k).lower(): v for k, v in (headers or {}).items()}
+            if status == 200 and int(float(h.get("x-requests-remaining", 1))) > 0:
+                return key, False
+        except Exception:  # noqa: BLE001 — sin red o respuesta rara: cae a la gratuita
+            log.warning("respaldo de cuotas: no se pudo comprobar la clave de pago; se usa la gratuita")
+    return gratis, True
+
+
 @dataclass
 class Presupuesto:
     maximo: int = MAX_CREDITOS
     gastado: int = 0
     saldo: int | None = None   # x-requests-remaining de la última respuesta
+    suelo: int = SUELO
 
     def cobra(self, coste: int) -> None:
         if self.gastado + coste > self.maximo:
             raise Parar(f"presupuesto: {self.gastado}+{coste} > {self.maximo}")
-        if self.saldo is not None and self.saldo - coste < SUELO:
-            raise Parar(f"saldo {self.saldo} - {coste} bajo el suelo {SUELO}")
+        if self.saldo is not None and self.saldo - coste < self.suelo:
+            raise Parar(f"saldo {self.saldo} - {coste} bajo el suelo {self.suelo}")
 
     def registra(self, headers: Mapping, coste: int) -> None:
         h = {str(k).lower(): v for k, v in (headers or {}).items()}
@@ -614,8 +635,11 @@ def _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now):
 
 
 def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", regiones="us", get=None, now=None,
-           salida=print, key=None, cache_path=None, info=None, sp_key=None, sp_call=None, sp_raiz=None, rd_key=None, rd_call=None, rd_sleep=None) -> int:
-    key = key if key is not None else settings.odds_api_respaldo_key
+           salida=print, key=None, cache_path=None, info=None, sp_key=None, sp_call=None, sp_raiz=None, rd_key=None, rd_call=None, rd_sleep=None,
+           suelo_creditos=SUELO) -> int:
+    if key is None:
+        key, gratis = resolver_clave(settings.odds_api_respaldo_key)
+        suelo_creditos = SUELO_GRATIS if gratis else suelo_creditos
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
     cache_path = cache_path if cache_path is not None else settings.cuotas_respaldo_cache
@@ -638,7 +662,7 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
         huecos += huecos_tenis(archive, feed, ct.load_sealed(settings.tennis_sealed_dir, ids), cache, now=now)
     huecos = [h for h in huecos if h.sellado <= now]
     salida(f"huecos: {sum(len(h.items) for h in huecos)} filas en {len(huecos)} eventos; "
-           f"coste estimado ~{coste_estimado(huecos, regiones)} créditos (tope {max_creditos}, suelo {SUELO})")
+           f"coste estimado ~{coste_estimado(huecos, regiones)} créditos (tope {max_creditos}, suelo {suelo_creditos})")
     # En el modo seco se lista todo; en las pasadas reales (cron cada 10 min, sin rotación de registro) solo los 10 primeros,
     # los partidos futuros antes, para que el registro no crezca ~1,7 MB al día.
     visibles = huecos if not ejecutar else sorted(huecos, key=lambda h: (h.comienzo <= now, h.sellado))[:10]
@@ -652,7 +676,7 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
     if not huecos:
         return 0  # sin hueco no hay ni una petición (ni siquiera la lectura gratuita del saldo)
     intentos, entries, nuevas, suelo = leer_intentos(cache_path), dict(cache), 0, False
-    cli = Cliente(get or _transporte(key or ""), Presupuesto(max_creditos), regiones)
+    cli = Cliente(get or _transporte(key or ""), Presupuesto(max_creditos, suelo=suelo_creditos), regiones)
     # Nivel 2: The Odds API (histórico a la hora del sello). Se salta sin clave, sin presupuesto o con los intentos
     # agotados; lo que quede sin resolver pasa al nivel 3, también cuando el saldo cae bajo el suelo a mitad de pasada.
     pend2 = []
@@ -712,14 +736,14 @@ def _gasto_hoy(path: Path, now: datetime) -> int:
         return 0
 
 
-def _futbol(*, get, now, cache_path, key, sp_key, rd_key=None, kw, tope, estado, hoy) -> dict:
+def _futbol(*, get, now, cache_path, key, sp_key, rd_key=None, kw, tope, estado, hoy, suelo_creditos=SUELO) -> dict:
     """Fútbol (cuotas de consulta): comparte clave, suelo y tope diario con NBA/tenis. Nunca lanza."""
     try:
         from qf.ingest import cuotas_respaldo_futbol as rf
         out = rf.correr(ejecutar=True, max_creditos=tope, get=get, now=now, salida=log.info, key=key, sp_key=sp_key,
                         sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"), cache_path=cache_path,
                         lista_huecos=kw.get("huecos_futbol"), rd_key=rd_key, rd_call=kw.get("rd_call"),
-                        rd_sleep=kw.get("rd_sleep"))
+                        rd_sleep=kw.get("rd_sleep"), suelo_creditos=suelo_creditos)
         gastado = int(out.get("gastado", 0) or 0)
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
@@ -745,7 +769,12 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None, **kw) ->
         now = now or datetime.now(timezone.utc)
         estado = Path(str(cache_path) + ".gasto.json")
         hoy = _gasto_hoy(estado, now)
-        tope = min(settings.cuotas_respaldo_auto_max, settings.cuotas_respaldo_diario - hoy)
+        suelo_creditos, diario = SUELO, settings.cuotas_respaldo_diario
+        if key is None:
+            key, gratis = resolver_clave(settings.odds_api_respaldo_key, get)
+            if gratis:
+                suelo_creditos, diario = SUELO_GRATIS, settings.cuotas_respaldo_diario_gratis
+        tope = min(settings.cuotas_respaldo_auto_max, diario - hoy)
         sp_key = kw.get("sp_key") if kw.get("sp_key") is not None else getattr(settings, "sportsapipro_key", None)
         rd_key = kw.get("rd_key") if kw.get("rd_key") is not None else getattr(settings, "therundown_key", None)
         if tope <= 0 and not sp_key and not rd_key:
@@ -754,20 +783,20 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None, **kw) ->
         run: dict = {}
         correr(ejecutar=True, max_creditos=max(tope, 0), get=get, now=now, salida=log.info, key=key,
                cache_path=cache_path, info=run, sp_key=sp_key, sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"),
-               rd_key=rd_key, rd_call=kw.get("rd_call"), rd_sleep=kw.get("rd_sleep"))
+               rd_key=rd_key, rd_call=kw.get("rd_call"), rd_sleep=kw.get("rd_sleep"), suelo_creditos=suelo_creditos)
         gastado = int(run.get("gastado", 0))
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
             tmp.write_text(json.dumps(dict(dia=now.date().isoformat(), gastado=hoy + gastado)), encoding="utf-8")
             os.replace(tmp, estado)
         saldo = run.get("saldo")
-        if run.get("suelo") or (saldo is not None and saldo < SUELO):
+        if run.get("suelo") or (suelo_creditos and saldo is not None and saldo < suelo_creditos):
             if alerta is None:
                 from qf.publish import telegram
                 alerta = telegram.alert
-            alerta(f"Respaldo de cuotas: el saldo de The Odds API ({saldo}) cayó bajo el suelo {SUELO}")
+            alerta(f"Respaldo de cuotas: el saldo de The Odds API ({saldo}) cayó bajo el suelo {suelo_creditos}")
         futbol = _futbol(get=get, now=now, cache_path=cache_path, key=key, sp_key=sp_key, rd_key=rd_key, kw=kw,
-                         tope=max(tope - gastado, 0), estado=estado, hoy=hoy + gastado)
+                         tope=max(tope - gastado, 0), estado=estado, hoy=hoy + gastado, suelo_creditos=suelo_creditos)
         return {"estado": "ok", **run, "gastado_hoy": hoy + gastado + int(futbol.get("gastado", 0)), "futbol": futbol}
     except Exception:  # noqa: BLE001 — el respaldo nunca rompe ni retrasa el sellado ni la publicación
         log.exception("respaldo de cuotas: fallo (ignorado)")
