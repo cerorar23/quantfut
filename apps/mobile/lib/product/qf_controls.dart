@@ -225,31 +225,37 @@ class QfSwitch extends StatelessWidget {
       label: semanticLabel,
       toggled: value,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onChanged == null ? null : () => onChanged!(!value),
-        child: Container(
-          width: width,
-          height: height,
-          padding: const EdgeInsets.all(3),
-          decoration: ShapeDecoration(
-            color: value ? QfColors.cyan.withValues(alpha: .18) : QfColors.surface2,
-            shape: CutCornerBorder(
-              cut: 6,
-              side: BorderSide(
-                color: value ? QfColors.cyan : QfColors.slate.withValues(alpha: .4),
-                width: 1,
-              ),
-            ),
-          ),
-          child: AnimatedAlign(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeInOut,
-            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 52, minHeight: 44),
+          child: Center(
             child: Container(
-              width: thumbSize,
-              height: thumbSize,
+              width: width,
+              height: height,
+              padding: const EdgeInsets.all(3),
               decoration: ShapeDecoration(
-                color: value ? QfColors.cyan : QfColors.slate,
-                shape: const CutCornerBorder(cut: 4),
+                color: value ? QfColors.cyan.withValues(alpha: .18) : QfColors.surface2,
+                shape: CutCornerBorder(
+                  cut: 6,
+                  side: BorderSide(
+                    color: value ? QfColors.cyan : QfColors.slate.withValues(alpha: .4),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeInOut,
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  width: thumbSize,
+                  height: thumbSize,
+                  decoration: ShapeDecoration(
+                    color: value ? QfColors.cyan : QfColors.slate,
+                    shape: const CutCornerBorder(cut: 4),
+                  ),
+                ),
               ),
             ),
           ),

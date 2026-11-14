@@ -1528,6 +1528,36 @@ abstract class AppLocalizations {
   /// **'Es información y entretenimiento'**
   String get guideHead6;
 
+  /// Botón para avanzar al siguiente tema de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente'**
+  String get guideNext;
+
+  /// Botón para volver al tema anterior de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Anterior'**
+  String get guidePrevious;
+
+  /// Regla de responsabilidad 1 en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo con dinero que puedas perder'**
+  String get guideRespRule1;
+
+  /// Regla de responsabilidad 2 en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo si eres mayor de edad'**
+  String get guideRespRule2;
+
+  /// Regla de responsabilidad 3 en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Si deja de ser un pasatiempo, pide ayuda'**
+  String get guideRespRule3;
+
   /// Subtítulo de la guía.
   ///
   /// In es, this message translates to:
@@ -1575,6 +1605,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'RESPONSABILIDAD'**
   String get guideTopic6;
+
+  /// Contador de temas en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} temas'**
+  String guideTopicCount(int count);
 
   /// No description provided for @historyWebSince.
   ///
@@ -1726,6 +1762,12 @@ abstract class AppLocalizations {
   /// **'Todavía no tienes avisos.'**
   String get inboxEmpty;
 
+  /// Subtítulo explicativo cuando la bandeja de avisos está vacía.
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí verás los pronósticos nuevos, las bajas y los resultados de tus deportes.'**
+  String get inboxEmptySubtitle;
+
   /// No description provided for @inboxMatch.
   ///
   /// In es, this message translates to:
@@ -1743,6 +1785,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Avisos'**
   String get inboxTitle;
+
+  /// Contador de avisos pendientes de leer.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} sin leer'**
+  String inboxUnread(int count);
 
   /// Resumen sobre las tarjetas del Reto Escalera.
   ///
@@ -2499,6 +2547,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudo abrir la tienda de aplicaciones.'**
   String get moreStoreError;
+
+  /// Subtítulo del acceso VIP en el menú Más.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los pronósticos, sin monedas'**
+  String get moreVipSubtitle;
 
   /// No description provided for @navCoins.
   ///

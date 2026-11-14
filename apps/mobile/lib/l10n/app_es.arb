@@ -659,6 +659,26 @@
   "@guideHead6": {
     "description": "Título del tema 6."
   },
+  "guideNext": "Siguiente",
+  "@guideNext": {
+    "description": "Botón para avanzar al siguiente tema de la guía."
+  },
+  "guidePrevious": "Anterior",
+  "@guidePrevious": {
+    "description": "Botón para volver al tema anterior de la guía."
+  },
+  "guideRespRule1": "Solo con dinero que puedas perder",
+  "@guideRespRule1": {
+    "description": "Regla de responsabilidad 1 en la guía."
+  },
+  "guideRespRule2": "Solo si eres mayor de edad",
+  "@guideRespRule2": {
+    "description": "Regla de responsabilidad 2 en la guía."
+  },
+  "guideRespRule3": "Si deja de ser un pasatiempo, pide ayuda",
+  "@guideRespRule3": {
+    "description": "Regla de responsabilidad 3 en la guía."
+  },
   "guideSubtitle": "Aprende a leer los datos antes de decidir.",
   "@guideSubtitle": {
     "description": "Subtítulo de la guía."
@@ -690,6 +710,15 @@
   "guideTopic6": "RESPONSABILIDAD",
   "@guideTopic6": {
     "description": "Tema 6 de la guía."
+  },
+  "guideTopicCount": "{count} temas",
+  "@guideTopicCount": {
+    "description": "Contador de temas en la guía.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "historyWebSince": "Historial web desde el 26/10/2026",
   "homeAgendaTitle": "Agenda",
@@ -804,6 +833,10 @@
   "imageCredits": "Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.",
   "imageUnavailable": "Imagen no disponible",
   "inboxEmpty": "Todavía no tienes avisos.",
+  "inboxEmptySubtitle": "Aquí verás los pronósticos nuevos, las bajas y los resultados de tus deportes.",
+  "@inboxEmptySubtitle": {
+    "description": "Subtítulo explicativo cuando la bandeja de avisos está vacía."
+  },
   "inboxMatch": "Partido",
   "inboxSportTag": "Deporte: {sport}",
   "@inboxSportTag": {
@@ -815,6 +848,15 @@
     }
   },
   "inboxTitle": "Avisos",
+  "inboxUnread": "{count} sin leer",
+  "@inboxUnread": {
+    "description": "Contador de avisos pendientes de leer.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "ladderActiveCount": "{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}",
   "@ladderActiveCount": {
     "description": "Resumen sobre las tarjetas del Reto Escalera.",
@@ -1246,6 +1288,10 @@
   "moreStoreError": "No se pudo abrir la tienda de aplicaciones.",
   "@moreStoreError": {
     "description": "Error al abrir la tienda."
+  },
+  "moreVipSubtitle": "Todos los pronósticos, sin monedas",
+  "@moreVipSubtitle": {
+    "description": "Subtítulo del acceso VIP en el menú Más."
   },
   "navCoins": "Coins",
   "navHome": "Inicio",

@@ -801,7 +801,7 @@ class _ProductShellState extends State<ProductShell>
           child: IconButton(
             key: const ValueKey('home-menu'),
             tooltip: context.l10n.homeMenuTooltip,
-            onPressed: () => showMoreSheet(context, onMySports: openMySports),
+            onPressed: () => showMoreSheet(context, onMySports: openMySports, onVip: vip),
             icon: const Icon(Icons.menu, color: QfColors.muted, size: 22),
           ),
         ),

@@ -7,6 +7,7 @@ import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_detail.dart';
 import 'package:gobet/product/live_profile.dart';
 import 'package:gobet/product/live_widgets.dart';
+import 'package:gobet/product/qf_controls.dart';
 import 'package:gobet/product/qf_theme.dart';
 import 'package:gobet/product/my_sports.dart';
 import 'package:gobet/product/sports.dart';
@@ -62,7 +63,7 @@ Future<int Function()> pump(
 Finder row(String id) => find.byKey(ValueKey('my-sport-$id'));
 
 bool switchOn(WidgetTester tester, String id) =>
-    tester.widget<Switch>(find.byKey(ValueKey('my-sport-switch-$id'))).value;
+    tester.widget<QfSwitch>(find.byKey(ValueKey('my-sport-switch-$id'))).value;
 
 void main() {
   tearDown(() => AppLocale.instance.reset());

@@ -838,6 +838,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get guideHead6 => 'C\'est de l\'information et du divertissement';
 
   @override
+  String get guideNext => 'Suivant';
+
+  @override
+  String get guidePrevious => 'Précédent';
+
+  @override
+  String get guideRespRule1 =>
+      'Uniquement avec de l\'argent que vous pouvez perdre';
+
+  @override
+  String get guideRespRule2 => 'Uniquement si vous êtes majeur';
+
+  @override
+  String get guideRespRule3 =>
+      'Si ce n\'est plus un passe-temps, demandez de l\'aide';
+
+  @override
   String get guideSubtitle => 'Apprenez à lire les données avant de décider.';
 
   @override
@@ -860,6 +877,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get guideTopic6 => 'RESPONSABILITÉ';
+
+  @override
+  String guideTopicCount(int count) {
+    return '$count thèmes';
+  }
 
   @override
   String get historyWebSince => 'Historique web depuis le 26/10/2026';
@@ -960,6 +982,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inboxEmpty => 'Vous n\'avez pas encore d\'alertes.';
 
   @override
+  String get inboxEmptySubtitle =>
+      'Ici vous verrez les nouveaux pronostics, les absences et les résultats de vos sports.';
+
+  @override
   String get inboxMatch => 'Match';
 
   @override
@@ -969,6 +995,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get inboxTitle => 'Alertes';
+
+  @override
+  String inboxUnread(int count) {
+    return '$count non lus';
+  }
 
   @override
   String ladderActiveCount(int count) {
@@ -1454,6 +1485,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get moreStoreError =>
       'Impossible d\'ouvrir la boutique d\'applications.';
+
+  @override
+  String get moreVipSubtitle => 'Tous les pronostics, sans pièces';
 
   @override
   String get navCoins => 'Coins';

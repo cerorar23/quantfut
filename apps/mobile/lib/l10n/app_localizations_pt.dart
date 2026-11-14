@@ -838,6 +838,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get guideHead6 => 'É informação e entretenimento';
 
   @override
+  String get guideNext => 'Seguinte';
+
+  @override
+  String get guidePrevious => 'Anterior';
+
+  @override
+  String get guideRespRule1 => 'Apenas com dinheiro que possas perder';
+
+  @override
+  String get guideRespRule2 => 'Apenas se fores maior de idade';
+
+  @override
+  String get guideRespRule3 => 'Se deixar de ser um passatempo, pede ajuda';
+
+  @override
   String get guideSubtitle => 'Aprenda a ler os dados antes de decidir.';
 
   @override
@@ -860,6 +875,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get guideTopic6 => 'RESPONSABILIDADE';
+
+  @override
+  String guideTopicCount(int count) {
+    return '$count temas';
+  }
 
   @override
   String get historyWebSince => 'Histórico da web desde 26/10/2026';
@@ -961,6 +981,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxEmpty => 'Você ainda não tem avisos.';
 
   @override
+  String get inboxEmptySubtitle =>
+      'Aqui verás os novos prognósticos, as ausências e os resultados dos teus desportos.';
+
+  @override
   String get inboxMatch => 'Jogo';
 
   @override
@@ -970,6 +994,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get inboxTitle => 'Avisos';
+
+  @override
+  String inboxUnread(int count) {
+    return '$count não lidos';
+  }
 
   @override
   String ladderActiveCount(int count) {
@@ -1450,6 +1479,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get moreStoreError => 'Não foi possível abrir a loja de aplicativos.';
+
+  @override
+  String get moreVipSubtitle => 'Todos os prognósticos, sem moedas';
 
   @override
   String get navCoins => 'Coins';

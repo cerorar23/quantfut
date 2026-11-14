@@ -6,6 +6,7 @@ import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_widgets.dart';
 import 'package:gobet/product/my_sports.dart';
+import 'package:gobet/product/qf_controls.dart';
 import 'package:gobet/product/sport_selector.dart';
 import 'package:gobet/product/sports.dart';
 
@@ -62,9 +63,9 @@ void main() {
     expect(find.byKey(const ValueKey('my-sport-golf')), findsOneWidget);
     expect(find.descendant(of: find.byKey(const ValueKey('my-sport-golf')), matching: find.text('BETA')), findsOneWidget);
     expect(find.text('BETA'), findsOneWidget, reason: 'solo el preview lleva la etiqueta');
-    Switch golf() => tester.widget<Switch>(find.byKey(const ValueKey('my-sport-switch-golf')));
+    QfSwitch golf() => tester.widget<QfSwitch>(find.byKey(const ValueKey('my-sport-switch-golf')));
     expect(golf().value, isFalse);
-    expect(tester.widget<Switch>(find.byKey(const ValueKey('my-sport-switch-futbol'))).value, isTrue);
+    expect(tester.widget<QfSwitch>(find.byKey(const ValueKey('my-sport-switch-futbol'))).value, isTrue);
 
     await tester.tap(find.byKey(const ValueKey('my-sport-switch-golf')));
     await tester.pumpAndSettle();

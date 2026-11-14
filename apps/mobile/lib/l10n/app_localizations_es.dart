@@ -838,6 +838,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get guideHead6 => 'Es información y entretenimiento';
 
   @override
+  String get guideNext => 'Siguiente';
+
+  @override
+  String get guidePrevious => 'Anterior';
+
+  @override
+  String get guideRespRule1 => 'Solo con dinero que puedas perder';
+
+  @override
+  String get guideRespRule2 => 'Solo si eres mayor de edad';
+
+  @override
+  String get guideRespRule3 => 'Si deja de ser un pasatiempo, pide ayuda';
+
+  @override
   String get guideSubtitle => 'Aprende a leer los datos antes de decidir.';
 
   @override
@@ -860,6 +875,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get guideTopic6 => 'RESPONSABILIDAD';
+
+  @override
+  String guideTopicCount(int count) {
+    return '$count temas';
+  }
 
   @override
   String get historyWebSince => 'Historial web desde el 26/10/2026';
@@ -961,6 +981,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get inboxEmpty => 'Todavía no tienes avisos.';
 
   @override
+  String get inboxEmptySubtitle =>
+      'Aquí verás los pronósticos nuevos, las bajas y los resultados de tus deportes.';
+
+  @override
   String get inboxMatch => 'Partido';
 
   @override
@@ -970,6 +994,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get inboxTitle => 'Avisos';
+
+  @override
+  String inboxUnread(int count) {
+    return '$count sin leer';
+  }
 
   @override
   String ladderActiveCount(int count) {
@@ -1445,6 +1474,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get moreStoreError => 'No se pudo abrir la tienda de aplicaciones.';
+
+  @override
+  String get moreVipSubtitle => 'Todos los pronósticos, sin monedas';
 
   @override
   String get navCoins => 'Coins';

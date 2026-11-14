@@ -829,6 +829,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guideHead6 => 'It is information and entertainment';
 
   @override
+  String get guideNext => 'Next';
+
+  @override
+  String get guidePrevious => 'Previous';
+
+  @override
+  String get guideRespRule1 => 'Only with money you can afford to lose';
+
+  @override
+  String get guideRespRule2 => 'Only if you are of legal age';
+
+  @override
+  String get guideRespRule3 => 'If it stops being a hobby, ask for help';
+
+  @override
   String get guideSubtitle => 'Learn to read the data before you decide.';
 
   @override
@@ -851,6 +866,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideTopic6 => 'RESPONSIBILITY';
+
+  @override
+  String guideTopicCount(int count) {
+    return '$count topics';
+  }
 
   @override
   String get historyWebSince => 'Web history since 26 Oct 2026';
@@ -951,6 +971,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxEmpty => 'You have no alerts yet.';
 
   @override
+  String get inboxEmptySubtitle =>
+      'Here you will see new predictions, absences and results for your sports.';
+
+  @override
   String get inboxMatch => 'Match';
 
   @override
@@ -960,6 +984,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxTitle => 'Alerts';
+
+  @override
+  String inboxUnread(int count) {
+    return '$count unread';
+  }
 
   @override
   String ladderActiveCount(int count) {
@@ -1429,6 +1458,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreStoreError => 'Could not open the app store.';
+
+  @override
+  String get moreVipSubtitle => 'All predictions, without coins';
 
   @override
   String get navCoins => 'Coins';

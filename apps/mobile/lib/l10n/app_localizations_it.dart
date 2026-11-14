@@ -839,6 +839,23 @@ class AppLocalizationsIt extends AppLocalizations {
   String get guideHead6 => 'È informazione e intrattenimento';
 
   @override
+  String get guideNext => 'Avanti';
+
+  @override
+  String get guidePrevious => 'Precedente';
+
+  @override
+  String get guideRespRule1 =>
+      'Solo con denaro che puoi permetterti di perdere';
+
+  @override
+  String get guideRespRule2 => 'Solo se sei maggiorenne';
+
+  @override
+  String get guideRespRule3 =>
+      'Se smette di essere un passatempo, chiedi aiuto';
+
+  @override
   String get guideSubtitle => 'Impara a leggere i dati prima di decidere.';
 
   @override
@@ -861,6 +878,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get guideTopic6 => 'RESPONSABILITÀ';
+
+  @override
+  String guideTopicCount(int count) {
+    return '$count argomenti';
+  }
 
   @override
   String get historyWebSince => 'Storico web dal 26/10/2026';
@@ -961,6 +983,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get inboxEmpty => 'Non hai ancora avvisi.';
 
   @override
+  String get inboxEmptySubtitle =>
+      'Qui vedrai i nuovi pronostici, le assenze e i risultati dei tuoi sport.';
+
+  @override
   String get inboxMatch => 'Partita';
 
   @override
@@ -970,6 +996,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get inboxTitle => 'Avvisi';
+
+  @override
+  String inboxUnread(int count) {
+    return '$count non letti';
+  }
 
   @override
   String ladderActiveCount(int count) {
@@ -1452,6 +1483,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get moreStoreError => 'Impossibile aprire lo store delle app.';
+
+  @override
+  String get moreVipSubtitle => 'Tutti i pronostici, senza monete';
 
   @override
   String get navCoins => 'Coins';
