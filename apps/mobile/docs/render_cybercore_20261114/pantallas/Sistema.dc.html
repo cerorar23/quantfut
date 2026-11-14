@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Sistema de componentes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:880px;height:640px;box-sizing:border-box;padding:28px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))">
+<div style="display:flex;flex-direction:column;gap:14px">
+<span style="font:700 14px var(--d);letter-spacing:.16em;color:var(--gr)">NAVEGACIÓN · 4 NIVELES, UNA PIEZA POR NIVEL</span>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font:500 11px var(--m);color:var(--fa)">N1 · BARRA INFERIOR — las 5 pestañas</span>
+<div style="height:52px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--p);border-top:1px solid var(--b)">
+<span style="display:grid;place-items:center;font:700 11px var(--d);letter-spacing:.08em;color:var(--cy);background:rgba(0,240,255,.07);box-shadow:inset 0 2px var(--cy)">INICIO</span>
+<span style="display:grid;place-items:center;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)">PICKS</span>
+<span style="display:grid;place-items:center;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)">MERCADOS</span>
+<span style="display:grid;place-items:center;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)">COINS</span>
+<span style="display:grid;place-items:center;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)">PERFIL</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font:500 11px var(--m);color:var(--fa)">N2 · DEPORTE — Inicio, Picks y Mercados</span>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--cy);background:var(--cy);color:#03110f;font:700 14px var(--d);letter-spacing:.08em;clip-path:var(--cut)">FÚTBOL</span>
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--b);background:rgba(0,240,255,.05);color:var(--mu);font:700 14px var(--d);letter-spacing:.08em;clip-path:var(--cut)">NBA</span>
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--b);background:rgba(0,240,255,.05);color:var(--mu);font:700 14px var(--d);letter-spacing:.08em;clip-path:var(--cut)">TENIS</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font:500 11px var(--m);color:var(--fa)">N3 · PESTAÑAS — Alta prob./Escalera/Parley · Pronóstico/Análisis/H2H/Alertas · Hoy/Anteriores · Partido/Goles</span>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:4px;border:1px solid var(--b);background:rgba(3,9,17,.72)">
+<span style="min-height:40px;display:grid;place-items:center;font:700 12px var(--d);letter-spacing:.05em;color:var(--cy);background:rgba(0,240,255,.1);box-shadow:inset 0 -2px var(--cy)">PRONÓSTICO</span>
+<span style="min-height:40px;display:grid;place-items:center;font:700 12px var(--d);letter-spacing:.05em;color:var(--mu)">ANÁLISIS</span>
+<span style="min-height:40px;display:grid;place-items:center;font:700 12px var(--d);letter-spacing:.05em;color:var(--mu)">H2H</span>
+<span style="min-height:40px;display:grid;place-items:center;font:700 12px var(--d);letter-spacing:.05em;color:var(--mu)">ALERTAS</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font:500 11px var(--m);color:var(--fa)">N4 · FILTROS — días, mini menús</span>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--cy);background:rgba(0,240,255,.1);color:var(--cy);font:700 11px var(--m)">HOY 13</span>
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">SÁB 14</span>
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">DOM 15</span>
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">LUN 16</span>
+<span style="height:44px;display:grid;place-items:center;border:1px solid var(--ln);color:var(--mu);font:500 11px var(--m)">MAR 17</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font:500 11px var(--m);color:var(--fa)">TARJETA · esquina cortada 10 / 16 dp, borde cian 20 %</span>
+<div style="border:1px solid var(--b);background:var(--p);padding:12px 14px;clip-path:var(--cut);display:flex;justify-content:space-between;align-items:center"><div><div style="font:500 11px var(--m);color:var(--fa)">LALIGA 2 · SÁB 17:30</div><strong style="font-size:15px">Mallorca – Córdoba</strong></div><span style="font:700 24px var(--m);color:var(--cy)">81%</span></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<span style="font:700 14px var(--d);letter-spacing:.16em;color:var(--gr)">ACCIONES · UN SOLO VERDE POR PANTALLA</span>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<span style="min-height:48px;display:grid;place-items:center;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">PRINCIPAL</span>
+<span style="min-height:48px;display:grid;place-items:center;color:var(--cy);border:1px solid var(--bs);background:rgba(0,240,255,.05);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">SECUNDARIA</span>
+<span style="min-height:48px;display:grid;place-items:center;color:var(--ye);border:1px solid rgba(252,238,10,.5);background:rgba(252,238,10,.08);font:700 14px var(--d);letter-spacing:.1em;clip-path:var(--cut)">VIP</span>
+</div>
+<span style="font:700 14px var(--d);letter-spacing:.16em;color:var(--gr)">INSIGNIAS · COLOR + TEXTO, NUNCA SOLO COLOR</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid rgba(5,255,161,.4);color:var(--gr)">GRATIS</span>
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid rgba(5,255,161,.4);color:var(--gr)">GANADO</span>
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid rgba(252,238,10,.45);color:var(--ye)">VIP</span>
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid rgba(252,238,10,.45);color:var(--ye)">DUDA</span>
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid var(--mg);color:var(--mg)">FALLADO</span>
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid var(--mg);color:var(--mg)">EN VIVO</span>
+<span style="padding:3px 9px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid var(--ln);color:var(--fa)">EN REVISIÓN</span>
+</div>
+<span style="font:700 14px var(--d);letter-spacing:.16em;color:var(--gr)">COLOR · LOS TOKENS DE LA WEB (CYBERCORE 0.3.0)</span>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<div style="display:flex;gap:8px;align-items:center"><span style="width:28px;height:28px;flex:none;background:#00f0ff"></span><span style="font:500 11px var(--m)">#00F0FF<span style="display:block;color:var(--fa)">navegar · dato</span></span></div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:28px;height:28px;flex:none;background:#05ffa1"></span><span style="font:500 11px var(--m)">#05FFA1<span style="display:block;color:var(--fa)">acción · acierto</span></span></div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:28px;height:28px;flex:none;background:#fcee0a"></span><span style="font:500 11px var(--m)">#FCEE0A<span style="display:block;color:var(--fa)">VIP · monedas</span></span></div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:28px;height:28px;flex:none;background:#ff2a6d"></span><span style="font:500 11px var(--m)">#FF2A6D<span style="display:block;color:var(--fa)">fallo · en vivo</span></span></div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:28px;height:28px;flex:none;background:#12141d;border:1px solid var(--b)"></span><span style="font:500 11px var(--m)">#12141D<span style="display:block;color:var(--fa)">tarjeta</span></span></div>
+<div style="display:flex;gap:8px;align-items:center"><span style="width:28px;height:28px;flex:none;background:#07080c;border:1px solid var(--b)"></span><span style="font:500 11px var(--m)">#07080C<span style="display:block;color:var(--fa)">fondo</span></span></div>
+</div>
+<span style="font:700 14px var(--d);letter-spacing:.16em;color:var(--gr)">TIPOGRAFÍA</span>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--ln);padding-bottom:6px"><span style="font:700 24px var(--d);letter-spacing:.06em">RAJDHANI 700</span><span style="font:500 11px var(--m);color:var(--fa)">títulos, pestañas, botones</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--ln);padding-bottom:6px"><span style="font:700 22px var(--m);color:var(--cy)">81% · 1.28</span><span style="font:500 11px var(--m);color:var(--fa)">JetBrains Mono: cifras, sello</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px">Exo 2 para leer con calma</span><span style="font:500 11px var(--m);color:var(--fa)">cuerpo de texto</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":880,"height":640}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Partido de tenis · H2H</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.ph{background:center 12%/cover no-repeat;border:1px solid rgba(0,240,255,.35);box-sizing:border-box}
+.i-alc{background-image:url(/_blob/93372743515ef3f3b1a897cc2669b845)}
+.i-zve{background-image:url(/_blob/4e1d40a719ca20a5cf7c8a7c3cbc8642)}
+</style>
+</helmet>
+<div style="width:390px;height:844px;overflow:hidden;background:#07080c">
+<dc-import name="Partido" sport="ten" tab="h2h" hint-size="390px,844px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

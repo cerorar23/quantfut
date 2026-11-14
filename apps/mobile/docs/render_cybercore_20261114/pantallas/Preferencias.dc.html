@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Privacidad y preferencias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:{{rootH}};overflow:{{rootOv}};box-sizing:border-box;position:relative;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+<header style="height:56px;flex:none;display:flex;align-items:center;gap:4px;padding:0 14px 0 6px;border-bottom:1px solid var(--b)">
+<a href="Perfil.dc.html" aria-label="Volver al perfil" style="width:44px;height:44px;display:grid;place-items:center;color:var(--mu)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div style="flex-grow:1;font:700 18px var(--d);letter-spacing:.1em">PRIVACIDAD Y PREFERENCIAS</div>
+</header>
+
+<main style="flex-grow:1;min-height:0;overflow-y:{{scrollOv}};padding:12px 14px 18px;display:flex;flex-direction:column;gap:14px">
+
+<section style="flex:none;display:flex;flex-direction:column;gap:8px">
+<div style="font:700 11px var(--d);letter-spacing:.18em;color:var(--cy)">// NOTIFICACIONES</div>
+<div style="border:1px solid var(--bs);background:var(--p);clip-path:var(--cut)">
+<div style="min-height:62px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--ln)">
+<span><strong style="display:block;font-size:15px">Notificaciones de QuantFut</strong><span style="font-size:12px;color:var(--mu)">{{notiSub}}</span></span>
+<button role="switch" aria-checked="{{noti}}" aria-label="Notificaciones" onClick="{{toggleNoti}}" style="width:52px;height:30px;padding:3px;cursor:pointer;border:1px solid {{notiBd}};background:{{notiBg}};display:flex;justify-content:{{notiJ}};box-sizing:border-box"><span style="width:22px;height:22px;background:{{notiKn}}"></span></button>
+</div>
+<sc-for list="{{sports}}" as="sp" hint-placeholder-count="3">
+<div style="min-height:52px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:6px 14px;border-bottom:1px solid var(--ln);opacity:{{sp.op}}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{sp.d}}"></path></svg>
+<span style="font-weight:600">{{sp.n}}</span>
+<button role="switch" aria-checked="{{sp.on}}" aria-label="{{sp.n}}" onClick="{{sp.pick}}" style="width:52px;height:30px;padding:3px;cursor:pointer;border:1px solid {{sp.bd}};background:{{sp.bg}};display:flex;justify-content:{{sp.j}};box-sizing:border-box"><span style="width:22px;height:22px;background:{{sp.kn}}"></span></button>
+</div>
+</sc-for>
+<a href="Avisos.dc.html" style="min-height:54px;display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:6px 14px;text-decoration:none;color:inherit"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b2b7c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.300 21a1.900 1.900 0 003.400 0"></path></svg><span style="font-weight:600">Bandeja de avisos</span><span style="padding:1px 8px;background:var(--cy);color:#03110f;font:700 11px var(--m)">2</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#939ab0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+</div>
+<p style="margin:0;font-size:11px;color:var(--fa)">Puedes retirarlas cuando quieras. Los avisos pueden aparecer en la pantalla bloqueada.</p>
+</section>
+
+<section style="flex:none;display:flex;flex-direction:column;gap:8px">
+<div style="font:700 11px var(--d);letter-spacing:.18em;color:var(--cy)">// IDIOMA</div>
+<a href="Idioma.dc.html" style="min-height:58px;display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:12px;padding:6px 14px;text-decoration:none;color:inherit;border:1px solid var(--b);background:var(--p);clip-path:var(--cut)"><span style="height:36px;display:grid;place-items:center;border:1px solid var(--bs);background:rgba(0,240,255,.08);font:700 14px var(--m);color:var(--cy)">ES</span><span><strong style="display:block;font-size:15px">Español</strong><span style="font-size:12px;color:var(--mu)">Se aplica a toda la app y se guarda como preferencia.</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#939ab0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+</section>
+
+<section style="flex:none;display:flex;flex-direction:column;gap:8px">
+<div style="font:700 11px var(--d);letter-spacing:.18em;color:var(--cy)">// MEDICIÓN Y DIAGNÓSTICO</div>
+<div style="border:1px solid var(--b);background:var(--p)">
+<sc-for list="{{meds}}" as="md" hint-placeholder-count="3">
+<div style="padding:10px 14px;border-bottom:1px solid var(--ln)">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px">
+<span><strong style="display:block;font-size:14px">{{md.t}}</strong><span style="font-size:12px;color:var(--mu)">{{md.b}}</span></span>
+<button role="switch" aria-checked="{{md.on}}" aria-label="{{md.t}}" onClick="{{md.pick}}" style="width:52px;height:30px;padding:3px;cursor:pointer;border:1px solid {{md.bd}};background:{{md.bg}};display:flex;justify-content:{{md.j}};box-sizing:border-box"><span style="width:22px;height:22px;background:{{md.kn}}"></span></button>
+</div>
+<div style="display:{{md.moreD}};margin-top:6px"><button onClick="{{md.toggleMore}}" style="min-height:36px;padding:0;border:0;background:none;cursor:pointer;color:var(--cy);font:700 12px var(--d);letter-spacing:.1em">{{md.moreL}}</button><div style="display:{{md.longD}};font-size:12px;color:var(--mu)">{{md.long}}</div></div>
+</div>
+</sc-for>
+</div>
+<p style="margin:0;font-size:11px;color:var(--fa)">Puedes usar las funciones básicas sin activar medición o diagnóstico. Cambiar estas opciones no borra automáticamente los datos ya enviados.</p>
+</section>
+
+<section style="flex:none;display:flex;flex-direction:column;gap:8px">
+<div style="font:700 11px var(--d);letter-spacing:.18em;color:var(--cy)">// TUS DERECHOS</div>
+<div style="border:1px solid var(--b);background:var(--p)">
+<a href="Preferencias.dc.html" style="min-height:54px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:6px 14px;text-decoration:none;color:inherit;border-bottom:1px solid var(--ln)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b2b7c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z"></path></svg><span style="font-weight:600">Privacidad y tus derechos</span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#939ab0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a href="Preferencias.dc.html" style="min-height:62px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:6px 14px;text-decoration:none;color:inherit"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff2a6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg><span><strong style="display:block;font-size:14px;color:#ff7aa3">Solicitar eliminación de mi cuenta</strong><span style="font-size:12px;color:var(--mu)">Consulta los pasos y el contacto de Saptain LTD.</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#939ab0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"full":{"editor":"text","default":""},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const full = this.props.full === '1' || this.props.full === 1 || this.props.full === true;
+const s = this.state || {};
+const noti = s.noti === undefined ? true : s.noti;
+const sp = Object.assign({ fut: true, nba: true, ten: false }, s.sp || {});
+const med = Object.assign({ uso: true, diag: true, ads: true }, s.med || {});
+const more = !!s.more || full;
+const sw = (on) => ({ bd: on ? '#00f0ff' : '#939ab0', bg: on ? 'rgba(0,240,255,.2)' : 'transparent', j: on ? 'flex-end' : 'flex-start', kn: on ? '#00f0ff' : '#939ab0' });
+const C = 'M12 3a9 9 0 100 18 9 9 0 000-18z';
+const SP = [['fut', 'Fútbol', C + 'M12 8l3.500 2.500-1.300 4h-4.400l-1.300-4z'], ['nba', 'NBA', C + 'M3 12h18M12 3v18M5.600 5.600c3 3.500 3 9.300 0 12.800M18.400 5.600c-3 3.500-3 9.300 0 12.800'], ['ten', 'Tenis', C + 'M5.600 5.600c3.500 3.500 3.500 9.300 0 12.800M18.400 5.600c-3.500 3.500-3.500 9.300 0 12.800']];
+const MD = [['uso', 'Medición de uso', 'Ayuda a mejorar la app con datos sobre las pantallas utilizadas. Es opcional.', ''], ['diag', 'Informes de errores y rendimiento', 'Envía información técnica a Firebase y a Sentry para diagnosticar fallos. Es opcional.', ''], ['ads', 'Medición de anuncios (Meta)', 'Comparte datos cifrados para medir qué anuncios funcionan.', 'Comparte con Meta datos cifrados de tu cuenta, del dispositivo y de tus compras para medir qué anuncios funcionan. En California equivale a «No compartir mis datos» cuando lo desactivas.']];
+return {
+rootH: full ? 'auto' : '844px', rootOv: full ? 'visible' : 'hidden', scrollOv: full ? 'visible' : 'auto',
+noti: noti, notiSub: noti ? 'Elige de qué deportes quieres recibir avisos.' : 'Desactivadas',
+toggleNoti: () => this.setState({ noti: !noti }),
+notiBd: sw(noti).bd, notiBg: sw(noti).bg, notiJ: sw(noti).j, notiKn: sw(noti).kn,
+sports: SP.map((x) => Object.assign({ n: x[1], d: x[2], on: noti && sp[x[0]], op: noti ? '1' : '.4', pick: () => this.setState({ sp: Object.assign({}, sp, { [x[0]]: !sp[x[0]] }) }) }, sw(noti && sp[x[0]]))),
+meds: MD.map((x) => Object.assign({ t: x[1], b: x[2], on: med[x[0]], long: x[3], moreD: x[3] ? 'block' : 'none', longD: (x[3] && more) ? 'block' : 'none', moreL: more ? 'VER MENOS' : 'VER MÁS', toggleMore: () => this.setState({ more: !s.more }), pick: () => this.setState({ med: Object.assign({}, med, { [x[0]]: !med[x[0]] }) }) }, sw(med[x[0]])))
+};
+}
+}
+</script>
+</body>
+</html>

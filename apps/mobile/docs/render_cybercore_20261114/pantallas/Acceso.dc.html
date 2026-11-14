@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Acceso con Google</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+
+<header style="height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 16px">
+<div style="font:700 21px var(--d);letter-spacing:.14em">QUANT<span style="color:var(--cy)">FUT</span></div>
+<a href="Idioma.dc.html" aria-label="Cambiar idioma" style="min-height:44px;padding:0 12px;display:flex;align-items:center;gap:6px;text-decoration:none;border:1px solid var(--b);color:var(--mu);font:700 12px var(--m)"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c2.500 2.700 3.700 5.700 3.700 9s-1.200 6.300-3.700 9c-2.500-2.700-3.700-5.700-3.700-9S9.500 5.700 12 3z"></path></svg>ES</a>
+</header>
+
+<section style="position:relative;flex-grow:1;min-height:0;padding:6px 20px 0;display:flex;flex-direction:column;justify-content:center;gap:14px">
+<div aria-hidden="true" style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(0,240,255,.14),transparent 65%)"></div>
+<div aria-hidden="true" style="position:relative;display:flex;justify-content:center;gap:10px">
+<div style="width:78px;height:96px;border:1px solid var(--b);background:var(--p);clip-path:var(--cut);display:grid;place-items:center;transform:rotate(-5deg);margin-top:10px"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:50px;height:50px;object-fit:contain"></div>
+<div style="width:92px;height:116px;border:1px solid var(--cy);background:var(--p2);clip-path:var(--cut);display:grid;place-items:center;box-shadow:0 0 30px rgba(0,240,255,.28)"><img alt="" src="/_blob/bfd80f71d11b27f23208aba8ff962867" style="width:62px;height:62px;object-fit:contain"></div>
+<div style="width:78px;height:96px;border:1px solid var(--b);background:var(--p);clip-path:var(--cut);display:grid;place-items:center;transform:rotate(5deg);margin-top:10px"><img alt="" src="/_blob/c1cdfced4be0b368a59a4a6b87f01ce5" style="width:50px;height:50px;object-fit:cover;border-radius:50%;border:2px solid rgba(0,240,255,.55)"></div>
+</div>
+<div style="position:relative;text-align:center;min-height:132px">
+<div style="font:700 12px var(--d);letter-spacing:.2em;color:var(--cy)">{{kicker}}</div>
+<h1 style="margin:6px 0 8px;font:700 30px/1.05 var(--d);letter-spacing:.02em;text-transform:uppercase">{{stitle}}</h1>
+<p style="margin:0;color:var(--mu);font-size:14px">{{sbody}}</p>
+</div>
+<div role="tablist" aria-label="Presentación" style="position:relative;display:flex;justify-content:center;gap:2px">
+<sc-for list="{{dots}}" as="dt" hint-placeholder-count="5"><button onClick="{{dt.pick}}" aria-label="{{dt.label}}" style="width:30px;height:44px;border:0;background:none;cursor:pointer;display:grid;place-items:center"><span style="display:block;width:{{dt.w}}px;height:6px;background:{{dt.bg}}"></span></button></sc-for>
+</div>
+</section>
+
+<section style="flex:none;border-top:1px solid var(--bs);background:var(--p);clip-path:polygon(0 18px,18px 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%);padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -20px 50px rgba(0,240,255,.1)">
+<div>
+<div style="font:700 21px var(--d);letter-spacing:.06em">INICIA SESIÓN PARA CONTINUAR</div>
+<div style="font-size:13px;color:var(--mu)">Guarda tu progreso y tus monedas en todos tus dispositivos.</div>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:3px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--d);letter-spacing:.1em">GRATIS PARA EMPEZAR</span><span style="padding:3px 8px;border:1px solid var(--ln);color:var(--mu);font:700 11px var(--d);letter-spacing:.1em">SIN TARJETA</span></div>
+
+<sc-if value="{{checked}}" hint-placeholder-val="{{false}}">
+<a href="Main.dc.html" style="min-height:54px;display:flex;align-items:center;justify-content:center;gap:12px;text-decoration:none;color:#111;background:#fff;font:700 16px 'Exo 2',sans-serif;clip-path:var(--cut);box-shadow:0 8px 28px rgba(255,255,255,.12)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.490 12.270c0-.790-.070-1.540-.190-2.270H12v4.510h6.470c-.290 1.480-1.140 2.730-2.400 3.580v3h3.860c2.260-2.090 3.560-5.170 3.560-8.820z"></path><path fill="#34A853" d="M12 24c3.240 0 5.950-1.080 7.930-2.910l-3.860-3c-1.080.720-2.450 1.160-4.070 1.160-3.130 0-5.780-2.110-6.730-4.960H1.290v3.090C3.260 21.300 7.310 24 12 24z"></path><path fill="#FBBC05" d="M5.270 14.290c-.250-.720-.380-1.490-.380-2.290s.140-1.570.380-2.290V6.620H1.290C.470 8.240 0 10.060 0 12s.470 3.760 1.290 5.380l3.980-3.090z"></path><path fill="#EA4335" d="M12 4.750c1.770 0 3.350.610 4.600 1.800l3.420-3.420C17.950 1.190 15.240 0 12 0 7.310 0 3.260 2.700 1.290 6.620l3.980 3.090c.950-2.850 3.600-4.960 6.730-4.960z"></path></svg>Continuar con Google</a>
+</sc-if>
+<sc-if value="{{unchecked}}" hint-placeholder-val="{{true}}">
+<button onClick="{{tryGoogle}}" style="min-height:54px;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;color:#111;background:#fff;opacity:.9;font:700 16px 'Exo 2',sans-serif;clip-path:var(--cut)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.490 12.270c0-.790-.070-1.540-.190-2.270H12v4.510h6.470c-.290 1.480-1.140 2.730-2.400 3.580v3h3.860c2.260-2.090 3.560-5.170 3.560-8.820z"></path><path fill="#34A853" d="M12 24c3.240 0 5.950-1.080 7.930-2.910l-3.860-3c-1.080.720-2.450 1.160-4.070 1.160-3.130 0-5.780-2.110-6.730-4.960H1.290v3.090C3.260 21.300 7.310 24 12 24z"></path><path fill="#FBBC05" d="M5.270 14.290c-.250-.720-.380-1.490-.380-2.290s.140-1.570.380-2.290V6.620H1.290C.470 8.240 0 10.060 0 12s.470 3.760 1.290 5.380l3.980-3.090z"></path><path fill="#EA4335" d="M12 4.750c1.770 0 3.350.610 4.600 1.800l3.420-3.420C17.950 1.190 15.240 0 12 0 7.310 0 3.260 2.700 1.290 6.620l3.980 3.090c.950-2.850 3.600-4.960 6.730-4.960z"></path></svg>Continuar con Google</button>
+</sc-if>
+
+<button role="checkbox" aria-checked="{{checked}}" onClick="{{toggle}}" style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;align-items:start;text-align:left;cursor:pointer;color:inherit;font:inherit;border:0;background:none;padding:4px 0;min-height:44px">
+<span style="width:22px;height:22px;box-sizing:border-box;border:2px solid {{cbc}};background:{{cbg}};display:grid;place-items:center;margin-top:1px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#03110f" stroke-width="3.500" stroke-linecap="round" stroke-linejoin="round" style="display:{{ckd}}"><path d="M5 12l5 5 9-10"></path></svg></span>
+<span style="font-size:12px;color:var(--mu)">Tengo 18 años o más y acepto los <span style="color:var(--cy);text-decoration:underline">Términos de uso</span> y la <span style="color:var(--cy);text-decoration:underline">Política de privacidad</span>.</span>
+</button>
+<div role="alert" style="display:{{errd}};padding:8px 10px;border:1px solid rgba(255,42,109,.5);background:rgba(255,42,109,.08);color:#ff7aa3;font-size:12px">Marca la casilla para continuar con Google.</div>
+<p style="margin:0;text-align:center;font-size:11px;color:var(--fa)">Solo con fines informativos y de entretenimiento. Los pronósticos no garantizan resultados.</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const checked = !!s.checked;
+const slide = s.slide || 0;
+const S = [
+['PROBABILIDADES REALES', 'Entiende cada partido con datos.', 'Un modelo estadístico calcula las probabilidades. Una probabilidad no es una certeza.'],
+['ALTA PROBABILIDAD', 'Pronósticos con su acierto a la vista.', 'Cada día, los de mayor probabilidad, con su acierto histórico real.'],
+['RETO ESCALERA', 'Sube escalón a escalón.', 'Sigue el avance de cada reto y cuánto falta para completarlo.'],
+['PARLEY', 'Un boleto sellado antes de los partidos.', 'Con su cuota y su probabilidad conjunta, para que sepas qué arriesgas.'],
+['COINS', 'Gana monedas y desbloquea.', 'Marca asistencia, completa ofertas e invita amigos para desbloquear pronósticos.']
+];
+return {
+kicker: S[slide][0], stitle: S[slide][1], sbody: S[slide][2],
+dots: [0, 1, 2, 3, 4].map((i) => ({ w: i === slide ? 24 : 6, bg: i === slide ? '#00f0ff' : '#3a3f55', label: 'Ir a la presentación ' + (i + 1), pick: () => this.setState({ slide: i }) })),
+checked: checked, unchecked: !checked,
+toggle: () => this.setState({ checked: !checked, err: false }),
+tryGoogle: () => this.setState({ err: true }),
+cbc: checked ? '#05ffa1' : (s.err ? '#ff2a6d' : '#939ab0'),
+cbg: checked ? '#05ffa1' : 'transparent',
+ckd: checked ? 'block' : 'none',
+errd: (s.err && !checked) ? 'block' : 'none'
+};
+}
+}
+</script>
+</body>
+</html>
