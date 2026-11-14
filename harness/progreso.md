@@ -1,6 +1,33 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F1 completada (`app/rediseno-f1-fundaciones`)
+
+- **Objetivo de F1 alcanzado:** Tokens CyberCore, familias tipográficas Exo 2 / JetBrains Mono / Rajdhani, paleta de colores y componentes visuales reutilizables listos y probados sin romper ninguna de las pantallas heredadas.
+- **Fuentes:**
+  - Descargadas e incorporadas en `apps/mobile/fonts/`: `Exo2-Regular.ttf`, `Exo2-Medium.ttf`, `Exo2-SemiBold.ttf`, `Exo2-Bold.ttf`, `JetBrainsMono-Bold.ttf`, `OFL-Exo2.txt`.
+  - Declaradas en `apps/mobile/pubspec.yaml` manteniendo `Gilroy*` y `Rajdhani` para retrocompatibilidad.
+  - Actualizado `adaptive_icon_background: '#07080C'`.
+- **Tokens y estilos (`lib/product/qf_theme.dart`):**
+  - Implementada la paleta completa CyberCore: `bg` (#07080C), `surface` (#12141D), `surface2` (#181A25), `text` (#F0F1F5), `text2` (#B2B7C7), `muted` (#939AB0), `chrome` (#D1D4DE), `slate` (#747D99), `track` (#2A2D3A), `cyan` (#00F0FF), `green` (#05FFA1), `yellow` (#FCEE0A), `magenta` (#FF2A6D), `magentaText` (#FF7AA3), `onGreen` (#03110F), `onYellow` (#1A1800).
+  - Derivados de diseño como constantes ARGB compilables: `border` (cyan 20%), `borderStrong` (cyan 48%), `divider` (slate 22%), `chipActiveBg` (cyan 10%).
+  - Escala tipográfica precalculada `QfText` (`brand`, `heroTitle`, `sectionTitle`, `sectionTag`, `tab`, `chip`, `button`, `badge`, `statLarge`, `statMedium`, `statSmall`, `meta`, `body`, `bodyMedium`, `bodySmall`, `teamName`).
+  - Espaciados `QfSpace` y gradiente verde de acción `qfGreenGradient`.
+- **Componentes base CyberCore implementados y testeados:**
+  - `qf_shapes.dart`: `CutCornerBorder`, `BottomSheetCutShape`, `ScanlinesPainter`, `QfCard` (con `cut`, `strong`, `glow`, `accent`), `QfBadge` con `QfBadgeKind` (`free, won, vip, lost, live, review, voided, doubt`), `qfSectionTag`.
+  - `qf_controls.dart`: `QfButton` (`primary`, `secondary`, `vip`, `danger`, `google`), `QfSwitch` (52x30 dp), `QfCheckbox` (área táctil 44x44 dp), `QfTabs` (segmentado y chips con scroll), `QfSectionNav`, `QfStepDots`.
+  - `qf_charts.dart`: `QfRing` (con gradiente y glow), `QfRadar`, `QfDivergingRow`, `QfDominanceDots`, `QfFormPills`, `QfMarginBars`, `QfStackedBar`, `QfSeasonTrack`, `QfPips`, `QfSegmentedChart`.
+  - `qf_sheets.dart`: `QfBottomSheet` (con cabecera, muesca y corte) y `QfDialogCard`.
+  - `qf_standings.dart`: `QfStandingsTable` (clasificación con zonas de color CyberCore).
+  - `sport_images.dart`: `QfAvatar` soportando `kind: QfAvatarKind.person / QfAvatarKind.logo` (aro cian 2 dp para personas, cuadrado contain para equipos).
+  - `live_widgets.dart`: tokens CyberCore mapeados en alias `live*`.
+- **Suites de pruebas:**
+  - Nuevas pruebas: `qf_theme_test.dart` (contraste WCAG >= 4.5:1), `qf_shapes_test.dart`, `qf_controls_test.dart`, `qf_charts_test.dart`, `qf_sheets_test.dart`, `qf_standings_test.dart`, `qf_gallery_test.dart` (render a 360 y 390 dp, touch targets >= 44 dp).
+  - Verificación global: 574 pruebas ejecutadas y pasando al 100% (`574/574 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+  - `l10n_test.dart`: 100% verde (sin textos fijos en español en `lib/`).
+- **Siguiente paso:** Fase F2 — Cáscara de navegación (`AppBar` 56 dp, `QfBottomNav` 64 dp con `navPicks`, `SportSelector`, `PredictionsSwitcher`).
+
 ## 14-nov-2026 · Inicio del Rediseño CyberCore de la app Flutter (Fase F0 completada)
 
 - **Planes de referencia:** `apps/mobile/docs/PLAN_REDISENO_CYBERCORE_20261114.md` (especificación de diseño, tokens, widgets y contratos) y `apps/mobile/docs/PLAN_REDISENO_FASES_20261114.md` (fases F0 a F8 con criterios de aceptación y dependencias).

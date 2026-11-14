@@ -199,7 +199,7 @@ class _ArtPainter extends CustomPainter {
         c,
         l10n.artNba,
         const Offset(160, 186),
-        color: QfColors.nba,
+        color: QfColors.cyan,
       );
     } else if (index == 1) {
       final rect = Rect.fromCircle(center: const Offset(130, 116), radius: 40);
@@ -235,7 +235,7 @@ class _ArtPainter extends CustomPainter {
         Icons.schedule_rounded,
       ];
       final labels = [l10n.artGoals, l10n.artCorners, l10n.artNba];
-      const colors = [QfColors.football, QfColors.success, QfColors.nba];
+      const colors = [QfColors.cyan, QfColors.green, QfColors.yellow];
       for (var i = 0; i < 3; i++) {
         final y = 90.0 + i * 39;
         c.drawRRect(
@@ -307,7 +307,7 @@ class _ArtPainter extends CustomPainter {
     c.drawCircle(
       Offset.zero,
       29,
-      Paint()..color = basketball ? QfColors.nba : ink,
+      Paint()..color = basketball ? QfColors.yellow : ink,
     );
     if (basketball) {
       line(c, const Offset(-28, 0), const Offset(28, 0), track, 2);

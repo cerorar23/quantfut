@@ -3343,7 +3343,7 @@ Implementado en `feat/control-configuracion-web`:
 Plan: `apps/mobile/docs/PLAN_REDISENO_CYBERCORE_20261114.md` y `apps/mobile/docs/PLAN_REDISENO_FASES_20261114.md`.
 Referencia visual: `apps/mobile/docs/render_cybercore_20261114/` (36 láminas).
 - [x] **F0 · Preparación (14-nov-2026):** worktree `qf-app-rediseno`, línea base medida (545 tests pasando, `flutter analyze` limpio), fixtures reales copiadas (`ficha_futbol_real.json`, etc.), tareas y progreso inicializados.
-- [ ] **F1 · Fundaciones:** tokens `QfColors`, tipografías Exo 2 y JetBrains Mono Bold, widgets base (`QfButton`, `QfTabs`, `QfCard`, etc.) y pruebas (`qf_gallery_test`).
+- [x] **F1 · Fundaciones (14-nov-2026):** tokens `QfColors`, tipografías Exo 2 y JetBrains Mono Bold, widgets base (`QfButton`, `QfTabs`, `QfCard`, `QfBadge`, `QfSwitch`, `QfCheckbox`, `QfCharts`, `QfBottomSheet`, `QfDialogCard`, `QfStandingsTable`), contrastes WCAG >= 4.5:1, galería visual 360/390 dp y 574 tests pasando en verde. PR en `app/rediseno-f1-fundaciones`.
 - [ ] **F2 · Cáscara:** cabecera 56 dp, `QfBottomNav` 64 dp con `navPicks`, selector de deportes y `PredictionsSwitcher`.
 - [ ] **F3a · Inicio:** destacado del día fuerte, tarjetas de acierto y monedas, franja 5 días y agenda.
 - [ ] **F3b · Predicciones:** alta probabilidad, escalera (5 segmentos) y parley con pie fijo de desbloqueo.

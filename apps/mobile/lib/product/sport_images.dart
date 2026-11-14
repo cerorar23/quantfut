@@ -197,6 +197,8 @@ Future<ImageCatalog> loadImageCatalog(QuantFutApi api, {bool refresh = false}) {
 
 enum AvatarShape { contain, circle }
 
+enum QfAvatarKind { person, logo }
+
 // (horizontal, colores). Solo banderas que son franjas lisas; el resto, sin bandera
 // (una bandera mal dibujada es peor que ninguna).
 const _stripes = <String, (bool, List<int>)>{
@@ -255,6 +257,7 @@ class QfAvatar extends StatelessWidget {
     this.url,
     required this.name,
     this.size = 32,
+    this.kind,
     this.shape = AvatarShape.contain,
     this.countryCode,
     this.ring,
@@ -263,6 +266,7 @@ class QfAvatar extends StatelessWidget {
   final String? url;
   final String name;
   final double size;
+  final QfAvatarKind? kind;
   final AvatarShape shape;
   final String? countryCode;
   final Color? ring;
@@ -270,14 +274,17 @@ class QfAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final circle = shape == AvatarShape.circle;
+    final effectiveKind = kind ?? (shape == AvatarShape.circle ? QfAvatarKind.person : QfAvatarKind.logo);
+    final isPerson = effectiveKind == QfAvatarKind.person;
+    final borderRing = ring ?? (isPerson ? QfColors.cyan : null);
     final u = url;
     final usable = u != null && Uri.tryParse(u)?.hasScheme == true;
     final fallback = _Fallback(
       initials: _initials(name),
       size: size,
-      circle: circle,
+      isPerson: isPerson,
       countryCode: countryCode,
+      ringColor: borderRing,
     );
     Widget child = usable
         ? Image.network(
@@ -285,23 +292,28 @@ class QfAvatar extends StatelessWidget {
             width: size,
             height: size,
             headers: const {'User-Agent': 'QuantFut/1.0 (Android; Flutter)'},
-            fit: circle ? BoxFit.cover : BoxFit.contain,
-            alignment: circle ? const Alignment(0, -0.7) : Alignment.center,
+            fit: isPerson ? BoxFit.cover : BoxFit.contain,
+            alignment: isPerson ? const Alignment(0, -0.7) : Alignment.center,
             excludeFromSemantics: true,
             errorBuilder: (_, error, stack) => fallback,
           )
         : fallback;
-    if (circle) {
+    if (isPerson) {
       child = ClipOval(child: child);
-      child = Container(
-        width: size,
-        height: size,
-        decoration: ring == null
-            ? null
-            : BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: ring!, width: 2),
-              ),
+      if (borderRing != null) {
+        child = Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: borderRing, width: 2),
+          ),
+          child: child,
+        );
+      }
+    } else {
+      child = Padding(
+        padding: const EdgeInsets.all(2),
         child: child,
       );
     }
@@ -316,13 +328,16 @@ class _Fallback extends StatelessWidget {
   const _Fallback({
     required this.initials,
     required this.size,
-    required this.circle,
+    required this.isPerson,
     required this.countryCode,
+    this.ringColor,
   });
   final String initials;
   final double size;
-  final bool circle;
+  final bool isPerson;
   final String? countryCode;
+  final Color? ringColor;
+
   @override
   Widget build(BuildContext context) {
     final cc = countryCode;
@@ -332,8 +347,11 @@ class _Fallback extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: QfColors.surface2,
-        shape: circle ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: circle ? null : BorderRadius.circular(size * 0.2),
+        shape: isPerson ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: isPerson ? null : BorderRadius.circular(size * 0.2),
+        border: (isPerson && ringColor != null)
+            ? Border.all(color: ringColor!, width: 2)
+            : null,
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -341,10 +359,10 @@ class _Fallback extends StatelessWidget {
           Text(
             initials,
             style: TextStyle(
-              fontFamily: qfMono,
-              fontSize: size * 0.36,
+              fontFamily: isPerson ? qfTitleFont : qfMono,
+              fontSize: isPerson ? size * 0.4 : size * 0.36,
               fontWeight: FontWeight.w700,
-              color: QfColors.text2,
+              color: isPerson ? QfColors.cyan : QfColors.text2,
             ),
           ),
           if (cc != null && cc.isNotEmpty)

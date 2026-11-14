@@ -19,27 +19,27 @@ final welcomePages = [
   WelcomePage(
     (l10n) => l10n.welcome1Title,
     (l10n) => l10n.welcome1Body,
-    QfColors.football,
+    QfColors.cyan,
   ),
   WelcomePage(
     (l10n) => l10n.welcome2Title,
     (l10n) => l10n.welcome2Body,
-    QfColors.primary,
+    QfColors.green,
   ),
   WelcomePage(
     (l10n) => l10n.welcome3Title,
     (l10n) => l10n.welcome3Body,
-    QfColors.success,
+    QfColors.yellow,
   ),
   WelcomePage(
     (l10n) => l10n.welcome4Title,
     (l10n) => l10n.welcome4Body,
-    QfColors.nba,
+    QfColors.cyan,
   ),
   WelcomePage(
     (l10n) => l10n.welcome5Title,
     (l10n) => l10n.welcome5Body,
-    QfColors.tennis,
+    QfColors.green,
   ),
 ];
 

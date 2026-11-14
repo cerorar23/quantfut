@@ -10,10 +10,10 @@ import 'sport_images.dart';
 
 const liveBg = QfColors.bg,
     livePanel = QfColors.surface,
-    liveCyan = QfColors.primary,
-    liveGold = QfColors.cta,
-    liveGreen = QfColors.success,
-    liveMuted = QfColors.text2;
+    liveCyan = QfColors.cyan,
+    liveGold = QfColors.yellow,
+    liveGreen = QfColors.green,
+    liveMuted = QfColors.muted;
 ThemeData liveTheme() => qfTheme();
 Widget liveText(
   String text, {
@@ -36,12 +36,12 @@ Widget liveCard({
   margin: const EdgeInsets.only(bottom: 12),
   decoration: BoxDecoration(
     color: livePanel,
-    borderRadius: BorderRadius.circular(16),
-    border: border == null ? null : Border.all(color: border),
+    borderRadius: BorderRadius.circular(10),
+    border: Border.all(color: border ?? QfColors.border),
   ),
   child: Material(
     color: Colors.transparent,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(10),
     child: Padding(padding: padding, child: child),
   ),
 );
@@ -61,19 +61,26 @@ Widget training(String message) => liveCard(
 Widget liveButton(
   String text,
   VoidCallback? action, {
-  Color color = liveGold,
+  Color color = liveGreen,
 }) => SizedBox(
   width: double.infinity,
   child: FilledButton(
     style: FilledButton.styleFrom(
       backgroundColor: color,
-      // Texto oscuro de la paleta: nunca blanco sobre azul ni sobre ámbar.
-      foregroundColor: color == QfColors.primary ? QfColors.onPrimary : QfColors.onCta,
+      foregroundColor: color == QfColors.yellow ? QfColors.onYellow : QfColors.onGreen,
       minimumSize: const Size(44, 48),
       padding: const EdgeInsets.all(14),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
     ),
     onPressed: action,
-    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontFamily: qfDisplay,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+      ),
+    ),
   ),
 );
 void liveNotice(BuildContext context, String message) =>
