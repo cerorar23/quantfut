@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Actualización disponible</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+<div aria-hidden="true" style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(0,240,255,.18),transparent 62%)"></div>
+<div aria-hidden="true" style="position:absolute;inset:0;padding:74px 14px 0;display:flex;flex-direction:column;gap:10px;filter:blur(3px);opacity:.25">
+<div style="border:1px solid var(--cy);background:var(--p);height:150px"></div><div style="border:1px solid var(--b);background:var(--p);height:60px"></div><div style="border:1px solid var(--b);background:var(--p);height:60px"></div>
+</div>
+<div style="position:absolute;inset:0;background:rgba(3,4,8,.7)"></div>
+
+<section role="dialog" aria-label="Actualización" style="position:relative;margin:0 20px;border:1px solid var(--bs);background:#12141d;clip-path:var(--cut2);padding:24px 20px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 60px rgba(0,240,255,.2)">
+<div style="display:flex;align-items:center;gap:14px">
+<span style="width:56px;height:56px;flex:none;display:grid;place-items:center;border:1px solid var(--bs);background:rgba(0,240,255,.1);clip-path:var(--cut);box-shadow:0 0 24px rgba(0,240,255,.3)"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg></span>
+<div><div style="font:700 22px/1.05 var(--d);letter-spacing:.05em">{{title}}</div><span style="display:inline-block;margin-top:4px;padding:1px 8px;border:1px solid rgba(5,255,161,.4);color:var(--gr);font:700 11px var(--m)">VERSIÓN 1.2.0</span></div>
+</div>
+<p style="margin:0;color:var(--mu)">{{body}}</p>
+<sc-if value="{{opt}}" hint-placeholder-val="{{true}}">
+<div style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--ln);background:rgba(255,255,255,.02);padding:12px">
+<div style="display:flex;align-items:center;gap:10px;font-size:13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05ffa1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>Fútbol, NBA y tenis con el mismo diseño</div>
+<div style="display:flex;align-items:center;gap:10px;font-size:13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05ffa1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>Análisis con gráficos y fotos de jugadores</div>
+<div style="display:flex;align-items:center;gap:10px;font-size:13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05ffa1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>Props de jugadores NBA con cuota y casa</div>
+</div>
+</sc-if>
+<div style="display:flex;flex-direction:column;gap:8px">
+<a href="Main.dc.html" style="min-height:54px;display:grid;place-items:center;text-decoration:none;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 17px var(--d);letter-spacing:.1em;clip-path:var(--cut);box-shadow:0 8px 28px rgba(5,255,161,.16)">ACTUALIZAR AHORA</a>
+<sc-if value="{{opt}}" hint-placeholder-val="{{true}}">
+<a href="Main.dc.html" style="min-height:48px;display:grid;place-items:center;text-decoration:none;color:var(--mu);font:700 14px var(--d);letter-spacing:.1em">MÁS TARDE</a>
+</sc-if>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"req":{"editor":"text","default":""},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const req = this.props.req === '1' || this.props.req === 1 || this.props.req === true;
+return {
+opt: !req,
+title: req ? 'ACTUALIZA PARA CONTINUAR' : 'ACTUALIZACIÓN DISPONIBLE',
+body: req ? 'Actualiza QuantFut para continuar.' : 'Hay una nueva versión de QuantFut disponible.'
+};
+}
+}
+</script>
+</body>
+</html>

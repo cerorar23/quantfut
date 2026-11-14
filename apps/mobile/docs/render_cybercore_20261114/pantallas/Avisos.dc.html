@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Avisos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))">
+<header style="height:56px;flex:none;display:flex;align-items:center;gap:4px;padding:0 14px 0 6px;border-bottom:1px solid var(--b)">
+<a href="Perfil.dc.html" aria-label="Volver" style="width:44px;height:44px;display:grid;place-items:center;color:var(--mu)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div style="flex-grow:1;font:700 18px var(--d);letter-spacing:.1em">AVISOS</div>
+<span style="font:700 12px var(--m);color:var(--cy)">{{unread}}</span>
+</header>
+<main style="flex-grow:1;min-height:0;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+<div role="tablist" aria-label="Deporte" style="display:flex;gap:6px;overflow-x:auto;flex:none">
+<sc-for list="{{chips}}" as="ch" hint-placeholder-count="4">
+<button onClick="{{ch.pick}}" style="flex:none;min-height:40px;padding:0 14px;cursor:pointer;white-space:nowrap;border:1px solid {{ch.bd}};background:{{ch.bg}};color:{{ch.c}};font:700 12px var(--d);letter-spacing:.08em;clip-path:var(--cut)">{{ch.n}}</button>
+</sc-for>
+</div>
+<sc-for list="{{items}}" as="it" hint-placeholder-count="5">
+<a href="Partido.dc.html" style="text-decoration:none;color:inherit;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border:1px solid {{it.bd}};background:{{it.bg}};clip-path:var(--cut)">
+<img alt="" src="{{it.src}}" style="width:44px;height:44px;{{it.css}}">
+<span style="min-width:0"><span style="display:flex;align-items:center;gap:6px"><span style="padding:1px 6px;border:1px solid var(--b);color:var(--cy);font:700 9px var(--d);letter-spacing:.12em">{{it.tag}}</span><span style="font:700 11px var(--d);letter-spacing:.08em;color:var(--mu)">{{it.kind}}</span></span><strong style="display:block;font-size:14px;margin-top:2px">{{it.match}}</strong><span style="font-size:12px;color:{{it.dc}}">{{it.detail}}</span></span>
+<span style="text-align:right"><span style="display:block;font:500 10px var(--m);color:var(--fa)">{{it.when}}</span><span style="display:{{it.dotD}};width:8px;height:8px;border-radius:50%;background:#00f0ff;box-shadow:0 0 8px #00f0ff;margin:6px 0 0 auto"></span></span>
+</a>
+</sc-for>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+<div style="border:1px dashed var(--ln);padding:40px 16px;text-align:center"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#939ab0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10.300 21a1.900 1.900 0 003.400 0"></path></svg><div style="font:700 16px var(--d);letter-spacing:.1em;margin-top:8px">TODAVÍA NO TIENES AVISOS</div><div style="margin-top:4px;font-size:12px;color:var(--mu)">Aquí verás los pronósticos nuevos, las bajas y los resultados de tus deportes.</div></div>
+</sc-if>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"vacio":{"editor":"text","default":""},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const vacio = this.props.vacio === '1' || this.props.vacio === 1 || this.props.vacio === true;
+const f = (this.state || {}).f || 'todos';
+const MAL = '/_blob/9da85345e94e5f91f11240ac38d5c58d', DET = '/_blob/bfd80f71d11b27f23208aba8ff962867', FRI = '/_blob/c1cdfced4be0b368a59a4a6b87f01ce5', CRU = '/_blob/9a20bf15cbc68ac56b042100f44f532b';
+const LG = 'object-fit:contain;padding:3px;box-sizing:border-box', PH = 'object-fit:cover;border-radius:50%;border:2px solid rgba(0,240,255,.55);box-sizing:border-box';
+const ALL = vacio ? [] : [
+['fut', 'FÚTBOL', 'NUEVO PRONÓSTICO', 'Mallorca – Córdoba', 'Más de 1,5 goles · 81 %', 'hace 12 min', true, MAL, LG, '#00f0ff'],
+['fut', 'FÚTBOL', 'BAJAS ACTUALIZADAS', 'Mallorca – Córdoba', '3 bajas confirmadas · 1 duda', 'hace 1 h', true, MAL, LG, '#b2b7c7'],
+['nba', 'NBA', 'REPORTE DE LESIONES', 'Pistons @ Heat', 'Reporte aplicado · Miami 31 min de bajas', 'hace 2 h', false, DET, LG, '#b2b7c7'],
+['ten', 'TENIS', 'NUEVO PRONÓSTICO', 'Fritz – Tirante', 'Gana Fritz · 82 %', 'ayer', false, FRI, PH, '#00f0ff'],
+['fut', 'FÚTBOL', 'RESULTADO', 'Cruzeiro – Palmeiras', 'Tu pronóstico se cumplió', 'ayer', false, CRU, LG, '#05ffa1']
+];
+const cnt = (k) => ALL.filter((x) => k === 'todos' || x[0] === k).length;
+const items = ALL.filter((x) => f === 'todos' || x[0] === f).map((x) => ({
+tag: x[1], kind: x[2], match: x[3], detail: x[4], when: x[5], dotD: x[6] ? 'block' : 'none',
+bd: x[6] ? 'rgba(0,240,255,.4)' : 'rgba(0,240,255,.2)', bg: x[6] ? 'rgba(0,240,255,.05)' : '#12141d',
+src: x[7], css: x[8], dc: x[9]
+}));
+const chips = [['todos', 'TODOS'], ['fut', 'FÚTBOL'], ['nba', 'NBA'], ['ten', 'TENIS']].map((x) => ({
+n: x[1] + ' · ' + cnt(x[0]), pick: () => this.setState({ f: x[0] }),
+c: f === x[0] ? '#00f0ff' : '#b2b7c7', bd: f === x[0] ? '#00f0ff' : 'rgba(0,240,255,.2)', bg: f === x[0] ? 'rgba(0,240,255,.1)' : 'transparent'
+}));
+return { items: items, chips: chips, empty: items.length === 0, unread: vacio ? '' : '2 SIN LEER' };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Predicciones</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.im{background:center/contain no-repeat content-box;padding:5px;box-sizing:border-box}
+.ph{background:center 12%/cover no-repeat;border:1px solid rgba(0,240,255,.35);box-sizing:border-box}
+.i-ath{background-image:url(/_blob/9da85345e94e5f91f11240ac38d5c58d)}
+.i-esp{background-image:url(/_blob/afab1ff9f1c954d5ecc8200c3dcf500d)}
+.i-cru{background-image:url(/_blob/9a20bf15cbc68ac56b042100f44f532b)}
+.i-pal{background-image:url(/_blob/b4d035f162742dc4744fb6ea4736ba93)}
+.i-fla{background-image:url(/_blob/b6f3599a4863f2d04df62ca2925478fe)}
+.i-cap{background-image:url(/_blob/1eb70b09ff1dfebea1ee8d685df7af07)}
+.i-nyk{background-image:url(/_blob/cf44a5a61913d439a6928335e67150eb)}
+.i-mia{background-image:url(/_blob/10fda615cda9a0af6884ca922825e90b)}
+.i-bos{background-image:url(/_blob/e9b400da9580608c75ff00a2c1dc11c5)}
+.i-mil{background-image:url(/_blob/aea89ff3989ccce3b75d8343a05a3743)}
+.i-alc{background-image:url(/_blob/93372743515ef3f3b1a897cc2669b845)}
+.i-zve{background-image:url(/_blob/4e1d40a719ca20a5cf7c8a7c3cbc8642)}
+.i-fritz{background-image:url(/_blob/c1cdfced4be0b368a59a4a6b87f01ce5)}
+.i-dem{background-image:url(/_blob/ea610f40c3f67b0aee7039a50569ca00)}
+.i-ryb{background-image:url(/_blob/1d05682d3921573084dbdb00f1eb5314)}
+.i-pao{background-image:url(/_blob/d104815e8f420fcb473e17de55e13826)}
+.i-brunson{background-image:url(/_blob/ee10ef692188fd86766c8bf80836b37f)}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+<header style="height:56px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;border-bottom:1px solid var(--b)">
+<a href="Menu.dc.html" aria-label="Menú" style="width:44px;height:44px;background:none;color:var(--mu);display:grid;place-items:center;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></a>
+<div style="flex-grow:1;font:700 21px var(--d);letter-spacing:.14em">QUANT<span style="color:var(--cy)">FUT</span></div>
+<a href="Coins.dc.html" aria-label="120 monedas" style="height:44px;padding:0 12px;display:flex;align-items:center;gap:6px;text-decoration:none;border:1px solid rgba(252,238,10,.4);background:rgba(252,238,10,.08);color:var(--ye);font:700 13px var(--m);clip-path:var(--cut)"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>120</a>
+<a href="Vip.dc.html" aria-label="Acceso VIP" style="width:44px;height:44px;display:grid;place-items:center;color:var(--ye)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19h18M4 15L3 7l5 4 4-6 4 6 5-4-1 8z"></path></svg></a>
+</header>
+<main style="flex-grow:1;min-height:0;padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+<div role="group" aria-label="Deporte" style="flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<sc-for list="{{sports}}" as="sp" hint-placeholder-count="3">
+<button onClick="{{sp.pick}}" style="height:44px;display:flex;align-items:center;justify-content:center;gap:7px;font:700 14px var(--d);letter-spacing:.08em;clip-path:var(--cut);cursor:pointer;border:1px solid {{sp.bd}};background:{{sp.bg}};color:{{sp.c}}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{sp.d}}"></path></svg>{{sp.label}}</button>
+</sc-for>
+</div>
+<div role="tablist" aria-label="Tipo de pronóstico" style="flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;border:1px solid var(--b);background:rgba(3,9,17,.72)">
+<sc-for list="{{segs}}" as="t" hint-placeholder-count="3">
+<button onClick="{{t.pick}}" style="min-height:40px;border:0;cursor:pointer;font:700 13px var(--d);letter-spacing:.06em;color:{{t.c}};background:{{t.bg}};box-shadow:{{t.sh}}">{{t.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{isHigh}}" hint-placeholder-val="{{true}}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{picks}}" as="k" hint-placeholder-count="3">
+<a href="Partido.dc.html" style="text-decoration:none;color:inherit;border:1px solid var(--b);background:var(--p);padding:12px 14px;clip-path:var(--cut);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 11px var(--m);color:var(--fa)">{{k.meta}}</span><span style="padding:2px 8px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid {{k.tb}};color:{{k.tc}}">{{k.tag}}</span></div>
+<div style="display:flex;align-items:center;gap:8px"><span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="{{k.s1}}" style="width:36px;height:36px;{{k.c1}}"><img alt="" src="{{k.s2}}" style="width:36px;height:36px;margin-left:-8px;{{k.c2}}"></span><strong style="font-size:15px">{{k.match}}</strong></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+<div style="filter:{{k.blur}}"><div style="font:700 17px var(--d);color:var(--cy)">{{k.sel}}</div><div style="font:500 11px var(--m);color:var(--mu)">cuota al publicar {{k.odd}}</div></div>
+<div style="font:700 26px var(--m);color:var(--cy);filter:{{k.blur}}">{{k.p}}</div>
+</div>
+</a>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isLadder}}" hint-placeholder-val="{{false}}">
+<div style="border:1px solid var(--b);background:var(--p);padding:14px;clip-path:var(--cut2);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 13px var(--d);letter-spacing:.14em">ESCALERA · RETO ACTIVO</span><span style="font:700 12px var(--m);color:var(--cy)">ESCALÓN 4 DE 5</span></div>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;height:10px">
+<div style="background:var(--gr)"></div><div style="background:var(--gr)"></div><div style="background:var(--gr)"></div><div style="background:var(--cy);box-shadow:0 0 10px rgba(0,240,255,.6)"></div><div style="background:#2a2d3a"></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+<div style="border:1px solid var(--ln);padding:8px 10px"><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">CUOTA ACUMULADA</div><div style="font:700 22px var(--m)">x3.10</div></div>
+<div style="border:1px solid var(--ln);padding:8px 10px"><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">PROB. DE ESTE ESCALÓN</div><div style="font:700 22px var(--m);color:var(--cy)">79%</div></div>
+</div>
+<div style="border-top:1px solid var(--ln);padding-top:10px;display:flex;flex-direction:column;gap:4px">
+<span style="font:500 11px var(--m);color:var(--fa)">BRASILEIRÃO · HOY 19:30</span>
+<div style="display:flex;align-items:center;gap:8px"><span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="/_blob/b6f3599a4863f2d04df62ca2925478fe" style="width:36px;height:36px;object-fit:contain"><img alt="" src="/_blob/1eb70b09ff1dfebea1ee8d685df7af07" style="width:36px;height:36px;margin-left:-8px;object-fit:contain"></span><strong style="font-size:15px">Flamengo – Atlético-PR</strong></div>
+<span style="font:700 17px var(--d);color:var(--cy)">Doble oportunidad 1X</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mu)">
+<div style="display:flex;justify-content:space-between"><span>1 · Más de 1,5 goles</span><span style="color:var(--gr);font:700 11px var(--m)">GANADO</span></div>
+<div style="display:flex;justify-content:space-between"><span>2 · Gana local</span><span style="color:var(--gr);font:700 11px var(--m)">GANADO</span></div>
+<div style="display:flex;justify-content:space-between"><span>3 · Menos de 4,5 goles</span><span style="color:var(--gr);font:700 11px var(--m)">GANADO</span></div>
+</div>
+<p style="margin:0;font-size:11px;color:var(--fa)">Si un escalón falla, la escalera vuelve a empezar.</p>
+</div>
+</sc-if>
+<sc-if value="{{isParley}}" hint-placeholder-val="{{false}}">
+<div style="border:1px solid var(--b);background:var(--p);padding:14px;clip-path:var(--cut2);display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 13px var(--d);letter-spacing:.14em">PARLEY DEL DÍA · 3 SELECCIONES</span><span style="padding:2px 8px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid rgba(5,255,161,.4);color:var(--gr)">GRATIS</span></div>
+<div style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--ln)"><span style="font:700 10px var(--m);color:var(--fa)">FÚT</span><span style="font-weight:600;display:flex;align-items:center;gap:8px;min-width:0"><span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="/_blob/9da85345e94e5f91f11240ac38d5c58d" style="width:30px;height:30px;object-fit:contain"><img alt="" src="/_blob/afab1ff9f1c954d5ecc8200c3dcf500d" style="width:30px;height:30px;margin-left:-6px;object-fit:contain"></span><span>Mallorca – Córdoba<span style="display:block;font:700 14px var(--d);color:var(--cy)">Más de 1,5 goles</span></span></span><span style="font:700 14px var(--m)">81%</span></div>
+<div style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--ln)"><span style="font:700 10px var(--m);color:var(--fa)">NBA</span><span style="font-weight:600;display:flex;align-items:center;gap:8px;min-width:0"><span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="/_blob/bfd80f71d11b27f23208aba8ff962867" style="width:30px;height:30px;object-fit:contain"><img alt="" src="/_blob/10fda615cda9a0af6884ca922825e90b" style="width:30px;height:30px;margin-left:-6px;object-fit:contain"></span><span>Pistons @ Heat<span style="display:block;font:700 14px var(--d);color:var(--cy)">Pistons ganan</span></span></span><span style="font:700 14px var(--m)">62%</span></div>
+<div style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--ln)"><span style="font:700 10px var(--m);color:var(--fa)">TEN</span><span style="font-weight:600;display:flex;align-items:center;gap:8px;min-width:0"><span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="/_blob/c1cdfced4be0b368a59a4a6b87f01ce5" style="width:30px;height:30px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"><img alt="" src="/_blob/34c6447ff06248aad6c47ec3e792fe40" style="width:30px;height:30px;margin-left:-6px;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%"></span><span>Fritz – Tirante<span style="display:block;font:700 14px var(--d);color:var(--cy)">Gana Fritz</span></span></span><span style="font:700 14px var(--m)">82%</span></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+<div style="border:1px solid var(--ln);padding:8px 10px"><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">PROB. CONJUNTA</div><div style="font:700 22px var(--m);color:var(--cy)">34%</div></div>
+<div style="border:1px solid var(--ln);padding:8px 10px"><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">CUOTA COMBINADA</div><div style="font:700 22px var(--m)">2.74</div></div>
+</div>
+<p style="margin:0;font-size:11px;color:var(--fa)">Una probabilidad no es una certeza: de cada 3 parleys como este se espera acertar 1.</p>
+</div>
+</sc-if>
+</main>
+<div style="flex:none;padding:10px 14px;border-top:1px solid var(--b);background:var(--p);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px">
+<a href="Desbloquear.dc.html" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-decoration:none;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 15px var(--d);letter-spacing:.08em;clip-path:var(--cut)"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 018 0v4"></path></svg>DESBLOQUEAR · 40</a>
+<a href="Vip.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;color:var(--ye);border:1px solid rgba(252,238,10,.5);background:rgba(252,238,10,.08);font:700 15px var(--d);letter-spacing:.08em;clip-path:var(--cut)">VIP</a>
+</div>
+<nav aria-label="Principal" style="height:64px;flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--p);border-top:1px solid var(--b)">
+<a href="Main.dc.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9h-6v-6H9v6H3z"></path></svg>INICIO</a>
+<a href="Predicciones.dc.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;font:700 11px var(--d);letter-spacing:.08em;color:var(--cy);background:rgba(0,240,255,.07);box-shadow:inset 0 2px var(--cy)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>PICKS</a>
+<a href="Mercados.dc.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M2 20h20"></path></svg>MERCADOS</a>
+<a href="Coins.dc.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v10M15 9.5h-4.5a1.5 1.5 0 000 3h3a1.5 1.5 0 010 3H9"></path></svg>COINS</a>
+<a href="Perfil.dc.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;font:600 11px var(--d);letter-spacing:.08em;color:var(--fa)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a4 4 0 100 8 4 4 0 000-8zM4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path></svg>PERFIL</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const sport = s.sport || 'fut';
+const seg = s.seg || 'high';
+const C = 'M12 3a9 9 0 100 18 9 9 0 000-18z';
+const sports = [
+['fut', 'FÚTBOL', C + 'M12 8l3.5 2.5-1.3 4h-4.4l-1.3-4z'],
+['nba', 'NBA', C + 'M3 12h18M12 3v18M5.6 5.6c3 3.5 3 9.3 0 12.8M18.4 5.6c-3 3.5-3 9.3 0 12.8'],
+['ten', 'TENIS', C + 'M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8']
+].map((x) => ({
+label: x[1], d: x[2],
+pick: () => this.setState({ sport: x[0] }),
+c: x[0] === sport ? '#03110f' : '#b2b7c7',
+bg: x[0] === sport ? '#00f0ff' : 'rgba(0,240,255,.05)',
+bd: x[0] === sport ? '#00f0ff' : 'rgba(0,240,255,.2)'
+}));
+const segs = [['high', 'ALTA PROB.'], ['ladder', 'ESCALERA'], ['parley', 'PARLEY']].map((x) => ({
+label: x[1],
+pick: () => this.setState({ seg: x[0] }),
+c: x[0] === seg ? '#00f0ff' : '#b2b7c7',
+bg: x[0] === seg ? 'rgba(0,240,255,.1)' : 'transparent',
+sh: x[0] === seg ? 'inset 0 -2px #00f0ff' : 'none'
+}));
+const data = {
+fut: [
+['LALIGA 2 · SÁB 17:30', 'Mallorca – Córdoba', 'Más de 1,5 goles', '81%', '1.28', true],
+['BRASILEIRÃO · HOY 19:30', 'Flamengo – Atlético-PR', 'Doble oportunidad 1X', '79%', '1.31', false],
+['BRASILEIRÃO · HOY 21:00', 'Cruzeiro – Palmeiras', 'Menos de 4,5 goles', '77%', '1.22', false]
+],
+nba: [
+['NBA · SÁB 20:00', 'Pistons @ Heat', 'Pistons ganan', '62%', '1.62', true],
+['NBA · HOY 20:00', 'Celtics @ Bucks', 'Gana Celtics', '61%', '1.72', false],
+['NBA · SÁB 20:00', 'Cunningham · Pistons @ Heat', 'Puntos de jugador · Más de 25,5', '61%', '1.88', false]
+],
+ten: [
+['ATP ESTOCOLMO · SÁB 12:00', 'Fritz – Tirante', 'Gana Fritz', '82%', '1.22', true],
+['ATP FINALS · HOY 20:30', 'Alcaraz – Zverev', 'Menos de 23,5 juegos', '62%', '1.75', false],
+['WTA · MAÑANA 11:00', 'Paolini – Rybakina', 'Más de 20,5 juegos', '60%', '1.80', false]
+]
+};
+const SRC = {
+ath: '/_blob/9da85345e94e5f91f11240ac38d5c58d', esp: '/_blob/afab1ff9f1c954d5ecc8200c3dcf500d',
+cru: '/_blob/9a20bf15cbc68ac56b042100f44f532b', pal: '/_blob/b4d035f162742dc4744fb6ea4736ba93',
+fla: '/_blob/b6f3599a4863f2d04df62ca2925478fe', cap: '/_blob/1eb70b09ff1dfebea1ee8d685df7af07',
+nyk: '/_blob/cf44a5a61913d439a6928335e67150eb', mia: '/_blob/10fda615cda9a0af6884ca922825e90b',
+bos: '/_blob/e9b400da9580608c75ff00a2c1dc11c5', mil: '/_blob/aea89ff3989ccce3b75d8343a05a3743',
+alc: '/_blob/93372743515ef3f3b1a897cc2669b845', zve: '/_blob/4e1d40a719ca20a5cf7c8a7c3cbc8642',
+fritz: '/_blob/c1cdfced4be0b368a59a4a6b87f01ce5', dem: '/_blob/ea610f40c3f67b0aee7039a50569ca00',
+ryb: '/_blob/1d05682d3921573084dbdb00f1eb5314', pao: '/_blob/d104815e8f420fcb473e17de55e13826',
+brunson: '/_blob/ee10ef692188fd86766c8bf80836b37f', det: '/_blob/bfd80f71d11b27f23208aba8ff962867', cade: '/_blob/fc3dff5676a4ff417341754d6b94a621', tirante: '/_blob/34c6447ff06248aad6c47ec3e792fe40'
+};
+const PH = 'display:block;box-sizing:border-box;object-fit:cover;object-position:center 12%;border:2px solid rgba(0,240,255,.55);border-radius:50%';
+const LG = 'display:block;box-sizing:border-box;object-fit:contain;padding:3px';
+const IM = {
+fut: [['im', 'ath', 'im', 'esp'], ['im', 'fla', 'im', 'cap'], ['im', 'cru', 'im', 'pal']],
+nba: [['im', 'det', 'im', 'mia'], ['im', 'bos', 'im', 'mil'], ['ph', 'cade', 'im', 'det']],
+ten: [['ph', 'fritz', 'ph', 'tirante'], ['ph', 'alc', 'ph', 'zve'], ['ph', 'pao', 'ph', 'ryb']]
+};
+const picks = data[sport].map((r, ix) => ({
+s1: SRC[IM[sport][ix][1]], c1: IM[sport][ix][0] === 'ph' ? PH : LG, s2: SRC[IM[sport][ix][3]], c2: IM[sport][ix][2] === 'ph' ? PH : LG,
+meta: r[0], match: r[1], sel: r[2], p: r[3], odd: r[4],
+tag: r[5] ? 'GRATIS' : 'VIP',
+tc: r[5] ? '#05ffa1' : '#fcee0a',
+tb: r[5] ? 'rgba(5,255,161,.4)' : 'rgba(252,238,10,.45)',
+blur: r[5] ? 'none' : 'blur(7px)'
+}));
+return { sports, segs, picks, isHigh: seg === 'high', isLadder: seg === 'ladder', isParley: seg === 'parley' };
+}
+}
+</script>
+</body>
+</html>

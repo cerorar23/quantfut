@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Detalle de mercado</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.im{background:center/contain no-repeat content-box;padding:5px;box-sizing:border-box}
+.i-ath{background-image:url(/_blob/9da85345e94e5f91f11240ac38d5c58d)}
+.i-esp{background-image:url(/_blob/afab1ff9f1c954d5ecc8200c3dcf500d)}
+.i-cru{background-image:url(/_blob/9a20bf15cbc68ac56b042100f44f532b)}
+.i-pal{background-image:url(/_blob/b4d035f162742dc4744fb6ea4736ba93)}
+.i-fla{background-image:url(/_blob/b6f3599a4863f2d04df62ca2925478fe)}
+.i-cap{background-image:url(/_blob/1eb70b09ff1dfebea1ee8d685df7af07)}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#07080c;color:#f0f1f5;font-family:'Exo 2',system-ui,sans-serif;font-size:14px;line-height:1.35;--p:#12141d;--p2:#181a25;--b:rgba(0,240,255,.2);--bs:rgba(0,240,255,.48);--ln:rgba(116,125,153,.22);--cy:#00f0ff;--gr:#05ffa1;--ye:#fcee0a;--mg:#ff2a6d;--mu:#b2b7c7;--fa:#939ab0;--d:'Rajdhani',sans-serif;--m:'JetBrains Mono',monospace;--cut:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));--cut2:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))">
+<header style="height:56px;flex:none;display:flex;align-items:center;gap:4px;padding:0 14px 0 6px;border-bottom:1px solid var(--b)">
+<a href="Mercados.dc.html" aria-label="Volver a Mercados" style="width:44px;height:44px;display:grid;place-items:center;color:var(--mu)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div style="flex-grow:1;min-width:0">
+<div style="font:700 18px var(--d);letter-spacing:.1em">MÁS / MENOS 2,5</div>
+<div style="font:500 11px var(--m);color:var(--fa)">FÚTBOL · GOLES</div>
+</div>
+<span style="padding:2px 8px;font:700 11px var(--d);letter-spacing:.12em;border:1px solid rgba(5,255,161,.4);background:rgba(5,255,161,.09);color:var(--gr)">LÍNEA CONFIRMADA</span>
+</header>
+<main style="flex-grow:1;min-height:0;padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+<section style="flex:none;border:1px solid var(--bs);background-color:var(--p);background-image:repeating-linear-gradient(0deg,rgba(0,240,255,.035) 0 1px,transparent 1px 4px);clip-path:var(--cut2);padding:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+<div><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">ACIERTO GLOBAL</div><div style="font:700 34px/1.1 var(--m);color:var(--cy);text-shadow:0 0 18px rgba(0,240,255,.45)">66%</div><div style="font:500 11px var(--m);color:var(--mu)">48 de 73 publicados</div></div>
+<div><div style="font:700 11px var(--d);letter-spacing:.14em;color:var(--fa)">HOY</div><div style="font:700 34px/1.1 var(--m)">3</div><div style="font:500 11px var(--m);color:var(--mu)">1 gratis · 2 VIP</div></div>
+</section>
+<div role="tablist" aria-label="Periodo" style="flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:4px;border:1px solid var(--b);background:rgba(3,9,17,.72)">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+<button onClick="{{t.pick}}" style="min-height:40px;border:0;cursor:pointer;font:700 13px var(--d);letter-spacing:.06em;color:{{t.c}};background:{{t.bg}};box-shadow:{{t.sh}}">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+<a href="Partido.dc.html" style="text-decoration:none;color:inherit;border:1px solid var(--b);background:var(--p);padding:11px 14px;clip-path:var(--cut);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px">
+<div>
+<div style="font:500 11px var(--m);color:var(--fa)">{{r.meta}}</div>
+<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span aria-hidden="true" style="display:flex;flex:none"><img alt="" src="{{r.s1}}" style="width:36px;height:36px;object-fit:contain"><img alt="" src="{{r.s2}}" style="width:36px;height:36px;margin-left:-8px;object-fit:contain"></span><strong style="font-size:15px">{{r.match}}</strong></div>
+<div style="font:700 15px var(--d);color:var(--cy);filter:{{r.blur}}">{{r.sel}}</div>
+</div>
+<span style="padding:3px 8px;font:700 11px var(--d);letter-spacing:.12em;color:{{r.c}};border:1px solid {{r.c}}">{{r.tag}}</span>
+</a>
+</sc-for>
+</div>
+</main>
+<div style="flex:none;padding:10px 14px 14px;border-top:1px solid var(--b);background:var(--p);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px">
+<a href="Desbloquear.dc.html" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-decoration:none;color:#03110f;background:linear-gradient(120deg,#05ffa1,#8affdf);font:700 15px var(--d);letter-spacing:.08em;clip-path:var(--cut)"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 018 0v4"></path></svg>DESBLOQUEAR · 40</a>
+<a href="Vip.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;color:var(--ye);border:1px solid rgba(252,238,10,.5);background:rgba(252,238,10,.08);font:700 15px var(--d);letter-spacing:.08em;clip-path:var(--cut)">VIP</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const tab = (this.state || {}).tab || 'hoy';
+const tabs = [['hoy', 'HOY (3)'], ['prev', 'ANTERIORES']].map((x) => ({
+label: x[1],
+pick: () => this.setState({ tab: x[0] }),
+c: x[0] === tab ? '#00f0ff' : '#b2b7c7',
+bg: x[0] === tab ? 'rgba(0,240,255,.1)' : 'transparent',
+sh: x[0] === tab ? 'inset 0 -2px #00f0ff' : 'none'
+}));
+const G = '#05ffa1', Y = '#fcee0a', M = '#ff2a6d', F = '#939ab0';
+const data = {
+hoy: [
+['LALIGA 2 · 17:30', 'Mallorca – Córdoba', 'Más de 2,5 · 64%', 'GRATIS', G, false],
+['BRASILEIRÃO · 19:30', 'Flamengo – Atlético-PR', 'Menos de 2,5 · 61%', 'VIP', Y, true],
+['BRASILEIRÃO · 21:00', 'Cruzeiro – Palmeiras', 'Más de 2,5 · 66%', 'VIP', Y, true]
+],
+prev: [
+['AYER · BRASILEIRÃO', 'Palmeiras 3–1 Flamengo', 'Más de 2,5 · 67%', 'GANADO', G, false],
+['AYER · BRASILEIRÃO', 'Cruzeiro 1–0 Atlético-PR', 'Menos de 2,5 · 63%', 'GANADO', G, false],
+['11-NOV · LALIGA 2', 'Córdoba 1–1 Mallorca', 'Más de 2,5 · 62%', 'FALLADO', M, false],
+['11-NOV · BRASILEIRÃO', 'Atlético-PR 0–0 Palmeiras', 'Línea retirada', 'ANULADO', F, false]
+]
+};
+const SRC = {
+ath: '/_blob/9da85345e94e5f91f11240ac38d5c58d', esp: '/_blob/afab1ff9f1c954d5ecc8200c3dcf500d',
+cru: '/_blob/9a20bf15cbc68ac56b042100f44f532b', pal: '/_blob/b4d035f162742dc4744fb6ea4736ba93',
+fla: '/_blob/b6f3599a4863f2d04df62ca2925478fe', cap: '/_blob/1eb70b09ff1dfebea1ee8d685df7af07'
+};
+const IM = { hoy: [['ath', 'esp'], ['fla', 'cap'], ['cru', 'pal']], prev: [['pal', 'fla'], ['cru', 'cap'], ['esp', 'ath'], ['cap', 'pal']] };
+const rows = data[tab].map((r, ix) => ({ s1: SRC[IM[tab][ix][0]], s2: SRC[IM[tab][ix][1]], meta: r[0], match: r[1], sel: r[2], tag: r[3], c: r[4], blur: r[5] ? 'blur(6px)' : 'none' }));
+return { tabs, rows };
+}
+}
+</script>
+</body>
+</html>

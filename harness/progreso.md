@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Respaldo de cuotas: clave gratuita de The Odds API cuando vence la de pago (rama `cuotas/odds-api-clave-gratis`)
+
+- **Decisión del titular:** el plan de 100.000 créditos (NBA) fue de un solo mes y no se renueva; después solo cuenta el plan gratuito (500/mes, sin histórico). `ODDS_API_KEY` del servidor y del `.env` está muerta (401 `DEACTIVATED_KEY`); la de pago vive en `ODDS_API_RESPALDO_KEY`.
+- **Qué hace:** `ODDS_API_GRATIS_KEY` (nueva). `cuotas_respaldo.resolver_clave` usa la de pago mientras `/v4/sports` (gratis) responda 200 con saldo >0; si no, pasa a la gratuita con suelo 0 (el de 500 la habría bloqueado desde el primer día) y tope diario propio `CUOTAS_RESPALDO_DIARIO_GRATIS=16` (≈480/mes). Sin la variable nada cambia. Aplica a NBA/tenis y a fútbol (mismo `key`).
+- **Por qué no más:** medido el 14-nov, las 7 ligas de fútbol que PropLine deja sin cuota (Allsvenskan, Superliga danesa, Super League suiza, Serie B, LaLiga 2, Eliteserien, MLS) sí tienen `h2h`/`totals` en The Odds API (12-21 casas; 2 créditos por liga y pasada con `h2h,totals`); TheRundown no incluye ninguna salvo MLS. Con 16/día solo caben unas 5 ligas por día: queda por decidir si la cascada de fútbol pide solo `h2h,totals` (2) en vez de `h2h,totals,spreads` (3) y si se rota por ligas.
+- **Pendiente de despliegue:** añadir `ODDS_API_GRATIS_KEY` al entorno del worker/API (la clave está en la cuenta del titular; no se guarda en el repo) siguiendo `DEPLOYS.md`.
 ## 14-nov-2026 · Ingesto de PropLine: doble oportunidad en todos sus formatos y 19 alias que faltaban (`quantfut-worker:8613290c`)
 
 - **Causa:** dos pérdidas silenciosas entre el archivo de PropLine (que sí traía las cuotas, con Pinnacle) y `odds_snapshots`. El ingesto no leía la doble oportunidad de las casas que la nombran «X / Draw» o «Draw Or X», y 19 nombres de clubes no tenían alias. Mi diagnóstico previo («PropLine no cubre esas ligas») era falso: el archivo guarda LaLiga 2, Serie B, Allsvenskan y Suiza cada 6 h desde el 25-oct; la captura cada 6 h es de las ligas no prioritarias (presupuesto de 4.500 peticiones/día).
