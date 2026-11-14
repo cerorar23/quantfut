@@ -7,6 +7,8 @@ import 'live_widgets.dart';
 import 'market_catalog.dart';
 import 'market_hub.dart';
 import 'published_history.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
 /// Pantalla de un mercado: tasa de acierto, pronósticos de hoy (abiertos) y
 /// el historial de los ya resueltos. Todo viene del servidor; lo que no llega
@@ -135,12 +137,17 @@ class _MarketDetailScreenState extends State<MarketDetailScreen> {
       return d != null && _sameDay(d, today);
     }).toList();
     final todayWon = todays.where((r) => r['outcome'] == 'win').length;
+    final isGoals = footballGoalsFamilies.contains(widget.family.id);
+    final subtitle =
+        '${context.l10n.artFootball} · ${isGoals ? context.l10n.groupGoals : context.l10n.marketsTabGame.toUpperCase()}';
     return MarketScaffold(
       title: widget.family.localTitle,
+      subtitle: subtitle,
       color: widget.color,
       today: history == null ? null : PublishedRecord(todays.length, todayWon),
       overall: history == null ? widget.record : historyRecord(history!),
       todayCount: widget.upcoming.length + widget.locked.length,
+      onVip: widget.onVip,
       onLines: widget.family.lines.isEmpty
           ? null
           : () => showLinesSheet(
@@ -265,12 +272,12 @@ void showLinesSheet(
     final supported = line.supported(minimum);
     final l10n = context.l10n;
     final (label, tone) = supported
-        ? (l10n.mdLineConfirmed, liveGreen)
+        ? (l10n.mdLineConfirmed, QfColors.primary)
         : !line.deployed
-        ? (l10n.mdLineNotDeployed, liveGold)
+        ? (l10n.mdLineNotDeployed, QfColors.yellow)
         : line.cases < minimum
-        ? (l10n.mdLineShort, liveGold)
-        : (l10n.mdLineReview, liveMuted);
+        ? (l10n.mdLineShort, QfColors.yellow)
+        : (l10n.mdLineReview, QfColors.muted);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -279,20 +286,50 @@ void showLinesSheet(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                liveText(line.localLabel, size: 13, bold: true),
-                liveText(casesLabel(line.cases), size: 10, color: liveMuted),
+                Text(
+                  line.localLabel,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  casesLabel(line.cases),
+                  style: const TextStyle(fontSize: 10, color: QfColors.muted),
+                ),
               ],
             ),
           ),
-          liveText(percent(line.observed), size: 14, bold: true),
+          Text(
+            percent(line.observed),
+            style: const TextStyle(
+              fontFamily: qfMono,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: tone.withValues(alpha: .15),
-              borderRadius: BorderRadius.circular(8),
+            decoration: ShapeDecoration(
+              color: tone.withValues(alpha: .12),
+              shape: CutCornerBorder(
+                cut: 4,
+                side: BorderSide(color: tone.withValues(alpha: .5)),
+              ),
             ),
-            child: liveText(label, size: 10, color: tone, bold: true),
+            child: Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                fontFamily: qfDisplay,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+                color: tone,
+              ),
+            ),
           ),
         ],
       ),
@@ -302,10 +339,8 @@ void showLinesSheet(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xff0d1522),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-    ),
+    backgroundColor: QfColors.surface,
+    shape: const CutCornerBorder(cut: 18),
     builder: (_) => SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -313,10 +348,33 @@ void showLinesSheet(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            liveText(family.localTitle, size: 18, bold: true, color: color),
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              family.localTitle.toUpperCase(),
+              style: TextStyle(
+                fontFamily: qfDisplay,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 6),
-            liveText(family.localSubtitle, size: 12, color: liveMuted),
-            const SizedBox(height: 14),
+            Text(
+              family.localSubtitle,
+              style: const TextStyle(fontSize: 12, color: QfColors.muted),
+            ),
+            const SizedBox(height: 16),
             for (final line in family.lines) row(line),
           ],
         ),
