@@ -1,6 +1,23 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4f completada (`app/rediseno-f4f-alertas`)
+
+- **Objetivo de F4f alcanzado:** Pestaña de Alertas y Alineaciones (`AlertsTab` en `lib/product/live_alerts.dart` y nueva pizarra táctica `QfPitch` en `lib/product/lineup_pitch.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoAlertas.png`, `PartidoAlertasCompleto.png` y `pantallas/Partido.dc.html`.
+- **Implementación y Arquitectura (`lib/product/live_alerts.dart`, `alerts_model.dart`, `lineup_pitch.dart`, `pick_labels.dart`):**
+  - **1. Filas de baja (`_AbsenceCard`):** 68 dp de altura mínima, `QfAvatar` de 44 dp con iniciales en JetBrains Mono cian y gradiente oscuro (o foto real si está disponible), con escudo de club de 20 dp en la esquina inferior derecha; nombre del jugador en 14 bold; subtítulo «POS · Equipo» (omite POS si es nulo); motivo traducido o texto de regreso en JetBrains Mono 11; insignia temática con borde fino CyberCore (`LESIÓN` magenta, `SELECCIÓN` cian, `SANCIÓN` magenta, `DUDA` amarillo, `VUELVE` verde).
+  - **2. Interpretación de fechas y traducción de motivos (`pick_labels.dart`):** Funciones puras `interpretReturnDate` y `absenceReturnText` con soporte para formato en inglés («Early/Mid/Late <Month> [<Year>]») con traducción del mes y periodo a los 6 idiomas (`principios de dic.`, `mediados de nov.`, `finales de nov.`, `principios de may. 2027`), fechas ISO del servidor, y textos de estado (`Con su selección · vuelve a {when}`, `Vuelve a {when}`, `Ya entrena con el grupo`). Texto desconocido se conserva tal cual.
+  - **3. Pizarra táctica de alineaciones (`QfPitch` en `lineup_pitch.dart`):** Contenedor de 400 dp con borde verde CyberCore y gradiente de césped (`#0a1d16` a `#08140f`), línea de medio campo, círculo central de 84 dp, áreas de penalti de 70 dp en ambos extremos; layout táctico dinámico (`PitchPlayer.layoutPlayers`) que mapea formaciones (`4-3-1-2`, `4-3-3`, `4-4-2`, `3-5-2`, `4-2-3-1`...) con orden vertical (portero abajo en y ≈ 89%, delanteros arriba en y ≈ 13%) y distribución horizontal simétrica; 11 avatares circulares de 42 dp con borde cian de 2 dp, dorsal mono cian en caja negra 18x18 dp y nombre/apellido con sombra de 3 px; soporte robusto para plantillas con menos de 11 jugadores sin desbordes.
+  - **4. Bloque de alineaciones al final de Alertas (`_LineupsSection`):** Muestra el último once conocido de cada equipo con cabecera `// ALINEACIONES` y título `ÚLTIMO ONCE CONOCIDO`, formación en badge cian, fecha y rival (`último once, vs {rival} · {date}`), y el campo táctico `QfPitch`. Para equipos sin alineación guardada, despliega la tarjeta con borde discontinuo CyberCore («{Equipo} · sin alineación guardada — El once se confirma una hora antes del partido y aparecerá aquí con foto.»).
+  - **5. Pie y estado sin alertas:** Pie con fecha formateada «> COMPROBADO {date} · se actualiza cada hora» y tarjeta CyberCore para partidos sin incidencias.
+- **Internacionalización (l10n):** 24 nuevas cadenas de texto añadidas en los 6 idiomas (`es, en, pt, fr, it, de`) vía `tool/add_f4f_keys.py` (`alertsBadge*`, `alertsDutyReturns`, `alertsReturnsWhen`, `alertsBackTrainingDesc`, `alertsEarlyMonth`, `alertsMidMonth`, `alertsLateMonth`, `alertsLineups*`, `alertsLastElevenVs`, `alertsNoLineup*`, `alertsNoAlerts*`, `alertsCheckedFooter`, `alertsTennisNoIssues`, `alertsNbaReportSummary`).
+- **Pruebas y Verificación:**
+  - Nueva suite `test/lineup_pitch_test.dart` con pruebas exhaustivas para formaciones tácticas (4-3-3, 4-4-2, 3-5-2, 4-2-3-1, 4-3-1-2, <11 jugadores, lista vacía) y renderizado responsive en 320 px, 360 px y 390 px.
+  - Pruebas unitarias de interpretación de fechas en `test/pick_labels_test.dart`.
+  - Pruebas de integración de la pestaña en `test/alerts_tab_test.dart` y `test/alerts_model_test.dart`.
+  - Suite completa de la app en verde: **647/647 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4e completada (`app/rediseno-f4e-analisis-tenis`)
 
 - **Objetivo de F4e alcanzado:** Pestaña de Análisis de Tenis (`TennisAnalysis` en `lib/product/analysis_tennis.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoTenis.png`, `PartidoTenisAnalisis.png`, `PartidoTenisAnalisisCompleto.png` y `pantallas/Partido.dc.html`, retirando el listado plano obsoleto de `SportAnalysis.tennisPlayer` en `sport_detail_tabs.dart`.

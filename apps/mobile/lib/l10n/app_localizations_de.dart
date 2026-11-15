@@ -3805,4 +3805,102 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Los geht\'s';
+
+  @override
+  String get alertsBadgeInjury => 'VERLETZUNG';
+
+  @override
+  String get alertsBadgeDuty => 'NATIONALTEAM';
+
+  @override
+  String get alertsBadgeSuspension => 'SPERRE';
+
+  @override
+  String get alertsBadgeDoubt => 'FRAGLICH';
+
+  @override
+  String get alertsBadgeReturns => 'ZURÜCK';
+
+  @override
+  String get alertsBadgeNone => 'KEINE MELDUNGEN';
+
+  @override
+  String get alertsBadgeApplied => 'ANGEWENDET';
+
+  @override
+  String get alertsBadgePending => 'AUSSTEHEND';
+
+  @override
+  String alertsDutyReturns(String when) {
+    return 'Bei der Nationalmannschaft · zurück $when';
+  }
+
+  @override
+  String alertsReturnsWhen(String when) {
+    return 'Zurück $when';
+  }
+
+  @override
+  String get alertsBackTrainingDesc => 'Bereits im Mannschaftstraining';
+
+  @override
+  String alertsEarlyMonth(String month) {
+    return 'Anfang $month';
+  }
+
+  @override
+  String alertsMidMonth(String month) {
+    return 'Mitte $month';
+  }
+
+  @override
+  String alertsLateMonth(String month) {
+    return 'Ende $month';
+  }
+
+  @override
+  String get alertsLineupsKicker => '// AUFSTELLUNGEN';
+
+  @override
+  String get alertsLineupsTitle => 'LETZTE BEKANNTE STARTELF';
+
+  @override
+  String alertsLastElevenVs(String rival, String date) {
+    return 'letzte Startelf, vs $rival · $date';
+  }
+
+  @override
+  String alertsNoLineupSaved(String team) {
+    return '$team · keine gespeicherte Aufstellung';
+  }
+
+  @override
+  String get alertsNoLineupDesc =>
+      'Die Startelf wird eine Stunde vor Anpfiff bestätigt und erscheint hier mit Fotos.';
+
+  @override
+  String get alertsNoAlertsTitle => 'KEINE MELDUNGEN';
+
+  @override
+  String get alertsNoAlertsBody =>
+      'Keine Ausfälle oder fraglichen Spieler für dieses Spiel gemeldet.';
+
+  @override
+  String alertsCheckedFooter(String when) {
+    return 'GEPRÜFT $when · stündliche Aktualisierung';
+  }
+
+  @override
+  String get alertsTennisNoIssues => 'Keine Vorfälle in den letzten 7 Tagen';
+
+  @override
+  String alertsNbaReportSummary(num count, num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Spieler im Bericht',
+      one: '1 Spieler im Bericht',
+    );
+    return '$_temp0 · $minutes Min. Ausfälle';
+  }
 }

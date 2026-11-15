@@ -6228,6 +6228,150 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Empezar'**
   String get welcomeStart;
+
+  /// Badge for injured player absence
+  ///
+  /// In es, this message translates to:
+  /// **'LESIÓN'**
+  String get alertsBadgeInjury;
+
+  /// Badge for player on international duty
+  ///
+  /// In es, this message translates to:
+  /// **'SELECCIÓN'**
+  String get alertsBadgeDuty;
+
+  /// Badge for suspended player
+  ///
+  /// In es, this message translates to:
+  /// **'SANCIÓN'**
+  String get alertsBadgeSuspension;
+
+  /// Badge for doubtful player
+  ///
+  /// In es, this message translates to:
+  /// **'DUDA'**
+  String get alertsBadgeDoubt;
+
+  /// Badge for player returning/back in training
+  ///
+  /// In es, this message translates to:
+  /// **'VUELVE'**
+  String get alertsBadgeReturns;
+
+  /// Badge when there are no alerts
+  ///
+  /// In es, this message translates to:
+  /// **'SIN ALERTAS'**
+  String get alertsBadgeNone;
+
+  /// Badge for applied injury report
+  ///
+  /// In es, this message translates to:
+  /// **'APLICADO'**
+  String get alertsBadgeApplied;
+
+  /// Badge for pending injury report
+  ///
+  /// In es, this message translates to:
+  /// **'PENDIENTE'**
+  String get alertsBadgePending;
+
+  /// Description for international duty with return date
+  ///
+  /// In es, this message translates to:
+  /// **'Con su selección · vuelve a {when}'**
+  String alertsDutyReturns(String when);
+
+  /// Return date formatted
+  ///
+  /// In es, this message translates to:
+  /// **'Vuelve a {when}'**
+  String alertsReturnsWhen(String when);
+
+  /// Player back in group training
+  ///
+  /// In es, this message translates to:
+  /// **'Ya entrena con el grupo'**
+  String get alertsBackTrainingDesc;
+
+  /// Early in month
+  ///
+  /// In es, this message translates to:
+  /// **'principios de {month}'**
+  String alertsEarlyMonth(String month);
+
+  /// Mid month
+  ///
+  /// In es, this message translates to:
+  /// **'mediados de {month}'**
+  String alertsMidMonth(String month);
+
+  /// Late in month
+  ///
+  /// In es, this message translates to:
+  /// **'finales de {month}'**
+  String alertsLateMonth(String month);
+
+  /// Kicker above lineups pitch
+  ///
+  /// In es, this message translates to:
+  /// **'// ALINEACIONES'**
+  String get alertsLineupsKicker;
+
+  /// Title for pitch lineups
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMO ONCE CONOCIDO'**
+  String get alertsLineupsTitle;
+
+  /// Subtitle for last starting XI
+  ///
+  /// In es, this message translates to:
+  /// **'último once, vs {rival} · {date}'**
+  String alertsLastElevenVs(String rival, String date);
+
+  /// Header when team has no saved lineup
+  ///
+  /// In es, this message translates to:
+  /// **'{team} · sin alineación guardada'**
+  String alertsNoLineupSaved(String team);
+
+  /// Description when lineup is not yet confirmed
+  ///
+  /// In es, this message translates to:
+  /// **'El once se confirma una hora antes del partido y aparecerá aquí con foto.'**
+  String get alertsNoLineupDesc;
+
+  /// Title when match has no alerts
+  ///
+  /// In es, this message translates to:
+  /// **'SIN ALERTAS'**
+  String get alertsNoAlertsTitle;
+
+  /// Body when match has no alerts
+  ///
+  /// In es, this message translates to:
+  /// **'No hay bajas ni dudas registradas para este partido.'**
+  String get alertsNoAlertsBody;
+
+  /// Footer for alerts checking timestamp
+  ///
+  /// In es, this message translates to:
+  /// **'COMPROBADO {when} · se actualiza cada hora'**
+  String alertsCheckedFooter(String when);
+
+  /// Tennis player without issues
+  ///
+  /// In es, this message translates to:
+  /// **'Sin incidencias en los últimos 7 días'**
+  String get alertsTennisNoIssues;
+
+  /// NBA team injury report summary
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 jugador en el reporte} other{{count} jugadores en el reporte}} · {minutes} min de bajas'**
+  String alertsNbaReportSummary(num count, num minutes);
 }
 
 class _AppLocalizationsDelegate

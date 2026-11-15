@@ -3783,4 +3783,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Get started';
+
+  @override
+  String get alertsBadgeInjury => 'INJURY';
+
+  @override
+  String get alertsBadgeDuty => 'INT. DUTY';
+
+  @override
+  String get alertsBadgeSuspension => 'SUSPENDED';
+
+  @override
+  String get alertsBadgeDoubt => 'DOUBTFUL';
+
+  @override
+  String get alertsBadgeReturns => 'RETURNING';
+
+  @override
+  String get alertsBadgeNone => 'NO ALERTS';
+
+  @override
+  String get alertsBadgeApplied => 'APPLIED';
+
+  @override
+  String get alertsBadgePending => 'PENDING';
+
+  @override
+  String alertsDutyReturns(String when) {
+    return 'On international duty · back in $when';
+  }
+
+  @override
+  String alertsReturnsWhen(String when) {
+    return 'Back in $when';
+  }
+
+  @override
+  String get alertsBackTrainingDesc => 'Back in training with the group';
+
+  @override
+  String alertsEarlyMonth(String month) {
+    return 'early $month';
+  }
+
+  @override
+  String alertsMidMonth(String month) {
+    return 'mid-$month';
+  }
+
+  @override
+  String alertsLateMonth(String month) {
+    return 'late $month';
+  }
+
+  @override
+  String get alertsLineupsKicker => '// LINEUPS';
+
+  @override
+  String get alertsLineupsTitle => 'LAST KNOWN STARTING XI';
+
+  @override
+  String alertsLastElevenVs(String rival, String date) {
+    return 'last XI, vs $rival · $date';
+  }
+
+  @override
+  String alertsNoLineupSaved(String team) {
+    return '$team · no saved lineup';
+  }
+
+  @override
+  String get alertsNoLineupDesc =>
+      'The starting XI is confirmed one hour before kickoff and will appear here with photos.';
+
+  @override
+  String get alertsNoAlertsTitle => 'NO ALERTS';
+
+  @override
+  String get alertsNoAlertsBody =>
+      'No injuries or doubtful players reported for this match.';
+
+  @override
+  String alertsCheckedFooter(String when) {
+    return 'CHECKED $when · updates hourly';
+  }
+
+  @override
+  String get alertsTennisNoIssues => 'No issues in the last 7 days';
+
+  @override
+  String alertsNbaReportSummary(num count, num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count players on the report',
+      one: '1 player on the report',
+    );
+    return '$_temp0 · $minutes min of absences';
+  }
 }

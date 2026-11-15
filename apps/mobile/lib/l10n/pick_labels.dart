@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../product/alerts_model.dart';
 import '../product/live_api.dart';
 import 'app_locale.dart';
 
@@ -332,4 +334,188 @@ String tennisRoundLabel(String rawRound) {
     'qualification final' || 'qualifying final' => l10n.tenRoundQualFinal,
     _ => rawRound,
   };
+}
+
+/// Interpreta fechas de regreso en inglés como «Early December 2026», «Mid November 2026»,
+/// «Late May 2027», o formato ISO «2026-12-05».
+/// Si el texto no es reconocido se devuelve tal cual sin fallar.
+String interpretReturnDate(
+  String raw, {
+  AppLocalizations? l10n,
+  String? localeCode,
+  int currentYear = 2026,
+}) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return trimmed;
+  final loc = l10n ?? AppLocale.instance.l10n;
+  final code = localeCode ?? AppLocale.instance.code;
+
+  // Intentar parsear ISO date
+  final iso = DateTime.tryParse(trimmed);
+  if (iso != null) {
+    return DateFormat.MMMd(code).format(iso);
+  }
+
+  // Regex para Early / Mid / Late <Month> [<Year>]
+  final match = RegExp(
+    r'^(Early|Mid|Late)\s+([A-Za-z]+)(?:\s+(\d{4}))?$',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
+
+  if (match == null) {
+    return trimmed;
+  }
+
+  final period = match.group(1)!.toLowerCase();
+  final monthName = match.group(2)!.toLowerCase();
+  final yearStr = match.group(3);
+
+  final monthNum = switch (monthName) {
+    'january' || 'jan' => 1,
+    'february' || 'feb' => 2,
+    'march' || 'mar' => 3,
+    'april' || 'apr' => 4,
+    'may' => 5,
+    'june' || 'jun' => 6,
+    'july' || 'jul' => 7,
+    'august' || 'aug' => 8,
+    'september' || 'sep' || 'sept' => 9,
+    'october' || 'oct' => 10,
+    'november' || 'nov' => 11,
+    'december' || 'dec' => 12,
+    _ => null,
+  };
+
+  if (monthNum == null) return trimmed;
+
+  // Mes abreviado localizado
+  var mStr = DateFormat('MMM', code).format(DateTime(2026, monthNum, 1));
+  if (code == 'es' && !mStr.endsWith('.') && mStr != 'may') {
+    mStr = '$mStr.';
+  } else if (code == 'es' && mStr == 'may') {
+    mStr = 'may.';
+  }
+
+  final periodStr = switch (period) {
+    'early' => loc.alertsEarlyMonth(mStr),
+    'mid' => loc.alertsMidMonth(mStr),
+    'late' => loc.alertsLateMonth(mStr),
+    _ => mStr,
+  };
+
+  if (yearStr != null) {
+    final y = int.tryParse(yearStr);
+    if (y != null && y != currentYear) {
+      return '$periodStr $yearStr';
+    }
+  }
+
+  return periodStr;
+}
+
+/// Devuelve el texto descriptivo de la tercera línea de la tarjeta de baja
+/// (p. ej. «Con su selección · vuelve a mediados de nov.», «Vuelve a principios de dic.»,
+/// «Ya entrena con el grupo», o el motivo traducido si no hay fecha de regreso).
+String? absenceReturnText(
+  Absence absence, {
+  AppLocalizations? l10n,
+  String? localeCode,
+}) {
+  final loc = l10n ?? AppLocale.instance.l10n;
+  final code = localeCode ?? AppLocale.instance.code;
+
+  final rawReason = absence.rawReason ?? '';
+  final reasonLower = rawReason.trim().toLowerCase();
+  final type = (absence.type ?? '').toLowerCase();
+
+  if (reasonLower == 'back in training') {
+    return loc.alertsBackTrainingDesc;
+  }
+
+  final isDuty = type == 'internationalduty' ||
+      type.contains('international') ||
+      type.contains('duty') ||
+      type.contains('selec');
+
+  final returnDate = absence.returnDate;
+  if (isDuty) {
+    if (returnDate != null && returnDate.isNotEmpty) {
+      final interpreted = interpretReturnDate(returnDate, l10n: loc, localeCode: code);
+      return loc.alertsDutyReturns(interpreted);
+    }
+    if (rawReason.isNotEmpty &&
+        RegExp(r'^(Early|Mid|Late)\s+', caseSensitive: false).hasMatch(rawReason)) {
+      final interpreted = interpretReturnDate(rawReason, l10n: loc, localeCode: code);
+      return loc.alertsDutyReturns(interpreted);
+    }
+  }
+
+  if (returnDate != null && returnDate.isNotEmpty) {
+    final interpreted = interpretReturnDate(returnDate, l10n: loc, localeCode: code);
+    return loc.alertsReturnsWhen(interpreted);
+  }
+
+  if (rawReason.isNotEmpty &&
+      RegExp(r'^(Early|Mid|Late)\s+', caseSensitive: false).hasMatch(rawReason)) {
+    final interpreted = interpretReturnDate(rawReason, l10n: loc, localeCode: code);
+    return loc.alertsReturnsWhen(interpreted);
+  }
+
+  return null;
+}
+
+/// Etiqueta traducida de la insignia de baja
+String absenceBadgeLabel(Absence absence, AppLocalizations l10n) {
+  final rawReason = (absence.rawReason ?? '').trim().toLowerCase();
+  final type = (absence.type ?? '').trim().toLowerCase();
+
+  if (rawReason == 'back in training') {
+    return l10n.alertsBadgeReturns;
+  }
+  if (rawReason == 'doubtful' ||
+      absence.kind == AbsenceKind.doubt ||
+      type.contains('question')) {
+    return l10n.alertsBadgeDoubt;
+  }
+  if (type == 'internationalduty' ||
+      type.contains('international') ||
+      type.contains('duty') ||
+      type.contains('selec')) {
+    return l10n.alertsBadgeDuty;
+  }
+  if (absence.kind == AbsenceKind.suspended ||
+      type == 'suspension' ||
+      type.contains('suspen') ||
+      absence.reason == AbsenceReason.suspension) {
+    return l10n.alertsBadgeSuspension;
+  }
+  return l10n.alertsBadgeInjury;
+}
+
+/// Color de la insignia de baja
+Color absenceBadgeColor(Absence absence) {
+  final rawReason = (absence.rawReason ?? '').trim().toLowerCase();
+  final type = (absence.type ?? '').trim().toLowerCase();
+
+  if (rawReason == 'back in training') {
+    return const Color(0xff05ffa1); // QfColors.green
+  }
+  if (rawReason == 'doubtful' ||
+      absence.kind == AbsenceKind.doubt ||
+      type.contains('question')) {
+    return const Color(0xfffcee0a); // QfColors.gold
+  }
+  if (type == 'internationalduty' ||
+      type.contains('international') ||
+      type.contains('duty') ||
+      type.contains('selec')) {
+    return const Color(0xff00f0ff); // QfColors.cyan
+  }
+  if (absence.kind == AbsenceKind.suspended ||
+      type == 'suspension' ||
+      type.contains('suspen') ||
+      absence.reason == AbsenceReason.suspension) {
+    return const Color(0xffff2a6d); // QfColors.magenta
+  }
+  return const Color(0xffff2a6d); // QfColors.magenta
 }
