@@ -14,12 +14,13 @@ import argparse
 import json
 import logging
 import math
+from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from ..config import settings
-from ..db import execute, query, query_one
+from ..db import conn, execute, query, query_one
 from ..eval.clv import _settle_outcome
 from ..model import estadisticas_mercado as em
 from ..model.devig import devig, two_way_devig
@@ -387,7 +388,31 @@ def _evaluar_opciones(now: datetime) -> tuple[list[es.Opcion], int]:
     return todas, sin_precio
 
 
+# Clave del candado de Postgres que comparten el job diario y el reemplazo intradía.
+CANDADO_ELECCION = 4502026111
+
+
+@contextmanager
+def _turno():
+    """
+    Un solo proceso elige escalones a la vez. El job diario (09:00) y el reemplazo
+    (cada 5 min) leen los escalones ocupados y eligen ~50 s después: en paralelo,
+    ninguno ve el del otro y dos retos acaban en el mismo partido (retos 23 y 24,
+    15-nov-2026). El segundo espera y lee el estado ya con el escalón del primero.
+    """
+    with conn() as c:
+        c.execute("SELECT pg_advisory_xact_lock(%s)", (CANDADO_ELECCION,))
+        yield
+
+
 def select_and_persist(now: datetime | None = None, dry_run: bool = False) -> dict:
+    if dry_run:
+        return _select_and_persist(now, True)
+    with _turno():
+        return _select_and_persist(now, False)
+
+
+def _select_and_persist(now: datetime | None, dry_run: bool) -> dict:
     now = now or datetime.now(timezone.utc)
     hoy = now.astimezone(timezone.utc).date()
     if not settings.escalera_enabled and not dry_run:
@@ -477,6 +502,13 @@ def _insertar_paso(reto_id: int, o: es.Opcion, reemplaza_paso_id: str | None = N
 def reemplazar_nulos(now: datetime | None = None, dry_run: bool = False,
                      seal: bool = True, git_push: bool = True) -> dict:
     """Liquida pendientes y cubre al instante los retos activos cuyo último escalón quedó 'void'."""
+    if dry_run:
+        return _reemplazar_nulos(now, True, seal, git_push)
+    with _turno():
+        return _reemplazar_nulos(now, False, seal, git_push)
+
+
+def _reemplazar_nulos(now: datetime | None, dry_run: bool, seal: bool, git_push: bool) -> dict:
     now = now or datetime.now(timezone.utc)
     hoy = now.astimezone(timezone.utc).date()
     if not settings.escalera_enabled and not dry_run:

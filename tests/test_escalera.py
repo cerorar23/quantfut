@@ -10,6 +10,15 @@ from qf.publish import hashchain
 from qf.publish.alta_prob import Candidato
 
 
+@pytest.fixture(autouse=True)
+def _sin_candado(monkeypatch):
+    """Sin Postgres: el candado de elección (probado en test_escalera_pg) no se toma."""
+    from contextlib import nullcontext
+
+    from qf.publish import escalera_datos
+    monkeypatch.setattr(escalera_datos, "_turno", nullcontext)
+
+
 def _o(prob, price, market="h2h", match="m1"):
     return es.Opcion(match, Candidato(market, "home", None, prob), price, "betano")
 
