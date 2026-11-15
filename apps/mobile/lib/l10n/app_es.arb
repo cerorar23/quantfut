@@ -1504,6 +1504,166 @@
   },
   "navPredictions": "Predicciones",
   "navProfile": "Perfil",
+  "nbaAvailFootnote": "Los minutos de bajas suman los minutos medios de los jugadores que aparecen en el reporte. Si un equipo no envía su reporte, se avisa aquí.",
+  "nbaAvailKicker": "// REPORTE OFICIAL DE LESIONES",
+  "nbaAvailTitle": "DISPONIBILIDAD",
+  "nbaAwayRecord": "VISITANTE · {record}",
+  "@nbaAwayRecord": {
+    "description": "Récord del equipo visitante",
+    "placeholders": {
+      "record": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaBackToBackYesterday": "BACK-TO-BACK · JUGÓ AYER",
+  "nbaCompDom": "{team} mejor en {n} de {total}",
+  "@nbaCompDom": {
+    "description": "Dominancia en métricas comparativas",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaCompTied": "Empate en métricas ({n} de {total})",
+  "@nbaCompTied": {
+    "description": "Empate en número de métricas",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaCompTitle": "COMPARATIVA",
+  "nbaConfEast": "Este",
+  "nbaConfStandingsKicker": "// CONFERENCIA {conf} · {n} EQUIPOS",
+  "@nbaConfStandingsKicker": {
+    "description": "Kicker de clasificación de conferencia NBA",
+    "placeholders": {
+      "conf": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaConfWest": "Oeste",
+  "nbaFactorAwayForm": "Rinde fuera de casa",
+  "nbaFactorHomeForm": "Fuerte en casa",
+  "nbaFactorRecordBest": "Mejor récord",
+  "nbaFactorRecordTied": "Récord empatado",
+  "nbaFactorRestAdvantage": "Más descanso",
+  "nbaFactorRestTied": "Descanso igual",
+  "nbaFactorStreakBest": "Mejor racha",
+  "nbaFactorStreakTied": "Racha igualada",
+  "nbaFormLast6": "// ÚLTIMOS 6 PARTIDOS",
+  "nbaH2hLastN": "// ÚLTIMOS {n} PARTIDOS",
+  "@nbaH2hLastN": {
+    "description": "Kicker para enfrentamientos cara a cara",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaHomeRecord": "LOCAL · {record}",
+  "@nbaHomeRecord": {
+    "description": "Récord del equipo local",
+    "placeholders": {
+      "record": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaLastSeason": "Temp. pasada {record}",
+  "@nbaLastSeason": {
+    "description": "Récord de la temporada anterior",
+    "placeholders": {
+      "record": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaLegendOut": "FUERA (11–15)",
+  "nbaLegendPlayIn": "PLAY-IN (7–10)",
+  "nbaLegendPlayoffs": "PLAYOFFS DIRECTOS (1–6)",
+  "nbaMarginLoss": "MARGEN EN DERROTA",
+  "nbaMarginWin": "MARGEN EN VICTORIA",
+  "nbaMatchFactors": "FACTORES DEL PARTIDO",
+  "nbaMetricAwayHome": "VISITANTE · LOCAL",
+  "nbaMetricDiff": "DIFERENCIAL",
+  "nbaMetricLast6": "ÚLTIMOS 6",
+  "nbaMetricPointsAgainst": "PUNTOS EN CONTRA",
+  "nbaMetricPointsFor": "PUNTOS A FAVOR",
+  "nbaMetricRecord": "RÉCORD",
+  "nbaMetricRestDays": "DESCANSO (DÍAS)",
+  "nbaMinutesMissing": "{minutes} min de bajas",
+  "@nbaMinutesMissing": {
+    "description": "Minutos de ausencia de jugadores",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaNavAvail": "Disponibilidad",
+  "nbaNavComp": "Comparativa",
+  "nbaNavProb": "Probabilidad",
+  "nbaNoH2h": "Sin duelos directos registrados esta temporada",
+  "nbaNoStats": "Estadísticas NBA no disponibles",
+  "nbaPlayedYesterday": "{team} jugó ayer (back-to-back)",
+  "@nbaPlayedYesterday": {
+    "description": "Indica que un equipo jugó el día anterior",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaPtsAvg": "{pf} – {pa} pts",
+  "@nbaPtsAvg": {
+    "description": "Promedio de puntos a favor y en contra",
+    "placeholders": {
+      "pf": {
+        "type": "String"
+      },
+      "pa": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaRankOf": "{rank}.º de {total}",
+  "@nbaRankOf": {
+    "description": "Puesto en la clasificación",
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaRestedDays": "{count, plural, one{DESCANSÓ 1 DÍA} other{DESCANSÓ {count} DÍAS}}",
+  "@nbaRestedDays": {
+    "description": "Días de descanso",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "nbaSealHeading": "CUÁNDO SE AGREGA EL PRONÓSTICO",
   "@nbaSealHeading": {
     "description": "Encabezado de la tarjeta de un partido de NBA que aún no tiene pronóstico sellado."
@@ -1533,6 +1693,79 @@
   "@nbaSealPendingTitle": {
     "description": "Título cuando el pronóstico de un partido de NBA todavía no se ha sellado."
   },
+  "nbaSeasonKicker": "// TEMPORADA {season}",
+  "@nbaSeasonKicker": {
+    "description": "Kicker de temporada para la comparativa",
+    "placeholders": {
+      "season": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaStandingsCallout": "{teamA} está {diff} puestos por encima de {teamB} en el {conf}.",
+  "@nbaStandingsCallout": {
+    "description": "Diferencia de puestos en la conferencia",
+    "placeholders": {
+      "teamA": {
+        "type": "String"
+      },
+      "diff": {
+        "type": "int"
+      },
+      "teamB": {
+        "type": "String"
+      },
+      "conf": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaStandingsCalloutTied": "{teamA} y {teamB} están empatados en el {conf}.",
+  "@nbaStandingsCalloutTied": {
+    "description": "Empate de puestos en la conferencia",
+    "placeholders": {
+      "teamA": {
+        "type": "String"
+      },
+      "teamB": {
+        "type": "String"
+      },
+      "conf": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaStreakLabel": "RACHA: {text}",
+  "@nbaStreakLabel": {
+    "description": "Texto de racha",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaStreakSummary": "{teamA} lleva {countA} seguidas · {teamB} {countB}",
+  "@nbaStreakSummary": {
+    "description": "Comparación de rachas de ambos equipos",
+    "placeholders": {
+      "teamA": {
+        "type": "String"
+      },
+      "countA": {
+        "type": "int"
+      },
+      "teamB": {
+        "type": "String"
+      },
+      "countB": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaTotalPtsPerGame": "PUNTOS TOTALES POR PARTIDO",
+  "nbaViewAllH2h": "VER TODOS EN H2H",
+  "nbaWinProbTitle": "PROBABILIDAD DE GANAR",
+  "nbaWinsLabel": "VICTORIAS",
   "noteExpectedAverage": "Media esperada: {value}",
   "@noteExpectedAverage": {
     "placeholders": {

@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
+import 'analysis_nba.dart';
 import 'live_api.dart';
 import 'live_widgets.dart' show valueBars;
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'sport_contract.dart';
+import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
 
@@ -172,48 +174,20 @@ String? _signed(dynamic v) =>
     v is num && v != 0 ? '${v > 0 ? '+' : ''}${v.toInt()}' : null;
 
 class SportAnalysis extends StatelessWidget {
-  const SportAnalysis({super.key, required this.stats, required this.event});
+  const SportAnalysis({
+    super.key,
+    required this.stats,
+    required this.event,
+    this.api,
+    this.images,
+    this.onH2h,
+  });
+
   final Future<JsonMap?> stats;
   final SportEvent event;
-
-  List<Widget> nbaTeam(AppLocalizations l10n, JsonMap t) {
-    final scoring = jsonMap(t['scoring']);
-    final standing = jsonMap(t['standing']);
-    final rows = <(String, String?)>[
-      (l10n.sportStatSeason, _record(t['season'])),
-      (l10n.sportStatHome, _record(t['home'])),
-      (l10n.sportStatAway, _record(t['away'])),
-      (l10n.sportStatLast6, _record(t['last6'])),
-      (l10n.sportStatPointsFor, _number(scoring['points_for'])),
-      (l10n.sportStatPointsAgainst, _number(scoring['points_against'])),
-      (l10n.sportStatStreak, _signed(t['streak'])),
-      (
-        l10n.sportStatRest,
-        t['rest_days'] is num ? '${(t['rest_days'] as num).toInt()}' : null,
-      ),
-      (
-        l10n.sportStatStanding,
-        standing['rank'] is num && standing['of'] is num
-            ? '${standing['rank']} / ${standing['of']}'
-            : null,
-      ),
-    ];
-    return [
-      for (final (label, value) in rows)
-        if (value != null) _StatLine(label, value),
-      if (t['back_to_back'] == true) ...[
-        const SizedBox(height: 6),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: QfBadge(
-            l10n.sportStatBackToBack,
-            color: QfColors.text2,
-            icon: Icons.event_repeat,
-          ),
-        ),
-      ],
-    ];
-  }
+  final QuantFutApi? api;
+  final ImageCatalog? images;
+  final VoidCallback? onH2h;
 
   List<Widget> tennisPlayer(AppLocalizations l10n, JsonMap p) {
     final surfaces = jsonMap(p['surfaces']);
@@ -247,7 +221,16 @@ class SportAnalysis extends StatelessWidget {
     builder: (data) {
       final l10n = context.l10n;
       final nba = event.sport == kNba;
-      final items = jsonRows(data[nba ? 'teams' : 'players']);
+      if (nba) {
+        return NbaAnalysis(
+          event: event,
+          data: data,
+          api: api,
+          images: images,
+          onH2h: onH2h,
+        );
+      }
+      final items = jsonRows(data['players']);
       if (items.isEmpty) return SportNote(l10n.sportStatsUnavailable);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -269,7 +252,7 @@ class SportAnalysis extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    ...(nba ? nbaTeam(l10n, t) : tennisPlayer(l10n, t)),
+                    ...tennisPlayer(l10n, t),
                   ],
                 ),
               ),

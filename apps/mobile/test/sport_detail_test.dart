@@ -339,8 +339,9 @@ void main() {
       });
       await pump(tester, nbaEvent(), api: api);
       await openTab(tester, 'Análisis');
+      final l10n = AppLocale.instance.l10n;
       expect(find.text('Dallas Mavericks'), findsWidgets);
-      expect(find.text('Temporada'), findsWidgets);
+      expect(find.text(l10n.nbaMetricRecord), findsWidgets);
       await openTab(tester, 'H2H');
       expect(find.textContaining('Houston Rockets 128'), findsWidgets);
       expect(find.textContaining('Dallas Mavericks 110'), findsWidgets);

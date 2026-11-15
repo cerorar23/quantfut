@@ -138,7 +138,13 @@ class _SportDetailState extends State<SportDetail> {
             onVip: widget.onVip,
             onUnlock: widget.onUnlock,
           ),
-          2 => SportAnalysis(stats: stats, event: e),
+          2 => SportAnalysis(
+            stats: stats,
+            event: e,
+            api: widget.api,
+            images: widget.images,
+            onH2h: () => setState(() => tab = 3),
+          ),
           3 => SportH2h(stats: stats, event: e),
           _ => SportAlerts(event: e),
         };
@@ -151,7 +157,13 @@ class _SportDetailState extends State<SportDetail> {
           accent: accent,
           quotes: widget.quotes,
         ),
-        1 => SportAnalysis(stats: stats, event: e),
+        1 => SportAnalysis(
+          stats: stats,
+          event: e,
+          api: widget.api,
+          images: widget.images,
+          onH2h: () => setState(() => tab = 2),
+        ),
         2 => SportH2h(stats: stats, event: e),
         _ => SportAlerts(event: e),
       };

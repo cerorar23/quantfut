@@ -1,6 +1,24 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4d completada (`app/rediseno-f4d-analisis-nba`)
+
+- **Objetivo de F4d alcanzado:** Pestaña de Análisis de NBA (`NbaAnalysis` en `lib/product/analysis_nba.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoNBA.png`, `PartidoNBAAnalisisCompleto.png` y `pantallas/Partido.dc.html`, retirando el listado plano obsoleto de `SportAnalysis.nbaTeam` en `sport_detail_tabs.dart`.
+- **Implementación y Arquitectura (`lib/product/analysis_nba.dart`, `sport_detail_tabs.dart`, `sport_detail.dart`, `qf_charts.dart`, `qf_controls.dart`):**
+  - `NbaAnalysis`: Widget principal con `QfSectionNav` que maneja 6 secciones navegables: `PROBABILIDAD`, `COMPARATIVA`, `FORMA`, `CARA A CARA`, `CLASIFICACIÓN` y `DISPONIBILIDAD`. Las secciones ausentes o vacías en los datos se ocultan de la navegación y del cuerpo.
+  - **1. Probabilidad:** 2 tarjetas de equipo con avatar/logo oficial de NBA, probabilidad mono 32 con brillo cian, récord visitante/local, barra proporcional horizontal de 10 dp, y 4 factores del partido calculados puramente a partir de estadísticas (récord, visitante/local, descanso y racha). Si el partido aún no tiene pronóstico sellado, muestra banner CyberCore con `nbaSealHeading` / `nbaSealPendingTitle` y tarjetas sin porcentaje («—») sin inventar datos.
+  - **2. Comparativa:** Tira de dominancia `QfDominanceDots` enfrentando métricas y 7 filas divergentes `QfDivergingRow`: RÉCORD, VISITANTE·LOCAL, PUNTOS A FAVOR, PUNTOS EN CONTRA (`lowerIsBetter: true`), DIFERENCIAL, ÚLTIMOS 6 y DESCANSO (DÍAS).
+  - **3. Forma:** Tarjeta por equipo con 6 partidos ordenados cronológicamente (más antiguo a la izquierda, último a la derecha con tag cian `ÚLTIMO`), logo rival, píldora con resultado `G`/`P` en corte angular, marcador, columnas de margen vertical verde/magenta proporcionales a `puntos - rival`, chips de racha (`RACHA: N VICTORIAS SEGUIDAS` o `N DERROTAS SEGUIDAS`), promedios de puntos y leyenda de márgenes.
+  - **4. Cara a cara:** Resumen de victorias cara a cara con números mono gigantes, barra apilada horizontal `QfStackedBar`, promedio de puntos totales por partido, lista de hasta 4 enfrentamientos recientes con marcador y código del ganador, y botón CyberCore «VER TODOS EN H2H» con callback `onH2h`.
+  - **5. Clasificación:** Pista de 15 posiciones `QfSeasonTrack` con marcadores hexagonales y logo para ambos equipos en su conferencia (Este u Oeste), dos tarjetas resumen de posición y récord, leyenda de zonas (Playoffs 1-6 cian, Play-In 7-10 slate, Fuera 11-15 track) y callout dinámico de distancia de puestos.
+  - **6. Disponibilidad:** Datos leídos de `event.availability` (ya parseado por `SportAlerts`) sin recalcular; estado oficial con badge verde `OFICIAL` o neutro `PENDIENTE`, barra visual de minutos de bajas con semáforo por umbrales (<20 min verde, 20-50 min amarillo, >=50 min magenta), tag de descanso (`BACK-TO-BACK · JUGÓ AYER` o `DESCANSÓ N DÍAS`), conteo de jugadores reportados y nota explicativa al pie.
+- **Localización (i18n):** 55 nuevas cadenas de texto añadidas a los 6 idiomas (`es, en, pt, fr, it, de`) en los archivos ARB correspondientes, pasando al 100% las verificaciones de `l10n_test.dart`.
+- **Pruebas y Verificación:**
+  - Nueva suite `test/analysis_nba_test.dart` con 8 pruebas que cubren: fixture real Heat vs Pistons con las 6 secciones, navegación horizontal de chips, variantes extremas (sin disponibilidad, sin standing, sin form, sin mercado ganador, sin h2h), y pruebas de responsividad y localización en 360×800 (`de`) y 390×844 (`es`) sin desbordes.
+  - Pruebas existentes adaptadas sin relajar aserciones (`sport_detail_test.dart`).
+  - `flutter analyze --no-pub`: 0 issues.
+  - Suite completa: 626/626 pruebas pasando en verde (`All tests passed!`).
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4c completada (`app/rediseno-f4c-analisis-futbol`)
 
 - **Objetivo de F4c alcanzado:** Pestaña de Análisis de fútbol (`FootballAnalysis` en `lib/product/analysis_football.dart`) totalmente reimplementada con estética CyberCore conforme a `capturas/PartidoAnalisis.png` y `pantallas/Partido.dc.html`, integrando sub-navegación `QfSectionNav` («RESUMEN · FORMA · CARA A CARA · TABLA»), selector TODOS|CASA·FUERA, radar `QfRadar` de 5 ejes, 10 métricas enfrentadas con dominancia `QfDominanceDots` y barras divergentes `QfDivergingRow`, tarjetas de forma con `QfFormPills` expandidas de 5 partidos, histórico Cara a Cara con barra apilada `QfStackedBar` y botón de salto a H2H, y tabla de clasificación `QfStandingsTable` con leyenda y callout de puntos.

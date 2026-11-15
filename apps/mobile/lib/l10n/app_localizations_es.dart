@@ -1727,6 +1727,175 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navProfile => 'Perfil';
 
   @override
+  String get nbaAvailFootnote =>
+      'Los minutos de bajas suman los minutos medios de los jugadores que aparecen en el reporte. Si un equipo no envía su reporte, se avisa aquí.';
+
+  @override
+  String get nbaAvailKicker => '// REPORTE OFICIAL DE LESIONES';
+
+  @override
+  String get nbaAvailTitle => 'DISPONIBILIDAD';
+
+  @override
+  String nbaAwayRecord(String record) {
+    return 'VISITANTE · $record';
+  }
+
+  @override
+  String get nbaBackToBackYesterday => 'BACK-TO-BACK · JUGÓ AYER';
+
+  @override
+  String nbaCompDom(String team, int n, int total) {
+    return '$team mejor en $n de $total';
+  }
+
+  @override
+  String nbaCompTied(int n, int total) {
+    return 'Empate en métricas ($n de $total)';
+  }
+
+  @override
+  String get nbaCompTitle => 'COMPARATIVA';
+
+  @override
+  String get nbaConfEast => 'Este';
+
+  @override
+  String nbaConfStandingsKicker(String conf, int n) {
+    return '// CONFERENCIA $conf · $n EQUIPOS';
+  }
+
+  @override
+  String get nbaConfWest => 'Oeste';
+
+  @override
+  String get nbaFactorAwayForm => 'Rinde fuera de casa';
+
+  @override
+  String get nbaFactorHomeForm => 'Fuerte en casa';
+
+  @override
+  String get nbaFactorRecordBest => 'Mejor récord';
+
+  @override
+  String get nbaFactorRecordTied => 'Récord empatado';
+
+  @override
+  String get nbaFactorRestAdvantage => 'Más descanso';
+
+  @override
+  String get nbaFactorRestTied => 'Descanso igual';
+
+  @override
+  String get nbaFactorStreakBest => 'Mejor racha';
+
+  @override
+  String get nbaFactorStreakTied => 'Racha igualada';
+
+  @override
+  String get nbaFormLast6 => '// ÚLTIMOS 6 PARTIDOS';
+
+  @override
+  String nbaH2hLastN(int n) {
+    return '// ÚLTIMOS $n PARTIDOS';
+  }
+
+  @override
+  String nbaHomeRecord(String record) {
+    return 'LOCAL · $record';
+  }
+
+  @override
+  String nbaLastSeason(String record) {
+    return 'Temp. pasada $record';
+  }
+
+  @override
+  String get nbaLegendOut => 'FUERA (11–15)';
+
+  @override
+  String get nbaLegendPlayIn => 'PLAY-IN (7–10)';
+
+  @override
+  String get nbaLegendPlayoffs => 'PLAYOFFS DIRECTOS (1–6)';
+
+  @override
+  String get nbaMarginLoss => 'MARGEN EN DERROTA';
+
+  @override
+  String get nbaMarginWin => 'MARGEN EN VICTORIA';
+
+  @override
+  String get nbaMatchFactors => 'FACTORES DEL PARTIDO';
+
+  @override
+  String get nbaMetricAwayHome => 'VISITANTE · LOCAL';
+
+  @override
+  String get nbaMetricDiff => 'DIFERENCIAL';
+
+  @override
+  String get nbaMetricLast6 => 'ÚLTIMOS 6';
+
+  @override
+  String get nbaMetricPointsAgainst => 'PUNTOS EN CONTRA';
+
+  @override
+  String get nbaMetricPointsFor => 'PUNTOS A FAVOR';
+
+  @override
+  String get nbaMetricRecord => 'RÉCORD';
+
+  @override
+  String get nbaMetricRestDays => 'DESCANSO (DÍAS)';
+
+  @override
+  String nbaMinutesMissing(int minutes) {
+    return '$minutes min de bajas';
+  }
+
+  @override
+  String get nbaNavAvail => 'Disponibilidad';
+
+  @override
+  String get nbaNavComp => 'Comparativa';
+
+  @override
+  String get nbaNavProb => 'Probabilidad';
+
+  @override
+  String get nbaNoH2h => 'Sin duelos directos registrados esta temporada';
+
+  @override
+  String get nbaNoStats => 'Estadísticas NBA no disponibles';
+
+  @override
+  String nbaPlayedYesterday(String team) {
+    return '$team jugó ayer (back-to-back)';
+  }
+
+  @override
+  String nbaPtsAvg(String pf, String pa) {
+    return '$pf – $pa pts';
+  }
+
+  @override
+  String nbaRankOf(int rank, int total) {
+    return '$rank.º de $total';
+  }
+
+  @override
+  String nbaRestedDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'DESCANSÓ $count DÍAS',
+      one: 'DESCANSÓ 1 DÍA',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get nbaSealHeading => 'CUÁNDO SE AGREGA EL PRONÓSTICO';
 
   @override
@@ -1746,6 +1915,48 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get nbaSealPendingTitle => 'Pronóstico pendiente';
+
+  @override
+  String nbaSeasonKicker(String season) {
+    return '// TEMPORADA $season';
+  }
+
+  @override
+  String nbaStandingsCallout(
+    String teamA,
+    int diff,
+    String teamB,
+    String conf,
+  ) {
+    return '$teamA está $diff puestos por encima de $teamB en el $conf.';
+  }
+
+  @override
+  String nbaStandingsCalloutTied(String teamA, String teamB, String conf) {
+    return '$teamA y $teamB están empatados en el $conf.';
+  }
+
+  @override
+  String nbaStreakLabel(String text) {
+    return 'RACHA: $text';
+  }
+
+  @override
+  String nbaStreakSummary(String teamA, int countA, String teamB, int countB) {
+    return '$teamA lleva $countA seguidas · $teamB $countB';
+  }
+
+  @override
+  String get nbaTotalPtsPerGame => 'PUNTOS TOTALES POR PARTIDO';
+
+  @override
+  String get nbaViewAllH2h => 'VER TODOS EN H2H';
+
+  @override
+  String get nbaWinProbTitle => 'PROBABILIDAD DE GANAR';
+
+  @override
+  String get nbaWinsLabel => 'VICTORIAS';
 
   @override
   String noteExpectedAverage(String value) {

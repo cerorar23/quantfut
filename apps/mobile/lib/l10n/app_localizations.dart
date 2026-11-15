@@ -2958,6 +2958,282 @@ abstract class AppLocalizations {
   /// **'Perfil'**
   String get navProfile;
 
+  /// No description provided for @nbaAvailFootnote.
+  ///
+  /// In es, this message translates to:
+  /// **'Los minutos de bajas suman los minutos medios de los jugadores que aparecen en el reporte. Si un equipo no envía su reporte, se avisa aquí.'**
+  String get nbaAvailFootnote;
+
+  /// No description provided for @nbaAvailKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// REPORTE OFICIAL DE LESIONES'**
+  String get nbaAvailKicker;
+
+  /// No description provided for @nbaAvailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'DISPONIBILIDAD'**
+  String get nbaAvailTitle;
+
+  /// Récord del equipo visitante
+  ///
+  /// In es, this message translates to:
+  /// **'VISITANTE · {record}'**
+  String nbaAwayRecord(String record);
+
+  /// No description provided for @nbaBackToBackYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'BACK-TO-BACK · JUGÓ AYER'**
+  String get nbaBackToBackYesterday;
+
+  /// Dominancia en métricas comparativas
+  ///
+  /// In es, this message translates to:
+  /// **'{team} mejor en {n} de {total}'**
+  String nbaCompDom(String team, int n, int total);
+
+  /// Empate en número de métricas
+  ///
+  /// In es, this message translates to:
+  /// **'Empate en métricas ({n} de {total})'**
+  String nbaCompTied(int n, int total);
+
+  /// No description provided for @nbaCompTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'COMPARATIVA'**
+  String get nbaCompTitle;
+
+  /// No description provided for @nbaConfEast.
+  ///
+  /// In es, this message translates to:
+  /// **'Este'**
+  String get nbaConfEast;
+
+  /// Kicker de clasificación de conferencia NBA
+  ///
+  /// In es, this message translates to:
+  /// **'// CONFERENCIA {conf} · {n} EQUIPOS'**
+  String nbaConfStandingsKicker(String conf, int n);
+
+  /// No description provided for @nbaConfWest.
+  ///
+  /// In es, this message translates to:
+  /// **'Oeste'**
+  String get nbaConfWest;
+
+  /// No description provided for @nbaFactorAwayForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Rinde fuera de casa'**
+  String get nbaFactorAwayForm;
+
+  /// No description provided for @nbaFactorHomeForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuerte en casa'**
+  String get nbaFactorHomeForm;
+
+  /// No description provided for @nbaFactorRecordBest.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor récord'**
+  String get nbaFactorRecordBest;
+
+  /// No description provided for @nbaFactorRecordTied.
+  ///
+  /// In es, this message translates to:
+  /// **'Récord empatado'**
+  String get nbaFactorRecordTied;
+
+  /// No description provided for @nbaFactorRestAdvantage.
+  ///
+  /// In es, this message translates to:
+  /// **'Más descanso'**
+  String get nbaFactorRestAdvantage;
+
+  /// No description provided for @nbaFactorRestTied.
+  ///
+  /// In es, this message translates to:
+  /// **'Descanso igual'**
+  String get nbaFactorRestTied;
+
+  /// No description provided for @nbaFactorStreakBest.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor racha'**
+  String get nbaFactorStreakBest;
+
+  /// No description provided for @nbaFactorStreakTied.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha igualada'**
+  String get nbaFactorStreakTied;
+
+  /// No description provided for @nbaFormLast6.
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS 6 PARTIDOS'**
+  String get nbaFormLast6;
+
+  /// Kicker para enfrentamientos cara a cara
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS {n} PARTIDOS'**
+  String nbaH2hLastN(int n);
+
+  /// Récord del equipo local
+  ///
+  /// In es, this message translates to:
+  /// **'LOCAL · {record}'**
+  String nbaHomeRecord(String record);
+
+  /// Récord de la temporada anterior
+  ///
+  /// In es, this message translates to:
+  /// **'Temp. pasada {record}'**
+  String nbaLastSeason(String record);
+
+  /// No description provided for @nbaLegendOut.
+  ///
+  /// In es, this message translates to:
+  /// **'FUERA (11–15)'**
+  String get nbaLegendOut;
+
+  /// No description provided for @nbaLegendPlayIn.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAY-IN (7–10)'**
+  String get nbaLegendPlayIn;
+
+  /// No description provided for @nbaLegendPlayoffs.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAYOFFS DIRECTOS (1–6)'**
+  String get nbaLegendPlayoffs;
+
+  /// No description provided for @nbaMarginLoss.
+  ///
+  /// In es, this message translates to:
+  /// **'MARGEN EN DERROTA'**
+  String get nbaMarginLoss;
+
+  /// No description provided for @nbaMarginWin.
+  ///
+  /// In es, this message translates to:
+  /// **'MARGEN EN VICTORIA'**
+  String get nbaMarginWin;
+
+  /// No description provided for @nbaMatchFactors.
+  ///
+  /// In es, this message translates to:
+  /// **'FACTORES DEL PARTIDO'**
+  String get nbaMatchFactors;
+
+  /// No description provided for @nbaMetricAwayHome.
+  ///
+  /// In es, this message translates to:
+  /// **'VISITANTE · LOCAL'**
+  String get nbaMetricAwayHome;
+
+  /// No description provided for @nbaMetricDiff.
+  ///
+  /// In es, this message translates to:
+  /// **'DIFERENCIAL'**
+  String get nbaMetricDiff;
+
+  /// No description provided for @nbaMetricLast6.
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS 6'**
+  String get nbaMetricLast6;
+
+  /// No description provided for @nbaMetricPointsAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS EN CONTRA'**
+  String get nbaMetricPointsAgainst;
+
+  /// No description provided for @nbaMetricPointsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS A FAVOR'**
+  String get nbaMetricPointsFor;
+
+  /// No description provided for @nbaMetricRecord.
+  ///
+  /// In es, this message translates to:
+  /// **'RÉCORD'**
+  String get nbaMetricRecord;
+
+  /// No description provided for @nbaMetricRestDays.
+  ///
+  /// In es, this message translates to:
+  /// **'DESCANSO (DÍAS)'**
+  String get nbaMetricRestDays;
+
+  /// Minutos de ausencia de jugadores
+  ///
+  /// In es, this message translates to:
+  /// **'{minutes} min de bajas'**
+  String nbaMinutesMissing(int minutes);
+
+  /// No description provided for @nbaNavAvail.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponibilidad'**
+  String get nbaNavAvail;
+
+  /// No description provided for @nbaNavComp.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparativa'**
+  String get nbaNavComp;
+
+  /// No description provided for @nbaNavProb.
+  ///
+  /// In es, this message translates to:
+  /// **'Probabilidad'**
+  String get nbaNavProb;
+
+  /// No description provided for @nbaNoH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin duelos directos registrados esta temporada'**
+  String get nbaNoH2h;
+
+  /// No description provided for @nbaNoStats.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas NBA no disponibles'**
+  String get nbaNoStats;
+
+  /// Indica que un equipo jugó el día anterior
+  ///
+  /// In es, this message translates to:
+  /// **'{team} jugó ayer (back-to-back)'**
+  String nbaPlayedYesterday(String team);
+
+  /// Promedio de puntos a favor y en contra
+  ///
+  /// In es, this message translates to:
+  /// **'{pf} – {pa} pts'**
+  String nbaPtsAvg(String pf, String pa);
+
+  /// Puesto en la clasificación
+  ///
+  /// In es, this message translates to:
+  /// **'{rank}.º de {total}'**
+  String nbaRankOf(int rank, int total);
+
+  /// Días de descanso
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{DESCANSÓ 1 DÍA} other{DESCANSÓ {count} DÍAS}}'**
+  String nbaRestedDays(int count);
+
   /// Encabezado de la tarjeta de un partido de NBA que aún no tiene pronóstico sellado.
   ///
   /// In es, this message translates to:
@@ -2993,6 +3269,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pronóstico pendiente'**
   String get nbaSealPendingTitle;
+
+  /// Kicker de temporada para la comparativa
+  ///
+  /// In es, this message translates to:
+  /// **'// TEMPORADA {season}'**
+  String nbaSeasonKicker(String season);
+
+  /// Diferencia de puestos en la conferencia
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} está {diff} puestos por encima de {teamB} en el {conf}.'**
+  String nbaStandingsCallout(String teamA, int diff, String teamB, String conf);
+
+  /// Empate de puestos en la conferencia
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} y {teamB} están empatados en el {conf}.'**
+  String nbaStandingsCalloutTied(String teamA, String teamB, String conf);
+
+  /// Texto de racha
+  ///
+  /// In es, this message translates to:
+  /// **'RACHA: {text}'**
+  String nbaStreakLabel(String text);
+
+  /// Comparación de rachas de ambos equipos
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} lleva {countA} seguidas · {teamB} {countB}'**
+  String nbaStreakSummary(String teamA, int countA, String teamB, int countB);
+
+  /// No description provided for @nbaTotalPtsPerGame.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS TOTALES POR PARTIDO'**
+  String get nbaTotalPtsPerGame;
+
+  /// No description provided for @nbaViewAllH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'VER TODOS EN H2H'**
+  String get nbaViewAllH2h;
+
+  /// No description provided for @nbaWinProbTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD DE GANAR'**
+  String get nbaWinProbTitle;
+
+  /// No description provided for @nbaWinsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'VICTORIAS'**
+  String get nbaWinsLabel;
 
   /// No description provided for @noteExpectedAverage.
   ///
