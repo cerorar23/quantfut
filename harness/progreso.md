@@ -9,6 +9,12 @@
 - **Sin desplegar ni subir al VPS:** espera confirmación del titular.
 - **F7c (solo comprobado):** `/app/v1/firebase/preferences` guarda `language, analytics, diagnostics, push_enabled, ads_measurement`: NO hay preferencias por deporte. `GET /app/v1/plans` devuelve los planes activos de `plans`; la siembra (db/043) trae 3 activos con `duration_days` 30/90/180 (`club` inactivo, sin duración); producción es editable desde `/control`, no verificado ahí. `availability` NBA (`game['availability']`) = resumen del forecast: `state` (`reporte_aplicado`), `listed`, `used`, `no_history`, `unknown_player`, `unknown_team`, `report_*`, `teams_not_submitted`, más `missing_minutes_home/away`.
 
+
+
+## 15-nov-2026 · Rediseño CyberCore de la app: auditoría y restos de F8 (`app/rediseno-f8-restos`)
+- La auditoría del #429 halló todo implementado salvo F7 (servidor), que queda anotado como pendiente; las entradas F0–F8 del 14-nov están al final de este archivo.
+- Retirados `QfColors.football/nba/tennis` (acentos ahora en `sports.dart`) y la tipografía Gilroy de las pantallas rediseñadas (→ Exo 2). Sin cambio de comportamiento.
+- Queda sin tocar: colores fijos en `market_hub.dart` y `lineup_pitch.dart` (colores de familia del render) y Gilroy en las pantallas antiguas (`sign_in/`, `forget_password/`), fuera del alcance del rediseño.
 ## 15-nov-2026 · Historial web: la gráfica grande pasa a «aciertos menos fallos, acumulados» (`web/historial-aciertos-menos-fallos`)
 
 - **Por qué:** el titular pidió que la gráfica grande muestre algo medible que se vea en positivo. La anterior (reales − esperados) oscila alrededor de 0 por diseño cuando el modelo está calibrado: con 82 % prometido y 81 % real bajaba aunque el resultado fuera bueno.

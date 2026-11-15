@@ -172,12 +172,12 @@ class SportCatalog {
     SportSpec(
       id: kFootball,
       order: 1,
-      accent: QfColors.football,
+      accent: kFootballAccent,
       icon: Icons.sports_soccer,
       streams: {'high', 'ladder', 'parley'},
     ),
-    SportSpec(id: kNba, order: 2, accent: QfColors.nba, icon: Icons.sports_basketball, streams: {'high'}),
-    SportSpec(id: kTennis, order: 3, accent: QfColors.tennis, icon: Icons.sports_tennis, streams: {'high'}),
+    SportSpec(id: kNba, order: 2, accent: kNbaAccent, icon: Icons.sports_basketball, streams: {'high'}),
+    SportSpec(id: kTennis, order: 3, accent: kTennisAccent, icon: Icons.sports_tennis, streams: {'high'}),
   ]);
 
   /// Lee la respuesta de `/cliente/v1/config`. `null` si no es utilizable (no es un mapa, sin `deportes` o sin
@@ -335,3 +335,8 @@ String sportFamilyTitle(
   'tiebreak' => l10n.sfTennisTiebreak,
   _ => fallback ?? family,
 };
+
+/// Acentos por deporte (antes `QfColors.football/nba/tennis`).
+const kFootballAccent = Color(0xFF22D3EE);
+const kNbaAccent = Color(0xFFB58CFF);
+const kTennisAccent = Color(0xFFD4F53C);

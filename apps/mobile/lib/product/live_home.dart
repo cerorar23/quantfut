@@ -437,7 +437,7 @@ class _HomeTabState extends State<HomeTab> {
                   l10n.homeTicketsTitle,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Gilroy ExtraBold',
+                    fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
                     fontSize: 18,
                   ),
                 ),
@@ -506,7 +506,7 @@ class _HomeTabState extends State<HomeTab> {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Gilroy Bold',
+                  fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
               ),

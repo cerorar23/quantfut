@@ -45,9 +45,9 @@ void main() {
       expect(a.icon, b.icon, reason: id);
       expect(a.streams, b.streams, reason: id);
     }
-    expect(factory.spec(kFootball).accent, QfColors.football);
-    expect(factory.spec(kNba).accent, QfColors.nba);
-    expect(factory.spec(kTennis).accent, QfColors.tennis);
+    expect(factory.spec(kFootball).accent, kFootballAccent);
+    expect(factory.spec(kNba).accent, kNbaAccent);
+    expect(factory.spec(kTennis).accent, kTennisAccent);
   });
 
   test('los nombres de fábrica son los textos de la app: instalarla no cambia nada en pantalla', () async {

@@ -820,7 +820,7 @@ class _StatusChip extends StatelessWidget {
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: color, fontFamily: 'Gilroy Bold', fontSize: 11),
+        style: TextStyle(color: color, fontFamily: 'Exo 2', fontWeight: FontWeight.w700, fontSize: 11),
       ),
     ),
   );

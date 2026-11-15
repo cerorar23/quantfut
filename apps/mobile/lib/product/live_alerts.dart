@@ -223,7 +223,7 @@ class _TeamSwitcher extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: side == s ? Colors.white : QfColors.muted,
-                            fontFamily: 'Gilroy Bold',
+                            fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                             fontSize: 13,
                           ),
                         ),
@@ -313,7 +313,7 @@ class _Section extends StatelessWidget {
               title.toUpperCase(),
               style: TextStyle(
                 color: color,
-                fontFamily: 'Gilroy ExtraBold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
                 fontSize: 14,
                 letterSpacing: .8,
               ),
@@ -520,7 +520,7 @@ class _AbsenceCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Gilroy Bold',
+                        fontFamily: 'Exo 2',
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
