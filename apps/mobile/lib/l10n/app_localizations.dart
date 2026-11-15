@@ -3318,6 +3318,120 @@ abstract class AppLocalizations {
   /// **'LOCAL · {record}'**
   String nbaHomeRecord(String record);
 
+  /// Resumen de bajas y dudas en la cabecera del equipo
+  ///
+  /// In es, this message translates to:
+  /// **'{bajas, plural, one{{bajas} baja} other{{bajas} bajas}} · {dudas} en duda'**
+  String nbaInjuriesBadgeBajasDudas(int bajas, int dudas);
+
+  /// Resumen de solo bajas en la cabecera del equipo
+  ///
+  /// In es, this message translates to:
+  /// **'{bajas, plural, one{{bajas} baja} other{{bajas} bajas}}'**
+  String nbaInjuriesBadgeBajasOnly(int bajas);
+
+  /// Resumen de solo dudas en la cabecera del equipo
+  ///
+  /// In es, this message translates to:
+  /// **'{dudas} en duda'**
+  String nbaInjuriesBadgeDudasOnly(int dudas);
+
+  /// No description provided for @nbaInjuriesClean.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin suspensiones ni bajas por lesión en el reporte oficial.'**
+  String get nbaInjuriesClean;
+
+  /// No description provided for @nbaInjuriesFullRoster.
+  ///
+  /// In es, this message translates to:
+  /// **'Plantilla completa'**
+  String get nbaInjuriesFullRoster;
+
+  /// Etiqueta de minutos de bajas por equipo
+  ///
+  /// In es, this message translates to:
+  /// **'Minutos · {team}'**
+  String nbaInjuriesImpactMinutes(String team);
+
+  /// Etiqueta de puntos de bajas por equipo
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos · {team}'**
+  String nbaInjuriesImpactPoints(String team);
+
+  /// No description provided for @nbaInjuriesImpactTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Impacto estimado en el modelo por bajas'**
+  String get nbaInjuriesImpactTitle;
+
+  /// No description provided for @nbaInjuriesNoReason.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin motivo reportado'**
+  String get nbaInjuriesNoReason;
+
+  /// No description provided for @nbaInjuriesNotYetSubmitted.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte aún no enviado a la liga por el equipo (Not Yet Submitted).'**
+  String get nbaInjuriesNotYetSubmitted;
+
+  /// No description provided for @nbaInjuriesPdfLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Parte oficial NBA (PDF)'**
+  String get nbaInjuriesPdfLink;
+
+  /// No description provided for @nbaInjuriesSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte oficial de disponibilidad emitido por la NBA antes del encuentro.'**
+  String get nbaInjuriesSub;
+
+  /// No description provided for @nbaInjuriesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lesiones y suspensiones'**
+  String get nbaInjuriesTitle;
+
+  /// No description provided for @nbaInjuryStatusAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponible'**
+  String get nbaInjuryStatusAvailable;
+
+  /// No description provided for @nbaInjuryStatusDoubtful.
+  ///
+  /// In es, this message translates to:
+  /// **'Poco probable'**
+  String get nbaInjuryStatusDoubtful;
+
+  /// No description provided for @nbaInjuryStatusOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Lesionado'**
+  String get nbaInjuryStatusOut;
+
+  /// No description provided for @nbaInjuryStatusProbable.
+  ///
+  /// In es, this message translates to:
+  /// **'Probable'**
+  String get nbaInjuryStatusProbable;
+
+  /// No description provided for @nbaInjuryStatusQuestionable.
+  ///
+  /// In es, this message translates to:
+  /// **'En duda'**
+  String get nbaInjuryStatusQuestionable;
+
+  /// No description provided for @nbaInjuryStatusSuspended.
+  ///
+  /// In es, this message translates to:
+  /// **'Suspendido'**
+  String get nbaInjuryStatusSuspended;
+
   /// Récord de la temporada anterior
   ///
   /// In es, this message translates to:

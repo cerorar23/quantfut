@@ -2,6 +2,7 @@
 // estadísticas públicas del servidor (pueden faltar: el mensaje neutro vive solo en su pestaña).
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_locale.dart';
 import 'analysis_nba.dart';
@@ -518,17 +519,749 @@ class SportH2h extends StatelessWidget {
 }
 
 class SportAlerts extends StatelessWidget {
-  const SportAlerts({super.key, required this.event});
+  const SportAlerts({
+    super.key,
+    required this.event,
+    this.availability,
+    this.api,
+    this.images,
+  });
+
   final SportEvent event;
+  final Future<JsonMap?>? availability;
+  final QuantFutApi? api;
+  final ImageCatalog? images;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final a = event.availability;
-    // Tenis: las estadísticas no traen avisos; NBA sin reporte tampoco.
-    if (event.sport != kNba || a == null) {
+    if (event.sport != kNba) {
       return SportNote(l10n.sportAlertsNone);
     }
+
+    if (availability != null) {
+      return FutureBuilder<JsonMap?>(
+        future: availability,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              event.availability == null) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          }
+          final data = snapshot.data ?? event.availability;
+          return _buildAlertsContent(context, l10n, data);
+        },
+      );
+    }
+
+    return _buildAlertsContent(context, l10n, event.availability);
+  }
+
+  Widget _buildAlertsContent(
+    BuildContext context,
+    AppLocalizations l10n,
+    JsonMap? data,
+  ) {
+    if (data == null) {
+      return SportNote(l10n.sportAlertsNone);
+    }
+
+    final hasOfficialReport = data.containsKey('local') ||
+        data.containsKey('visitante') ||
+        data.containsKey('teams') ||
+        data.containsKey('players') ||
+        data.containsKey('jugadores');
+
+    if (hasOfficialReport) {
+      return _NbaInjuriesReport(
+        event: event,
+        data: data,
+        api: api,
+        images: images,
+      );
+    }
+
+    return _LegacyAlerts(event: event, a: data);
+  }
+}
+
+class _NbaInjuriesReport extends StatelessWidget {
+  const _NbaInjuriesReport({
+    required this.event,
+    required this.data,
+    required this.api,
+    required this.images,
+  });
+
+  final SportEvent event;
+  final JsonMap data;
+  final QuantFutApi? api;
+  final ImageCatalog? images;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final reportUrl = (data['reporte_url'] ?? data['report_url']) as String?;
+    final reportTime =
+        (data['reporte_timestamp_utc'] ?? data['report_timestamp_utc'])
+            as String?;
+    final hasPdf = reportUrl != null && reportUrl.startsWith('https://');
+
+    Map<String, dynamic> homeTeam;
+    Map<String, dynamic> awayTeam;
+
+    if (data['local'] is Map<String, dynamic> &&
+        data['visitante'] is Map<String, dynamic>) {
+      final localMap = data['local'] as Map<String, dynamic>;
+      final visitMap = data['visitante'] as Map<String, dynamic>;
+      final localName = localMap['nombre']?.toString() ?? '';
+      final isSwapped = nbaTricode(localName) != null &&
+          nbaTricode(localName) == nbaTricode(event.away);
+      homeTeam = isSwapped ? visitMap : localMap;
+      awayTeam = isSwapped ? localMap : visitMap;
+    } else if (data['teams'] is List && (data['teams'] as List).length >= 2) {
+      final list = data['teams'] as List;
+      final t0 = list[0] is Map<String, dynamic>
+          ? list[0] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final t1 = list[1] is Map<String, dynamic>
+          ? list[1] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final name0 = (t0['nombre'] ?? t0['name'])?.toString() ?? '';
+      final isSwapped = nbaTricode(name0) != null &&
+          nbaTricode(name0) == nbaTricode(event.away);
+      homeTeam = isSwapped ? t0 : t1;
+      awayTeam = isSwapped ? t1 : t0;
+    } else {
+      homeTeam = {'nombre': event.home, 'jugadores': const []};
+      awayTeam = {'nombre': event.away, 'jugadores': const []};
+    }
+
+    final awayName = awayTeam['nombre']?.toString() ?? event.away;
+    final homeName = homeTeam['nombre']?.toString() ?? event.home;
+
+    final mb = data['metricas_bajas'] is Map<String, dynamic>
+        ? data['metricas_bajas'] as Map<String, dynamic>
+        : (data['missing_points_home'] != null ? data : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        QfCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              qfTitle(l10n.nbaInjuriesTitle, size: 14),
+              const SizedBox(height: 4),
+              Text(
+                l10n.nbaInjuriesSub,
+                style: const TextStyle(fontSize: 12, color: QfColors.text2),
+              ),
+              if (reportTime != null || hasPdf) const SizedBox(height: 10),
+              if (reportTime != null)
+                Text(
+                  l10n.detailChecked(kickoffText(reportTime)),
+                  style: const TextStyle(fontSize: 11, color: QfColors.muted),
+                ),
+              if (hasPdf) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: InkWell(
+                    onTap: () {
+                      final uri = Uri.tryParse(reportUrl);
+                      if (uri != null) {
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: QfColors.surface2,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: QfColors.border),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.picture_as_pdf_outlined,
+                            size: 14,
+                            color: QfColors.cyan,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              l10n.nbaInjuriesPdfLink,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: QfColors.cyan,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.open_in_new,
+                            size: 12,
+                            color: QfColors.cyan,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        _TeamInjuryCard(
+          teamName: awayName,
+          roleLabel: l10n.commonAway,
+          teamData: awayTeam,
+          api: api,
+          images: images,
+        ),
+        const SizedBox(height: 10),
+        _TeamInjuryCard(
+          teamName: homeName,
+          roleLabel: l10n.commonHome,
+          teamData: homeTeam,
+          api: api,
+          images: images,
+        ),
+        if (mb != null) ...[
+          const SizedBox(height: 10),
+          QfCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                qfTitle(l10n.nbaInjuriesImpactTitle, size: 13),
+                const SizedBox(height: 8),
+                if (mb['missing_points_home'] != null)
+                  _StatLine(
+                    l10n.nbaInjuriesImpactPoints(event.home),
+                    _formatStatNum(mb['missing_points_home']),
+                  ),
+                if (mb['missing_points_away'] != null)
+                  _StatLine(
+                    l10n.nbaInjuriesImpactPoints(event.away),
+                    _formatStatNum(mb['missing_points_away']),
+                  ),
+                if (mb['missing_minutes_home'] != null)
+                  _StatLine(
+                    l10n.nbaInjuriesImpactMinutes(event.home),
+                    _formatStatNum(mb['missing_minutes_home']),
+                  ),
+                if (mb['missing_minutes_away'] != null)
+                  _StatLine(
+                    l10n.nbaInjuriesImpactMinutes(event.away),
+                    _formatStatNum(mb['missing_minutes_away']),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String _formatStatNum(dynamic v) {
+  if (v is num) {
+    return decimalText(v, v is int || v == v.roundToDouble() ? 0 : 1);
+  }
+  return '$v';
+}
+
+class _TeamInjuryCard extends StatelessWidget {
+  const _TeamInjuryCard({
+    required this.teamName,
+    required this.roleLabel,
+    required this.teamData,
+    required this.api,
+    required this.images,
+  });
+
+  final String teamName;
+  final String roleLabel;
+  final Map<String, dynamic> teamData;
+  final QuantFutApi? api;
+  final ImageCatalog? images;
+
+  Widget _teamAvatar(String name, {double size = 28}) {
+    final code = nbaTricode(name);
+    final path = code == null
+        ? null
+        : (images?.nbaLogo(code) ??
+            '/web/imagenes/nba/${code.toUpperCase()}.png');
+    final resolved = api != null ? serverImageUrl(api!, path) : null;
+    return QfAvatar(
+      url: resolved,
+      name: name,
+      size: size,
+      shape: AvatarShape.contain,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final reporteNoEnviado = teamData['reporte_no_enviado'] == true;
+    final rawPlayers = teamData['jugadores'] ?? teamData['players'];
+    final players = [
+      if (rawPlayers is List)
+        for (final p in rawPlayers)
+          if (p is Map<String, dynamic>) p,
+    ];
+
+    final bajasCount = players.where(_isBaja).length;
+    final dudasCount = players.length - bajasCount;
+
+    Widget badgeWidget;
+    if (reporteNoEnviado) {
+      badgeWidget = QfBadge(
+        l10n.sportAvailPending,
+        color: QfColors.yellow,
+        icon: Icons.schedule,
+      );
+    } else if (players.isEmpty) {
+      badgeWidget = QfBadge(
+        l10n.nbaInjuriesFullRoster,
+        color: QfColors.success,
+        icon: Icons.check_circle_outline,
+      );
+    } else {
+      final String label;
+      if (bajasCount > 0 && dudasCount > 0) {
+        label = l10n.nbaInjuriesBadgeBajasDudas(bajasCount, dudasCount);
+      } else if (bajasCount > 0) {
+        label = l10n.nbaInjuriesBadgeBajasOnly(bajasCount);
+      } else {
+        label = l10n.nbaInjuriesBadgeDudasOnly(dudasCount);
+      }
+      badgeWidget = QfBadge(
+        label,
+        color: bajasCount > 0 ? QfColors.danger : QfColors.yellow,
+        icon: bajasCount > 0 ? Icons.error_outline : Icons.warning_amber_rounded,
+      );
+    }
+
+    return QfCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _teamAvatar(teamName, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      teamName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: QfColors.text,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      roleLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: QfColors.text2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              badgeWidget,
+            ],
+          ),
+          if (reporteNoEnviado) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: QfColors.danger,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.nbaInjuriesNotYetSubmitted,
+                      style:
+                          const TextStyle(fontSize: 13, color: QfColors.text2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (players.isEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    size: 16,
+                    color: QfColors.success,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.nbaInjuriesClean,
+                      style:
+                          const TextStyle(fontSize: 13, color: QfColors.text2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(
+                children: [
+                  for (var i = 0; i < players.length; i++) ...[
+                    if (i > 0)
+                      const Divider(
+                        height: 12,
+                        thickness: 0.5,
+                        color: QfColors.border,
+                      ),
+                    _InjuryPlayerRow(
+                      player: players[i],
+                      api: api,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InjuryPlayerRow extends StatelessWidget {
+  const _InjuryPlayerRow({
+    required this.player,
+    required this.api,
+  });
+
+  final Map<String, dynamic> player;
+  final QuantFutApi? api;
+
+  String? _playerPhoto() {
+    final nbaId = player['nba_id'] ?? player['nbaId'];
+    if (nbaId != null && '$nbaId'.isNotEmpty && '$nbaId' != '0') {
+      return 'https://cdn.nba.com/headshots/nba/latest/260x190/$nbaId.png';
+    }
+    final pid = player['id'] ?? player['playerId'];
+    if (pid != null && '$pid'.isNotEmpty && api != null) {
+      return serverImageUrl(api!, nbaPlayerPhoto('$pid'));
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final name =
+        player['nombre']?.toString() ?? player['name']?.toString() ?? '?';
+    final estado =
+        player['estado']?.toString() ?? player['status']?.toString();
+    final motivo =
+        player['motivo']?.toString() ?? player['reason']?.toString();
+    final statusInfo = _statusInfo(l10n, estado, motivo);
+    final shortName = _formatPlayerShort(name);
+    final reason = _traducirMotivo(motivo);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          QfAvatar(
+            url: _playerPhoto(),
+            name: name,
+            size: 36,
+            shape: AvatarShape.circle,
+            ring: statusInfo.color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        shortName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: QfColors.text,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusInfo.color.withValues(alpha: .12),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: statusInfo.color.withValues(alpha: .35),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '+ ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: statusInfo.color,
+                            ),
+                          ),
+                          Text(
+                            statusInfo.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: statusInfo.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  reason.isNotEmpty
+                      ? reason
+                      : (motivo ?? l10n.nbaInjuriesNoReason),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: QfColors.text2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusLook {
+  const _StatusLook(this.label, this.color);
+  final String label;
+  final Color color;
+}
+
+_StatusLook _statusInfo(
+  AppLocalizations l10n,
+  String? estado,
+  String? motivo,
+) {
+  final e = (estado ?? '').trim().toLowerCase();
+  final m = (motivo ?? '').toLowerCase();
+  if (m.contains('suspension')) {
+    return _StatusLook(l10n.nbaInjuryStatusSuspended, QfColors.magenta);
+  }
+  return switch (e) {
+    'out' => _StatusLook(l10n.nbaInjuryStatusOut, QfColors.danger),
+    'doubtful' =>
+      _StatusLook(l10n.nbaInjuryStatusDoubtful, const Color(0xfff59e0b)),
+    'questionable' =>
+      _StatusLook(l10n.nbaInjuryStatusQuestionable, QfColors.yellow),
+    'probable' => _StatusLook(l10n.nbaInjuryStatusProbable, QfColors.success),
+    'available' => _StatusLook(l10n.nbaInjuryStatusAvailable, QfColors.cyan),
+    _ => _StatusLook(
+        estado != null && estado.isNotEmpty
+            ? estado
+            : l10n.nbaInjuryStatusOut,
+        QfColors.danger,
+      ),
+  };
+}
+
+bool _isBaja(Map<String, dynamic> player) {
+  final motivo = (player['motivo'] ?? player['reason'] ?? '')
+      .toString()
+      .toLowerCase();
+  if (motivo.contains('suspension')) return true;
+  final estado = (player['estado'] ?? player['status'] ?? '')
+      .toString()
+      .toLowerCase();
+  return estado == 'out' || estado == 'suspended' || estado == 'baja';
+}
+
+String _formatPlayerShort(String name) {
+  final n = name.trim();
+  if (n.isEmpty) return n;
+  if (n.contains(',')) {
+    final parts = n.split(',').map((s) => s.trim()).toList();
+    if (parts.length >= 2 && parts[1].isNotEmpty) {
+      return '${parts[1][0]}. ${parts[0]}';
+    }
+  }
+  final parts = n.split(RegExp(r'\s+'));
+  if (parts.length > 1) {
+    return '${parts[0][0]}. ${parts.sublist(1).join(' ')}';
+  }
+  return n;
+}
+
+// l10n-ignore-start
+String _traducirParte(String txt) {
+  var res = txt
+      .replaceAll(RegExp(r'left\s+ankle', caseSensitive: false), 'tobillo izq.')
+      .replaceAll(RegExp(r'right\s+ankle', caseSensitive: false), 'tobillo der.')
+      .replaceAll(RegExp(r'bilateral\s+ankle', caseSensitive: false), 'tobillo bilateral')
+      .replaceAll(RegExp(r'left\s+knee', caseSensitive: false), 'rodilla izq.')
+      .replaceAll(RegExp(r'right\s+knee', caseSensitive: false), 'rodilla der.')
+      .replaceAll(RegExp(r'bilateral\s+knee', caseSensitive: false), 'rodilla bilateral')
+      .replaceAll(RegExp(r'left\s+foot', caseSensitive: false), 'pie izq.')
+      .replaceAll(RegExp(r'right\s+foot', caseSensitive: false), 'pie der.')
+      .replaceAll(RegExp(r'left\s+heel', caseSensitive: false), 'talón izq.')
+      .replaceAll(RegExp(r'right\s+heel', caseSensitive: false), 'talón der.')
+      .replaceAll(RegExp(r'left\s+hamstring', caseSensitive: false), 'isquiotibiales izq.')
+      .replaceAll(RegExp(r'right\s+hamstring', caseSensitive: false), 'isquiotibiales der.')
+      .replaceAll(RegExp(r'left\s+quad(?:riceps)?', caseSensitive: false), 'cuádriceps izq.')
+      .replaceAll(RegExp(r'right\s+quad(?:riceps)?', caseSensitive: false), 'cuádriceps der.')
+      .replaceAll(RegExp(r'left\s+calf', caseSensitive: false), 'pantorrilla izq.')
+      .replaceAll(RegExp(r'right\s+calf', caseSensitive: false), 'pantorrilla der.')
+      .replaceAll(RegExp(r'left\s+groin', caseSensitive: false), 'ingle izq.')
+      .replaceAll(RegExp(r'right\s+groin', caseSensitive: false), 'ingle der.')
+      .replaceAll(RegExp(r'left\s+hip', caseSensitive: false), 'cadera izq.')
+      .replaceAll(RegExp(r'right\s+hip', caseSensitive: false), 'cadera der.')
+      .replaceAll(RegExp(r'left\s+shoulder', caseSensitive: false), 'hombro izq.')
+      .replaceAll(RegExp(r'right\s+shoulder', caseSensitive: false), 'hombro der.')
+      .replaceAll(RegExp(r'left\s+wrist', caseSensitive: false), 'muñeca izq.')
+      .replaceAll(RegExp(r'right\s+wrist', caseSensitive: false), 'muñeca der.')
+      .replaceAll(RegExp(r'left\s+thumb', caseSensitive: false), 'pulgar izq.')
+      .replaceAll(RegExp(r'right\s+thumb', caseSensitive: false), 'pulgar der.')
+      .replaceAll(RegExp(r'left\s+hand', caseSensitive: false), 'mano izq.')
+      .replaceAll(RegExp(r'right\s+hand', caseSensitive: false), 'mano der.')
+      .replaceAll(RegExp(r'left\s+elbow', caseSensitive: false), 'codo izq.')
+      .replaceAll(RegExp(r'right\s+elbow', caseSensitive: false), 'codo der.')
+      .replaceAll(RegExp(r'left\s+eye', caseSensitive: false), 'ojo izq.')
+      .replaceAll(RegExp(r'right\s+eye', caseSensitive: false), 'ojo der.')
+      .replaceAll(RegExp(r'lower\s+back', caseSensitive: false), 'espalda baja')
+      .replaceAll(RegExp(r'mid\s+back', caseSensitive: false), 'espalda media')
+      .replaceAll(RegExp(r'upper\s+back', caseSensitive: false), 'espalda alta');
+
+  const dic = [
+    [r'left', 'izq.'], [r'right', 'der.'], [r'bilateral', 'bilateral'],
+    [r'ankle', 'tobillo'], [r'knee', 'rodilla'], [r'foot', 'pie'],
+    [r'heel', 'talón'], [r'hamstring', 'isquiotibiales'], [r'quad', 'cuádriceps'],
+    [r'calf', 'pantorrilla'], [r'groin', 'ingle'], [r'hip', 'cadera'],
+    [r'back', 'espalda'], [r'shoulder', 'hombro'], [r'wrist', 'muñeca'],
+    [r'thumb', 'pulgar'], [r'finger', 'dedo'], [r'hand', 'mano'],
+    [r'elbow', 'codo'], [r'neck', 'cuello'], [r'eye', 'ojo'],
+    [r'sprain', 'esguince'], [r'strain', 'distensión'], [r'soreness', 'molestias'],
+    [r'contusion', 'contusión'], [r'fracture', 'fractura'], [r'surgery', 'cirugía'],
+    [r'tear', 'desgarro'], [r'inflammation', 'inflamación'], [r'tightness', 'sobrecarga'],
+    [r'illness', 'enfermedad'], [r'recovery', 'recuperación'],
+    [r'injury\s+management', 'gestión de carga'], [r'rest', 'descanso'],
+  ];
+
+  for (final pair in dic) {
+    res = res.replaceAll(RegExp(pair[0], caseSensitive: false), pair[1]);
+  }
+  res = res.replaceAll(RegExp(r';\s*'), ' · ').trim();
+  return res.isNotEmpty ? '${res[0].toUpperCase()}${res.substring(1)}' : '';
+}
+
+String _traducirMotivo(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return '';
+  final txt = raw.trim();
+  if (RegExp(r'suspension', caseSensitive: false).hasMatch(txt)) {
+    if (RegExp(r'league\s+suspension', caseSensitive: false).hasMatch(txt)) {
+      return 'Suspensión de la liga';
+    }
+    if (RegExp(r'team\s+suspension', caseSensitive: false).hasMatch(txt)) {
+      return 'Suspensión del equipo';
+    }
+    return 'Suspensión disciplinaria';
+  }
+  if (RegExp(r'g\s*league', caseSensitive: false).hasMatch(txt)) {
+    if (RegExp(r'two-way', caseSensitive: false).hasMatch(txt)) {
+      return 'Contrato Two-Way (G League)';
+    }
+    if (RegExp(r'assignment', caseSensitive: false).hasMatch(txt)) {
+      return 'Asignado a G League';
+    }
+    return 'G League';
+  }
+  if (RegExp(r'health\s+and\s+safety', caseSensitive: false).hasMatch(txt)) {
+    return 'Protocolos de salud y seguridad';
+  }
+  if (RegExp(r'personal\s+reasons', caseSensitive: false).hasMatch(txt)) {
+    return 'Motivos personales';
+  }
+  if (RegExp(r'not\s+with\s+team', caseSensitive: false).hasMatch(txt)) {
+    return 'No está con el equipo';
+  }
+  if (RegExp(r'^Injury/Illness\s*-\s*Rest$', caseSensitive: false)
+          .hasMatch(txt) ||
+      RegExp(r'^Rest$', caseSensitive: false).hasMatch(txt)) {
+    return 'Descanso programado';
+  }
+  final clean = txt.replaceFirst(
+    RegExp(r'^Injury/Illness\s*-\s*', caseSensitive: false),
+    '',
+  );
+  return _traducirParte(clean);
+}
+// l10n-ignore-end
+
+class _LegacyAlerts extends StatelessWidget {
+  const _LegacyAlerts({required this.event, required this.a});
+  final SportEvent event;
+  final JsonMap a;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final applied = a['state'] == 'reporte_aplicado';
     final missingHome = _number(a['missing_minutes_home'], 0);
     final missingAway = _number(a['missing_minutes_away'], 0);

@@ -1759,6 +1759,68 @@
       }
     }
   },
+  "nbaInjuriesBadgeBajasDudas": "{bajas, plural, one{{bajas} baja} other{{bajas} bajas}} · {dudas} en duda",
+  "@nbaInjuriesBadgeBajasDudas": {
+    "description": "Resumen de bajas y dudas en la cabecera del equipo",
+    "placeholders": {
+      "bajas": {
+        "type": "int"
+      },
+      "dudas": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaInjuriesBadgeBajasOnly": "{bajas, plural, one{{bajas} baja} other{{bajas} bajas}}",
+  "@nbaInjuriesBadgeBajasOnly": {
+    "description": "Resumen de solo bajas en la cabecera del equipo",
+    "placeholders": {
+      "bajas": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaInjuriesBadgeDudasOnly": "{dudas} en duda",
+  "@nbaInjuriesBadgeDudasOnly": {
+    "description": "Resumen de solo dudas en la cabecera del equipo",
+    "placeholders": {
+      "dudas": {
+        "type": "int"
+      }
+    }
+  },
+  "nbaInjuriesClean": "Sin suspensiones ni bajas por lesión en el reporte oficial.",
+  "nbaInjuriesFullRoster": "Plantilla completa",
+  "nbaInjuriesImpactMinutes": "Minutos · {team}",
+  "@nbaInjuriesImpactMinutes": {
+    "description": "Etiqueta de minutos de bajas por equipo",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaInjuriesImpactPoints": "Puntos · {team}",
+  "@nbaInjuriesImpactPoints": {
+    "description": "Etiqueta de puntos de bajas por equipo",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "nbaInjuriesImpactTitle": "Impacto estimado en el modelo por bajas",
+  "nbaInjuriesNoReason": "Sin motivo reportado",
+  "nbaInjuriesNotYetSubmitted": "Reporte aún no enviado a la liga por el equipo (Not Yet Submitted).",
+  "nbaInjuriesPdfLink": "Parte oficial NBA (PDF)",
+  "nbaInjuriesSub": "Reporte oficial de disponibilidad emitido por la NBA antes del encuentro.",
+  "nbaInjuriesTitle": "Lesiones y suspensiones",
+  "nbaInjuryStatusAvailable": "Disponible",
+  "nbaInjuryStatusDoubtful": "Poco probable",
+  "nbaInjuryStatusOut": "Lesionado",
+  "nbaInjuryStatusProbable": "Probable",
+  "nbaInjuryStatusQuestionable": "En duda",
+  "nbaInjuryStatusSuspended": "Suspendido",
   "nbaLastSeason": "Temp. pasada {record}",
   "@nbaLastSeason": {
     "description": "Récord de la temporada anterior",
