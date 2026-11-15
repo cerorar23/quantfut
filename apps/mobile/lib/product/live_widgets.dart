@@ -106,6 +106,7 @@ class TeamCrest extends StatelessWidget {
       url: serverImageUrl(api, url is String ? url : null),
       name: '${team['name'] ?? team['nombre'] ?? ''}',
       size: size,
+      kind: QfAvatarKind.logo,
     );
   }
 }

@@ -67,12 +67,14 @@ Widget sportAvatar(
       url: serverImageUrl(api, code == null ? null : images.nbaLogo(code)),
       name: name,
       size: size,
+      kind: QfAvatarKind.logo,
     );
   }
   return QfAvatar(
     url: serverImageUrl(api, images.tennisPhoto(name)?.path),
     name: name,
     size: size,
+    kind: QfAvatarKind.person,
     shape: AvatarShape.circle,
   );
 }
@@ -92,7 +94,8 @@ Widget eventAvatar(
     url: serverImageUrl(api, path),
     name: name,
     size: size,
-    shape: AvatarShape.circle,
+    kind: QfAvatarKind.logo,
+    shape: AvatarShape.contain,
   );
 }
 

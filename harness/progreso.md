@@ -1445,3 +1445,20 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
   - `test/l10n_test.dart`: 6/6 tests pasados en todos los idiomas.
   - Suite completa de la app en verde: **667/667 tests pasados**.
   - `flutter analyze --no-pub`: **0 issues**.
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F6 — Imágenes (cliente)
+- **Reglas únicas de imagen en toda la app (`lib/product/sport_images.dart`, `lib/product/live_widgets.dart`, `lib/product/home_sport.dart`):**
+  - **Personas (`QfAvatarKind.person` / `AvatarShape.circle`):** contenedor circular `Clip.antiAlias` con fondo `QfColors.surface2`, aro cian perimetral de 2 dp (`QfColors.cyan`), `BoxFit.cover` centrado en el tercio superior del rostro (`Alignment(0, -0.7)`). En caso de error o ausencia de imagen, iniciales en Rajdhani 700 (`qfTitleFont`) en cian y bandera de país si corresponde.
+  - **Escudos y logos (`QfAvatarKind.logo` / `AvatarShape.contain`):** formato cuadrado en `BoxFit.contain` con padding perimetral de 2 dp, sin aro cian ni recorte circular. En caso de ausencia de imagen, iniciales en JetBrains Mono (`qfMono`) atenuadas sobre tarjeta `surface2` con bordes redondeados.
+  - **Eficiencia y dimensionamiento:** decodificación optimizada mediante `cacheWidth` y `cacheHeight` al triple del tamaño visual renderizado (`(size * 3).clamp(16, 1024)`), reduciendo la huella de memoria sin degradación visual en pantallas de alta densidad (390×844 y 360×800).
+- **Catálogo de Imágenes (`ImageCatalog`):**
+  - Extendido para soportar el bloque `tenis_sofascore` (F7b) prefiriéndolo sobre el catálogo histórico de Wikimedia (`tenis`).
+  - Soporte de nombres invertidos comunes en tenis (`"Alcaraz Carlos"`, `"Alcaraz, Carlos"`, `"De Minaur Alex"` frente a `"Carlos Alcaraz"`, `"Alex De Minaur"`).
+  - Manejo estricto de duplicados: las listas en SofaScore (ej. `Coleman Wong` con múltiples IDs de jugador) se resuelven a `null` para desplegar iniciales, garantizando que nunca se muestre la imagen de otra persona.
+  - Jugadores sin registro de imagen (ej. `Ruien Zhang`) caen limpiamente a iniciales.
+- **Pruebas y Verificación:**
+  - Suite `test/sport_images_test.dart` ampliada a 13 pruebas: persona vs logo, fallback con tipografía y borde cian, bandera de país, preferencia SofaScore, nombres invertidos, duplicados, sin imagen, URLs maliciosas/inseguras, y resiliencia offline/404 sin iconos rotos.
+  - Verificadas todas las suites existentes (`home_sport_test.dart`, `sport_detail_test.dart`, etc.).
+  - Suite completa de la app en verde: **673/673 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
