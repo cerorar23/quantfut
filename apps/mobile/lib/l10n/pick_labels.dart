@@ -315,3 +315,21 @@ String resultLetter(Object? res) {
     final other => other,
   };
 }
+
+/// Traducción de ronda de torneo de tenis. Si la ronda no es reconocida se
+/// devuelve el texto crudo original sin fallar.
+String tennisRoundLabel(String rawRound) {
+  final l10n = AppLocale.instance.l10n;
+  final normalized = rawRound.trim().toLowerCase();
+  return switch (normalized) {
+    'final' => l10n.tenRoundFinal,
+    'semifinals' || 'semi-finals' || 'semi finals' => l10n.tenRoundSemifinals,
+    'quarterfinals' || 'quarter-finals' || 'quarter finals' => l10n.tenRoundQuarterfinals,
+    'round of 16' || '1/8-finals' || '1/8' || 'r16' => l10n.tenRoundR16,
+    'round of 32' || '1/16-finals' || '1/16' || 'r32' => l10n.tenRoundR32,
+    'round of 64' || '1/32-finals' || '1/32' || 'r64' => l10n.tenRoundR64,
+    'round of 128' || '1/64-finals' || '1/64' || 'r128' => l10n.tenRoundR128,
+    'qualification final' || 'qualifying final' => l10n.tenRoundQualFinal,
+    _ => rawRound,
+  };
+}

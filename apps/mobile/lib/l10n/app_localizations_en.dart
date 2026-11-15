@@ -3291,6 +3291,205 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streamParley => 'Parlay';
 
   @override
+  String tenAgeYears(int age, String country) {
+    return '$age YRS · $country';
+  }
+
+  @override
+  String get tenFormIndex => 'FORM INDEX';
+
+  @override
+  String get tenFormKicker => '// RECENT MATCHES';
+
+  @override
+  String tenGapLeader(String player, int diff, String circuit) {
+    return '$player is $diff spots ahead in the $circuit rankings.';
+  }
+
+  @override
+  String tenGapTied(String playerA, String playerB, String circuit) {
+    return '$playerA and $playerB share the same spot in the $circuit rankings.';
+  }
+
+  @override
+  String get tenH2hFirstDuel => 'FIRST MEETING';
+
+  @override
+  String tenH2hFirstDuelDesc(String surface) {
+    return 'They have never met. Without direct history, the model relies on recent form and performance on $surface.';
+  }
+
+  @override
+  String tenLastMatchesCount(int count) {
+    return 'LAST $count';
+  }
+
+  @override
+  String tenModelGamesExpectedApprox(String line) {
+    return '≈ $line';
+  }
+
+  @override
+  String tenModelGamesExpectedCaption(
+    String line1,
+    int p1,
+    String line2,
+    int p2,
+    String expected,
+  ) {
+    return 'At $line1 games the model gives $p1%; at $line2, $p2%: expects a match around $expected games.';
+  }
+
+  @override
+  String get tenModelGamesExpectedLabel => 'EXPECTED GAMES';
+
+  @override
+  String tenModelGamesExpectedSimple(String expected) {
+    return 'The model expects a match of about $expected games.';
+  }
+
+  @override
+  String tenModelHandicap(String player) {
+    return 'GAMES HANDICAP · $player';
+  }
+
+  @override
+  String tenModelIn2Sets(int pct) {
+    return '$pct% in 2 sets';
+  }
+
+  @override
+  String tenModelIn3Sets(int pct) {
+    return '$pct% in 3 sets';
+  }
+
+  @override
+  String get tenModelKicker => '// WHAT THE MODEL EXPECTS';
+
+  @override
+  String get tenModelMatchDuration => 'MATCH DURATION';
+
+  @override
+  String get tenModelSet1 => 'SET 1';
+
+  @override
+  String get tenModelSet2 => 'SET 2';
+
+  @override
+  String get tenModelSet3 => 'SET 3';
+
+  @override
+  String get tenModelSet3Footnote =>
+      'The 3rd set is only played if there is a 1–1 tie.';
+
+  @override
+  String get tenModelSets => 'SETS';
+
+  @override
+  String get tenModelTiebreak => 'TIE-BREAK WILL OCCUR';
+
+  @override
+  String get tenModelTitle => 'MODEL';
+
+  @override
+  String get tenModelTotalGames => 'TOTAL GAMES · OVER PROBABILITY';
+
+  @override
+  String tenModelWinsEachSet(String player) {
+    return '$player WINS EACH SET';
+  }
+
+  @override
+  String get tenNavModel => 'Model';
+
+  @override
+  String get tenNavProb => 'Probability';
+
+  @override
+  String get tenNavSurface => 'Surface';
+
+  @override
+  String get tenNoStats => 'Tennis statistics not available';
+
+  @override
+  String tenRankNumber(int rank) {
+    return 'No. $rank';
+  }
+
+  @override
+  String tenRankPts(String rank, String pts) {
+    return '$rank · $pts pts';
+  }
+
+  @override
+  String get tenRoundFinal => 'Final';
+
+  @override
+  String get tenRoundQ16 => 'Round of 16';
+
+  @override
+  String get tenRoundQualFinal => 'Qualifying Final';
+
+  @override
+  String get tenRoundQuarterfinals => 'Quarterfinals';
+
+  @override
+  String get tenRoundR128 => 'Round of 128';
+
+  @override
+  String get tenRoundR16 => 'Round of 16';
+
+  @override
+  String get tenRoundR32 => 'Round of 32';
+
+  @override
+  String get tenRoundR64 => 'Round of 64';
+
+  @override
+  String get tenRoundSemifinals => 'Semifinal';
+
+  @override
+  String tenSurfaceCareer(String surface) {
+    return '$surface · CAREER';
+  }
+
+  @override
+  String get tenSurfaceClay => 'CLAY';
+
+  @override
+  String get tenSurfaceGrass => 'GRASS';
+
+  @override
+  String get tenSurfaceHard => 'HARD COURT';
+
+  @override
+  String get tenSurfaceKicker => '// SURFACE PERFORMANCE';
+
+  @override
+  String tenSurfaceSeason(String surface) {
+    return '$surface · THIS SEASON';
+  }
+
+  @override
+  String get tenSurfaceTitle => 'SURFACE';
+
+  @override
+  String get tenSurfaceToday => 'TODAY';
+
+  @override
+  String tenThreeSets(int pct) {
+    return '$pct% to 3 sets';
+  }
+
+  @override
+  String tenTiebreakPct(int pct) {
+    return '$pct% with tie-break';
+  }
+
+  @override
+  String get tenWinProbTitle => 'WIN PROBABILITY';
+
+  @override
   String tileFairOdds(String value) {
     return 'Fair odds $value';
   }

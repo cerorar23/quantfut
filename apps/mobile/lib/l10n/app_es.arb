@@ -3030,6 +3030,232 @@
   "streamHighProb": "Alta probabilidad",
   "streamLadder": "Reto Escalera",
   "streamParley": "Parley",
+  "tenAgeYears": "{age} AÑOS · {country}",
+  "@tenAgeYears": {
+    "description": "Edad y país del tenista",
+    "placeholders": {
+      "age": {
+        "type": "int"
+      },
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "tenFormIndex": "ÍNDICE DE FORMA",
+  "tenFormKicker": "// ÚLTIMOS PARTIDOS",
+  "tenGapLeader": "{player} está {diff} puestos por encima en el ranking {circuit}.",
+  "@tenGapLeader": {
+    "description": "Diferencia de ranking entre los dos tenistas",
+    "placeholders": {
+      "player": {
+        "type": "String"
+      },
+      "diff": {
+        "type": "int"
+      },
+      "circuit": {
+        "type": "String"
+      }
+    }
+  },
+  "tenGapTied": "{playerA} y {playerB} tienen el mismo puesto en el ranking {circuit}.",
+  "@tenGapTied": {
+    "description": "Empate de puesto en ranking de tenis",
+    "placeholders": {
+      "playerA": {
+        "type": "String"
+      },
+      "playerB": {
+        "type": "String"
+      },
+      "circuit": {
+        "type": "String"
+      }
+    }
+  },
+  "tenH2hFirstDuel": "PRIMER DUELO",
+  "tenH2hFirstDuelDesc": "Nunca se han enfrentado. Sin historial directo, el modelo se apoya en su forma reciente y en su rendimiento sobre {surface}.",
+  "@tenH2hFirstDuelDesc": {
+    "description": "Explicación de primer duelo cara a cara en tenis",
+    "placeholders": {
+      "surface": {
+        "type": "String"
+      }
+    }
+  },
+  "tenLastMatchesCount": "ÚLTIMOS {count}",
+  "@tenLastMatchesCount": {
+    "description": "Cantidad de últimos partidos en forma de tenis",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tenModelGamesExpectedApprox": "≈ {line}",
+  "@tenModelGamesExpectedApprox": {
+    "description": "Línea de juegos esperados aproximados",
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "tenModelGamesExpectedCaption": "Con {line1} juegos el modelo da {p1} %; con {line2}, {p2} %: espera un partido de unos {expected} juegos.",
+  "@tenModelGamesExpectedCaption": {
+    "description": "Explicación del cruce de juegos esperados",
+    "placeholders": {
+      "line1": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "int"
+      },
+      "line2": {
+        "type": "String"
+      },
+      "p2": {
+        "type": "int"
+      },
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "tenModelGamesExpectedLabel": "JUEGOS ESPERADOS",
+  "tenModelGamesExpectedSimple": "El modelo espera un partido de unos {expected} juegos.",
+  "@tenModelGamesExpectedSimple": {
+    "description": "Aviso simple de juegos esperados",
+    "placeholders": {
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "tenModelHandicap": "HÁNDICAP DE JUEGOS · {player}",
+  "@tenModelHandicap": {
+    "description": "Título de hándicap de juegos para un tenista",
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "tenModelIn2Sets": "{pct}% en 2 sets",
+  "@tenModelIn2Sets": {
+    "description": "Porcentaje de partido terminado en 2 sets",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "tenModelIn3Sets": "{pct}% en 3 sets",
+  "@tenModelIn3Sets": {
+    "description": "Porcentaje de partido terminado en 3 sets",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "tenModelKicker": "// LO QUE ESPERA EL MODELO",
+  "tenModelMatchDuration": "DURACIÓN DEL PARTIDO",
+  "tenModelSet1": "SET 1",
+  "tenModelSet2": "SET 2",
+  "tenModelSet3": "SET 3",
+  "tenModelSet3Footnote": "El 3.er set solo se juega si hay empate 1–1.",
+  "tenModelSets": "SETS",
+  "tenModelTiebreak": "HABRÁ TIE-BREAK",
+  "tenModelTitle": "MODELO",
+  "tenModelTotalGames": "JUEGOS TOTALES · PROBABILIDAD DE «MÁS DE»",
+  "tenModelWinsEachSet": "{player} GANA CADA SET",
+  "@tenModelWinsEachSet": {
+    "description": "Probabilidad de ganar cada set para el jugador favorito",
+    "placeholders": {
+      "player": {
+        "type": "String"
+      }
+    }
+  },
+  "tenNavModel": "Modelo",
+  "tenNavProb": "Probabilidad",
+  "tenNavSurface": "Superficie",
+  "tenNoStats": "Estadísticas de tenis no disponibles",
+  "tenRankNumber": "N.º {rank}",
+  "@tenRankNumber": {
+    "description": "Número de ranking individual en tenis",
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "tenRankPts": "{rank} · {pts} pts",
+  "@tenRankPts": {
+    "description": "Ranking y puntos ATP/WTA",
+    "placeholders": {
+      "rank": {
+        "type": "String"
+      },
+      "pts": {
+        "type": "String"
+      }
+    }
+  },
+  "tenRoundFinal": "Final",
+  "tenRoundQ16": "Dieciseisavos",
+  "tenRoundQualFinal": "Final de clasificación",
+  "tenRoundQuarterfinals": "Cuartos",
+  "tenRoundR128": "Ronda de 128",
+  "tenRoundR16": "Octavos",
+  "tenRoundR32": "Ronda de 32",
+  "tenRoundR64": "Ronda de 64",
+  "tenRoundSemifinals": "Semifinal",
+  "tenSurfaceCareer": "{surface} · CARRERA",
+  "@tenSurfaceCareer": {
+    "description": "Rendimiento en una superficie a lo largo de la carrera",
+    "placeholders": {
+      "surface": {
+        "type": "String"
+      }
+    }
+  },
+  "tenSurfaceClay": "TIERRA BATIDA",
+  "tenSurfaceGrass": "HIERBA",
+  "tenSurfaceHard": "PISTA DURA",
+  "tenSurfaceKicker": "// RENDIMIENTO POR SUPERFICIE",
+  "tenSurfaceSeason": "{surface} · ESTA TEMPORADA",
+  "@tenSurfaceSeason": {
+    "description": "Rendimiento en una superficie en la temporada actual",
+    "placeholders": {
+      "surface": {
+        "type": "String"
+      }
+    }
+  },
+  "tenSurfaceTitle": "SUPERFICIE",
+  "tenSurfaceToday": "HOY",
+  "tenThreeSets": "{pct}% a 3 sets",
+  "@tenThreeSets": {
+    "description": "Porcentaje de partidos decididos a 3 sets",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "tenTiebreakPct": "{pct}% con tie-break",
+  "@tenTiebreakPct": {
+    "description": "Porcentaje de partidos que tuvieron al menos un tie-break",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "tenWinProbTitle": "PROBABILIDAD DE GANAR",
   "tileFairOdds": "Cuota justa {value}",
   "@tileFairOdds": {
     "placeholders": {

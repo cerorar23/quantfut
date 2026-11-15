@@ -3321,6 +3321,205 @@ class AppLocalizationsIt extends AppLocalizations {
   String get streamParley => 'Multipla';
 
   @override
+  String tenAgeYears(int age, String country) {
+    return '$age ANNI · $country';
+  }
+
+  @override
+  String get tenFormIndex => 'INDICE DI FORMA';
+
+  @override
+  String get tenFormKicker => '// ULTIME PARTITE';
+
+  @override
+  String tenGapLeader(String player, int diff, String circuit) {
+    return '$player è $diff posizioni avanti nel ranking $circuit.';
+  }
+
+  @override
+  String tenGapTied(String playerA, String playerB, String circuit) {
+    return '$playerA e $playerB occupano la stessa posizione nel ranking $circuit.';
+  }
+
+  @override
+  String get tenH2hFirstDuel => 'PRIMO DUELLO';
+
+  @override
+  String tenH2hFirstDuelDesc(String surface) {
+    return 'Non si sono mai affrontati. Senza precedenti diretti, il modello si basa sullo stato di forma e sul rendimento su $surface.';
+  }
+
+  @override
+  String tenLastMatchesCount(int count) {
+    return 'ULTIMI $count';
+  }
+
+  @override
+  String tenModelGamesExpectedApprox(String line) {
+    return '≈ $line';
+  }
+
+  @override
+  String tenModelGamesExpectedCaption(
+    String line1,
+    int p1,
+    String line2,
+    int p2,
+    String expected,
+  ) {
+    return 'Con $line1 game il modello dà il $p1%; con $line2, il $p2%: prevede un match di circa $expected game.';
+  }
+
+  @override
+  String get tenModelGamesExpectedLabel => 'GAME ATTESI';
+
+  @override
+  String tenModelGamesExpectedSimple(String expected) {
+    return 'Il modello prevede un match di circa $expected game.';
+  }
+
+  @override
+  String tenModelHandicap(String player) {
+    return 'HANDICAP GAME · $player';
+  }
+
+  @override
+  String tenModelIn2Sets(int pct) {
+    return '$pct% in 2 set';
+  }
+
+  @override
+  String tenModelIn3Sets(int pct) {
+    return '$pct% in 3 set';
+  }
+
+  @override
+  String get tenModelKicker => '// COSA PREVEDE IL MODELLO';
+
+  @override
+  String get tenModelMatchDuration => 'DURATA DEL MATCH';
+
+  @override
+  String get tenModelSet1 => 'SET 1';
+
+  @override
+  String get tenModelSet2 => 'SET 2';
+
+  @override
+  String get tenModelSet3 => 'SET 3';
+
+  @override
+  String get tenModelSet3Footnote =>
+      'Il 3° set si gioca solo in caso di parità 1–1.';
+
+  @override
+  String get tenModelSets => 'SET';
+
+  @override
+  String get tenModelTiebreak => 'CI SARÀ TIE-BREAK';
+
+  @override
+  String get tenModelTitle => 'MODELLO';
+
+  @override
+  String get tenModelTotalGames => 'GIOCHI TOTALI · PROBABILITÀ DI «OVER»';
+
+  @override
+  String tenModelWinsEachSet(String player) {
+    return '$player VINCE OGNI SET';
+  }
+
+  @override
+  String get tenNavModel => 'Modello';
+
+  @override
+  String get tenNavProb => 'Probabilità';
+
+  @override
+  String get tenNavSurface => 'Superficie';
+
+  @override
+  String get tenNoStats => 'Statistiche di tennis non disponibili';
+
+  @override
+  String tenRankNumber(int rank) {
+    return 'N. $rank';
+  }
+
+  @override
+  String tenRankPts(String rank, String pts) {
+    return '$rank · $pts pts';
+  }
+
+  @override
+  String get tenRoundFinal => 'Finale';
+
+  @override
+  String get tenRoundQ16 => 'Sedicesimi';
+
+  @override
+  String get tenRoundQualFinal => 'Finale qualificazioni';
+
+  @override
+  String get tenRoundQuarterfinals => 'Quarti';
+
+  @override
+  String get tenRoundR128 => 'Sessantaquattresimi';
+
+  @override
+  String get tenRoundR16 => 'Ottavi';
+
+  @override
+  String get tenRoundR32 => 'Sedicesimi';
+
+  @override
+  String get tenRoundR64 => 'Trentaduesimi';
+
+  @override
+  String get tenRoundSemifinals => 'Semifinale';
+
+  @override
+  String tenSurfaceCareer(String surface) {
+    return '$surface · CARRIERA';
+  }
+
+  @override
+  String get tenSurfaceClay => 'TERRA ROSSA';
+
+  @override
+  String get tenSurfaceGrass => 'ERBA';
+
+  @override
+  String get tenSurfaceHard => 'CEMENTO';
+
+  @override
+  String get tenSurfaceKicker => '// RENDIMENTO PER SUPERFICIE';
+
+  @override
+  String tenSurfaceSeason(String surface) {
+    return '$surface · QUESTA STAGIONE';
+  }
+
+  @override
+  String get tenSurfaceTitle => 'SUPERFICIE';
+
+  @override
+  String get tenSurfaceToday => 'OGGI';
+
+  @override
+  String tenThreeSets(int pct) {
+    return '$pct% a 3 set';
+  }
+
+  @override
+  String tenTiebreakPct(int pct) {
+    return '$pct% con tie-break';
+  }
+
+  @override
+  String get tenWinProbTitle => 'PROBABILITÀ DI VITTORIA';
+
+  @override
   String tileFairOdds(String value) {
     return 'Quota giusta $value';
   }

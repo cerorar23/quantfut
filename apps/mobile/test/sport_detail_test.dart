@@ -382,7 +382,8 @@ void main() {
       await pump(tester, tennisEvent(), api: api);
       await openTab(tester, 'Análisis');
       expect(find.text('Heather Watson'), findsWidgets);
-      expect(find.text('Ranking'), findsWidgets);
+      expect(find.textContaining('180'), findsWidgets);
+      expect(find.textContaining('ranking'), findsWidgets);
       await openTab(tester, 'H2H');
       expect(find.textContaining('WTA Cincinnati'), findsOneWidget);
       await openTab(tester, 'Alertas');

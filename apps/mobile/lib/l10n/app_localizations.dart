@@ -5419,6 +5419,324 @@ abstract class AppLocalizations {
   /// **'Parley'**
   String get streamParley;
 
+  /// Edad y país del tenista
+  ///
+  /// In es, this message translates to:
+  /// **'{age} AÑOS · {country}'**
+  String tenAgeYears(int age, String country);
+
+  /// No description provided for @tenFormIndex.
+  ///
+  /// In es, this message translates to:
+  /// **'ÍNDICE DE FORMA'**
+  String get tenFormIndex;
+
+  /// No description provided for @tenFormKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS PARTIDOS'**
+  String get tenFormKicker;
+
+  /// Diferencia de ranking entre los dos tenistas
+  ///
+  /// In es, this message translates to:
+  /// **'{player} está {diff} puestos por encima en el ranking {circuit}.'**
+  String tenGapLeader(String player, int diff, String circuit);
+
+  /// Empate de puesto en ranking de tenis
+  ///
+  /// In es, this message translates to:
+  /// **'{playerA} y {playerB} tienen el mismo puesto en el ranking {circuit}.'**
+  String tenGapTied(String playerA, String playerB, String circuit);
+
+  /// No description provided for @tenH2hFirstDuel.
+  ///
+  /// In es, this message translates to:
+  /// **'PRIMER DUELO'**
+  String get tenH2hFirstDuel;
+
+  /// Explicación de primer duelo cara a cara en tenis
+  ///
+  /// In es, this message translates to:
+  /// **'Nunca se han enfrentado. Sin historial directo, el modelo se apoya en su forma reciente y en su rendimiento sobre {surface}.'**
+  String tenH2hFirstDuelDesc(String surface);
+
+  /// Cantidad de últimos partidos en forma de tenis
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS {count}'**
+  String tenLastMatchesCount(int count);
+
+  /// Línea de juegos esperados aproximados
+  ///
+  /// In es, this message translates to:
+  /// **'≈ {line}'**
+  String tenModelGamesExpectedApprox(String line);
+
+  /// Explicación del cruce de juegos esperados
+  ///
+  /// In es, this message translates to:
+  /// **'Con {line1} juegos el modelo da {p1} %; con {line2}, {p2} %: espera un partido de unos {expected} juegos.'**
+  String tenModelGamesExpectedCaption(
+    String line1,
+    int p1,
+    String line2,
+    int p2,
+    String expected,
+  );
+
+  /// No description provided for @tenModelGamesExpectedLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'JUEGOS ESPERADOS'**
+  String get tenModelGamesExpectedLabel;
+
+  /// Aviso simple de juegos esperados
+  ///
+  /// In es, this message translates to:
+  /// **'El modelo espera un partido de unos {expected} juegos.'**
+  String tenModelGamesExpectedSimple(String expected);
+
+  /// Título de hándicap de juegos para un tenista
+  ///
+  /// In es, this message translates to:
+  /// **'HÁNDICAP DE JUEGOS · {player}'**
+  String tenModelHandicap(String player);
+
+  /// Porcentaje de partido terminado en 2 sets
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% en 2 sets'**
+  String tenModelIn2Sets(int pct);
+
+  /// Porcentaje de partido terminado en 3 sets
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% en 3 sets'**
+  String tenModelIn3Sets(int pct);
+
+  /// No description provided for @tenModelKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// LO QUE ESPERA EL MODELO'**
+  String get tenModelKicker;
+
+  /// No description provided for @tenModelMatchDuration.
+  ///
+  /// In es, this message translates to:
+  /// **'DURACIÓN DEL PARTIDO'**
+  String get tenModelMatchDuration;
+
+  /// No description provided for @tenModelSet1.
+  ///
+  /// In es, this message translates to:
+  /// **'SET 1'**
+  String get tenModelSet1;
+
+  /// No description provided for @tenModelSet2.
+  ///
+  /// In es, this message translates to:
+  /// **'SET 2'**
+  String get tenModelSet2;
+
+  /// No description provided for @tenModelSet3.
+  ///
+  /// In es, this message translates to:
+  /// **'SET 3'**
+  String get tenModelSet3;
+
+  /// No description provided for @tenModelSet3Footnote.
+  ///
+  /// In es, this message translates to:
+  /// **'El 3.er set solo se juega si hay empate 1–1.'**
+  String get tenModelSet3Footnote;
+
+  /// No description provided for @tenModelSets.
+  ///
+  /// In es, this message translates to:
+  /// **'SETS'**
+  String get tenModelSets;
+
+  /// No description provided for @tenModelTiebreak.
+  ///
+  /// In es, this message translates to:
+  /// **'HABRÁ TIE-BREAK'**
+  String get tenModelTiebreak;
+
+  /// No description provided for @tenModelTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'MODELO'**
+  String get tenModelTitle;
+
+  /// No description provided for @tenModelTotalGames.
+  ///
+  /// In es, this message translates to:
+  /// **'JUEGOS TOTALES · PROBABILIDAD DE «MÁS DE»'**
+  String get tenModelTotalGames;
+
+  /// Probabilidad de ganar cada set para el jugador favorito
+  ///
+  /// In es, this message translates to:
+  /// **'{player} GANA CADA SET'**
+  String tenModelWinsEachSet(String player);
+
+  /// No description provided for @tenNavModel.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo'**
+  String get tenNavModel;
+
+  /// No description provided for @tenNavProb.
+  ///
+  /// In es, this message translates to:
+  /// **'Probabilidad'**
+  String get tenNavProb;
+
+  /// No description provided for @tenNavSurface.
+  ///
+  /// In es, this message translates to:
+  /// **'Superficie'**
+  String get tenNavSurface;
+
+  /// No description provided for @tenNoStats.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas de tenis no disponibles'**
+  String get tenNoStats;
+
+  /// Número de ranking individual en tenis
+  ///
+  /// In es, this message translates to:
+  /// **'N.º {rank}'**
+  String tenRankNumber(int rank);
+
+  /// Ranking y puntos ATP/WTA
+  ///
+  /// In es, this message translates to:
+  /// **'{rank} · {pts} pts'**
+  String tenRankPts(String rank, String pts);
+
+  /// No description provided for @tenRoundFinal.
+  ///
+  /// In es, this message translates to:
+  /// **'Final'**
+  String get tenRoundFinal;
+
+  /// No description provided for @tenRoundQ16.
+  ///
+  /// In es, this message translates to:
+  /// **'Dieciseisavos'**
+  String get tenRoundQ16;
+
+  /// No description provided for @tenRoundQualFinal.
+  ///
+  /// In es, this message translates to:
+  /// **'Final de clasificación'**
+  String get tenRoundQualFinal;
+
+  /// No description provided for @tenRoundQuarterfinals.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuartos'**
+  String get tenRoundQuarterfinals;
+
+  /// No description provided for @tenRoundR128.
+  ///
+  /// In es, this message translates to:
+  /// **'Ronda de 128'**
+  String get tenRoundR128;
+
+  /// No description provided for @tenRoundR16.
+  ///
+  /// In es, this message translates to:
+  /// **'Octavos'**
+  String get tenRoundR16;
+
+  /// No description provided for @tenRoundR32.
+  ///
+  /// In es, this message translates to:
+  /// **'Ronda de 32'**
+  String get tenRoundR32;
+
+  /// No description provided for @tenRoundR64.
+  ///
+  /// In es, this message translates to:
+  /// **'Ronda de 64'**
+  String get tenRoundR64;
+
+  /// No description provided for @tenRoundSemifinals.
+  ///
+  /// In es, this message translates to:
+  /// **'Semifinal'**
+  String get tenRoundSemifinals;
+
+  /// Rendimiento en una superficie a lo largo de la carrera
+  ///
+  /// In es, this message translates to:
+  /// **'{surface} · CARRERA'**
+  String tenSurfaceCareer(String surface);
+
+  /// No description provided for @tenSurfaceClay.
+  ///
+  /// In es, this message translates to:
+  /// **'TIERRA BATIDA'**
+  String get tenSurfaceClay;
+
+  /// No description provided for @tenSurfaceGrass.
+  ///
+  /// In es, this message translates to:
+  /// **'HIERBA'**
+  String get tenSurfaceGrass;
+
+  /// No description provided for @tenSurfaceHard.
+  ///
+  /// In es, this message translates to:
+  /// **'PISTA DURA'**
+  String get tenSurfaceHard;
+
+  /// No description provided for @tenSurfaceKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// RENDIMIENTO POR SUPERFICIE'**
+  String get tenSurfaceKicker;
+
+  /// Rendimiento en una superficie en la temporada actual
+  ///
+  /// In es, this message translates to:
+  /// **'{surface} · ESTA TEMPORADA'**
+  String tenSurfaceSeason(String surface);
+
+  /// No description provided for @tenSurfaceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'SUPERFICIE'**
+  String get tenSurfaceTitle;
+
+  /// No description provided for @tenSurfaceToday.
+  ///
+  /// In es, this message translates to:
+  /// **'HOY'**
+  String get tenSurfaceToday;
+
+  /// Porcentaje de partidos decididos a 3 sets
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% a 3 sets'**
+  String tenThreeSets(int pct);
+
+  /// Porcentaje de partidos que tuvieron al menos un tie-break
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% con tie-break'**
+  String tenTiebreakPct(int pct);
+
+  /// No description provided for @tenWinProbTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD DE GANAR'**
+  String get tenWinProbTitle;
+
   /// No description provided for @tileFairOdds.
   ///
   /// In es, this message translates to:

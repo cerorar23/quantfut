@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
 import 'analysis_nba.dart';
+import 'analysis_tennis.dart';
 import 'live_api.dart';
 import 'live_widgets.dart' show valueBars;
 import 'qf_shapes.dart';
@@ -163,15 +164,8 @@ class _StatLine extends StatelessWidget {
   );
 }
 
-String? _record(dynamic r) => r is Map && r['won'] is num && r['lost'] is num
-    ? '${(r['won'] as num).toInt()}-${(r['lost'] as num).toInt()}'
-    : null;
-
 String? _number(dynamic v, [int digits = 1]) =>
     v is num && v.isFinite ? decimalText(v, digits) : null;
-
-String? _signed(dynamic v) =>
-    v is num && v != 0 ? '${v > 0 ? '+' : ''}${v.toInt()}' : null;
 
 class SportAnalysis extends StatelessWidget {
   const SportAnalysis({
@@ -189,31 +183,6 @@ class SportAnalysis extends StatelessWidget {
   final ImageCatalog? images;
   final VoidCallback? onH2h;
 
-  List<Widget> tennisPlayer(AppLocalizations l10n, JsonMap p) {
-    final surfaces = jsonMap(p['surfaces']);
-    final key = (event.surface ?? '').trim().toLowerCase();
-    final form = p['form'] is Map ? jsonMap(p['form']) : <String, dynamic>{};
-    final rows = <(String, String?)>[
-      (l10n.sportStatRank, p['rank'] != null ? '${p['rank']}' : null),
-      (
-        l10n.sportStatAge,
-        p['age'] is num ? '${(p['age'] as num).toInt()}' : null,
-      ),
-      (l10n.sportStatSeason, _record(p['season'])),
-      (l10n.sportStatCareer, _record(p['career'])),
-      (l10n.sportStatSurface, _record(jsonMap(surfaces[key])['career'])),
-      (
-        l10n.sportStatFormIndex,
-        form['index'] is num ? '${(form['index'] as num).toInt()}' : null,
-      ),
-      (l10n.sportStatStreak, _signed(form['streak'])),
-    ];
-    return [
-      for (final (label, value) in rows)
-        if (value != null) _StatLine(label, value),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) => _StatsGate(
     stats: stats,
@@ -223,6 +192,16 @@ class SportAnalysis extends StatelessWidget {
       final nba = event.sport == kNba;
       if (nba) {
         return NbaAnalysis(
+          event: event,
+          data: data,
+          api: api,
+          images: images,
+          onH2h: onH2h,
+        );
+      }
+      final tennis = event.sport == kTennis;
+      if (tennis) {
+        return TennisAnalysis(
           event: event,
           data: data,
           api: api,
@@ -251,8 +230,6 @@ class SportAnalysis extends StatelessWidget {
                         color: QfColors.text,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    ...tennisPlayer(l10n, t),
                   ],
                 ),
               ),
