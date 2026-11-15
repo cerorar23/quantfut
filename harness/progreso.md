@@ -8,7 +8,7 @@
 - **Límite que se respeta:** el subtítulo dice «Cuenta resultados, no dinero»; la calibración sigue en la tarjeta «Prometido frente a real». No se añadió CSS (`.cv-hist-band` queda sin uso). No es una garantía: si se acertara menos del 50 % la curva bajaría y se pintaría en magenta.
 - **Escalera y parley (misma petición del titular):** la cifra grande y la curva pasan de ganancia acumulada a aciertos menos fallos de las piezas. Medido en producción: escalones +44 (57 ✓, 13 ✗, nunca bajo 0, retroceso máximo 2); patas del parley +37 (95 ✓, 58 ✗, nunca bajo 0, retroceso máximo 4). No hay métrica de dinero en positivo: escalera −5,15 u y parley −27,09 u.
 - **Límite que se respeta:** la ganancia real y el rendimiento siguen escritos justo debajo de la cifra grande, y la nota de la curva dice que cuenta piezas, no dinero, y que una sola pieza fallada pierde el reto o el parley. Sin piezas liquidadas se sigue mostrando la ganancia.
-- **Pendiente:** desplegar el frontend (no desplegado en este cambio).
+- **Desplegado** el 15-nov a las 15:49 UTC (`quantfut-api:15d16a47`, ver DEPLOYS.md).
 
 ## 15-nov-2026 · Reto escalera: dos retos con el mismo partido (retos #23 y #24) → candado común de elección (`fix/escalera-candado-eleccion`)
 
