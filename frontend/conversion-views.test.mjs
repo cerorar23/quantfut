@@ -378,3 +378,31 @@ test('escalera activa oculta escalones nulos o aplazados y renumera los visibles
   assert.match(view, /Más de 210,5 puntos/);
   assert.match(view, /Esperando su primer escalón sellado/);
 });
+
+test('escalera y parley: la cifra grande y la curva cuentan aciertos menos fallos, con la ganancia real al lado', () => {
+  const paso = (outcome, h) => ({ paso: 1, outcome, kickoff_utc: `2026-11-01T${h}:00:00Z`, price: 1.3, prob: 0.8, texto: 'X', local: 'A', visitante: 'B' });
+  const escalera = { status: 'ready', data: {
+    activo: true, reglas: { cuota_min: 1.25, cuota_max: 2.1, stake: '10.00', longitudes: [3] }, actuales: [],
+    historial: [
+      { reto_id: 1, estado: 'completado', ganados: 3, pasos_objetivo: 3, retirado: '0.00', ganancia: '9.00', inicio: '2026-11-01T09:00:00Z', pasos: [paso('win', '10'), paso('win', '11'), paso('win', '12')] },
+      { reto_id: 2, estado: 'fallido', ganados: 1, pasos_objetivo: 3, retirado: '0.00', ganancia: '-10.00', inicio: '2026-11-01T09:00:00Z', pasos: [paso('win', '13'), paso('void', '14'), paso('loss', '15')] },
+    ],
+    resumen: { cerrados: 2, completados: 1, ganancia: '-1.00', invertido: '20.00', roi: -5, tasa_completados: 50 }, por_longitud: {}, serie: [{ acumulado: '9.00', reto_id: 1 }, { acumulado: '-1.00', reto_id: 2 }],
+  } };
+  const pata = outcome => ({ texto: 'X', local: 'A', visitante: 'B', kickoff_utc: '2026-11-01T19:00:00Z', price: 1.5, prob: 0.6, outcome });
+  const ticket = (outcome, patas) => ({ escalon: 1, target: 2.1, outcome, cuota_total: 2.1, n_patas: patas.length, patas });
+  const parley = { status: 'ready', data: { reglas: {}, dias: [], resumen: {}, v2: { activo: true, reglas: { targets: [2.1] }, dias: [
+    { dia: '2026-11-02', tickets: [ticket('perdido', [pata('win'), pata('win'), pata('loss')])] },
+    { dia: '2026-11-01', tickets: [ticket('perdido', [pata('win'), pata('push'), pata('loss')])] },
+  ] } } };
+  const views = createConversionViews(helpers({ parley, escalera }));
+  const e = views.escaleraView();
+  assert.match(e, /cv-big[^>]*cyber-text-glow--green">\+3</, '4 escalones acertados − 1 fallado; el nulo no cuenta');
+  assert.match(e, /escalones acertados menos fallados/);
+  assert.match(e, /ganancia -1[.,]00 u sobre 20 u invertidas/, 'la ganancia real sigue a la vista');
+  assert.match(e, /Cuenta escalones, no dinero/);
+  const p = views.parleyView();
+  assert.match(p, /cv-big[^>]*cyber-text-glow--green">\+1</, '3 patas acertadas − 2 falladas; la devuelta no cuenta');
+  assert.match(p, /ganancia -2[.,]00 u sobre 2 u/, 'dos parlays perdidos: la pérdida real sigue a la vista');
+  assert.match(p, /Cuenta patas, no dinero/);
+});

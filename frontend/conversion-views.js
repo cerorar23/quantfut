@@ -106,6 +106,18 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
   const fecha = value => `${realDate(value)} ${esc(realTime(value))}`;
   const nombreMercado = market => MERCADO[market] ?? market ?? 'Mercado';
   const unidades = value => `${Number(value) > 0 ? '+' : ''}${realNumber(value, 2)} u`;
+  const conSigno = value => `${Number(value) > 0 ? '+' : ''}${realNumber(value)}`;
+  // Aciertos menos fallos de las piezas (escalones de la escalera, patas del parley): cada acierto suma 1 y cada
+  // fallo resta 1; nulos, devueltos y pendientes no cuentan. Cuenta resultados, no dinero: la ganancia va aparte.
+  function netoPiezas(piezas) {
+    let neto = 0, aciertos = 0, fallos = 0;
+    const serie = [];
+    for (const pieza of piezas) {
+      if (pieza?.outcome === 'win') { neto++; aciertos++; } else if (pieza?.outcome === 'loss') { neto--; fallos++; } else continue;
+      serie.push({ acumulado: neto });
+    }
+    return { serie, neto, aciertos, fallos };
+  }
   const meter = (value, tone = '') => `<div class="cyber-progress cyber-progress--sm ${tone}" role="presentation"><div class="cyber-progress__bar" data-cv-w="${Number(value) || 0}"></div></div>`;
   const hash = value => esc(String(value ?? '').slice(0, 12));
 
@@ -270,19 +282,24 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const totalGanancia = acum;
     const roi = n > 0 ? (totalGanancia / n) * 100 : 0;
 
+    const patas = netoPiezas(crono.flatMap(t => t.patas ?? []));
+    const conPatas = patas.serie.length > 0;
+
     const heroCard = hero({
       eyebrow: 'COMBINADAS · PARLEY DEL DÍA',
       title: n ? `<em>${realNumber(ganados)} de ${realNumber(n)}</em> parlays ganados, todos a la vista` : 'Parley v2.1 · Multideporte',
       lead: `Cuatro objetivos de cuota al día (${targets.map(t => realNumber(t, 2)).join(' · ')}) combinando fútbol, tenis y NBA con la menor cantidad de patas posible. Cada combinada se sella antes de los partidos y las perdidas se quedan en el historial.`,
-      big: n ? unidades(totalGanancia) : '—',
-      bigLabel: 'ganancia acumulada',
-      bigSub: n ? `sobre ${realNumber(n, 0)} u invertidas (1 u por parlay) · rendimiento ${realPercent(roi, 1)} · ${realPercent((ganados / n) * 100, 1)} acierto` : 'Lotes sellados al día · historial transparente',
+      big: conPatas ? conSigno(patas.neto) : n ? unidades(totalGanancia) : '—',
+      bigLabel: conPatas ? 'patas acertadas menos falladas' : 'ganancia acumulada',
+      bigSub: conPatas ? `${realNumber(patas.aciertos)} patas acertadas y ${realNumber(patas.fallos)} falladas · ganancia ${unidades(totalGanancia)} sobre ${realNumber(n, 0)} u (1 u por parlay) · rendimiento ${realPercent(roi, 1)}` : n ? `sobre ${realNumber(n, 0)} u invertidas (1 u por parlay) · rendimiento ${realPercent(roi, 1)} · ${realPercent((ganados / n) * 100, 1)} acierto` : 'Lotes sellados al día · historial transparente',
       chips: [
         badge(v2?.activo ? 'Parley v2.1 activo' : 'Parley inactivo', v2?.activo ? 'good' : 'muted'),
         badge('Fútbol · Tenis · NBA', 'accent'),
         badge('Lote sellado', 'good'),
       ].filter(Boolean),
-      extra: curva(serie, 'parlays', 'La curva incluye las combinadas perdidas: cada bajada es un parley perdido.'),
+      extra: conPatas
+        ? curva(patas.serie, { unidadLabel: 'patas', titulo: 'Patas: aciertos menos fallos', valor: conSigno, nota: 'Cada pata acertada suma 1 y cada fallada resta 1. Cuenta patas, no dinero: un parley se pierde con una sola pata fallada.' })
+        : curva(serie, { unidadLabel: 'parlays', nota: 'La curva incluye las combinadas perdidas: cada bajada es un parley perdido.' }),
     });
 
     const racha = dots(lista);
@@ -430,7 +447,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       <div class="cv-list">${visibles}${cerrados.join('')}</div>${!pasos.length && !cerrados.length ? '<p class="cv-ticket-meta">Esperando su primer escalón sellado.</p>' : ''}</article>`;
   }
 
-  function curva(serie, unidadLabel = 'retos', nota = 'La curva incluye los retos fallidos: cada bajada es un reto perdido.') {
+  function curva(serie, { unidadLabel = 'retos', nota = 'La curva incluye los retos fallidos: cada bajada es un reto perdido.', titulo = 'Ganancia acumulada', valor = unidades } = {}) {
     if (!serie.length) return '';
     const values = [0, ...serie.map(r => Number(r.acumulado))];
     const min = Math.min(...values, 0);
@@ -440,7 +457,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const y = v => 72 - (v - min) / span * 60;
     const last = values.at(-1);
     const area = `8,${y(0).toFixed(1)} ${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')} ${x(values.length - 1).toFixed(1)},${y(0).toFixed(1)}`;
-    return `<figure class="cv-curve"><figcaption><span>Ganancia acumulada</span><strong class="${last < 0 ? 'cv-neg' : 'cv-pos'}">${unidades(last)}</strong></figcaption><svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Ganancia acumulada: ${realNumber(last, 2)} unidades tras ${serie.length} ${unidadLabel}"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polygon class="area" points="${area}"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg><small>${nota}</small></figure>`;
+    return `<figure class="cv-curve"><figcaption><span>${titulo}</span><strong class="${last < 0 ? 'cv-neg' : 'cv-pos'}">${valor(last)}</strong></figcaption><svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="${titulo}: ${valor(last)} tras ${serie.length} ${unidadLabel}"><line x1="8" x2="292" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/><polygon class="area" points="${area}"/><polyline points="${values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg><small>${nota}</small></figure>`;
   }
 
   function escaleraView() {
@@ -453,17 +470,23 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const huella = primeraHuella(...actuales.flatMap(a => (a.pasos ?? []).map(p => p.chain_sha256)).reverse());
     const bloqueados = actuales.reduce((n, a) => n + (a.vip?.length ?? 0), 0);
 
+    const pasosJugados = [...historial, ...actuales].flatMap(x => x.pasos ?? []).sort((a, b) => Date.parse(a.kickoff_utc) - Date.parse(b.kickoff_utc));
+    const peldanos = netoPiezas(pasosJugados);
+    const conPeldanos = Boolean(r.cerrados) && peldanos.serie.length > 0;
+
     const heroCard = hero({
       eyebrow: 'RETOS · ESCALERA',
       title: r.cerrados ? `<em>${realNumber(r.completados)} de ${realNumber(r.cerrados)}</em> retos completados, y los fallidos también se ven` : 'Reto escalera',
       lead: reglas.targets?.length
         ? `Un reto abierto por cada objetivo de cobro (${reglas.targets.map(t => `×${realNumber(t, t % 1 ? 1 : 0)}`).join(' · ')}), con ${realNumber(reglas.stake, 0)} unidades cada uno: cada escalón juega todo el saldo en un pronóstico de al menos ${realNumber((reglas.prob_min ?? 0.69) * 100, 0)}% de probabilidad y cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}. El reto se completa al llegar a su objetivo (hasta ${realNumber(reglas.max_escalones ?? 6)} escalones y ${realNumber(reglas.dias_max ?? 10)} días como máximo); fallar un escalón lo cierra.`
         : `Retos de ${(reglas.longitudes ?? [2]).map(n => realNumber(n)).join(' o ')} escalones${reglas.dias_max ? ` en ${realNumber(reglas.dias_max)} días como máximo` : ''} que empiezan con ${realNumber(reglas.stake, 0)} unidades: cada escalón juega todo el saldo${reglas.prob_reto ? ` y se elige para que el reto entero se complete al menos el ${realNumber(reglas.prob_reto * 100, 0)}% de las veces` : ` a un pronóstico de cuota ${realNumber(reglas.cuota_min, 2)}–${realNumber(reglas.cuota_max, 2)}`}. Ganarlos todos completa el reto; fallar uno lo cierra.`,
-      big: r.cerrados ? unidades(r.ganancia) : '—',
-      bigLabel: 'ganancia acumulada',
-      bigSub: r.cerrados ? `sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% completados` : 'Aún no se cerró ningún reto',
+      big: conPeldanos ? conSigno(peldanos.neto) : r.cerrados ? unidades(r.ganancia) : '—',
+      bigLabel: conPeldanos ? 'escalones acertados menos fallados' : 'ganancia acumulada',
+      bigSub: conPeldanos ? `${realNumber(peldanos.aciertos)} escalones acertados y ${realNumber(peldanos.fallos)} fallados · ganancia ${unidades(r.ganancia)} sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% de retos completados` : r.cerrados ? `sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% completados` : 'Aún no se cerró ningún reto',
       chips: [badge(activo ? 'Reto activo' : 'Reto inactivo', activo ? 'good' : 'muted'), badge('Datos del servidor', 'accent')].filter(Boolean),
-      extra: curva(serie),
+      extra: conPeldanos
+        ? curva(peldanos.serie, { unidadLabel: 'escalones', titulo: 'Escalones: aciertos menos fallos', valor: conSigno, nota: 'Cada escalón acertado suma 1 y cada fallado resta 1. Cuenta escalones, no dinero: un reto se pierde con un solo escalón fallado.' })
+        : curva(serie),
     });
 
     const abiertos = actuales.length ? `<div class="cv-list">${actuales.map(reto).join('')}</div>` : `<div class="cv-empty cyber-card"><h3>${activo ? 'No hay retos abiertos' : 'El reto escalera todavía no está activo'}</h3><p>${activo ? 'El próximo empieza en cuanto un partido cumpla la regla.' : 'Cuando se active, aparecerá aquí.'}</p></div>`;

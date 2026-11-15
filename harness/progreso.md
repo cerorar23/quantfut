@@ -1,6 +1,15 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 15-nov-2026 · Historial web: la gráfica grande pasa a «aciertos menos fallos, acumulados» (`web/historial-aciertos-menos-fallos`)
+
+- **Por qué:** el titular pidió que la gráfica grande muestre algo medible que se vea en positivo. La anterior (reales − esperados) oscila alrededor de 0 por diseño cuando el modelo está calibrado: con 82 % prometido y 81 % real bajaba aunque el resultado fuera bueno.
+- **Medido con los 668 liquidados del historial en producción:** aciertos − fallos va en +410 (539 ✓, 129 ✗), mínimo −1 en los 5 primeros, retroceso máximo 3, ninguna ventana de 30 en negativo. Descartadas: unidades a cuota justa (−9,4, sale negativa) y Brier frente a 50/50 (positiva pero difícil de explicar).
+- **Límite que se respeta:** el subtítulo dice «Cuenta resultados, no dinero»; la calibración sigue en la tarjeta «Prometido frente a real». No se añadió CSS (`.cv-hist-band` queda sin uso). No es una garantía: si se acertara menos del 50 % la curva bajaría y se pintaría en magenta.
+- **Escalera y parley (misma petición del titular):** la cifra grande y la curva pasan de ganancia acumulada a aciertos menos fallos de las piezas. Medido en producción: escalones +44 (57 ✓, 13 ✗, nunca bajo 0, retroceso máximo 2); patas del parley +37 (95 ✓, 58 ✗, nunca bajo 0, retroceso máximo 4). No hay métrica de dinero en positivo: escalera −5,15 u y parley −27,09 u.
+- **Límite que se respeta:** la ganancia real y el rendimiento siguen escritos justo debajo de la cifra grande, y la nota de la curva dice que cuenta piezas, no dinero, y que una sola pieza fallada pierde el reto o el parley. Sin piezas liquidadas se sigue mostrando la ganancia.
+- **Pendiente:** desplegar el frontend (no desplegado en este cambio).
+
 ## 15-nov-2026 · Reto escalera: dos retos con el mismo partido (retos #23 y #24) → candado común de elección (`fix/escalera-candado-eleccion`)
 
 - **Causa:** carrera entre el job diario (09:00 UTC) y el reemplazo intradía (`*/5`, también a las 09:00). Cada uno lee los escalones ocupados y elige ~50 s después. A las 09:00:51 el reemplazo anuló el escalón 4 del reto #23 (Langmo–Holmgren, 6 h sin resultado) y eligió Clarke–Nordquist; el diario, que había leído el estado antes, eligió el mismo partido para el #24. Insertaron con 0,26 s de diferencia (09:01:41) sin verse. La regla «un partido no se repite entre retos» (`planificar`/`ocupados`) estaba bien; lo que faltaba era que solo un proceso eligiera a la vez. El `flock` del cron solo protegía al reemplazo de sí mismo.
