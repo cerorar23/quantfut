@@ -177,9 +177,54 @@
   "@alertsAdvantageEmpty": {
     "description": "El rival no tiene bajas reportadas."
   },
+  "alertsBackTrainingDesc": "Ya entrena con el grupo",
+  "@alertsBackTrainingDesc": {
+    "description": "Player back in group training"
+  },
+  "alertsBadgeApplied": "APLICADO",
+  "@alertsBadgeApplied": {
+    "description": "Badge for applied injury report"
+  },
+  "alertsBadgeDoubt": "DUDA",
+  "@alertsBadgeDoubt": {
+    "description": "Badge for doubtful player"
+  },
+  "alertsBadgeDuty": "SELECCIÓN",
+  "@alertsBadgeDuty": {
+    "description": "Badge for player on international duty"
+  },
+  "alertsBadgeInjury": "LESIÓN",
+  "@alertsBadgeInjury": {
+    "description": "Badge for injured player absence"
+  },
+  "alertsBadgeNone": "SIN ALERTAS",
+  "@alertsBadgeNone": {
+    "description": "Badge when there are no alerts"
+  },
+  "alertsBadgePending": "PENDIENTE",
+  "@alertsBadgePending": {
+    "description": "Badge for pending injury report"
+  },
+  "alertsBadgeReturns": "VUELVE",
+  "@alertsBadgeReturns": {
+    "description": "Badge for player returning/back in training"
+  },
+  "alertsBadgeSuspension": "SANCIÓN",
+  "@alertsBadgeSuspension": {
+    "description": "Badge for suspended player"
+  },
   "alertsChecked": "Comprobado {when}",
   "@alertsChecked": {
     "description": "Cuándo se comprobaron las bajas por última vez.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsCheckedFooter": "COMPROBADO {when} · se actualiza cada hora",
+  "@alertsCheckedFooter": {
+    "description": "Footer for alerts checking timestamp",
     "placeholders": {
       "when": {
         "type": "String"
@@ -198,9 +243,98 @@
   "@alertsDoubt": {
     "description": "Estado de un jugador con duda."
   },
+  "alertsDutyReturns": "Con su selección · vuelve a {when}",
+  "@alertsDutyReturns": {
+    "description": "Description for international duty with return date",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsEarlyMonth": "principios de {month}",
+  "@alertsEarlyMonth": {
+    "description": "Early in month",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsLastElevenVs": "último once, vs {rival} · {date}",
+  "@alertsLastElevenVs": {
+    "description": "Subtitle for last starting XI",
+    "placeholders": {
+      "rival": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsLateMonth": "finales de {month}",
+  "@alertsLateMonth": {
+    "description": "Late in month",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsLineupsKicker": "// ALINEACIONES",
+  "@alertsLineupsKicker": {
+    "description": "Kicker above lineups pitch"
+  },
+  "alertsLineupsTitle": "ÚLTIMO ONCE CONOCIDO",
+  "@alertsLineupsTitle": {
+    "description": "Title for pitch lineups"
+  },
+  "alertsMidMonth": "mediados de {month}",
+  "@alertsMidMonth": {
+    "description": "Mid month",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "alertsNbaReportSummary": "{count, plural, one{1 jugador en el reporte} other{{count} jugadores en el reporte}} · {minutes} min de bajas",
+  "@alertsNbaReportSummary": {
+    "description": "NBA team injury report summary",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "minutes": {
+        "type": "num"
+      }
+    }
+  },
+  "alertsNoAlertsBody": "No hay bajas ni dudas registradas para este partido.",
+  "@alertsNoAlertsBody": {
+    "description": "Body when match has no alerts"
+  },
+  "alertsNoAlertsTitle": "SIN ALERTAS",
+  "@alertsNoAlertsTitle": {
+    "description": "Title when match has no alerts"
+  },
   "alertsNoCheck": "Todavía no hay una comprobación de bajas para este partido. Si su liga no tiene este dato, eso no significa que no haya lesionados.",
   "@alertsNoCheck": {
     "description": "No hay comprobación de bajas: no equivale a «sin lesionados»."
+  },
+  "alertsNoLineupDesc": "El once se confirma una hora antes del partido y aparecerá aquí con foto.",
+  "@alertsNoLineupDesc": {
+    "description": "Description when lineup is not yet confirmed"
+  },
+  "alertsNoLineupSaved": "{team} · sin alineación guardada",
+  "@alertsNoLineupSaved": {
+    "description": "Header when team has no saved lineup",
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
   },
   "alertsNote": "Las bajas pueden cambiar hasta el inicio. El once oficial se publica poco antes del partido.",
   "@alertsNote": {
@@ -242,6 +376,15 @@
   "@alertsReasonUnknown": {
     "description": "El proveedor no indica el motivo."
   },
+  "alertsReturnsWhen": "Vuelve a {when}",
+  "@alertsReturnsWhen": {
+    "description": "Return date formatted",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "alertsSource": "Fuente: API-Football",
   "@alertsSource": {
     "description": "Proveedor de los datos de bajas."
@@ -261,6 +404,10 @@
   "alertsSuspended": "Sancionado",
   "@alertsSuspended": {
     "description": "Estado de un jugador sancionado."
+  },
+  "alertsTennisNoIssues": "Sin incidencias en los últimos 7 días",
+  "@alertsTennisNoIssues": {
+    "description": "Tennis player without issues"
   },
   "anAveragesLast10": "// Promedios · Últimos 10",
   "anBttsShort": "AMBOS MARCAN",
@@ -921,6 +1068,22 @@
         "type": "int"
       }
     }
+  },
+  "h2hDrawBadge": "EMP",
+  "@h2hDrawBadge": {
+    "description": "Insignia de empate en la lista de partidos de H2H"
+  },
+  "h2hDraws": "EMPATES",
+  "@h2hDraws": {
+    "description": "Etiqueta para la tarjeta de empates en H2H de fútbol"
+  },
+  "h2hFirstDuelRow": "Primer duelo entre ambos",
+  "@h2hFirstDuelRow": {
+    "description": "Texto de fila cuando dos rivales nunca se han enfrentado"
+  },
+  "h2hRecentMatches": "ÚLTIMOS ENFRENTAMIENTOS",
+  "@h2hRecentMatches": {
+    "description": "Título de la sección de últimos enfrentamientos en H2H"
   },
   "historyWebSince": "Historial web desde el 26/10/2026",
   "homeAgendaTitle": "Agenda",
@@ -3422,152 +3585,5 @@
     }
   },
   "welcomeSkip": "Saltar",
-  "welcomeStart": "Empezar",
-  "alertsBadgeInjury": "LESIÓN",
-  "@alertsBadgeInjury": {
-    "description": "Badge for injured player absence"
-  },
-  "alertsBadgeDuty": "SELECCIÓN",
-  "@alertsBadgeDuty": {
-    "description": "Badge for player on international duty"
-  },
-  "alertsBadgeSuspension": "SANCIÓN",
-  "@alertsBadgeSuspension": {
-    "description": "Badge for suspended player"
-  },
-  "alertsBadgeDoubt": "DUDA",
-  "@alertsBadgeDoubt": {
-    "description": "Badge for doubtful player"
-  },
-  "alertsBadgeReturns": "VUELVE",
-  "@alertsBadgeReturns": {
-    "description": "Badge for player returning/back in training"
-  },
-  "alertsBadgeNone": "SIN ALERTAS",
-  "@alertsBadgeNone": {
-    "description": "Badge when there are no alerts"
-  },
-  "alertsBadgeApplied": "APLICADO",
-  "@alertsBadgeApplied": {
-    "description": "Badge for applied injury report"
-  },
-  "alertsBadgePending": "PENDIENTE",
-  "@alertsBadgePending": {
-    "description": "Badge for pending injury report"
-  },
-  "alertsDutyReturns": "Con su selección · vuelve a {when}",
-  "@alertsDutyReturns": {
-    "description": "Description for international duty with return date",
-    "placeholders": {
-      "when": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsReturnsWhen": "Vuelve a {when}",
-  "@alertsReturnsWhen": {
-    "description": "Return date formatted",
-    "placeholders": {
-      "when": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsBackTrainingDesc": "Ya entrena con el grupo",
-  "@alertsBackTrainingDesc": {
-    "description": "Player back in group training"
-  },
-  "alertsEarlyMonth": "principios de {month}",
-  "@alertsEarlyMonth": {
-    "description": "Early in month",
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsMidMonth": "mediados de {month}",
-  "@alertsMidMonth": {
-    "description": "Mid month",
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsLateMonth": "finales de {month}",
-  "@alertsLateMonth": {
-    "description": "Late in month",
-    "placeholders": {
-      "month": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsLineupsKicker": "// ALINEACIONES",
-  "@alertsLineupsKicker": {
-    "description": "Kicker above lineups pitch"
-  },
-  "alertsLineupsTitle": "ÚLTIMO ONCE CONOCIDO",
-  "@alertsLineupsTitle": {
-    "description": "Title for pitch lineups"
-  },
-  "alertsLastElevenVs": "último once, vs {rival} · {date}",
-  "@alertsLastElevenVs": {
-    "description": "Subtitle for last starting XI",
-    "placeholders": {
-      "rival": {
-        "type": "String"
-      },
-      "date": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsNoLineupSaved": "{team} · sin alineación guardada",
-  "@alertsNoLineupSaved": {
-    "description": "Header when team has no saved lineup",
-    "placeholders": {
-      "team": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsNoLineupDesc": "El once se confirma una hora antes del partido y aparecerá aquí con foto.",
-  "@alertsNoLineupDesc": {
-    "description": "Description when lineup is not yet confirmed"
-  },
-  "alertsNoAlertsTitle": "SIN ALERTAS",
-  "@alertsNoAlertsTitle": {
-    "description": "Title when match has no alerts"
-  },
-  "alertsNoAlertsBody": "No hay bajas ni dudas registradas para este partido.",
-  "@alertsNoAlertsBody": {
-    "description": "Body when match has no alerts"
-  },
-  "alertsCheckedFooter": "COMPROBADO {when} · se actualiza cada hora",
-  "@alertsCheckedFooter": {
-    "description": "Footer for alerts checking timestamp",
-    "placeholders": {
-      "when": {
-        "type": "String"
-      }
-    }
-  },
-  "alertsTennisNoIssues": "Sin incidencias en los últimos 7 días",
-  "@alertsTennisNoIssues": {
-    "description": "Tennis player without issues"
-  },
-  "alertsNbaReportSummary": "{count, plural, one{1 jugador en el reporte} other{{count} jugadores en el reporte}} · {minutes} min de bajas",
-  "@alertsNbaReportSummary": {
-    "description": "NBA team injury report summary",
-    "placeholders": {
-      "count": {
-        "type": "num"
-      },
-      "minutes": {
-        "type": "num"
-      }
-    }
-  }
+  "welcomeStart": "Empezar"
 }

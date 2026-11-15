@@ -188,8 +188,40 @@ class AppLocalizationsDe extends AppLocalizations {
   String get alertsAdvantageEmpty => 'Keine Vorteile gemeldet.';
 
   @override
+  String get alertsBackTrainingDesc => 'Bereits im Mannschaftstraining';
+
+  @override
+  String get alertsBadgeApplied => 'ANGEWENDET';
+
+  @override
+  String get alertsBadgeDoubt => 'FRAGLICH';
+
+  @override
+  String get alertsBadgeDuty => 'NATIONALTEAM';
+
+  @override
+  String get alertsBadgeInjury => 'VERLETZUNG';
+
+  @override
+  String get alertsBadgeNone => 'KEINE MELDUNGEN';
+
+  @override
+  String get alertsBadgePending => 'AUSSTEHEND';
+
+  @override
+  String get alertsBadgeReturns => 'ZURÜCK';
+
+  @override
+  String get alertsBadgeSuspension => 'SPERRE';
+
+  @override
   String alertsChecked(String when) {
     return 'Geprüft $when';
+  }
+
+  @override
+  String alertsCheckedFooter(String when) {
+    return 'GEPRÜFT $when · stündliche Aktualisierung';
   }
 
   @override
@@ -202,8 +234,66 @@ class AppLocalizationsDe extends AppLocalizations {
   String get alertsDoubt => 'Fraglich';
 
   @override
+  String alertsDutyReturns(String when) {
+    return 'Bei der Nationalmannschaft · zurück $when';
+  }
+
+  @override
+  String alertsEarlyMonth(String month) {
+    return 'Anfang $month';
+  }
+
+  @override
+  String alertsLastElevenVs(String rival, String date) {
+    return 'letzte Startelf, vs $rival · $date';
+  }
+
+  @override
+  String alertsLateMonth(String month) {
+    return 'Ende $month';
+  }
+
+  @override
+  String get alertsLineupsKicker => '// AUFSTELLUNGEN';
+
+  @override
+  String get alertsLineupsTitle => 'LETZTE BEKANNTE STARTELF';
+
+  @override
+  String alertsMidMonth(String month) {
+    return 'Mitte $month';
+  }
+
+  @override
+  String alertsNbaReportSummary(num count, num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Spieler im Bericht',
+      one: '1 Spieler im Bericht',
+    );
+    return '$_temp0 · $minutes Min. Ausfälle';
+  }
+
+  @override
+  String get alertsNoAlertsBody =>
+      'Keine Ausfälle oder fraglichen Spieler für dieses Spiel gemeldet.';
+
+  @override
+  String get alertsNoAlertsTitle => 'KEINE MELDUNGEN';
+
+  @override
   String get alertsNoCheck =>
       'Für dieses Spiel gibt es noch keine Ausfall-Prüfung. Hat die Liga diese Daten nicht, heißt das nicht, dass niemand verletzt ist.';
+
+  @override
+  String get alertsNoLineupDesc =>
+      'Die Startelf wird eine Stunde vor Anpfiff bestätigt und erscheint hier mit Fotos.';
+
+  @override
+  String alertsNoLineupSaved(String team) {
+    return '$team · keine gespeicherte Aufstellung';
+  }
 
   @override
   String get alertsNote =>
@@ -237,6 +327,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get alertsReasonUnknown => 'Grund nicht angegeben';
 
   @override
+  String alertsReturnsWhen(String when) {
+    return 'Zurück $when';
+  }
+
+  @override
   String get alertsSource => 'Quelle: API-Football';
 
   @override
@@ -258,6 +353,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get alertsSuspended => 'Gesperrt';
+
+  @override
+  String get alertsTennisNoIssues => 'Keine Vorfälle in den letzten 7 Tagen';
 
   @override
   String get anAveragesLast10 => '// Durchschnitte · Letzte 10';
@@ -1111,6 +1209,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String guideTopicCount(int count) {
     return '$count Themen';
   }
+
+  @override
+  String get h2hDrawBadge => 'UNT';
+
+  @override
+  String get h2hDraws => 'UNENTSCHIEDEN';
+
+  @override
+  String get h2hFirstDuelRow => 'Erstes Aufeinandertreffen';
+
+  @override
+  String get h2hRecentMatches => 'LETZTE DIREKTDUELLE';
 
   @override
   String get historyWebSince => 'Webverlauf seit dem 26.10.2026';
@@ -3805,102 +3915,4 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Los geht\'s';
-
-  @override
-  String get alertsBadgeInjury => 'VERLETZUNG';
-
-  @override
-  String get alertsBadgeDuty => 'NATIONALTEAM';
-
-  @override
-  String get alertsBadgeSuspension => 'SPERRE';
-
-  @override
-  String get alertsBadgeDoubt => 'FRAGLICH';
-
-  @override
-  String get alertsBadgeReturns => 'ZURÜCK';
-
-  @override
-  String get alertsBadgeNone => 'KEINE MELDUNGEN';
-
-  @override
-  String get alertsBadgeApplied => 'ANGEWENDET';
-
-  @override
-  String get alertsBadgePending => 'AUSSTEHEND';
-
-  @override
-  String alertsDutyReturns(String when) {
-    return 'Bei der Nationalmannschaft · zurück $when';
-  }
-
-  @override
-  String alertsReturnsWhen(String when) {
-    return 'Zurück $when';
-  }
-
-  @override
-  String get alertsBackTrainingDesc => 'Bereits im Mannschaftstraining';
-
-  @override
-  String alertsEarlyMonth(String month) {
-    return 'Anfang $month';
-  }
-
-  @override
-  String alertsMidMonth(String month) {
-    return 'Mitte $month';
-  }
-
-  @override
-  String alertsLateMonth(String month) {
-    return 'Ende $month';
-  }
-
-  @override
-  String get alertsLineupsKicker => '// AUFSTELLUNGEN';
-
-  @override
-  String get alertsLineupsTitle => 'LETZTE BEKANNTE STARTELF';
-
-  @override
-  String alertsLastElevenVs(String rival, String date) {
-    return 'letzte Startelf, vs $rival · $date';
-  }
-
-  @override
-  String alertsNoLineupSaved(String team) {
-    return '$team · keine gespeicherte Aufstellung';
-  }
-
-  @override
-  String get alertsNoLineupDesc =>
-      'Die Startelf wird eine Stunde vor Anpfiff bestätigt und erscheint hier mit Fotos.';
-
-  @override
-  String get alertsNoAlertsTitle => 'KEINE MELDUNGEN';
-
-  @override
-  String get alertsNoAlertsBody =>
-      'Keine Ausfälle oder fraglichen Spieler für dieses Spiel gemeldet.';
-
-  @override
-  String alertsCheckedFooter(String when) {
-    return 'GEPRÜFT $when · stündliche Aktualisierung';
-  }
-
-  @override
-  String get alertsTennisNoIssues => 'Keine Vorfälle in den letzten 7 Tagen';
-
-  @override
-  String alertsNbaReportSummary(num count, num minutes) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count Spieler im Bericht',
-      one: '1 Spieler im Bericht',
-    );
-    return '$_temp0 · $minutes Min. Ausfälle';
-  }
 }

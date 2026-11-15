@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
@@ -11,7 +12,9 @@ import 'live_match_markets.dart';
 import 'live_widgets.dart';
 import 'live_statistics.dart';
 import 'match_shell.dart';
+import 'qf_h2h_view.dart';
 import 'qf_theme.dart';
+import 'sport_images.dart';
 
 class LiveMatchDetail extends StatefulWidget {
   const LiveMatchDetail({
@@ -75,77 +78,135 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
       return training(featureMessage(data, 'h2h'));
     }
     final l10n = context.l10n;
-    final h2h = jsonRows(jsonMap(ficha['cara_a_cara'])['partidos']);
-    final lineups = jsonMap(ficha['alineaciones']),
-        injuries = jsonMap(ficha['bajas']);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        liveHeading(l10n.detailH2hTitle),
-        if (h2h.isEmpty) training(l10n.detailNoH2h) else results(h2h),
-        liveHeading(l10n.detailLineups),
-        if (lineups.isEmpty)
-          training(l10n.detailLineupsPending)
-        else
-          ...['home', 'away'].map((side) {
-            final l = jsonMap(lineups[side]);
-            final players = jsonRows(l['titulares']);
-            return liveCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  liveText(
-                    '${jsonMap(ficha[side == 'home' ? 'local' : 'visitante'])['nombre']} · ${l['formacion'] ?? l10n.detailFormationPending}',
-                    bold: true,
-                  ),
-                  const SizedBox(height: 10),
-                  if (players.isEmpty)
-                    liveText(l10n.detailNoStarters, color: liveMuted)
-                  else
-                    ...players.map(
-                      (p) => liveText(
-                        '${p['numero'] ?? p['number'] ?? ''} ${p['nombre'] ?? p['name'] ?? p['player'] ?? ''}',
-                        size: 13,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }),
-        liveHeading(l10n.detailInjuries),
-        if (injuries.isEmpty)
-          training(l10n.detailNoInjuriesCheck)
-        else
-          ...['home', 'away'].map(
-            (side) => liveCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  liveText(
-                    '${jsonMap(ficha[side == 'home' ? 'local' : 'visitante'])['nombre']}',
-                    bold: true,
-                  ),
-                  const SizedBox(height: 8),
-                  if (jsonRows(injuries[side]).isEmpty)
-                    liveText(l10n.detailNoInjuries, color: liveMuted, size: 12)
-                  else
-                    ...jsonRows(injuries[side]).map(
-                      (p) => liveText(
-                        '${p['jugador'] ?? p['player']} · ${p['motivo'] ?? p['reason']}',
-                        size: 13,
-                      ),
-                    ),
-                  liveText(
-                    l10n.detailChecked(kickoffText(injuries['comprobada'])),
-                    color: liveMuted,
-                    size: 10,
-                  ),
-                ],
-              ),
-            ),
+    final caraACara = jsonMap(ficha['cara_a_cara']);
+    final h2h = jsonRows(caraACara['partidos']);
+    final resumen = jsonMap(caraACara['resumen']);
+    final lineups = jsonMap(ficha['alineaciones']);
+    final injuries = jsonMap(ficha['bajas']);
+
+    final localName = '${jsonMap(ficha['local'])['nombre'] ?? ''}';
+    final awayName = '${jsonMap(ficha['visitante'])['nombre'] ?? ''}';
+    final localCrest = serverImageUrl(
+      widget.api,
+      jsonMap(ficha['local'])['escudo'] as String?,
+    );
+    final awayCrest = serverImageUrl(
+      widget.api,
+      jsonMap(ficha['visitante'])['escudo'] as String?,
+    );
+
+    final localWins = (resumen['victorias_local'] as num?)?.toInt() ?? 0;
+    final draws = (resumen['empates'] as num?)?.toInt() ?? 0;
+    final awayWins = (resumen['victorias_visitante'] as num?)?.toInt() ?? 0;
+
+    final hasH2hData = h2h.isNotEmpty || (localWins + draws + awayWins > 0);
+
+    Widget h2hWidget;
+    if (!hasH2hData) {
+      h2hWidget = training(l10n.detailNoH2h);
+    } else {
+      final matchItems = <QfH2hMatchItem>[];
+      for (final p in h2h) {
+        final isHome = p['local'] == true;
+        final rival = '${p['rival'] ?? awayName}';
+        final rivalCrest =
+            serverImageUrl(widget.api, p['rival_escudo'] as String?) ??
+            awayCrest;
+        final leftName = isHome ? localName : rival;
+        final leftCrest = isHome ? localCrest : rivalCrest;
+        final rightName = isHome ? rival : localName;
+        final rightCrest = isHome ? rivalCrest : localCrest;
+        final score = '${p['marcador'] ?? '${p['gf'] ?? 0}-${p['gc'] ?? 0}'}';
+        final text = '$leftName $score $rightName';
+
+        final res = '${p['res'] ?? 'E'}'.toUpperCase();
+        String winnerBadge;
+        String? winnerCrest;
+        String? winnerName;
+        if (res == 'E') {
+          winnerBadge = l10n.h2hDrawBadge;
+          winnerCrest = null;
+          winnerName = null;
+        } else if ((isHome && res == 'G') || (!isHome && res == 'P')) {
+          winnerBadge = localName.length > 3
+              ? localName.substring(0, 3).toUpperCase()
+              : localName.toUpperCase();
+          winnerCrest = localCrest;
+          winnerName = localName;
+        } else {
+          winnerBadge = rival.length > 3
+              ? rival.substring(0, 3).toUpperCase()
+              : rival.toUpperCase();
+          winnerCrest = rivalCrest;
+          winnerName = rival;
+        }
+
+        final rawDate = p['fecha'];
+        final d = dateValue(rawDate);
+        final dateText = d != null
+            ? DateFormat.yMMM(Localizations.localeOf(context).languageCode)
+                .format(d)
+                .toLowerCase()
+            : (rawDate != null ? kickoffText(rawDate) : '—');
+
+        matchItems.add(
+          QfH2hMatchItem(
+            date: dateText,
+            text: text,
+            winnerBadge: winnerBadge,
+            winnerImageUrl: winnerCrest,
+            winnerName: winnerName,
+            isCircle: false,
+            leftImageUrl: leftCrest,
+            leftName: leftName,
+            rightImageUrl: rightCrest,
+            rightName: rightName,
           ),
-        liveHeading(l10n.detailReferee),
-        training(l10n.detailRefereePending),
+        );
+      }
+
+      final stackedParts = <(String, double, Color)>[];
+      if (localWins + draws + awayWins > 0) {
+        stackedParts.add((localName, localWins.toDouble(), QfColors.cyan));
+        stackedParts.add((
+          l10n.anDrawsCount(draws),
+          draws.toDouble(),
+          QfColors.slate,
+        ));
+        stackedParts.add((awayName, awayWins.toDouble(), QfColors.chrome));
+      }
+
+      h2hWidget = QfH2hView(
+        summary: [
+          QfH2hSummaryItem(
+            label: localName,
+            count: localWins,
+            imageUrl: localCrest,
+            isCircle: false,
+          ),
+          QfH2hSummaryItem(
+            label: l10n.h2hDraws,
+            count: draws,
+            isDraw: true,
+          ),
+          QfH2hSummaryItem(
+            label: awayName,
+            count: awayWins,
+            imageUrl: awayCrest,
+            isCircle: false,
+          ),
+        ],
+        stackedBarParts: stackedParts,
+        matches: matchItems,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        h2hWidget,
+        if (lineups.isEmpty) training(l10n.detailLineupsPending),
+        if (injuries.isEmpty) training(l10n.detailNoInjuriesCheck),
       ],
     );
   }

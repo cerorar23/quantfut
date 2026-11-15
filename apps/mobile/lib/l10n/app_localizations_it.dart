@@ -186,8 +186,40 @@ class AppLocalizationsIt extends AppLocalizations {
   String get alertsAdvantageEmpty => 'Nessun vantaggio segnalato.';
 
   @override
+  String get alertsBackTrainingDesc => 'Già in gruppo';
+
+  @override
+  String get alertsBadgeApplied => 'APPLICATO';
+
+  @override
+  String get alertsBadgeDoubt => 'DUBBIO';
+
+  @override
+  String get alertsBadgeDuty => 'NAZIONALE';
+
+  @override
+  String get alertsBadgeInjury => 'INFORTUNIO';
+
+  @override
+  String get alertsBadgeNone => 'NESSUN AVVISO';
+
+  @override
+  String get alertsBadgePending => 'IN SOSPESO';
+
+  @override
+  String get alertsBadgeReturns => 'RIENTRO';
+
+  @override
+  String get alertsBadgeSuspension => 'SQUALIFICA';
+
+  @override
   String alertsChecked(String when) {
     return 'Verificato $when';
+  }
+
+  @override
+  String alertsCheckedFooter(String when) {
+    return 'VERIFICATO $when · aggiornato ogni ora';
   }
 
   @override
@@ -200,8 +232,66 @@ class AppLocalizationsIt extends AppLocalizations {
   String get alertsDoubt => 'Dubbio';
 
   @override
+  String alertsDutyReturns(String when) {
+    return 'In nazionale · rientro a $when';
+  }
+
+  @override
+  String alertsEarlyMonth(String month) {
+    return 'inizio $month';
+  }
+
+  @override
+  String alertsLastElevenVs(String rival, String date) {
+    return 'ultimo undici, vs $rival · $date';
+  }
+
+  @override
+  String alertsLateMonth(String month) {
+    return 'fine $month';
+  }
+
+  @override
+  String get alertsLineupsKicker => '// FORMAZIONI';
+
+  @override
+  String get alertsLineupsTitle => 'ULTIMO UNDICI NOTO';
+
+  @override
+  String alertsMidMonth(String month) {
+    return 'metà $month';
+  }
+
+  @override
+  String alertsNbaReportSummary(num count, num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count giocatori nel referto',
+      one: '1 giocatore nel referto',
+    );
+    return '$_temp0 · $minutes min di assenze';
+  }
+
+  @override
+  String get alertsNoAlertsBody =>
+      'Nessun infortunato o giocatore in dubbio per questa partita.';
+
+  @override
+  String get alertsNoAlertsTitle => 'NESSUN AVVISO';
+
+  @override
   String get alertsNoCheck =>
       'Non c\'è ancora un controllo delle assenze per questa partita. Se il suo campionato non ha questo dato, non significa che non ci siano infortunati.';
+
+  @override
+  String get alertsNoLineupDesc =>
+      'L\'undici titolare viene confermato un\'ora prima della partita e apparirà qui con le foto.';
+
+  @override
+  String alertsNoLineupSaved(String team) {
+    return '$team · nessuna formazione registrata';
+  }
 
   @override
   String get alertsNote =>
@@ -235,6 +325,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get alertsReasonUnknown => 'Motivo non indicato';
 
   @override
+  String alertsReturnsWhen(String when) {
+    return 'Rientro a $when';
+  }
+
+  @override
   String get alertsSource => 'Fonte: API-Football';
 
   @override
@@ -256,6 +351,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get alertsSuspended => 'Squalificato';
+
+  @override
+  String get alertsTennisNoIssues => 'Nessun problema negli ultimi 7 giorni';
 
   @override
   String get anAveragesLast10 => '// Medie · Ultime 10';
@@ -1113,6 +1211,18 @@ class AppLocalizationsIt extends AppLocalizations {
   String guideTopicCount(int count) {
     return '$count argomenti';
   }
+
+  @override
+  String get h2hDrawBadge => 'PAR';
+
+  @override
+  String get h2hDraws => 'PAREGGI';
+
+  @override
+  String get h2hFirstDuelRow => 'Primo scontro diretto';
+
+  @override
+  String get h2hRecentMatches => 'ULTIMI SCONTRI DIRETTI';
 
   @override
   String get historyWebSince => 'Storico web dal 26/10/2026';
@@ -3817,102 +3927,4 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Inizia';
-
-  @override
-  String get alertsBadgeInjury => 'INFORTUNIO';
-
-  @override
-  String get alertsBadgeDuty => 'NAZIONALE';
-
-  @override
-  String get alertsBadgeSuspension => 'SQUALIFICA';
-
-  @override
-  String get alertsBadgeDoubt => 'DUBBIO';
-
-  @override
-  String get alertsBadgeReturns => 'RIENTRO';
-
-  @override
-  String get alertsBadgeNone => 'NESSUN AVVISO';
-
-  @override
-  String get alertsBadgeApplied => 'APPLICATO';
-
-  @override
-  String get alertsBadgePending => 'IN SOSPESO';
-
-  @override
-  String alertsDutyReturns(String when) {
-    return 'In nazionale · rientro a $when';
-  }
-
-  @override
-  String alertsReturnsWhen(String when) {
-    return 'Rientro a $when';
-  }
-
-  @override
-  String get alertsBackTrainingDesc => 'Già in gruppo';
-
-  @override
-  String alertsEarlyMonth(String month) {
-    return 'inizio $month';
-  }
-
-  @override
-  String alertsMidMonth(String month) {
-    return 'metà $month';
-  }
-
-  @override
-  String alertsLateMonth(String month) {
-    return 'fine $month';
-  }
-
-  @override
-  String get alertsLineupsKicker => '// FORMAZIONI';
-
-  @override
-  String get alertsLineupsTitle => 'ULTIMO UNDICI NOTO';
-
-  @override
-  String alertsLastElevenVs(String rival, String date) {
-    return 'ultimo undici, vs $rival · $date';
-  }
-
-  @override
-  String alertsNoLineupSaved(String team) {
-    return '$team · nessuna formazione registrata';
-  }
-
-  @override
-  String get alertsNoLineupDesc =>
-      'L\'undici titolare viene confermato un\'ora prima della partita e apparirà qui con le foto.';
-
-  @override
-  String get alertsNoAlertsTitle => 'NESSUN AVVISO';
-
-  @override
-  String get alertsNoAlertsBody =>
-      'Nessun infortunato o giocatore in dubbio per questa partita.';
-
-  @override
-  String alertsCheckedFooter(String when) {
-    return 'VERIFICATO $when · aggiornato ogni ora';
-  }
-
-  @override
-  String get alertsTennisNoIssues => 'Nessun problema negli ultimi 7 giorni';
-
-  @override
-  String alertsNbaReportSummary(num count, num minutes) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count giocatori nel referto',
-      one: '1 giocatore nel referto',
-    );
-    return '$_temp0 · $minutes min di assenze';
-  }
 }

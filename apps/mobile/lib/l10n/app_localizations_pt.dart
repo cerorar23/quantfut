@@ -188,8 +188,40 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alertsAdvantageEmpty => 'Sem vantagens registradas.';
 
   @override
+  String get alertsBackTrainingDesc => 'Já treina com o grupo';
+
+  @override
+  String get alertsBadgeApplied => 'APLICADO';
+
+  @override
+  String get alertsBadgeDoubt => 'DÚVIDA';
+
+  @override
+  String get alertsBadgeDuty => 'SELEÇÃO';
+
+  @override
+  String get alertsBadgeInjury => 'LESÃO';
+
+  @override
+  String get alertsBadgeNone => 'SEM ALERTAS';
+
+  @override
+  String get alertsBadgePending => 'PENDENTE';
+
+  @override
+  String get alertsBadgeReturns => 'VOLTANDO';
+
+  @override
+  String get alertsBadgeSuspension => 'SUSPENSÃO';
+
+  @override
   String alertsChecked(String when) {
     return 'Verificado $when';
+  }
+
+  @override
+  String alertsCheckedFooter(String when) {
+    return 'VERIFICADO $when · atualizado a cada hora';
   }
 
   @override
@@ -202,8 +234,66 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alertsDoubt => 'Dúvida';
 
   @override
+  String alertsDutyReturns(String when) {
+    return 'Na seleção · volta no $when';
+  }
+
+  @override
+  String alertsEarlyMonth(String month) {
+    return 'início de $month';
+  }
+
+  @override
+  String alertsLastElevenVs(String rival, String date) {
+    return 'último onze, vs $rival · $date';
+  }
+
+  @override
+  String alertsLateMonth(String month) {
+    return 'fim de $month';
+  }
+
+  @override
+  String get alertsLineupsKicker => '// ESCALAÇÕES';
+
+  @override
+  String get alertsLineupsTitle => 'ÚLTIMO ONZE CONHECIDO';
+
+  @override
+  String alertsMidMonth(String month) {
+    return 'meados de $month';
+  }
+
+  @override
+  String alertsNbaReportSummary(num count, num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jogadores no relatório',
+      one: '1 jogador no relatório',
+    );
+    return '$_temp0 · $minutes min de ausências';
+  }
+
+  @override
+  String get alertsNoAlertsBody =>
+      'Não há desfalques ou dúvidas registradas para esta partida.';
+
+  @override
+  String get alertsNoAlertsTitle => 'SEM ALERTAS';
+
+  @override
   String get alertsNoCheck =>
       'Ainda não há verificação de desfalques para esta partida. Se a liga não tem esse dado, isso não significa que não haja lesionados.';
+
+  @override
+  String get alertsNoLineupDesc =>
+      'A escalação é confirmada uma hora antes do jogo e aparecerá aqui com fotos.';
+
+  @override
+  String alertsNoLineupSaved(String team) {
+    return '$team · sem escalação salva';
+  }
 
   @override
   String get alertsNote =>
@@ -237,6 +327,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alertsReasonUnknown => 'Motivo não informado';
 
   @override
+  String alertsReturnsWhen(String when) {
+    return 'Volta no $when';
+  }
+
+  @override
   String get alertsSource => 'Fonte: API-Football';
 
   @override
@@ -258,6 +353,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get alertsSuspended => 'Suspenso';
+
+  @override
+  String get alertsTennisNoIssues => 'Sem ocorrências nos últimos 7 dias';
 
   @override
   String get anAveragesLast10 => '// Médias · Últimos 10';
@@ -1110,6 +1208,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String guideTopicCount(int count) {
     return '$count temas';
   }
+
+  @override
+  String get h2hDrawBadge => 'EMP';
+
+  @override
+  String get h2hDraws => 'EMPATES';
+
+  @override
+  String get h2hFirstDuelRow => 'Primeiro confronto direto';
+
+  @override
+  String get h2hRecentMatches => 'ÚLTIMOS CONFRONTOS';
 
   @override
   String get historyWebSince => 'Histórico da web desde 26/10/2026';
@@ -3813,102 +3923,4 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get welcomeStart => 'Começar';
-
-  @override
-  String get alertsBadgeInjury => 'LESÃO';
-
-  @override
-  String get alertsBadgeDuty => 'SELEÇÃO';
-
-  @override
-  String get alertsBadgeSuspension => 'SUSPENSÃO';
-
-  @override
-  String get alertsBadgeDoubt => 'DÚVIDA';
-
-  @override
-  String get alertsBadgeReturns => 'VOLTANDO';
-
-  @override
-  String get alertsBadgeNone => 'SEM ALERTAS';
-
-  @override
-  String get alertsBadgeApplied => 'APLICADO';
-
-  @override
-  String get alertsBadgePending => 'PENDENTE';
-
-  @override
-  String alertsDutyReturns(String when) {
-    return 'Na seleção · volta no $when';
-  }
-
-  @override
-  String alertsReturnsWhen(String when) {
-    return 'Volta no $when';
-  }
-
-  @override
-  String get alertsBackTrainingDesc => 'Já treina com o grupo';
-
-  @override
-  String alertsEarlyMonth(String month) {
-    return 'início de $month';
-  }
-
-  @override
-  String alertsMidMonth(String month) {
-    return 'meados de $month';
-  }
-
-  @override
-  String alertsLateMonth(String month) {
-    return 'fim de $month';
-  }
-
-  @override
-  String get alertsLineupsKicker => '// ESCALAÇÕES';
-
-  @override
-  String get alertsLineupsTitle => 'ÚLTIMO ONZE CONHECIDO';
-
-  @override
-  String alertsLastElevenVs(String rival, String date) {
-    return 'último onze, vs $rival · $date';
-  }
-
-  @override
-  String alertsNoLineupSaved(String team) {
-    return '$team · sem escalação salva';
-  }
-
-  @override
-  String get alertsNoLineupDesc =>
-      'A escalação é confirmada uma hora antes do jogo e aparecerá aqui com fotos.';
-
-  @override
-  String get alertsNoAlertsTitle => 'SEM ALERTAS';
-
-  @override
-  String get alertsNoAlertsBody =>
-      'Não há desfalques ou dúvidas registradas para esta partida.';
-
-  @override
-  String alertsCheckedFooter(String when) {
-    return 'VERIFICADO $when · atualizado a cada hora';
-  }
-
-  @override
-  String get alertsTennisNoIssues => 'Sem ocorrências nos últimos 7 dias';
-
-  @override
-  String alertsNbaReportSummary(num count, num minutes) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count jogadores no relatório',
-      one: '1 jogador no relatório',
-    );
-    return '$_temp0 · $minutes min de ausências';
-  }
 }
