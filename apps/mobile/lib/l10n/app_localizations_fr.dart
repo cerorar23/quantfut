@@ -67,6 +67,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Si le compte existe, vous recevrez des instructions par e-mail.';
 
   @override
+  String get accessFreeToStart => 'GRATUIT POUR COMMENCER';
+
+  @override
   String get accessGenericError =>
       'Impossible de terminer la connexion. Veuillez réessayer.';
 
@@ -101,6 +104,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get accessLinkPassword => 'Ancien mot de passe';
+
+  @override
+  String get accessNoCard => 'SANS CARTE';
 
   @override
   String get accessOtherAccount => 'Utiliser un autre compte';
@@ -618,7 +624,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get artHeading4 => 'DONNÉES + VOTRE AVIS';
 
   @override
+  String get artLost => 'PERDU';
+
+  @override
   String get artNba => 'NBA';
+
+  @override
+  String get artNotCertainty => 'PAS UNE CERTITUDE';
+
+  @override
+  String get artProbability => 'PROBABILITÉ';
+
+  @override
+  String get artRegisteredRate => 'RÉUSSITE ENREGISTRÉE';
 
   @override
   String get artStats => 'STATISTIQUES';
@@ -627,7 +645,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get artTagline => 'ANALYSEZ. COMPAREZ. EXPLOREZ.';
 
   @override
+  String get artTennis => 'TENNIS';
+
+  @override
   String get artTransparency => 'TRANSPARENCE';
+
+  @override
+  String get artWon => 'GAGNÉ';
 
   @override
   String get bannerAwaiting => 'MATCH JOUÉ · en attente du résultat officiel';
@@ -1471,6 +1495,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String ladderWonOf(int won, int goal) {
     return '$won sur $goal gagnés';
   }
+
+  @override
+  String get languageChangeLater =>
+      'Vous pourrez le modifier plus tard depuis votre Profil.';
+
+  @override
+  String get languageDetected => 'DÉTECTÉ';
 
   @override
   String get languageFirstBadge => 'Configuration de la langue';
@@ -2623,6 +2654,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get quoteReference =>
       'Cote de référence de la capture utilisée lors du scellement du pronostic';
+
+  @override
+  String get radarAttack => 'ATTAQUE';
+
+  @override
+  String get radarCreation => 'CRÉATION';
+
+  @override
+  String get radarDefense => 'DÉFENSE';
+
+  @override
+  String get radarFinishing => 'TIR';
 
   @override
   String resultLabel(String score) {
@@ -4219,6 +4262,33 @@ class AppLocalizationsFr extends AppLocalizations {
   String welcomeGoTo(int number) {
     return 'Aller à l\'écran d\'accueil $number';
   }
+
+  @override
+  String get welcomeHistoryMatch1 => 'Majorque – Cordoue · Plus de 1,5';
+
+  @override
+  String get welcomeHistoryMatch2 => 'Fritz – Musetti · Victoire de Fritz';
+
+  @override
+  String get welcomeHistoryMatch3 => 'Heat – Lakers · Plus de 220,5';
+
+  @override
+  String get welcomeMarket1 => 'CORNERS';
+
+  @override
+  String get welcomeMarket2 => 'HANDICAP ASIATIQUE';
+
+  @override
+  String get welcomeMarket3 => 'DOUBLE CHANCE';
+
+  @override
+  String get welcomeMarket4 => 'PROPS JOUEURS NBA';
+
+  @override
+  String get welcomeMarket5 => 'JEUX TOTAUX · TENNIS';
+
+  @override
+  String get welcomeMarket6 => 'LES DEUX ÉQUIPES MARQUENT';
 
   @override
   String get welcomeNext => 'Suivant';

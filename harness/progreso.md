@@ -1398,3 +1398,24 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
   - Suite completa de la app en verde: **667/667 tests pasados**.
   - `flutter analyze --no-pub`: **0 issues**.
 
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5c — Idioma, Bienvenida y Acceso
+- **Selección de Idioma (`lib/l10n/language_selection_screen.dart`):** rediseño completo coincidente con `capturas/Idioma.png` y `pantallas/Idioma.dc.html`. Cabecera animada con órbitas concéntricas (`_OrbitsPainter`), caja de 68×68 dp con esquina cortada y globo terráqueo, titular Rajdhani «SELECCIONA TU IDIOMA» y badge de configuración en cian. 6 filas de idioma de 58 dp mínimo con código en caja mono (`ES`, `EN`, `PT`, `FR`, `IT`, `DE`), nombre nativo, liga correspondiente, etiqueta «DETECTADO» en el idioma del dispositivo y marca de verificación `Icons.check` en la selección activa.
+- **Pantalla de Bienvenida (`lib/onbonding_screen/second_screen.dart` y `lib/product/welcome_art.dart`):** 5 pantallas interactivas con ilustraciones CyberCore nativas en `FittedBox` adaptable que garantizan ausencia de desbordes en cualquier tamaño de pantalla (390×844, 360×800 y 320×568 dp):
+  - **Diapositiva 0:** 3 tarjetas deportivas (fútbol rotada −6°, tenis rotada +6°, y NBA central elevada con sombra cian resplandeciente) más barra inferior de 3 proporciones (58 cian, 24 pizarra, 18 atenuado).
+  - **Diapositiva 1:** mini radar pentagonal de 5 ejes (Ataque, Creación, Remate, Córners, Defensa) con polígono del equipo A en cian sólido, equipo B en pizarra punteado y 3 pestañas CyberCore (`FORMA`, `CARA A CARA`, `ESTADÍSTICAS`).
+  - **Diapositiva 2:** cuadrícula 2×3 con 6 fichas de mercados (`CÓRNERS`, `HÁNDICAP ASIÁTICO`, `DOBLE OPORTUNIDAD`, `PROPS DE JUGADORES NBA`, `JUEGOS TOTALES · TENIS`, `AMBOS MARCAN`), cada una con su anillo cónico de porcentaje y cifra en JetBrains Mono.
+  - **Diapositiva 3:** anillo de acierto del 76% (verde aciertos / magenta fallos) con recuento de 16 aciertos y 5 fallos, más tarjeta de historial con 3 partidos (Mallorca-Córdoba GANADO, Fritz-Musetti GANADO, Heat-Lakers FALLADO) con iconos de verificación/cruz.
+  - **Diapositiva 4:** caja cortada 74×74 dp con escudo e iluminación cian, tarjeta de probabilidad al 62% con barra segmentada de 10 casillas y advertencia amarilla `NO ES UNA CERTEZA`.
+  - **Controles de navegación:** contador superior `1 / 5` .. `5 / 5` en JetBrains Mono y enlace `SALTAR`; barra de puntos `QfStepDots` táctiles de 44×44 dp accesibles; botón verde CTA de 54 dp mínimo con gradiente `qfGreenGradient` (`SIGUIENTE` / `EMPEZAR`).
+- **Pantalla de Acceso (`lib/core/access_screen.dart`):** cabecera 56 dp con marca QUANTFUT y selector compacto de idioma; carrusel superior con 3 tarjetas deportivas decorativas, kicker en cian, título Rajdhani 26 bold, descripción y puntos de navegación táctiles 30×44 dp; tarjeta inferior fija con sombra cian, título `Inicia sesión para continuar`, badges «GRATIS PARA EMPEZAR» (verde) y «SIN TARJETA» (atenuado), botón Google blanco oficial (`OutlinedButton` de 54 dp con `GoogleLogo`), casilla 18+ con enlaces a Términos y Privacidad, error en línea inmediato si no se marca la casilla (sin apagar el botón) y pie de aviso informativo legal.
+- **Internacionalización (l10n):** 23 nuevas claves traducidas a los 6 idiomas (`es, en, pt, fr, it, de`) en `app_*.arb` validadas por `l10n_test.dart` y `l10n_runtime_test.dart`.
+- **Pruebas y Verificación:**
+  - `test/language_selection_test.dart`: 10/10 tests pasados.
+  - `test/access_screen_test.dart`: 15/15 tests pasados en todos los idiomas y resoluciones (390×844 y 320×568 dp).
+  - `test/consent_defaults_test.dart`: 3/3 tests pasados.
+  - `test/app_smoke_test.dart`: 4/4 tests pasados.
+  - `test/l10n_test.dart`: 6/6 tests pasados.
+  - Suite completa de la app en verde: **667/667 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
+

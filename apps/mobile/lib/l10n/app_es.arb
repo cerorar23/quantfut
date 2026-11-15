@@ -50,6 +50,7 @@
   "accessDocumentOpenError": "No se pudo abrir el documento.",
   "accessForgotLink": "Recuperar contraseña anterior",
   "accessForgotSent": "Si existe la cuenta, recibirás instrucciones por correo.",
+  "accessFreeToStart": "GRATIS PARA EMPEZAR",
   "accessGenericError": "No se pudo completar el acceso. Inténtalo de nuevo.",
   "accessGoogleError": "No se pudo acceder con Google. Inténtalo de nuevo.",
   "accessKicker1": "PROBABILIDADES REALES",
@@ -76,6 +77,7 @@
   "accessLinkEmail": "Correo de tu cuenta anterior",
   "accessLinkIntro": "Vincula tu cuenta anterior para conservar saldo y acceso.",
   "accessLinkPassword": "Contraseña anterior",
+  "accessNoCard": "SIN TARJETA",
   "accessOtherAccount": "Usar otra cuenta",
   "accessPreparingDocs": "Estamos preparando los documentos de acceso.",
   "accessPrivacy": "Política de privacidad",
@@ -613,10 +615,16 @@
   "artHeading2": "EXPLORA LOS MERCADOS",
   "artHeading3": "HISTORIAL A LA VISTA",
   "artHeading4": "DATOS + TU CRITERIO",
+  "artLost": "FALLADO",
   "artNba": "NBA",
+  "artNotCertainty": "NO ES UNA CERTEZA",
+  "artProbability": "PROBABILIDAD",
+  "artRegisteredRate": "ACIERTO REGISTRADO",
   "artStats": "ESTADÍSTICAS",
   "artTagline": "ANALIZA. COMPARA. EXPLORA.",
+  "artTennis": "TENIS",
   "artTransparency": "TRANSPARENCIA",
+  "artWon": "GANADO",
   "bannerAwaiting": "PARTIDO JUGADO · esperando el resultado oficial",
   "bannerLive": "PARTIDO EN JUEGO · pronóstico sellado antes del inicio",
   "bannerLost": "FALLADO{score} · pronóstico sellado antes del inicio",
@@ -1380,6 +1388,8 @@
       }
     }
   },
+  "languageChangeLater": "Podrás cambiarlo después desde tu Perfil.",
+  "languageDetected": "DETECTADO",
   "languageFirstBadge": "Configuración de idioma",
   "@languageFirstBadge": {
     "description": "Etiqueta de la pantalla inicial de elección de idioma (se muestra en mayúsculas)."
@@ -2393,6 +2403,10 @@
   },
   "quoteNone": "Sin cuota",
   "quoteReference": "Cuota de referencia de la captura usada al sellar el pronóstico",
+  "radarAttack": "ATAQUE",
+  "radarCreation": "CREACIÓN",
+  "radarDefense": "DEFENSA",
+  "radarFinishing": "REMATE",
   "resultLabel": "Resultado: {score}",
   "@resultLabel": {
     "placeholders": {
@@ -3836,6 +3850,15 @@
       }
     }
   },
+  "welcomeHistoryMatch1": "Mallorca – Córdoba · Más de 1,5",
+  "welcomeHistoryMatch2": "Fritz – Musetti · Gana Fritz",
+  "welcomeHistoryMatch3": "Heat – Lakers · Más de 220,5",
+  "welcomeMarket1": "CÓRNERS",
+  "welcomeMarket2": "HÁNDICAP ASIÁTICO",
+  "welcomeMarket3": "DOBLE OPORTUNIDAD",
+  "welcomeMarket4": "PROPS DE JUGADORES NBA",
+  "welcomeMarket5": "JUEGOS TOTALES · TENIS",
+  "welcomeMarket6": "AMBOS MARCAN",
   "welcomeNext": "Siguiente",
   "welcomeScreenOf": "Pantalla {page} de {total}",
   "@welcomeScreenOf": {

@@ -196,6 +196,12 @@ abstract class AppLocalizations {
   /// **'Si existe la cuenta, recibirás instrucciones por correo.'**
   String get accessForgotSent;
 
+  /// No description provided for @accessFreeToStart.
+  ///
+  /// In es, this message translates to:
+  /// **'GRATIS PARA EMPEZAR'**
+  String get accessFreeToStart;
+
   /// No description provided for @accessGenericError.
   ///
   /// In es, this message translates to:
@@ -261,6 +267,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Contraseña anterior'**
   String get accessLinkPassword;
+
+  /// No description provided for @accessNoCard.
+  ///
+  /// In es, this message translates to:
+  /// **'SIN TARJETA'**
+  String get accessNoCard;
 
   /// No description provided for @accessOtherAccount.
   ///
@@ -1086,11 +1098,35 @@ abstract class AppLocalizations {
   /// **'DATOS + TU CRITERIO'**
   String get artHeading4;
 
+  /// No description provided for @artLost.
+  ///
+  /// In es, this message translates to:
+  /// **'FALLADO'**
+  String get artLost;
+
   /// No description provided for @artNba.
   ///
   /// In es, this message translates to:
   /// **'NBA'**
   String get artNba;
+
+  /// No description provided for @artNotCertainty.
+  ///
+  /// In es, this message translates to:
+  /// **'NO ES UNA CERTEZA'**
+  String get artNotCertainty;
+
+  /// No description provided for @artProbability.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD'**
+  String get artProbability;
+
+  /// No description provided for @artRegisteredRate.
+  ///
+  /// In es, this message translates to:
+  /// **'ACIERTO REGISTRADO'**
+  String get artRegisteredRate;
 
   /// No description provided for @artStats.
   ///
@@ -1104,11 +1140,23 @@ abstract class AppLocalizations {
   /// **'ANALIZA. COMPARA. EXPLORA.'**
   String get artTagline;
 
+  /// No description provided for @artTennis.
+  ///
+  /// In es, this message translates to:
+  /// **'TENIS'**
+  String get artTennis;
+
   /// No description provided for @artTransparency.
   ///
   /// In es, this message translates to:
   /// **'TRANSPARENCIA'**
   String get artTransparency;
+
+  /// No description provided for @artWon.
+  ///
+  /// In es, this message translates to:
+  /// **'GANADO'**
+  String get artWon;
 
   /// No description provided for @bannerAwaiting.
   ///
@@ -2501,6 +2549,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{won} de {goal} ganados'**
   String ladderWonOf(int won, int goal);
+
+  /// No description provided for @languageChangeLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Podrás cambiarlo después desde tu Perfil.'**
+  String get languageChangeLater;
+
+  /// No description provided for @languageDetected.
+  ///
+  /// In es, this message translates to:
+  /// **'DETECTADO'**
+  String get languageDetected;
 
   /// Etiqueta de la pantalla inicial de elección de idioma (se muestra en mayúsculas).
   ///
@@ -4361,6 +4421,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cuota de referencia de la captura usada al sellar el pronóstico'**
   String get quoteReference;
+
+  /// No description provided for @radarAttack.
+  ///
+  /// In es, this message translates to:
+  /// **'ATAQUE'**
+  String get radarAttack;
+
+  /// No description provided for @radarCreation.
+  ///
+  /// In es, this message translates to:
+  /// **'CREACIÓN'**
+  String get radarCreation;
+
+  /// No description provided for @radarDefense.
+  ///
+  /// In es, this message translates to:
+  /// **'DEFENSA'**
+  String get radarDefense;
+
+  /// No description provided for @radarFinishing.
+  ///
+  /// In es, this message translates to:
+  /// **'REMATE'**
+  String get radarFinishing;
 
   /// No description provided for @resultLabel.
   ///
@@ -6876,6 +6960,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ir a bienvenida {number}'**
   String welcomeGoTo(int number);
+
+  /// No description provided for @welcomeHistoryMatch1.
+  ///
+  /// In es, this message translates to:
+  /// **'Mallorca – Córdoba · Más de 1,5'**
+  String get welcomeHistoryMatch1;
+
+  /// No description provided for @welcomeHistoryMatch2.
+  ///
+  /// In es, this message translates to:
+  /// **'Fritz – Musetti · Gana Fritz'**
+  String get welcomeHistoryMatch2;
+
+  /// No description provided for @welcomeHistoryMatch3.
+  ///
+  /// In es, this message translates to:
+  /// **'Heat – Lakers · Más de 220,5'**
+  String get welcomeHistoryMatch3;
+
+  /// No description provided for @welcomeMarket1.
+  ///
+  /// In es, this message translates to:
+  /// **'CÓRNERS'**
+  String get welcomeMarket1;
+
+  /// No description provided for @welcomeMarket2.
+  ///
+  /// In es, this message translates to:
+  /// **'HÁNDICAP ASIÁTICO'**
+  String get welcomeMarket2;
+
+  /// No description provided for @welcomeMarket3.
+  ///
+  /// In es, this message translates to:
+  /// **'DOBLE OPORTUNIDAD'**
+  String get welcomeMarket3;
+
+  /// No description provided for @welcomeMarket4.
+  ///
+  /// In es, this message translates to:
+  /// **'PROPS DE JUGADORES NBA'**
+  String get welcomeMarket4;
+
+  /// No description provided for @welcomeMarket5.
+  ///
+  /// In es, this message translates to:
+  /// **'JUEGOS TOTALES · TENIS'**
+  String get welcomeMarket5;
+
+  /// No description provided for @welcomeMarket6.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBOS MARCAN'**
+  String get welcomeMarket6;
 
   /// No description provided for @welcomeNext.
   ///

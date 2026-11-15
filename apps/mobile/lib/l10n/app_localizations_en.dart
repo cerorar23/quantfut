@@ -66,6 +66,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'If the account exists, you will receive instructions by email.';
 
   @override
+  String get accessFreeToStart => 'FREE TO START';
+
+  @override
   String get accessGenericError =>
       'Sign-in could not be completed. Please try again.';
 
@@ -100,6 +103,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accessLinkPassword => 'Previous password';
+
+  @override
+  String get accessNoCard => 'NO CARD';
 
   @override
   String get accessOtherAccount => 'Use another account';
@@ -615,7 +621,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get artHeading4 => 'DATA + YOUR JUDGMENT';
 
   @override
+  String get artLost => 'LOST';
+
+  @override
   String get artNba => 'NBA';
+
+  @override
+  String get artNotCertainty => 'NOT A CERTAINTY';
+
+  @override
+  String get artProbability => 'PROBABILITY';
+
+  @override
+  String get artRegisteredRate => 'RECORDED HIT RATE';
 
   @override
   String get artStats => 'STATISTICS';
@@ -624,7 +642,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get artTagline => 'ANALYZE. COMPARE. EXPLORE.';
 
   @override
+  String get artTennis => 'TENNIS';
+
+  @override
   String get artTransparency => 'TRANSPARENCY';
+
+  @override
+  String get artWon => 'WON';
 
   @override
   String get bannerAwaiting => 'MATCH PLAYED · awaiting the official result';
@@ -1459,6 +1483,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String ladderWonOf(int won, int goal) {
     return '$won of $goal won';
   }
+
+  @override
+  String get languageChangeLater =>
+      'You can change it later from your Profile.';
+
+  @override
+  String get languageDetected => 'DETECTED';
 
   @override
   String get languageFirstBadge => 'Language setup';
@@ -2595,6 +2626,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get quoteReference =>
       'Reference price from the capture used when the forecast was sealed';
+
+  @override
+  String get radarAttack => 'ATTACK';
+
+  @override
+  String get radarCreation => 'CREATION';
+
+  @override
+  String get radarDefense => 'DEFENSE';
+
+  @override
+  String get radarFinishing => 'FINISHING';
 
   @override
   String resultLabel(String score) {
@@ -4183,6 +4226,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String welcomeGoTo(int number) {
     return 'Go to welcome screen $number';
   }
+
+  @override
+  String get welcomeHistoryMatch1 => 'Mallorca – Córdoba · Over 1.5';
+
+  @override
+  String get welcomeHistoryMatch2 => 'Fritz – Musetti · Fritz wins';
+
+  @override
+  String get welcomeHistoryMatch3 => 'Heat – Lakers · Over 220.5';
+
+  @override
+  String get welcomeMarket1 => 'CORNERS';
+
+  @override
+  String get welcomeMarket2 => 'ASIAN HANDICAP';
+
+  @override
+  String get welcomeMarket3 => 'DOUBLE CHANCE';
+
+  @override
+  String get welcomeMarket4 => 'NBA PLAYER PROPS';
+
+  @override
+  String get welcomeMarket5 => 'TOTAL GAMES · TENNIS';
+
+  @override
+  String get welcomeMarket6 => 'BOTH TEAMS TO SCORE';
 
   @override
   String get welcomeNext => 'Next';
