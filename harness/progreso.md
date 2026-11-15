@@ -1381,3 +1381,20 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
 - **Salida VIP:** tarjeta amarilla CyberCore con corona, titular `O desbloquea todos con VIP` y subtítulo dinámico con el precio mensual real del plan más corto (`Sin gastar monedas · desde $X al mes`) o fallback `Sin gastar monedas` si no hay precios disponibles. Al tocar abre `LiveVipScreen`.
 - **Internacionalización y pruebas:** 21 nuevas cadenas l10n añadidas a los 6 idiomas (`es`, `en`, `pt`, `fr`, `it`, `de`). Nueva suite de pruebas `test/unlock_sheet_test.dart` (6 pruebas) cubriendo variante con saldo, variante sin saldo, fallback sin precio, transición dinámica por fallo de saldo en API, 6 idiomas y responsive a 390×844, 360×800 y 320×640 dp. 659 tests pasando al 100% en la app (`flutter test --no-pub`). `flutter analyze --no-pub` limpio (0 issues).
 
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5b — VIP
+- **Pantalla VIP CyberCore (`lib/product/live_vip.dart`) y panel de prueba (`lib/product/vip_performance.dart`):** rediseño completo de la experiencia de suscripción VIP conforme a `capturas/Vip.png` y `pantallas/Vip.dc.html`.
+- **Cabecera y tarjetas de deporte:** Top bar 56 dp con corona amarilla y texto Rajdhani `ACCESO VIP` con botón de cierre 44×44 dp. 3 tarjetas deportivas superiores con acierto registrado en ventana temporal (`FÚTBOL · 30 DÍAS`, `NBA · 7 DÍAS`, `TENIS · 7 DÍAS`), iconos 56×56 dp (circular para tenis), porcentajes mono y recuentos de aciertos preservando las protecciones de test.
+- **Hero y panel de rendimiento:** Hero Rajdhani 28 bold con remate en cian `DESBLOQUEADOS.` y subtítulo dinámico con recuento de pronósticos. Panel `VipPerformancePanel` con dos tarjetas de prueba:
+  - **Ayer:** anillo de 54×54 dp dibujado con `CustomPainter` (verde `#05ffa1` aciertos / magenta `#ff2a6d` fallos), porcentaje de acierto central y desglose de aciertos/fallos.
+  - **7 Días:** gráfico de 7 barras verticales apiladas de aciertos ganados/perdidos con borde cian de 2 dp en el día actual (hoy) y porcentaje global en cabecera.
+- **Selector de planes:** Lista de opciones con esquinas cortadas `CutCornerBorder(cut: 10)`, radio button estilizado, cálculo dinámico de ahorro relativo (`AHORRA X%`) respecto al plan más corto, desglose de precio mensual/diario equivalente, badge `MEJOR PRECIO` en el plan óptimo, semántica de botón/selección y claves de prueba `vip-plan-best` y `vip-plan-$index`. Preselección del plan más largo al abrir.
+- **Beneficios y comparativa plegable:** 4 filas de beneficios CyberCore (picks del día, escalera/parley, props NBA, alertas) y botón conmutador `VER GRATIS VS VIP` / `OCULTAR COMPARACIÓN` que despliega `VipFeatureComparison`: tabla de 6 filas que contrasta Free vs VIP con marcas de verificación, candados y cabecera VIP cian.
+- **Sellos de confianza y FAQ:** 3 sellos en píldoras oscuras (sellado previo al partido, cancelación en cualquier momento y pago gestionado por la tienda según plataforma iOS/Android). Acordeón interactivo de 5 preguntas frecuentes con notas estadísticas. Botón de refresco para cuentas VIP existentes (`Actualizar mi acceso`).
+- **Barra de acción fija inferior:** Botón verde CTA `EMPEZAR VIP {plan} · {precio}` de 54 dp mínimo con gradiente `qfGreenGradient` (`ValueKey('vip-subscribe')`), frase explicativa de renovación automática en la tienda, enlaces de acción a `Restaurar compras` y `Política de privacidad` (`https://pronosticosdeportivos.pro/legal/privacidad`).
+- **Internacionalización (l10n):** 63 nuevas claves traducidas a los 6 idiomas (`es, en, pt, fr, it, de`) en `app_*.arb` validadas por `l10n_test.dart` y `l10n_runtime_test.dart`.
+- **Pruebas y Verificación:**
+  - Nueva suite `test/vip_screen_test.dart` (8 pruebas): selección de planes, cálculo de ahorros, equivalencias mensuales/diarias, botón de comprobación para usuarios VIP, fallos de tienda, 6 idiomas y responsive a 390×844, 360×800 y 320×640 dp.
+  - Verificadas suites existentes `test/vip_sports_test.dart` (5 pruebas) y `test/product_navigation_test.dart`.
+  - Suite completa de la app en verde: **667/667 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+

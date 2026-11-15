@@ -6187,6 +6187,12 @@ abstract class AppLocalizations {
   /// **'Actualización disponible'**
   String get updateTitle;
 
+  /// No description provided for @vip7Days.
+  ///
+  /// In es, this message translates to:
+  /// **'7 DÍAS'**
+  String get vip7Days;
+
   /// Botón de los pronósticos bloqueados y difuminados: lleva a la compra de la suscripción VIP.
   ///
   /// In es, this message translates to:
@@ -6259,6 +6265,54 @@ abstract class AppLocalizations {
   /// **'Cuotas y análisis del partido'**
   String get vipBenefit4Title;
 
+  /// No description provided for @vipBenefitAlertsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Bajas y dudas antes del partido'**
+  String get vipBenefitAlertsSub;
+
+  /// No description provided for @vipBenefitAlertsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis, H2H y alertas'**
+  String get vipBenefitAlertsTitle;
+
+  /// No description provided for @vipBenefitAllPicksSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastar monedas, en los tres deportes'**
+  String get vipBenefitAllPicksSub;
+
+  /// No description provided for @vipBenefitAllPicksTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los picks del día'**
+  String get vipBenefitAllPicksTitle;
+
+  /// No description provided for @vipBenefitCombosSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Con probabilidad conjunta y cuota'**
+  String get vipBenefitCombosSub;
+
+  /// No description provided for @vipBenefitCombosTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalera y Parley completos'**
+  String get vipBenefitCombosTitle;
+
+  /// No description provided for @vipBenefitPropsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Probabilidad, cuota y casa de apuestas'**
+  String get vipBenefitPropsSub;
+
+  /// No description provided for @vipBenefitPropsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Props de jugadores NBA'**
+  String get vipBenefitPropsTitle;
+
   /// No description provided for @vipBenefitSportsBody.
   ///
   /// In es, this message translates to:
@@ -6277,6 +6331,12 @@ abstract class AppLocalizations {
   /// **'★ MEJOR PRECIO'**
   String get vipBestPrice;
 
+  /// No description provided for @vipCancelAnytime.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancela cuando quieras'**
+  String get vipCancelAnytime;
+
   /// No description provided for @vipCheckAccess.
   ///
   /// In es, this message translates to:
@@ -6289,11 +6349,197 @@ abstract class AppLocalizations {
   /// **'Inicia sesión en Perfil para comprobar tu acceso.'**
   String get vipCheckSignIn;
 
+  /// No description provided for @vipChoosePlan.
+  ///
+  /// In es, this message translates to:
+  /// **'ELIGE TU PLAN'**
+  String get vipChoosePlan;
+
+  /// No description provided for @vipCompareFreeHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'GRATIS'**
+  String get vipCompareFreeHeader;
+
+  /// No description provided for @vipCompareHide.
+  ///
+  /// In es, this message translates to:
+  /// **'OCULTAR COMPARACIÓN'**
+  String get vipCompareHide;
+
+  /// No description provided for @vipCompareRow1Free.
+  ///
+  /// In es, this message translates to:
+  /// **'10 % del día'**
+  String get vipCompareRow1Free;
+
+  /// No description provided for @vipCompareRow1Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Picks de alta probabilidad'**
+  String get vipCompareRow1Label;
+
+  /// No description provided for @vipCompareRow1Vip.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get vipCompareRow1Vip;
+
+  /// No description provided for @vipCompareRow2Free.
+  ///
+  /// In es, this message translates to:
+  /// **'Parcial'**
+  String get vipCompareRow2Free;
+
+  /// No description provided for @vipCompareRow2Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalera y Parley'**
+  String get vipCompareRow2Label;
+
+  /// No description provided for @vipCompareRow2Vip.
+  ///
+  /// In es, this message translates to:
+  /// **'Completos'**
+  String get vipCompareRow2Vip;
+
+  /// No description provided for @vipCompareRow3Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Props de jugadores NBA'**
+  String get vipCompareRow3Label;
+
+  /// No description provided for @vipCompareRow4Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis, H2H y alertas'**
+  String get vipCompareRow4Label;
+
+  /// No description provided for @vipCompareRow5Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Historial de aciertos'**
+  String get vipCompareRow5Label;
+
+  /// No description provided for @vipCompareRow6Free.
+  ///
+  /// In es, this message translates to:
+  /// **'40 por pick'**
+  String get vipCompareRow6Free;
+
+  /// No description provided for @vipCompareRow6Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloqueo con monedas'**
+  String get vipCompareRow6Label;
+
+  /// No description provided for @vipCompareRow6Vip.
+  ///
+  /// In es, this message translates to:
+  /// **'No hace falta'**
+  String get vipCompareRow6Vip;
+
+  /// No description provided for @vipCompareToggle.
+  ///
+  /// In es, this message translates to:
+  /// **'VER GRATIS VS VIP'**
+  String get vipCompareToggle;
+
+  /// No description provided for @vipCompareVipHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'VIP'**
+  String get vipCompareVipHeader;
+
   /// No description provided for @vipDays.
   ///
   /// In es, this message translates to:
   /// **'{days, plural, one{{days} día} other{{days} días}}'**
   String vipDays(int days);
+
+  /// No description provided for @vipDisclaimer.
+  ///
+  /// In es, this message translates to:
+  /// **'Los pronósticos son probabilidades de un modelo estadístico: cualquier partido puede acabar distinto. Una probabilidad no es una certeza.'**
+  String get vipDisclaimer;
+
+  /// Precio mensual equivalente
+  ///
+  /// In es, this message translates to:
+  /// **'Equivale a {price} al mes'**
+  String vipEquivMonth(String price);
+
+  /// Equivalencia mensual y diaria
+  ///
+  /// In es, this message translates to:
+  /// **'{month} al mes · {day} al día'**
+  String vipEquivMonthDay(String month, String day);
+
+  /// No description provided for @vipFaq1A.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde Google Play › Pagos y suscripciones (o Ajustes › ID de Apple en iOS). VIP sigue activo hasta el final del periodo pagado.'**
+  String get vipFaq1A;
+
+  /// No description provided for @vipFaq1Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo cancelo?'**
+  String get vipFaq1Q;
+
+  /// No description provided for @vipFaq2A.
+  ///
+  /// In es, this message translates to:
+  /// **'No. Son probabilidades de un modelo estadístico; cualquier partido puede acabar distinto. Por eso el historial es público.'**
+  String get vipFaq2A;
+
+  /// No description provided for @vipFaq2Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Los pronósticos siempre aciertan?'**
+  String get vipFaq2Q;
+
+  /// No description provided for @vipFaq3A.
+  ///
+  /// In es, this message translates to:
+  /// **'Muestran la cuota que publicó una casa de apuestas como referencia. En la app no se apuesta ni se mueve dinero.'**
+  String get vipFaq3A;
+
+  /// No description provided for @vipFaq3Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Muestran cuotas o dinero?'**
+  String get vipFaq3Q;
+
+  /// No description provided for @vipFaq4A.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicia sesión con la misma cuenta y toca «Restaurar compras».'**
+  String get vipFaq4A;
+
+  /// No description provided for @vipFaq4Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo uso VIP en otro dispositivo?'**
+  String get vipFaq4Q;
+
+  /// No description provided for @vipFaq5A.
+  ///
+  /// In es, this message translates to:
+  /// **'Los que tenga tu cuenta de Google Play o App Store: tarjeta, saldo o pago con operador.'**
+  String get vipFaq5A;
+
+  /// No description provided for @vipFaq5Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué métodos de pago puedo usar?'**
+  String get vipFaq5Q;
+
+  /// No description provided for @vipFaqTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PREGUNTAS FRECUENTES'**
+  String get vipFaqTitle;
 
   /// No description provided for @vipFreeAccess.
   ///
@@ -6306,6 +6552,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'¡Listo! Tu acceso VIP está activo.'**
   String get vipGranted;
+
+  /// No description provided for @vipHeaderTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'ACCESO VIP'**
+  String get vipHeaderTitle;
+
+  /// No description provided for @vipHeroHighlight.
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEADOS.'**
+  String get vipHeroHighlight;
+
+  /// Subtítulo de bienvenida VIP con contador total de pronósticos
+  ///
+  /// In es, this message translates to:
+  /// **'{count} picks de fútbol, NBA y tenis, cada uno sellado antes del partido.'**
+  String vipHeroSub(int count);
+
+  /// No description provided for @vipHeroSubGeneric.
+  ///
+  /// In es, this message translates to:
+  /// **'Picks de fútbol, NBA y tenis, cada uno sellado antes del partido.'**
+  String get vipHeroSubGeneric;
+
+  /// No description provided for @vipHeroTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'TODOS LOS PRONÓSTICOS DE HOY, '**
+  String get vipHeroTitle;
 
   /// No description provided for @vipHistoryNote.
   ///
@@ -6324,6 +6600,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'🔒  Tu acceso VIP queda vinculado a tu cuenta'**
   String get vipLinked;
+
+  /// Fallos de pronósticos
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 fallo} other{{count} fallos}}'**
+  String vipLostCount(int count);
 
   /// No description provided for @vipManage.
   ///
@@ -6361,6 +6643,24 @@ abstract class AppLocalizations {
   /// **'Pago pendiente. Te daremos acceso en cuanto la tienda lo confirme.'**
   String get vipPending;
 
+  /// No description provided for @vipPerMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'al mes'**
+  String get vipPerMonth;
+
+  /// Periodo de suscripción en meses
+  ///
+  /// In es, this message translates to:
+  /// **'cada {count} meses'**
+  String vipPerMonths(int count);
+
+  /// No description provided for @vipPerYear.
+  ///
+  /// In es, this message translates to:
+  /// **'al año'**
+  String get vipPerYear;
+
   /// No description provided for @vipPickLabel.
   ///
   /// In es, this message translates to:
@@ -6379,17 +6679,59 @@ abstract class AppLocalizations {
   /// **'Precios del catálogo del servidor.'**
   String get vipPricesNote;
 
+  /// No description provided for @vipPrivacyPolicy.
+  ///
+  /// In es, this message translates to:
+  /// **'Política de privacidad'**
+  String get vipPrivacyPolicy;
+
   /// No description provided for @vipPurchasesPending.
   ///
   /// In es, this message translates to:
   /// **'Compras en preparación: aún no se cobra nada desde la app.'**
   String get vipPurchasesPending;
 
+  /// Texto legal de renovación del plan VIP
+  ///
+  /// In es, this message translates to:
+  /// **'Se renueva por {price} {period}. Cancela cuando quieras en {store} › Suscripciones.'**
+  String vipRenewalPhrase(String price, String period, String store);
+
   /// No description provided for @vipRestore.
   ///
   /// In es, this message translates to:
   /// **'Restaurar compras'**
   String get vipRestore;
+
+  /// Insignia de ahorro en planes VIP
+  ///
+  /// In es, this message translates to:
+  /// **'AHORRA {pct}%'**
+  String vipSavingsBadge(int pct);
+
+  /// No description provided for @vipSealAppStore.
+  ///
+  /// In es, this message translates to:
+  /// **'PAGO POR APP STORE'**
+  String get vipSealAppStore;
+
+  /// No description provided for @vipSealCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'CANCELA CUANDO QUIERAS'**
+  String get vipSealCancel;
+
+  /// No description provided for @vipSealGooglePlay.
+  ///
+  /// In es, this message translates to:
+  /// **'PAGO POR GOOGLE PLAY'**
+  String get vipSealGooglePlay;
+
+  /// No description provided for @vipSealSealed.
+  ///
+  /// In es, this message translates to:
+  /// **'SELLADO ANTES DEL PARTIDO'**
+  String get vipSealSealed;
 
   /// No description provided for @vipSportsNote.
   ///
@@ -6403,11 +6745,29 @@ abstract class AppLocalizations {
   /// **'Acierto registrado por deporte'**
   String get vipSportsTitle;
 
+  /// Botón principal de suscripción VIP
+  ///
+  /// In es, this message translates to:
+  /// **'EMPEZAR VIP {plan} · {price}'**
+  String vipStartCta(String plan, String price);
+
+  /// No description provided for @vipStoreAppStore.
+  ///
+  /// In es, this message translates to:
+  /// **'App Store'**
+  String get vipStoreAppStore;
+
   /// No description provided for @vipStoreFailed.
   ///
   /// In es, this message translates to:
   /// **'No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.'**
   String get vipStoreFailed;
+
+  /// No description provided for @vipStoreGooglePlay.
+  ///
+  /// In es, this message translates to:
+  /// **'Google Play'**
+  String get vipStoreGooglePlay;
 
   /// No description provided for @vipStoreTerms.
   ///
@@ -6432,6 +6792,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Verificando la compra con la tienda…'**
   String get vipVerifying;
+
+  /// No description provided for @vipWhatYouUnlock.
+  ///
+  /// In es, this message translates to:
+  /// **'QUÉ DESBLOQUEAS'**
+  String get vipWhatYouUnlock;
+
+  /// Aciertos de pronósticos
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 acierto} other{{count} aciertos}}'**
+  String vipWonCount(int count);
+
+  /// No description provided for @vipYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'AYER'**
+  String get vipYesterday;
 
   /// No description provided for @welcome1Body.
   ///

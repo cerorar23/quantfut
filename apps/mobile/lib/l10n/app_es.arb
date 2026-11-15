@@ -3596,6 +3596,7 @@
   "updateRequired": "Actualiza QuantFut para continuar.",
   "updateStoreError": "No se pudo abrir la tienda. Inténtalo de nuevo.",
   "updateTitle": "Actualización disponible",
+  "vip7Days": "7 DÍAS",
   "vipAccessButton": "Acceso VIP",
   "@vipAccessButton": {
     "description": "Botón de los pronósticos bloqueados y difuminados: lleva a la compra de la suscripción VIP."
@@ -3621,11 +3622,37 @@
   "vipBenefit3Title": "Reto Escalera completo",
   "vipBenefit4Body": "Cuota publicada, probabilidad y xG de cada pick",
   "vipBenefit4Title": "Cuotas y análisis del partido",
+  "vipBenefitAlertsSub": "Bajas y dudas antes del partido",
+  "vipBenefitAlertsTitle": "Análisis, H2H y alertas",
+  "vipBenefitAllPicksSub": "Sin gastar monedas, en los tres deportes",
+  "vipBenefitAllPicksTitle": "Todos los picks del día",
+  "vipBenefitCombosSub": "Con probabilidad conjunta y cuota",
+  "vipBenefitCombosTitle": "Escalera y Parley completos",
+  "vipBenefitPropsSub": "Probabilidad, cuota y casa de apuestas",
+  "vipBenefitPropsTitle": "Props de jugadores NBA",
   "vipBenefitSportsBody": "Los mismos sellos y el mismo historial, sin suscripción",
   "vipBenefitSportsTitle": "NBA y tenis abiertos para todos",
   "vipBestPrice": "★ MEJOR PRECIO",
+  "vipCancelAnytime": "Cancela cuando quieras",
   "vipCheckAccess": "Comprobar mi acceso",
   "vipCheckSignIn": "Inicia sesión en Perfil para comprobar tu acceso.",
+  "vipChoosePlan": "ELIGE TU PLAN",
+  "vipCompareFreeHeader": "GRATIS",
+  "vipCompareHide": "OCULTAR COMPARACIÓN",
+  "vipCompareRow1Free": "10 % del día",
+  "vipCompareRow1Label": "Picks de alta probabilidad",
+  "vipCompareRow1Vip": "Todos",
+  "vipCompareRow2Free": "Parcial",
+  "vipCompareRow2Label": "Escalera y Parley",
+  "vipCompareRow2Vip": "Completos",
+  "vipCompareRow3Label": "Props de jugadores NBA",
+  "vipCompareRow4Label": "Análisis, H2H y alertas",
+  "vipCompareRow5Label": "Historial de aciertos",
+  "vipCompareRow6Free": "40 por pick",
+  "vipCompareRow6Label": "Desbloqueo con monedas",
+  "vipCompareRow6Vip": "No hace falta",
+  "vipCompareToggle": "VER GRATIS VS VIP",
+  "vipCompareVipHeader": "VIP",
   "vipDays": "{days, plural, one{{days} día} other{{days} días}}",
   "@vipDays": {
     "placeholders": {
@@ -3634,11 +3661,66 @@
       }
     }
   },
+  "vipDisclaimer": "Los pronósticos son probabilidades de un modelo estadístico: cualquier partido puede acabar distinto. Una probabilidad no es una certeza.",
+  "vipEquivMonth": "Equivale a {price} al mes",
+  "@vipEquivMonth": {
+    "description": "Precio mensual equivalente",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "vipEquivMonthDay": "{month} al mes · {day} al día",
+  "@vipEquivMonthDay": {
+    "description": "Equivalencia mensual y diaria",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "vipFaq1A": "Desde Google Play › Pagos y suscripciones (o Ajustes › ID de Apple en iOS). VIP sigue activo hasta el final del periodo pagado.",
+  "vipFaq1Q": "¿Cómo cancelo?",
+  "vipFaq2A": "No. Son probabilidades de un modelo estadístico; cualquier partido puede acabar distinto. Por eso el historial es público.",
+  "vipFaq2Q": "¿Los pronósticos siempre aciertan?",
+  "vipFaq3A": "Muestran la cuota que publicó una casa de apuestas como referencia. En la app no se apuesta ni se mueve dinero.",
+  "vipFaq3Q": "¿Muestran cuotas o dinero?",
+  "vipFaq4A": "Inicia sesión con la misma cuenta y toca «Restaurar compras».",
+  "vipFaq4Q": "¿Cómo uso VIP en otro dispositivo?",
+  "vipFaq5A": "Los que tenga tu cuenta de Google Play o App Store: tarjeta, saldo o pago con operador.",
+  "vipFaq5Q": "¿Qué métodos de pago puedo usar?",
+  "vipFaqTitle": "PREGUNTAS FRECUENTES",
   "vipFreeAccess": "Tu cuenta tiene acceso gratuito.",
   "vipGranted": "¡Listo! Tu acceso VIP está activo.",
+  "vipHeaderTitle": "ACCESO VIP",
+  "vipHeroHighlight": "DESBLOQUEADOS.",
+  "vipHeroSub": "{count} picks de fútbol, NBA y tenis, cada uno sellado antes del partido.",
+  "@vipHeroSub": {
+    "description": "Subtítulo de bienvenida VIP con contador total de pronósticos",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vipHeroSubGeneric": "Picks de fútbol, NBA y tenis, cada uno sellado antes del partido.",
+  "vipHeroTitle": "TODOS LOS PRONÓSTICOS DE HOY, ",
   "vipHistoryNote": "Historial público y sellado; las muestras por mercado son pequeñas y un pronóstico puede fallar.",
   "vipIntro": "Desbloquea los pronósticos de Alta Probabilidad y del Reto Escalera en fútbol mientras tu suscripción esté vigente. NBA y tenis son abiertos para todos.",
   "vipLinked": "🔒  Tu acceso VIP queda vinculado a tu cuenta",
+  "vipLostCount": "{count, plural, one{1 fallo} other{{count} fallos}}",
+  "@vipLostCount": {
+    "description": "Fallos de pronósticos",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "vipManage": "Ya tienes Plus. Cambia o cancela tu plan en la tienda.",
   "vipMonthly": "≈ {amount}/mes",
   "@vipMonthly": {
@@ -3659,18 +3741,83 @@
   "vipNoExpiry": "Sin vencimiento",
   "vipPaymentRequired": "La contratación requiere un canal de pago configurado.",
   "vipPending": "Pago pendiente. Te daremos acceso en cuanto la tienda lo confirme.",
+  "vipPerMonth": "al mes",
+  "vipPerMonths": "cada {count} meses",
+  "@vipPerMonths": {
+    "description": "Periodo de suscripción en meses",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vipPerYear": "al año",
   "vipPickLabel": "Pronóstico VIP",
   "vipPlansSoon": "Los planes se mostrarán cuando estén disponibles.",
   "vipPricesNote": "Precios del catálogo del servidor.",
+  "vipPrivacyPolicy": "Política de privacidad",
   "vipPurchasesPending": "Compras en preparación: aún no se cobra nada desde la app.",
+  "vipRenewalPhrase": "Se renueva por {price} {period}. Cancela cuando quieras en {store} › Suscripciones.",
+  "@vipRenewalPhrase": {
+    "description": "Texto legal de renovación del plan VIP",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      },
+      "store": {
+        "type": "String"
+      }
+    }
+  },
   "vipRestore": "Restaurar compras",
+  "vipSavingsBadge": "AHORRA {pct}%",
+  "@vipSavingsBadge": {
+    "description": "Insignia de ahorro en planes VIP",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "vipSealAppStore": "PAGO POR APP STORE",
+  "vipSealCancel": "CANCELA CUANDO QUIERAS",
+  "vipSealGooglePlay": "PAGO POR GOOGLE PLAY",
+  "vipSealSealed": "SELLADO ANTES DEL PARTIDO",
   "vipSportsNote": "Cada pick sellado antes del partido. «—»: aún sin resultados para calcularlo.",
   "vipSportsTitle": "Acierto registrado por deporte",
+  "vipStartCta": "EMPEZAR VIP {plan} · {price}",
+  "@vipStartCta": {
+    "description": "Botón principal de suscripción VIP",
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "vipStoreAppStore": "App Store",
   "vipStoreFailed": "No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.",
+  "vipStoreGooglePlay": "Google Play",
   "vipStoreTerms": "Se renueva automáticamente al mismo precio hasta que la canceles en la tienda.",
   "vipStoreUnavailable": "La tienda no está disponible en este dispositivo.",
   "vipSubscribe": "Suscribirme",
   "vipVerifying": "Verificando la compra con la tienda…",
+  "vipWhatYouUnlock": "QUÉ DESBLOQUEAS",
+  "vipWonCount": "{count, plural, one{1 acierto} other{{count} aciertos}}",
+  "@vipWonCount": {
+    "description": "Aciertos de pronósticos",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vipYesterday": "AYER",
   "welcome1Body": "Descubre el lado estadístico del deporte: partidos, análisis y pronósticos del proyecto que ya conoces en la web.",
   "welcome1Title": "Fútbol, NBA y tenis,\ncon otra perspectiva",
   "welcome2Body": "La forma reciente, el cara a cara y las estadísticas ayudan a entender lo que puede pasar. Empieza por los datos.",

@@ -3797,6 +3797,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get updateTitle => 'Mise à jour disponible';
 
   @override
+  String get vip7Days => '7 JOURS';
+
+  @override
   String get vipAccessButton => 'Accès VIP';
 
   @override
@@ -3836,6 +3839,31 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipBenefit4Title => 'Cotes et analyse du match';
 
   @override
+  String get vipBenefitAlertsSub => 'Absents et incertains avant le match';
+
+  @override
+  String get vipBenefitAlertsTitle => 'Analyse, H2H et alertes';
+
+  @override
+  String get vipBenefitAllPicksSub =>
+      'Sans dépenser de pièces, sur les trois sports';
+
+  @override
+  String get vipBenefitAllPicksTitle => 'Tous les pronostics du jour';
+
+  @override
+  String get vipBenefitCombosSub => 'Avec probabilité combinée et cote';
+
+  @override
+  String get vipBenefitCombosTitle => 'Montante et Combiné complets';
+
+  @override
+  String get vipBenefitPropsSub => 'Probabilité, cote et bookmaker';
+
+  @override
+  String get vipBenefitPropsTitle => 'Props de joueurs NBA';
+
+  @override
   String get vipBenefitSportsBody =>
       'Les mêmes sceaux et le même historique, sans abonnement';
 
@@ -3846,11 +3874,65 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipBestPrice => '★ MEILLEUR PRIX';
 
   @override
+  String get vipCancelAnytime => 'Annulez à tout moment';
+
+  @override
   String get vipCheckAccess => 'Vérifier mon accès';
 
   @override
   String get vipCheckSignIn =>
       'Connectez-vous depuis Profil pour vérifier votre accès.';
+
+  @override
+  String get vipChoosePlan => 'CHOISISSEZ VOTRE FORMULE';
+
+  @override
+  String get vipCompareFreeHeader => 'GRATUIT';
+
+  @override
+  String get vipCompareHide => 'MASQUER LA COMPARAISON';
+
+  @override
+  String get vipCompareRow1Free => '10 % du jour';
+
+  @override
+  String get vipCompareRow1Label => 'Picks à haute probabilité';
+
+  @override
+  String get vipCompareRow1Vip => 'Tous';
+
+  @override
+  String get vipCompareRow2Free => 'Partiel';
+
+  @override
+  String get vipCompareRow2Label => 'Montante et Combiné';
+
+  @override
+  String get vipCompareRow2Vip => 'Complets';
+
+  @override
+  String get vipCompareRow3Label => 'Props de joueurs NBA';
+
+  @override
+  String get vipCompareRow4Label => 'Analyse, H2H et alertes';
+
+  @override
+  String get vipCompareRow5Label => 'Historique des résultats';
+
+  @override
+  String get vipCompareRow6Free => '40 par pick';
+
+  @override
+  String get vipCompareRow6Label => 'Déblocage avec des pièces';
+
+  @override
+  String get vipCompareRow6Vip => 'Pas nécessaire';
+
+  @override
+  String get vipCompareToggle => 'VOIR GRATUIT VS VIP';
+
+  @override
+  String get vipCompareVipHeader => 'VIP';
 
   @override
   String vipDays(int days) {
@@ -3864,10 +3946,80 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get vipDisclaimer =>
+      'Les pronostics sont les probabilités d\'un modèle statistique : chaque match peut finir différemment. Une probabilité n\'est pas une certitude.';
+
+  @override
+  String vipEquivMonth(String price) {
+    return 'Équivaut à $price par mois';
+  }
+
+  @override
+  String vipEquivMonthDay(String month, String day) {
+    return '$month par mois · $day par jour';
+  }
+
+  @override
+  String get vipFaq1A =>
+      'Depuis Google Play › Paiements et abonnements (ou Réglages › Identifiant Apple sur iOS). Le VIP reste actif jusqu\'à la fin de la période payée.';
+
+  @override
+  String get vipFaq1Q => 'Comment annuler ?';
+
+  @override
+  String get vipFaq2A =>
+      'Non. Ce sont les probabilités d\'un modèle statistique ; chaque match peut finir différemment. C\'est pourquoi l\'historique est public.';
+
+  @override
+  String get vipFaq2Q => 'Les pronostics sont-ils toujours gagnants ?';
+
+  @override
+  String get vipFaq3A =>
+      'Ils affichent la cote publiée par un bookmaker à titre de référence. Aucun pari ni transfert d\'argent n\'a lieu dans l\'application.';
+
+  @override
+  String get vipFaq3Q => 'Affichez-vous des cotes ou de l\'argent réel ?';
+
+  @override
+  String get vipFaq4A =>
+      'Connectez-vous avec le même compte et appuyez sur « Restaurer les achats ».';
+
+  @override
+  String get vipFaq4Q => 'Comment utiliser le VIP sur un autre appareil ?';
+
+  @override
+  String get vipFaq5A =>
+      'Ceux configurés sur votre compte Google Play ou App Store : carte, solde ou facturation opérateur.';
+
+  @override
+  String get vipFaq5Q => 'Quels modes de paiement puis-je utiliser ?';
+
+  @override
+  String get vipFaqTitle => 'QUESTIONS FRÉQUENTES';
+
+  @override
   String get vipFreeAccess => 'Votre compte a un accès gratuit.';
 
   @override
   String get vipGranted => 'C\'est fait ! Votre accès VIP est actif.';
+
+  @override
+  String get vipHeaderTitle => 'ACCÈS VIP';
+
+  @override
+  String get vipHeroHighlight => 'DÉBLOQUÉS.';
+
+  @override
+  String vipHeroSub(int count) {
+    return '$count picks de football, NBA et tennis, chacun scellé avant le match.';
+  }
+
+  @override
+  String get vipHeroSubGeneric =>
+      'Picks de football, NBA et tennis, chacun scellé avant le match.';
+
+  @override
+  String get vipHeroTitle => 'TOUS LES PRONOSTICS DU JOUR, ';
 
   @override
   String get vipHistoryNote =>
@@ -3879,6 +4031,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vipLinked => '🔒  Votre accès VIP est lié à votre compte';
+
+  @override
+  String vipLostCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count échecs',
+      one: '1 échec',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get vipManage =>
@@ -3912,6 +4075,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Paiement en attente. Vous aurez accès dès que la boutique le confirmera.';
 
   @override
+  String get vipPerMonth => 'par mois';
+
+  @override
+  String vipPerMonths(int count) {
+    return 'tous les $count mois';
+  }
+
+  @override
+  String get vipPerYear => 'par an';
+
+  @override
   String get vipPickLabel => 'Pronostic VIP';
 
   @override
@@ -3922,11 +4096,36 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipPricesNote => 'Prix du catalogue du serveur.';
 
   @override
+  String get vipPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
   String get vipPurchasesPending =>
       'Achats en préparation : rien n\'est encore facturé depuis l\'application.';
 
   @override
+  String vipRenewalPhrase(String price, String period, String store) {
+    return 'Se renouvelle pour $price $period. Annulez à tout moment dans $store › Abonnements.';
+  }
+
+  @override
   String get vipRestore => 'Restaurer les achats';
+
+  @override
+  String vipSavingsBadge(int pct) {
+    return 'ÉCONOMISEZ $pct%';
+  }
+
+  @override
+  String get vipSealAppStore => 'PAIEMENT VIA APP STORE';
+
+  @override
+  String get vipSealCancel => 'ANNULEZ QUAND VOUS VOULEZ';
+
+  @override
+  String get vipSealGooglePlay => 'PAIEMENT VIA GOOGLE PLAY';
+
+  @override
+  String get vipSealSealed => 'SCELLÉ AVANT LE MATCH';
 
   @override
   String get vipSportsNote =>
@@ -3936,8 +4135,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vipSportsTitle => 'Taux de réussite enregistré par sport';
 
   @override
+  String vipStartCta(String plan, String price) {
+    return 'DÉMARRER VIP $plan · $price';
+  }
+
+  @override
+  String get vipStoreAppStore => 'App Store';
+
+  @override
   String get vipStoreFailed =>
       'Impossible de confirmer l\'achat. Nous réessaierons à la prochaine ouverture de l\'app.';
+
+  @override
+  String get vipStoreGooglePlay => 'Google Play';
 
   @override
   String get vipStoreTerms =>
@@ -3952,6 +4162,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vipVerifying => 'Vérification de l\'achat auprès de la boutique…';
+
+  @override
+  String get vipWhatYouUnlock => 'CE QUE VOUS DÉBLOQUEZ';
+
+  @override
+  String vipWonCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count succès',
+      one: '1 succès',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vipYesterday => 'HIER';
 
   @override
   String get welcome1Body =>

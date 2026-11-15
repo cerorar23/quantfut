@@ -985,7 +985,7 @@ void main() {
         },
       ),
     );
-    expect(find.text('QuantFut VIP'), findsOneWidget);
+    expect(find.text('ACCESO VIP'), findsOneWidget);
     expect(find.text('78,1 %'), findsOneWidget);
     expect(find.text('89/114'), findsOneWidget);
     expect(find.text('\$14,99'), findsOneWidget);
