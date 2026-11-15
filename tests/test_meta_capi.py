@@ -34,10 +34,11 @@ def test_evento_de_app_lleva_action_source_app_data_y_event_id():
     assert ev["custom_data"]["currency"] == "COP"
 
 
-def test_sin_dispositivo_conocido_se_manda_extinfo_minimo_con_version_y_so():
+def test_sin_dispositivo_no_se_inventa_extinfo_y_sale_como_other():
+    # Auditoría 15-nov: 6 de 6 registros de la app salieron con un extinfo genérico (Android 14, 1.0.0).
     ev = meta_capi.build_event(_row(), ACC, None)
-    assert ev["app_data"]["advertiser_tracking_enabled"] == 0
-    assert len(ev["app_data"]["extinfo"]) == 16 and ev["app_data"]["extinfo"][0] == "a2"
+    assert ev["action_source"] == "other" and "app_data" not in ev
+    assert set(ev["user_data"]) == {"external_id", "em", "fn", "ln"}
 
 
 def test_pais_de_la_compra_va_a_user_data_y_no_a_custom_data():
@@ -71,12 +72,25 @@ def test_envio_en_lote_con_token_y_codigo_de_prueba(monkeypatch):
     assert seen["body"]["data"][0]["event_id"] == "pur:GPA.1"
 
 
-def test_extinfo_de_reserva_lleva_version_del_so_que_meta_acepta():
-    # Meta devuelve 400 (2804043) si la versión del SO va vacía: se vio en producción el 18-oct.
-    from qf.comercial import meta_datos
-    for platform in ("android", "ios"):
-        ext = meta_capi._minimal_extinfo(platform)
-        assert ext[1] == "com.saptain.quantfut" and ext[2] and ext[4]
-        assert meta_datos.valid_extinfo(ext, platform) == ext
-    ev = meta_capi.build_event(_row(), ACC, None)
-    assert ev["app_data"]["extinfo"][4]
+def test_cobro_web_sin_navegador_va_como_system_generated():
+    # Meta exige client_user_agent en `website`: una renovación llega por webhook, sin navegador.
+    row = _row(action_source="website", web_context={"client_ip": "203.0.113.9"})
+    ev = meta_capi.build_event(row, ACC, None)
+    assert ev["action_source"] == "system_generated"
+    assert "client_user_agent" not in ev["user_data"] and "app_data" not in ev
+    con_navegador = _row(action_source="website", web_context={"user_agent": "Mozilla/5.0"})
+    assert meta_capi.build_event(con_navegador, ACC, None)["action_source"] == "website"
+
+
+def test_error_de_meta_conserva_el_motivo_sin_el_token(monkeypatch):
+    monkeypatch.setenv("META_DATASET_ID", "123")
+    monkeypatch.setenv("META_CAPI_TOKEN", "secreto")
+    monkeypatch.delenv("META_TEST_EVENT_CODE", raising=False)
+    body = {"error": {"message": "Invalid parameter", "error_subcode": 2804050}}
+    client = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(400, json=body)))
+    try:
+        meta_capi._post([meta_capi.build_event(_row(), ACC, IDENT)], client)
+    except meta_capi.MetaError as exc:
+        assert exc.status == 400 and "2804050" in str(exc) and "secreto" not in str(exc)
+    else:
+        raise AssertionError("debía fallar")

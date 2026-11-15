@@ -23,6 +23,8 @@ MAX_ATTEMPTS = 5
 ALERT_AT = 3
 # Meta rechaza eventos con más de 7 días de antigüedad.
 MAX_AGE = timedelta(days=7)
+# Un evento de app espera este tiempo a que la app registre su dispositivo (POST /app/v1/meta/dispositivo).
+DEVICE_WAIT = timedelta(minutes=15)
 
 
 def enabled() -> bool:
@@ -63,23 +65,11 @@ def web_kwargs(web_context: dict | None) -> dict:
     return {"action_source": "website", "web_context": web_context}
 
 
-def _minimal_extinfo(platform: str) -> list[str]:
-    """extinfo de reserva para una cuenta sin dispositivo registrado.
-
-    Meta rechaza (400, subcódigo 2804043) un extinfo sin versión del SO válida, y un compra o un
-    registro no pueden perderse por eso. Se mandan valores genéricos; en cuanto la app registra el
-    dispositivo (POST /app/v1/meta/dispositivo) se usa su extinfo real."""
-    values = [""] * meta_datos.EXTINFO_LEN
-    values[0] = "i2" if platform == "ios" else "a2"
-    values[1] = "com.saptain.quantfut"
-    values[2] = "1.0.0"
-    values[3] = "1"
-    values[4] = "17.0" if platform == "ios" else "14"
-    return values
-
-
 def build_web_event(row: dict, account: dict) -> dict:
-    """Evento de la web: action_source=website con el contexto del navegador (fbp, fbc, IP, UA, URL)."""
+    """Evento de la web: action_source=website con el contexto del navegador (fbp, fbc, IP, UA, URL).
+
+    Meta exige `client_user_agent` en los eventos `website`. Un cobro que llega sin navegador (una
+    renovación, un pago sin checkout guardado) lo generó el sistema: va como `system_generated`."""
     ctx = row.get("web_context") or {}
     custom = dict(row["custom_data"] or {})
     country = custom.pop("_country", None)
@@ -93,7 +83,7 @@ def build_web_event(row: dict, account: dict) -> dict:
         "event_name": row["event_name"],
         "event_time": int(row["event_time"].timestamp()),
         "event_id": row["event_id"],
-        "action_source": "website",
+        "action_source": "website" if ctx.get("user_agent") else "system_generated",
         "user_data": user,
         "custom_data": custom,
     }
@@ -105,10 +95,19 @@ def build_web_event(row: dict, account: dict) -> dict:
 def build_event(row: dict, account: dict, identity: dict | None) -> dict:
     if row.get("action_source") == "website":
         return build_web_event(row, account)
-    platform = identity["platform"] if identity else "android"
-    tracking = bool(identity and identity["advertiser_tracking_enabled"])
     custom = dict(row["custom_data"] or {})
     country = custom.pop("_country", None)
+    if identity is None:
+        # Sin dispositivo registrado no hay `extinfo` real, y Meta lo exige en los eventos de app. No se
+        # inventa: el evento sale como `other`, emparejado por correo, nombre y external_id.
+        return {
+            "event_name": row["event_name"],
+            "event_time": int(row["event_time"].timestamp()),
+            "event_id": row["event_id"],
+            "action_source": "other",
+            "user_data": meta_datos.user_data(account, None, country),
+            "custom_data": custom,
+        }
     return {
         "event_name": row["event_name"],
         "event_time": int(row["event_time"].timestamp()),
@@ -116,9 +115,9 @@ def build_event(row: dict, account: dict, identity: dict | None) -> dict:
         "action_source": "app",
         "user_data": meta_datos.user_data(account, identity, country),
         "app_data": {
-            "advertiser_tracking_enabled": int(tracking),
+            "advertiser_tracking_enabled": int(bool(identity["advertiser_tracking_enabled"])),
             "application_tracking_enabled": 1,
-            "extinfo": identity["extinfo"] if identity else _minimal_extinfo(platform),
+            "extinfo": identity["extinfo"],
         },
         "custom_data": custom,
     }
@@ -130,8 +129,42 @@ def _post(events: list[dict], client: httpx.Client) -> int:
         body["test_event_code"] = os.environ["META_TEST_EVENT_CODE"]
     url = f"https://graph.facebook.com/{GRAPH_VERSION}/{os.environ['META_DATASET_ID']}/events"
     r = client.post(url, json=body, timeout=20)
-    r.raise_for_status()
+    if r.status_code >= 400:
+        # El cuerpo trae el motivo de Meta (mensaje y subcódigo); no contiene el token.
+        raise MetaError(r.status_code, f"HTTP {r.status_code}: {r.text[:260]}")
     return int(r.json().get("events_received", 0))
+
+
+class MetaError(Exception):
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+
+
+def _send(c, events: list[dict], ids: list[str], client: httpx.Client, counts: dict) -> None:
+    """Envía el lote. Meta rechaza el lote entero si un solo evento es inválido (400): en ese caso se
+    reenvía de uno en uno para que el evento malo no arrastre a los demás."""
+    try:
+        _post(events, client)
+    except Exception as exc:  # noqa: BLE001 — se reintenta en la siguiente pasada
+        if len(events) > 1 and isinstance(exc, MetaError) and exc.status == 400:
+            for event, event_id in zip(events, ids):
+                _send(c, [event], [event_id], client, counts)
+            return
+        error = str(exc)[:300]
+        failed = c.execute(
+            """UPDATE meta_events SET attempts = attempts + 1, last_error = %s,
+                      status = CASE WHEN attempts + 1 >= %s THEN 'fallido' ELSE 'pendiente' END
+               WHERE event_id = ANY(%s) RETURNING attempts""",
+            (error, MAX_ATTEMPTS, ids)).fetchall()
+        counts["fallidos"] += len(ids)
+        if any(r["attempts"] == ALERT_AT for r in failed):
+            _alert(f"Meta CAPI falla {ALERT_AT} veces seguidas: {error}")
+        return
+    c.execute("""UPDATE meta_events SET status = 'enviado', sent_at = now(),
+                        attempts = attempts + 1, last_error = NULL
+                 WHERE event_id = ANY(%s)""", (ids,))
+    counts["enviados"] += len(ids)
 
 
 def _alert(text: str) -> None:
@@ -161,27 +194,12 @@ def send_pending(limit: int = 500, client: httpx.Client | None = None) -> dict:
             identity = None if row["action_source"] == "website" else c.execute(
                 """SELECT * FROM meta_identities WHERE account_id = %s
                    ORDER BY updated_at DESC LIMIT 1""", (row["account_id"],)).fetchone()
+            if row["action_source"] == "app" and identity is None and now - row["created_at"] < DEVICE_WAIT:
+                continue   # la app aún puede registrar el dispositivo; se envía en una pasada posterior
             batch.append(build_event(row, row, identity))
             ids.append(row["event_id"])
-        if not batch:
-            return counts
-        try:
-            _post(batch, client)
-        except Exception as exc:  # noqa: BLE001 — se reintenta en la siguiente pasada
-            error = str(exc)[:300]
-            failed = c.execute(
-                """UPDATE meta_events SET attempts = attempts + 1, last_error = %s,
-                          status = CASE WHEN attempts + 1 >= %s THEN 'fallido' ELSE 'pendiente' END
-                   WHERE event_id = ANY(%s) RETURNING attempts""",
-                (error, MAX_ATTEMPTS, ids)).fetchall()
-            counts["fallidos"] = len(ids)
-            if any(r["attempts"] == ALERT_AT for r in failed):
-                _alert(f"Meta CAPI falla {ALERT_AT} veces seguidas: {error}")
-            return counts
-        c.execute("""UPDATE meta_events SET status = 'enviado', sent_at = now(),
-                            attempts = attempts + 1, last_error = NULL
-                     WHERE event_id = ANY(%s)""", (ids,))
-        counts["enviados"] = len(ids)
+        if batch:
+            _send(c, batch, ids, client, counts)
     return counts
 
 

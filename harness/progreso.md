@@ -6,6 +6,15 @@
 - **Decisión:** `NULL` = todos los deportes (cuentas y apps antiguas no cambian), lista vacía = ninguno; el aviso sin `sport` es general y no se filtra. El filtro vive en SQL en `enqueue` y se vuelve a comprobar en `deliver` (si el usuario apaga un deporte con avisos ya en cola, no salen).
 - Un aviso de un deporte apagado **sigue en la bandeja** (solo se evita el push): la bandeja es consulta, no interrupción.
 - `enqueue` no tiene llamadores en `src/`: el envío de avisos sigue sin ponerse en marcha; esto solo prepara el filtro para cuando se haga.
+## 15-nov-2026 · Auditoría de Meta (Pixel + Conversions API): tres correcciones del envío (`fix/meta-capi-auditoria`)
+
+- **Medido en producción (solo lectura):** CAPI encendida, dataset = Pixel, Meta responde 200. Solo 7 eventos, todos `CompleteRegistration`; los 6 de la app salieron sin dispositivo registrado. Cero checkouts y cero pagos de Whop: compra y renovación nunca se ejercitaron.
+- **No se inventa el dispositivo:** el `extinfo` genérico (Android 14, 1.0.0) se quitó. Un evento de app espera 15 min a `POST /app/v1/meta/dispositivo`; si no llega, sale como `action_source=other` sin `app_data`. Motivo: Meta exige `extinfo` real y un dato inventado contamina la atribución.
+- **Cobro sin navegador = `system_generated`:** Meta exige `client_user_agent` en `website`; una renovación llega por webhook. Se decide al construir el evento (sin migración: la columna sigue con `app`/`website`).
+- **Un 400 ya no tumba el lote:** Meta rechaza el lote entero por un evento inválido; ahora se reenvía de uno en uno solo ante un 400 (no ante 401/429/5xx, para no multiplicar llamadas). `last_error` guarda el motivo de Meta.
+- **La causa de fondo sigue abierta:** la build de Play no lleva `QF_META_ENABLED=true`, así que el SDK no arranca ni registra dispositivo. La EMQ solo existe para eventos web. Sin desplegar: el worker espera confirmación del titular.
+
+
 ## 15-nov-2026 · Rediseño de la app, F7 del servidor: bajas con foto/posición y fotos de tenistas SofaScore (`servidor/bajas-con-foto-y-posicion`)
 
 - **Por qué:** la app CyberCore 1.2.0+13 ya lee `regreso_fecha`, `posicion`, `jugador_id` y `foto` de las bajas y salían vacíos. `_bajas()` los añade sin quitar `jugador/tipo/motivo` (app publicada intacta).
