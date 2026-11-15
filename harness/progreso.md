@@ -6,6 +6,8 @@
 - **Por qué:** el titular pidió que la gráfica grande muestre algo medible que se vea en positivo. La anterior (reales − esperados) oscila alrededor de 0 por diseño cuando el modelo está calibrado: con 82 % prometido y 81 % real bajaba aunque el resultado fuera bueno.
 - **Medido con los 668 liquidados del historial en producción:** aciertos − fallos va en +410 (539 ✓, 129 ✗), mínimo −1 en los 5 primeros, retroceso máximo 3, ninguna ventana de 30 en negativo. Descartadas: unidades a cuota justa (−9,4, sale negativa) y Brier frente a 50/50 (positiva pero difícil de explicar).
 - **Límite que se respeta:** el subtítulo dice «Cuenta resultados, no dinero»; la calibración sigue en la tarjeta «Prometido frente a real». No se añadió CSS (`.cv-hist-band` queda sin uso). No es una garantía: si se acertara menos del 50 % la curva bajaría y se pintaría en magenta.
+- **Escalera y parley (misma petición del titular):** la cifra grande y la curva pasan de ganancia acumulada a aciertos menos fallos de las piezas. Medido en producción: escalones +44 (57 ✓, 13 ✗, nunca bajo 0, retroceso máximo 2); patas del parley +37 (95 ✓, 58 ✗, nunca bajo 0, retroceso máximo 4). No hay métrica de dinero en positivo: escalera −5,15 u y parley −27,09 u.
+- **Límite que se respeta:** la ganancia real y el rendimiento siguen escritos justo debajo de la cifra grande, y la nota de la curva dice que cuenta piezas, no dinero, y que una sola pieza fallada pierde el reto o el parley. Sin piezas liquidadas se sigue mostrando la ganancia.
 - **Pendiente:** desplegar el frontend (no desplegado en este cambio).
 
 ## 15-nov-2026 · Reto escalera: dos retos con el mismo partido (retos #23 y #24) → candado común de elección (`fix/escalera-candado-eleccion`)
