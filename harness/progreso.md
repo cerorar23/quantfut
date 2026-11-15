@@ -1,6 +1,11 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+
+## 15-nov-2026 · Rediseño CyberCore de la app: auditoría y restos de F8 (`app/rediseno-f8-restos`)
+- La auditoría del #429 halló todo implementado salvo F7 (servidor), que queda anotado como pendiente; las entradas F0–F8 del 14-nov están al final de este archivo.
+- Retirados `QfColors.football/nba/tennis` (acentos ahora en `sports.dart`) y la tipografía Gilroy de las pantallas rediseñadas (→ Exo 2). Sin cambio de comportamiento.
+- Queda sin tocar: colores fijos en `market_hub.dart` y `lineup_pitch.dart` (colores de familia del render) y Gilroy en las pantallas antiguas (`sign_in/`, `forget_password/`), fuera del alcance del rediseño.
 ## 15-nov-2026 · Historial web: la gráfica grande pasa a «aciertos menos fallos, acumulados» (`web/historial-aciertos-menos-fallos`)
 
 - **Por qué:** el titular pidió que la gráfica grande muestre algo medible que se vea en positivo. La anterior (reales − esperados) oscila alrededor de 0 por diseño cuando el modelo está calibrado: con 82 % prometido y 81 % real bajaba aunque el resultado fuera bueno.

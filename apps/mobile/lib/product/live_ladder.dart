@@ -294,7 +294,7 @@ class _ProgressRing extends StatelessWidget {
               realPercent(fraction),
               style: const TextStyle(
                 color: Colors.white,
-                fontFamily: 'Gilroy Bold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
             ),
@@ -406,8 +406,8 @@ class _StatusChip extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: color,
-              fontFamily: 'Gilroy Bold',
-              fontSize: 11,
+              fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
+              fontSize: 10.5,
             ),
           ),
         ),

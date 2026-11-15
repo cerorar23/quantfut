@@ -522,7 +522,7 @@ class _HomeSportState extends State<HomeSport> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: QfColors.text,
-                fontFamily: 'Gilroy ExtraBold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
             ),
@@ -626,7 +626,7 @@ class _EventRow extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: QfColors.text,
-                                fontFamily: 'Gilroy Bold',
+                                fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
                             ),
@@ -726,7 +726,7 @@ class _PlayerCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: QfColors.text,
-                fontFamily: 'Gilroy Bold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
             ),

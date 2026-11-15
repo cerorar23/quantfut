@@ -371,7 +371,7 @@ class PickTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: QfColors.text,
-                              fontFamily: 'Gilroy Bold',
+                              fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                               fontSize: 15,
                               height: 1.2,
                             ),
@@ -631,7 +631,7 @@ class _LockedPicksGroupState extends State<LockedPicksGroup> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontFamily: 'Gilroy Bold',
+                                  fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                                   fontSize: 13,
                                   color: QfColors.text,
                                 ),
