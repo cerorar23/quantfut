@@ -1,6 +1,20 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 15-nov-2026 · Fix alineaciones en vivo: soporte para claves FotMob (name, number) en QfPitch (`fix/mobile-lineup-player-keys`)
+
+- **Causa resuelta:** En partidos con alineación en vivo (desde FotMob o SofaScore), la tabla `lineups.starters` almacena claves en inglés (`name`, `number`, `pos`), mientras que `PitchPlayer.fromJson` leía únicamente `json['nombre']` y `json['numero']`. Esto provocaba que `player.name` fuera una cadena vacía, resultando en nombres ausentes bajo los avatares, fallback al símbolo `?` en lugar de las iniciales reales, y dorsal `0` en todos los jugadores. Además, el subtítulo del equipo mostraba un punto colgante (`Tenerife · `) al no haber rival histórico en partidos del día.
+- **Implementación (`lineup_pitch.dart`, `live_alerts.dart`):**
+  - `PitchPlayer.fromJson`: soporte flexible para claves en inglés y español (`nombre`/`name`/`jugador`/`player`, `numero`/`number`/`dorsal`/`camiseta`, `pos`/`posicion`/`position`, `foto`/`photo`/`image`), parseando enteros tanto desde `num` como desde cadenas numéricas.
+  - Generación de iniciales (`PitchPlayer.initials`): para nombres de una sola palabra extrae las 2 primeras letras en mayúscula (ej. "Adilson" -> "AD").
+  - Dorsal en `_PitchPlayerWidget`: la caja del dorsal solo se renderiza si `player.number > 0`, ocultándola limpiamente cuando el dorsal no está disponible.
+  - Subtítulo en `_TeamPitchBlock`: formateo limpio que une `[team.nombre, cap]` omitiendo separadores `· ` si `cap` está vacío.
+- **Pruebas y Verificación:**
+  - Nueva prueba unitaria añadida en `test/lineup_pitch_test.dart` verificando el soporte de formato FotMob y generación de iniciales.
+  - `flutter analyze --no-pub`: 0 issues.
+  - Suite completa: 674/674 pruebas pasando al 100% en verde.
+
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4f completada (`app/rediseno-f4f-alertas`)
 
 - **Objetivo de F4f alcanzado:** Pestaña de Alertas y Alineaciones (`AlertsTab` en `lib/product/live_alerts.dart` y nueva pizarra táctica `QfPitch` en `lib/product/lineup_pitch.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoAlertas.png`, `PartidoAlertasCompleto.png` y `pantallas/Partido.dc.html`.

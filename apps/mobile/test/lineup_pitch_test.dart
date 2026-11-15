@@ -126,6 +126,34 @@ void main() {
       );
       expect(players, isEmpty);
     });
+
+    test('soporta claves en inglés de FotMob (name, number) y genera iniciales', () {
+      final fotmobPlayer = PitchPlayer.fromJson(
+        const {
+          'name': 'Dani Fernández',
+          'number': 2,
+          'player_id': 12345,
+          'src': 'fotmob',
+        },
+        x: 50.0,
+        y: 89.0,
+      );
+      expect(fotmobPlayer.name, 'Dani Fernández');
+      expect(fotmobPlayer.number, 2);
+      expect(PitchPlayer.initials(fotmobPlayer.name), 'DF');
+
+      final singleNamePlayer = PitchPlayer.fromJson(
+        const {
+          'name': 'Adilson',
+          'number': null,
+        },
+        x: 20.0,
+        y: 50.0,
+      );
+      expect(singleNamePlayer.name, 'Adilson');
+      expect(singleNamePlayer.number, 0);
+      expect(PitchPlayer.initials(singleNamePlayer.name), 'AD');
+    });
   });
 
   group('QfPitch widget', () {

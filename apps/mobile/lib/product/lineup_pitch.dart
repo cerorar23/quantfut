@@ -27,20 +27,37 @@ class PitchPlayer {
     required double x,
     required double y,
   }) {
+    final rawName = json['nombre'] ?? json['name'] ?? json['jugador'] ?? json['player'] ?? '';
+    final rawNum = json['numero'] ?? json['number'] ?? json['dorsal'] ?? json['camiseta'];
+    final rawPos = json['pos'] ?? json['posicion'] ?? json['position'];
+    final rawPhoto = json['foto'] ?? json['photo'] ?? json['image'];
+
+    int parsedNumber = 0;
+    if (rawNum is num) {
+      parsedNumber = rawNum.toInt();
+    } else if (rawNum is String) {
+      parsedNumber = int.tryParse(rawNum.trim()) ?? 0;
+    }
+
     return PitchPlayer(
-      name: '${json['nombre'] ?? ''}',
-      number: (json['numero'] as num?)?.toInt() ?? 0,
-      position: json['pos'] != null ? '${json['pos']}' : (json['posicion'] != null ? '${json['posicion']}' : null),
-      photoUrl: json['foto'] != null ? '${json['foto']}' : null,
+      name: '$rawName'.trim(),
+      number: parsedNumber,
+      position: rawPos != null ? '$rawPos'.trim() : null,
+      photoUrl: rawPhoto != null && '$rawPhoto'.trim().isNotEmpty ? '$rawPhoto'.trim() : null,
       x: x,
       y: y,
     );
   }
 
   static String initials(String name) {
-    final parts = name.split(RegExp(r'[\s.]+')).where((p) => p.isNotEmpty).toList();
+    final clean = name.trim();
+    if (clean.isEmpty) return '?';
+    final parts = clean.split(RegExp(r'[\s.]+')).where((p) => p.isNotEmpty).toList();
     if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    if (parts.length == 1) {
+      final chars = parts.first.characters;
+      return chars.take(2).toString().toUpperCase();
+    }
     return '${parts.first.characters.first}${parts.last.characters.first}'.toUpperCase();
   }
 
@@ -242,52 +259,55 @@ class _PitchPlayerWidget extends StatelessWidget {
               ),
             ),
 
-            // Dorsal en la esquina inferior derecha
-            Positioned(
-              right: -6,
-              bottom: -4,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color(0xff07080c),
-                  border: Border.all(color: QfColors.cyan, width: 1),
-                ),
-                child: Text(
-                  '${player.number}',
-                  style: const TextStyle(
-                    color: QfColors.cyan,
-                    fontFamily: 'JetBrains Mono',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
+            // Dorsal en la esquina inferior derecha (solo si number > 0)
+            if (player.number > 0)
+              Positioned(
+                right: -6,
+                bottom: -4,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xff07080c),
+                    border: Border.all(color: QfColors.cyan, width: 1),
+                  ),
+                  child: Text(
+                    '${player.number}',
+                    style: const TextStyle(
+                      color: QfColors.cyan,
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
-        const SizedBox(height: 3),
-        // Apellido / nombre con sombra de 3px
-        Text(
-          player.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xfff0f1f5),
-            fontFamily: 'JetBrains Mono',
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-            shadows: [
-              Shadow(
-                color: Colors.black,
-                blurRadius: 3,
-                offset: Offset(0, 1),
-              ),
-            ],
+        if (player.name.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          // Apellido / nombre con sombra de 3px
+          Text(
+            player.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xfff0f1f5),
+              fontFamily: 'JetBrains Mono',
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+              shadows: [
+                Shadow(
+                  color: Colors.black,
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
