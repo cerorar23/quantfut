@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-15 17:20 UTC · F7 del rediseño: bajas con foto/posición/regreso y fotos de tenistas SofaScore · API (PR #440; `main` `fc0f9a75`)
+- **Motivo:** la app CyberCore 1.2.0+13 ya lee `regreso_fecha`, `jugador_id`, `foto` y `posicion` de las bajas y prefiere el bloque `tenis_sofascore` del manifiesto; el servidor no los enviaba.
+- Pre-vuelo: `scripts/deploy.sh estado` mostró worker y API con solo 2 archivos distintos de `main` (`api/fichas.py`, `api/web.py`, los del cambio); compose y contenedores coincidían (`quantfut-api:15d16a47`, worker `d156e7ae`).
+- Método: imagen `quantfut-api:fc0f9a75` construida en el servidor desde `git archive origin/main`, ensayada (`modulos con error: ninguno`, `rutas: 313`; trae 1.361 archivos en `frontend/imagenes/tenis` y 1.181 entradas en `tenis_sofascore`) y desplegada recreando **solo `api`** (`CONFIRMO=si scripts/deploy.sh desplegar api quantfut-api:fc0f9a75`). Las imágenes van dentro de la imagen de la API: no hubo subida aparte al VPS.
+- Respaldo previo: `~/quantfut/releases/compose-antes-20261115-172031.yml`; imagen anterior `quantfut-api:15d16a47` conservada en el host.
+- Verificado: salud API 200; `https://pronosticosdeportivos.pro/` 200; `/web/imagenes/manifiesto.json` con `tenis_sofascore` (1.181) y una foto `.webp` sirviendo 200 `image/webp`; `GET /web/partidos/us.mls:2627:vancouverwh-seattlesoun:20261101` devuelve las bajas con `regreso_fecha`, `jugador_id`, `foto` y `posicion` (en esa baja de FotMob, `foto` y `posicion` son `null`, como se esperaba).
+- **Sin verificar:** la app Flutter en un dispositivo; los créditos CC BY-SA de `creditos.html` no se tocaron (el bloque viejo `tenis` sigue en el manifiesto).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261115-172031.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-15 15:49 UTC · Historial, reto escalera y parley muestran aciertos menos fallos · API + frontend (PR #436; `main` `15d16a47`)
 - **Motivo:** petición del titular: que la gráfica del historial y las cifras grandes de escalera y parley muestren una métrica medible que se vea en positivo. Historial: aciertos menos fallos acumulados. Escalera: escalones acertados menos fallados. Parley: patas acertadas menos falladas. La ganancia real en unidades sigue escrita debajo de la cifra grande.
 - Pre-vuelo: `scripts/deploy.sh estado` mostró en `quantfut-api-1` (`quantfut-api:e8c6757d`) 5 archivos de `src` distintos de `main` (`config.py`, `ingest/cuotas_respaldo.py`, `ingest/cuotas_respaldo_futbol.py`, `ingest/propline_ingest.py`, `publish/escalera_datos.py`): son exactamente el `git diff e8c6757d..main` de PRs ya fusionados (worker en 0 diferencias). `app.js` (`9bdf20d7…`) e `index.html` (`6ef0f991…`) del host coincidían con `main` antes del PR. Sin `db/`, sin `scripts/crontab`.
