@@ -180,3 +180,71 @@ def test_web_session_sets_cookie_and_requires_consent_for_new_accounts(monkeypat
     assert ok.status_code == 200 and ok.json()["refresh_token"] is None
     assert "qf_refresh" in ok.cookies
     assert seen[-1] == (firebase.CONSENT_VERSION, firebase.CONSENT_VERSION)
+
+
+class _Cur:
+    def __init__(self, log, row=None):
+        self.log, self.row = log, row
+
+    def execute(self, sql, params=()):
+        self.log.append((" ".join(sql.split()), params))
+        return self
+
+    def fetchone(self):
+        return self.row
+
+
+class _Conn:
+    def __init__(self, log, row=None):
+        self.cur = _Cur(log, row)
+
+    def __enter__(self):
+        return self.cur
+
+    def __exit__(self, *exc):
+        return False
+
+
+def test_preferencias_push_por_deporte_validan_y_no_pisan_apps_antiguas(monkeypatch):
+    from pydantic import ValidationError
+    assert api.PreferencesIn().push_sports is None
+    assert api.PreferencesIn(push_sports=["nba", "tenis"]).push_sports == ["nba", "tenis"]
+    with pytest.raises(ValidationError):
+        api.PreferencesIn(push_sports=["cricket"])
+    log = []
+    monkeypatch.setattr(api, "conn", lambda: _Conn(log))
+    account = {"account_id": 7}
+    api.save_preferences(api.PreferencesIn(push_enabled=True), account)
+    insert = log[0]
+    assert insert[1][-2:] == (None, False)          # app antigua: no se toca lo guardado
+    api.save_preferences(api.PreferencesIn(push_enabled=True, push_sports=["tenis", "nba", "nba"]), account)
+    assert log[1][1][-2:] == (["nba", "tenis"], True)
+    api.save_preferences(api.PreferencesIn(push_enabled=True, push_sports=[]), account)
+    assert log[2][1][-2:] == ([], True)             # lista vacía = ningún deporte
+
+
+def test_preferencias_get_devuelve_todos_los_deportes_si_no_hay_filtro(monkeypatch):
+    seen = []
+    monkeypatch.setattr(api, "query_one", lambda sql, params: seen.append(params) or None)
+    assert api.preferences({"account_id": 7})["push_sports"] == ["futbol", "nba", "tenis"]
+    assert seen[0][0] == ["futbol", "nba", "tenis"]
+
+
+def test_enqueue_filtra_por_deporte_y_rechaza_deporte_invalido(monkeypatch):
+    from qf.comercial import firebase_notificaciones as notif
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    with pytest.raises(ValueError, match="sport"):
+        enqueue(7, "k", future, sport="cricket")
+    log = []
+    monkeypatch.setattr(notif, "conn", lambda: _Conn(log, {"notification_id": 9, "language": "es"}))
+    assert enqueue(7, "k", future, "match-1", sport="nba") == 9
+    insert_notif, insert_outbox = log[1], log[2]
+    assert insert_notif[1][-1] == "nba"
+    assert "p.push_sports IS NULL OR %s::text = ANY(p.push_sports)" in insert_outbox[0]
+    assert insert_outbox[1] == (9, 7, "nba", "nba")
+
+
+def test_entrega_vuelve_a_comprobar_el_deporte():
+    import inspect
+    from qf.comercial import firebase_notificaciones as notif
+    assert "n.sport = ANY(p.push_sports)" in " ".join(inspect.getsource(notif.deliver).split())

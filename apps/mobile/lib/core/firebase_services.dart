@@ -31,6 +31,9 @@ bool consentDefault(bool? stored) => stored ?? true;
 /// Motivo por el que no hay notificaciones; el texto se traduce al mostrarlo.
 enum NotificationStatus { permissionDenied, iosPending }
 
+/// Deportes que admite el servidor en `push_sports` (`/app/v1/firebase/preferences`).
+const kPushSports = ['futbol', 'nba', 'tenis'];
+
 class FirebaseServices extends ChangeNotifier {
   FirebaseServices._(this.preferences);
   static FirebaseServices? current;
@@ -39,6 +42,8 @@ class FirebaseServices extends ChangeNotifier {
   bool diagnosticsAllowed = false;
   bool adsAllowed = true;
   bool notificationsAllowed = false;
+  /// Deportes de los que se quieren avisos push (el servidor filtra el envío por esta lista).
+  Set<String> pushSports = {'futbol', 'nba', 'tenis'};
   String language = 'es';
   NotificationStatus? notificationStatus;
   final openedMatch = ValueNotifier<String?>(null);
@@ -63,6 +68,10 @@ class FirebaseServices extends ChangeNotifier {
     );
     services.notificationsAllowed =
         await services.preferences.getBool('push_consent') ?? false;
+    final savedSports = await services.preferences.getStringList('push_sports');
+    if (savedSports != null) {
+      services.pushSports = savedSports.where(kPushSports.contains).toSet();
+    }
     // La app decide el idioma (elección guardada → dispositivo → español).
     services.language = AppLocale.instance.code;
     await FirebaseAppCheck.instance.activate(
@@ -269,6 +278,13 @@ class FirebaseServices extends ChangeNotifier {
       return null;
     }
     return messaging.getToken();
+  }
+
+  Future<void> setPushSport(String sport, bool on) async {
+    if (!kPushSports.contains(sport)) return;
+    on ? pushSports.add(sport) : pushSports.remove(sport);
+    await preferences.setStringList('push_sports', pushSports.toList()..sort());
+    notifyListeners();
   }
 
   Future<void> disableNotifications() async {

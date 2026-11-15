@@ -12,10 +12,6 @@ import '../product/qf_theme.dart';
 import '../product/sports.dart';
 import 'firebase_services.dart';
 
-// Servidor hoy solo soporta push global en /app/v1/firebase/preferences.
-// Notificaciones por deporte quedan detrás de esta bandera hasta F7a/F7b.
-const bool _supportsSportNotifications = false;
-
 class FirebasePreferencesScreen extends StatefulWidget {
   const FirebasePreferencesScreen({super.key, required this.api});
   final QuantFutApi api;
@@ -163,9 +159,8 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
                       ],
                     ),
                   ),
-                  if (_supportsSportNotifications) ...[
-                    // Notificaciones por deporte (cuando el servidor las soporte)
-                    for (final sport in sportCatalog.ids)
+                  ...[
+                    for (final sport in sportCatalog.ids.where(kPushSports.contains))
                       Container(
                         decoration: const BoxDecoration(
                           border: Border(top: BorderSide(color: QfColors.divider)),
@@ -186,9 +181,11 @@ class _FirebasePreferencesScreenState extends State<FirebasePreferencesScreen> {
                               ),
                             ),
                             QfSwitch(
-                              value: services.notificationsAllowed,
-                              onChanged: services.notificationsAllowed
-                                  ? (v) {}
+                              key: ValueKey('push-sport-$sport'),
+                              value: services.notificationsAllowed &&
+                                  services.pushSports.contains(sport),
+                              onChanged: services.notificationsAllowed && !busy
+                                  ? (v) => change(() => services.setPushSport(sport, v))
                                   : null,
                             ),
                           ],

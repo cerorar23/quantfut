@@ -394,6 +394,7 @@ class QuantFutApi extends ChangeNotifier {
         'analytics': services.analyticsAllowed,
         'diagnostics': services.diagnosticsAllowed,
         'push_enabled': services.notificationsAllowed,
+        'push_sports': services.pushSports.toList()..sort(),
         'ads_measurement': services.adsAllowed,
       },
     );
