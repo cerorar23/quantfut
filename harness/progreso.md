@@ -1462,3 +1462,15 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
   - Verificadas todas las suites existentes (`home_sport_test.dart`, `sport_detail_test.dart`, etc.).
   - Suite completa de la app en verde: **673/673 tests pasados**.
   - `flutter analyze --no-pub`: **0 issues**.
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F8 — Cierre y release
+- **Cierre del rediseño CyberCore de QuantFut:**
+  - **Versión oficial:** código de versión actualizado a `1.2.0+13` en `apps/mobile/pubspec.yaml` para el nuevo release CyberCore.
+  - **Icono adaptativo:** fondo actualizado a `#07080C` en `android/app/src/main/res/values/colors.xml` para alineación visual con el tema oscuro CyberCore de la aplicación.
+  - **Documentación histórica:** `apps/mobile/docs/REDISENO_NBA_TENIS_20261030.md` actualizado con aviso de sustitución por `PLAN_REDISENO_CYBERCORE_20261114.md`.
+  - **Internacionalización completa:** verificación estricta con `test/l10n_test.dart` y `test/l10n_runtime_test.dart` (14 pruebas) en los 6 idiomas soportados (`es, en, pt, fr, it, de`), sin textos hardcodeados en código Dart y con paridad total de claves ICU.
+  - **Verificación final:**
+    - `flutter analyze --no-pub`: **0 issues**.
+    - `flutter test --no-pub`: **673/673 tests pasados al 100%**.
+    - Rediseño completo concluido a través de todas las fases autorizadas: F0, F1, F2, F3a-e, F4a-g, F5a-d, F6 y F8.
