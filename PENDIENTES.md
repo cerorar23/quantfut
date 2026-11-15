@@ -41,7 +41,7 @@ Actualizada el **2026-11-11**. Antes tenía 105 líneas con calendario y estados
 
 ## 2. Claude: esperan una fecha o una muestra
 
-- **Rediseño CyberCore, F7 (servidor):** bajas con foto/posición/regreso y fotos de tenistas de SofaScore; sin hacer. Ver `harness/tareas.md` («F7 · Servidor del rediseño»). La app 1.2.0+13 funciona sin ellos (iniciales y sin fecha de regreso).
+- **Rediseño CyberCore, F7 (servidor):** código listo en el PR #440; falta, con confirmación del titular, subir las imágenes de tenistas al VPS y desplegar la API (`DEPLOYS.md`). La app 1.2.0+13 funciona sin ello (iniciales y sin fecha de regreso).
 - **Enero de 2027:** pasar Liga MX a `11620` (Clausura) en `LIGA_DE_TORNEO` (`sofascore_carga.py`) y en el scraper del VPS.
 - Puertas que esperan muestra: calibración, residuo, cuatro brazos, `ajuste_xi`, alineación en F7, altitud, tarjetas y córners del parley,
   1xBet y la ampliada 73-95 % (acierta 78,0 % frente a 81,4 % prometido, n=223).

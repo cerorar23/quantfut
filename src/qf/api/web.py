@@ -17,8 +17,8 @@ router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
 IMAGES_DIR = FRONTEND_DIR / "imagenes"
 _IMAGE_FOLDERS = {"nba", "tenis", "futbol"}
-_IMAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}\.(png|jpg)$", re.IGNORECASE)
-_IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg"}
+_IMAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}\.(png|jpg|webp)$", re.IGNORECASE)
+_IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
 
 
 @router.get("/web/deportes/tenis")

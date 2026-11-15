@@ -1,6 +1,15 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 15-nov-2026 · Rediseño de la app, F7 del servidor: bajas con foto/posición y fotos de tenistas SofaScore (`servidor/bajas-con-foto-y-posicion`)
+
+- **Por qué:** la app CyberCore 1.2.0+13 ya lee `regreso_fecha`, `posicion`, `jugador_id` y `foto` de las bajas y salían vacíos. `_bajas()` los añade sin quitar `jugador/tipo/motivo` (app publicada intacta).
+- **Posición solo de la misma fuente:** sale del último once conocido de ese `player_id` en `lineups` con el mismo `src` (api_football por defecto); los ids de SofaScore/FotMob no son los de API-Football, así que cruzar fuentes daría el jugador equivocado. Sin once previo → `null`, no se infiere. Foto: solo api_football y sofascore (FotMob → `null`).
+- **Fotos de tenistas:** `scripts/imagenes/tenistas_sofascore.py` copia 1.182 imágenes (1.181 nombres; `coleman wong` es lista) y añade el bloque `tenis_sofascore`; el bloque `tenis` y los JPG siguen. **Trampa:** 73 archivos «.webp» de SofaScore son PNG; la extensión se decide por los bytes y `web.py` ahora sirve también `.webp`. `creditos.html` no se toca hasta que el bloque nuevo sea el activo.
+- **Sin desplegar ni subir al VPS:** espera confirmación del titular.
+- **F7c (solo comprobado):** `/app/v1/firebase/preferences` guarda `language, analytics, diagnostics, push_enabled, ads_measurement`: NO hay preferencias por deporte. `GET /app/v1/plans` devuelve los planes activos de `plans`; la siembra (db/043) trae 3 activos con `duration_days` 30/90/180 (`club` inactivo, sin duración); producción es editable desde `/control`, no verificado ahí. `availability` NBA (`game['availability']`) = resumen del forecast: `state` (`reporte_aplicado`), `listed`, `used`, `no_history`, `unknown_player`, `unknown_team`, `report_*`, `teams_not_submitted`, más `missing_minutes_home/away`.
+
+
 
 ## 15-nov-2026 · Rediseño CyberCore de la app: auditoría y restos de F8 (`app/rediseno-f8-restos`)
 - La auditoría del #429 halló todo implementado salvo F7 (servidor), que queda anotado como pendiente; las entradas F0–F8 del 14-nov están al final de este archivo.
