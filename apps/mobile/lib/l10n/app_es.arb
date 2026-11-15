@@ -262,6 +262,182 @@
   "@alertsSuspended": {
     "description": "Estado de un jugador sancionado."
   },
+  "anAveragesLast10": "// Promedios · Últimos 10",
+  "anBttsShort": "AMBOS MARCAN",
+  "anDrawsCount": "{count} EMPATES",
+  "@anDrawsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "anGoalsDiff": "{gf} GF · {gc} GC",
+  "@anGoalsDiff": {
+    "placeholders": {
+      "gf": {
+        "type": "int"
+      },
+      "gc": {
+        "type": "int"
+      }
+    }
+  },
+  "anGoalsPerMatchShort": "GOLES / PARTIDO",
+  "anH2hMatchCount": "// {n} PARTIDOS",
+  "@anH2hMatchCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "anHowTheyArrive": "Cómo llegan",
+  "anLast5Matches": "// ÚLTIMOS 5 PARTIDOS",
+  "anLastMatch": "ÚLTIMO",
+  "anLeagueRound": "// {league} · JORNADA {round}",
+  "@anLeagueRound": {
+    "placeholders": {
+      "league": {
+        "type": "String"
+      },
+      "round": {
+        "type": "String"
+      }
+    }
+  },
+  "anMetricBtts": "AMBOS MARCAN",
+  "anMetricCleanSheet": "PORTERÍA A CERO",
+  "anMetricCorners": "CÓRNERS",
+  "anMetricGoalsAgainst": "GOLES EN CONTRA",
+  "anMetricGoalsFor": "GOLES A FAVOR",
+  "anMetricOver25": "MÁS DE 2,5 GOLES",
+  "anMetricShots": "TIROS",
+  "anMetricShotsOnTarget": "TIROS A PUERTA",
+  "anMetricXgAgainst": "xG EN CONTRA",
+  "anMetricXgFor": "xG A FAVOR",
+  "anNavForm": "Forma",
+  "anNavH2h": "Cara a cara",
+  "anNavStandings": "Tabla",
+  "anNavSummary": "Resumen",
+  "anNoForm": "Forma no disponible",
+  "anNoH2h": "Sin enfrentamientos previos registrados",
+  "anNoStandings": "Clasificación no disponible",
+  "anOver25Short": "MÁS DE 2,5",
+  "anPlayoff": "PLAY-OFF",
+  "anPointsOutOf": "{points} PTS DE 15",
+  "@anPointsOutOf": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "anPromotion": "ASCENSO",
+  "anRadarAttack": "ATAQUE",
+  "anRadarCorners": "CÓRNERS",
+  "anRadarCreation": "CREACIÓN",
+  "anRadarDefense": "DEFENSA",
+  "anRadarFinishing": "REMATE",
+  "anRelegation": "DESCENSO",
+  "anScopeAll": "TODOS",
+  "anScopeHomeAway": "CASA · FUERA",
+  "anScopeHomeAwayCaption": "EN CASA · FUERA",
+  "anScopeLast10Caption": "ÚLTIMOS 10 · 10",
+  "anSeenFrom": "Visto desde {team}",
+  "@anSeenFrom": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "anStandingsCalloutAhead": "{teamA} {posA}.º · {ptsA} pts · +{diff} sobre {teamB} ({posB}.º, {ptsB} pts)",
+  "@anStandingsCalloutAhead": {
+    "placeholders": {
+      "teamA": {
+        "type": "String"
+      },
+      "posA": {
+        "type": "int"
+      },
+      "ptsA": {
+        "type": "int"
+      },
+      "diff": {
+        "type": "int"
+      },
+      "teamB": {
+        "type": "String"
+      },
+      "posB": {
+        "type": "int"
+      },
+      "ptsB": {
+        "type": "int"
+      }
+    }
+  },
+  "anStandingsCalloutTied": "{teamA} y {teamB} empatados a {pts} pts",
+  "@anStandingsCalloutTied": {
+    "placeholders": {
+      "teamA": {
+        "type": "String"
+      },
+      "teamB": {
+        "type": "String"
+      },
+      "pts": {
+        "type": "int"
+      }
+    }
+  },
+  "anStandingsTitle": "Clasificación",
+  "anStreakLosses": "{count, plural, one{1 DERROTA} other{{count} DERROTAS SEGUIDAS}}",
+  "@anStreakLosses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "anStreakUnbeaten": "{count} SIN PERDER",
+  "@anStreakUnbeaten": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "anStreakWins": "{count, plural, one{1 VICTORIA} other{{count} VICTORIAS SEGUIDAS}}",
+  "@anStreakWins": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "anVenueAway": "FUERA",
+  "anVenueHome": "CASA",
+  "anViewAllMatches": "VER LOS {n} PARTIDOS",
+  "@anViewAllMatches": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "anWinsTeam": "{count} VICTORIAS {team}",
+  "@anWinsTeam": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "apiGoogleNotVerified": "Google no pudo verificar el acceso.",
   "apiInvalidResponse": "Respuesta no válida del servidor.",
   "apiInvalidSession": "Sesión no válida.",

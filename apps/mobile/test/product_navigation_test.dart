@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_profile.dart';
 import 'package:gobet/product/live_shell.dart';
@@ -16,6 +15,7 @@ import 'package:gobet/product/live_rewards.dart';
 import 'package:gobet/product/live_vip.dart';
 import 'package:gobet/product/live_forecast.dart';
 import 'package:gobet/product/live_widgets.dart';
+import 'package:gobet/product/qf_charts.dart';
 import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/qf_theme.dart';
 import 'package:gobet/product/sport_selector.dart';
@@ -761,7 +761,7 @@ void main() {
     await tester.tap(find.text('Análisis'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Promedios de 0'), findsOneWidget);
-    expect(find.byType(RadarChart), findsNothing);
+    expect(find.byType(QfRadar), findsNothing);
     expect(find.text('0 %'), findsNothing);
     await capture(tester, 'stats');
     await tester.tap(find.text('H2H'));
@@ -801,22 +801,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('RESUMEN DE PREDICCIÓN'), findsOneWidget);
     expect(find.text('37 %'), findsOneWidget);
-    expect(find.byType(RadarChart), findsOneWidget);
-    final radar = tester.widget<RadarChart>(find.byType(RadarChart));
-    expect(radar.data.titleCount, 6);
-    expect(radar.data.dataSets.first.dataEntries.first.value, 100);
-    expect(
-      radar.data.dataSets.last.dataEntries.first.value,
-      closeTo(.9 / 1.1 * 100, .001),
-    );
+    expect(find.byType(QfRadar), findsOneWidget);
+    final radar = tester.widget<QfRadar>(find.byType(QfRadar));
+    expect(radar.labels.length, 5);
+    expect(radar.a.length, 5);
+    expect(radar.b.length, 5);
     await capture(tester, 'stats_real_summary');
-    await tester.ensureVisible(find.text('ESTADÍSTICAS DEL EQUIPO'));
+    await tester.ensureVisible(find.text('CÓMO LLEGAN').first);
     await tester.pumpAndSettle();
     await capture(tester, 'stats_real_radar');
-    await tester.ensureVisible(find.text('COMPARACIÓN DE EQUIPOS'));
-    await tester.pumpAndSettle();
-    await capture(tester, 'stats_real_comparison');
-    await tester.ensureVisible(find.text('CARA A CARA'));
+    await tester.ensureVisible(find.text('CARA A CARA').last);
     await tester.pumpAndSettle();
     await capture(tester, 'stats_real_h2h');
     expect(tester.takeException(), isNull);

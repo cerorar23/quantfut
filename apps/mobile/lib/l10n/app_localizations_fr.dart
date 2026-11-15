@@ -260,6 +260,208 @@ class AppLocalizationsFr extends AppLocalizations {
   String get alertsSuspended => 'Suspendu';
 
   @override
+  String get anAveragesLast10 => '// Moyennes · 10 derniers';
+
+  @override
+  String get anBttsShort => 'LES DEUX MARQUENT';
+
+  @override
+  String anDrawsCount(int count) {
+    return '$count NULS';
+  }
+
+  @override
+  String anGoalsDiff(int gf, int gc) {
+    return '$gf BP · $gc BC';
+  }
+
+  @override
+  String get anGoalsPerMatchShort => 'BUTS / MATCH';
+
+  @override
+  String anH2hMatchCount(int n) {
+    return '// $n MATCHS';
+  }
+
+  @override
+  String get anHowTheyArrive => 'Dynamique';
+
+  @override
+  String get anLast5Matches => '// 5 DERNIERS MATCHS';
+
+  @override
+  String get anLastMatch => 'DERNIER';
+
+  @override
+  String anLeagueRound(String league, String round) {
+    return '// $league · JOURNÉE $round';
+  }
+
+  @override
+  String get anMetricBtts => 'LES DEUX ÉQUIPES MARQUENT';
+
+  @override
+  String get anMetricCleanSheet => 'CLEAN SHEET';
+
+  @override
+  String get anMetricCorners => 'CORNERS';
+
+  @override
+  String get anMetricGoalsAgainst => 'BUTS CONTRE';
+
+  @override
+  String get anMetricGoalsFor => 'BUTS POUR';
+
+  @override
+  String get anMetricOver25 => 'PLUS DE 2,5 BUTS';
+
+  @override
+  String get anMetricShots => 'TIRS';
+
+  @override
+  String get anMetricShotsOnTarget => 'TIRS CADRÉS';
+
+  @override
+  String get anMetricXgAgainst => 'xG CONTRE';
+
+  @override
+  String get anMetricXgFor => 'xG POUR';
+
+  @override
+  String get anNavForm => 'Forme';
+
+  @override
+  String get anNavH2h => 'Face à face';
+
+  @override
+  String get anNavStandings => 'Classement';
+
+  @override
+  String get anNavSummary => 'Résumé';
+
+  @override
+  String get anNoForm => 'Forme non disponible';
+
+  @override
+  String get anNoH2h => 'Aucun face-à-face enregistré';
+
+  @override
+  String get anNoStandings => 'Classement non disponible';
+
+  @override
+  String get anOver25Short => 'PLUS DE 2,5';
+
+  @override
+  String get anPlayoff => 'PLAY-OFF';
+
+  @override
+  String anPointsOutOf(int points) {
+    return '$points PTS SUR 15';
+  }
+
+  @override
+  String get anPromotion => 'PROMOTION';
+
+  @override
+  String get anRadarAttack => 'ATTAQUE';
+
+  @override
+  String get anRadarCorners => 'CORNERS';
+
+  @override
+  String get anRadarCreation => 'CRÉATION';
+
+  @override
+  String get anRadarDefense => 'DÉFENSE';
+
+  @override
+  String get anRadarFinishing => 'FINITION';
+
+  @override
+  String get anRelegation => 'RELÉGATION';
+
+  @override
+  String get anScopeAll => 'TOUS';
+
+  @override
+  String get anScopeHomeAway => 'DOM. · EXT.';
+
+  @override
+  String get anScopeHomeAwayCaption => 'À DOMICILE · À L\'EXTÉRIEUR';
+
+  @override
+  String get anScopeLast10Caption => '10 DERNIERS · 10';
+
+  @override
+  String anSeenFrom(String team) {
+    return 'Du point de vue de $team';
+  }
+
+  @override
+  String anStandingsCalloutAhead(
+    String teamA,
+    int posA,
+    int ptsA,
+    int diff,
+    String teamB,
+    int posB,
+    int ptsB,
+  ) {
+    return '$teamA ${posA}e · $ptsA pts · +$diff sur $teamB (${posB}e, $ptsB pts)';
+  }
+
+  @override
+  String anStandingsCalloutTied(String teamA, String teamB, int pts) {
+    return '$teamA et $teamB à égalité avec $pts pts';
+  }
+
+  @override
+  String get anStandingsTitle => 'Classement';
+
+  @override
+  String anStreakLosses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count DÉFAITES D\'AFFILÉE',
+      one: '1 DÉFAITE',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String anStreakUnbeaten(int count) {
+    return '$count SANS DÉFAITE';
+  }
+
+  @override
+  String anStreakWins(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count VICTOIRES D\'AFFILÉE',
+      one: '1 VICTOIRE',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get anVenueAway => 'EXT.';
+
+  @override
+  String get anVenueHome => 'DOM.';
+
+  @override
+  String anViewAllMatches(int n) {
+    return 'VOIR LES $n MATCHS';
+  }
+
+  @override
+  String anWinsTeam(int count, String team) {
+    return '$count VICTOIRES $team';
+  }
+
+  @override
   String get apiGoogleNotVerified =>
       'Google n\'a pas pu vérifier la connexion.';
 

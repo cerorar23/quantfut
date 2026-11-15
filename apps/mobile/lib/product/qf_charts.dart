@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_locale.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 
@@ -542,6 +543,9 @@ class QfFormResult {
     required this.opponent,
     required this.isHome,
     this.isLast = false,
+    this.opponentCrestUrl,
+    this.venueLabel,
+    this.tag,
   });
 
   final String result;
@@ -549,6 +553,9 @@ class QfFormResult {
   final String opponent;
   final bool isHome;
   final bool isLast;
+  final String? opponentCrestUrl;
+  final String? venueLabel;
+  final String? tag;
 }
 
 /// Fila de 5-6 píldoras de forma (G/E/P) con el último partido resaltado (§4).
@@ -556,12 +563,24 @@ class QfFormPills extends StatelessWidget {
   const QfFormPills({
     super.key,
     required this.results,
+    this.expanded = false,
   });
 
   final List<QfFormResult> results;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
+    if (expanded) {
+      return Row(
+        children: [
+          for (var i = 0; i < results.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            Expanded(child: _FormPillWidget(result: results[i])),
+          ],
+        ],
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -591,6 +610,123 @@ class _FormPillWidget extends StatelessWidget {
       color = QfColors.slate;
     } else {
       color = QfColors.magenta;
+    }
+
+    final isDetailed = result.opponentCrestUrl != null || result.venueLabel != null;
+
+    if (isDetailed) {
+      final ln = context.l10n;
+      final tagText = result.tag ?? (result.isLast ? ln.anLastMatch : '');
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        decoration: ShapeDecoration(
+          color: color.withValues(alpha: .12),
+          shape: CutCornerBorder(
+            cut: 6,
+            side: BorderSide(
+              color: result.isLast ? QfColors.cyan : color.withValues(alpha: .35),
+              width: result.isLast ? 2 : 1,
+            ),
+          ),
+          shadows: result.isLast
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: .3),
+                    blurRadius: 10,
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 12,
+              child: tagText.isNotEmpty
+                  ? Text(
+                      tagText,
+                      style: const TextStyle(
+                        fontFamily: qfDisplay,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: QfColors.cyan,
+                        letterSpacing: .8,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 3),
+            if (result.opponentCrestUrl != null && result.opponentCrestUrl!.isNotEmpty)
+              Image.network(
+                result.opponentCrestUrl!,
+                width: 22,
+                height: 22,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: Center(
+                    child: Text(
+                      result.opponent.isNotEmpty ? result.opponent.substring(0, 1) : '',
+                      style: const TextStyle(
+                        fontFamily: qfDisplay,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: QfColors.muted,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: Center(
+                  child: Text(
+                    result.opponent.isNotEmpty ? result.opponent.substring(0, 1) : '',
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: QfColors.muted,
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 3),
+            Text(
+              letter,
+              style: TextStyle(
+                fontFamily: qfDisplay,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              result.score,
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: QfColors.text,
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              result.venueLabel ?? (result.isHome ? 'CASA' : 'FUERA'),
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: QfColors.muted,
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     Widget pill = Container(

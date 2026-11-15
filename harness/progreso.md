@@ -1,6 +1,40 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4c completada (`app/rediseno-f4c-analisis-futbol`)
+
+- **Objetivo de F4c alcanzado:** Pestaña de Análisis de fútbol (`FootballAnalysis` en `lib/product/analysis_football.dart`) totalmente reimplementada con estética CyberCore conforme a `capturas/PartidoAnalisis.png` y `pantallas/Partido.dc.html`, integrando sub-navegación `QfSectionNav` («RESUMEN · FORMA · CARA A CARA · TABLA»), selector TODOS|CASA·FUERA, radar `QfRadar` de 5 ejes, 10 métricas enfrentadas con dominancia `QfDominanceDots` y barras divergentes `QfDivergingRow`, tarjetas de forma con `QfFormPills` expandidas de 5 partidos, histórico Cara a Cara con barra apilada `QfStackedBar` y botón de salto a H2H, y tabla de clasificación `QfStandingsTable` con leyenda y callout de puntos.
+- **Implementación y Arquitectura (`lib/product/analysis_football.dart`, `live_statistics.dart`, `live_detail.dart`, `qf_charts.dart`):**
+  - `FootballAnalysis`: `StatefulWidget` que recibe la ficha estructurada de fútbol y callback `onH2h`.
+  - **Sub-navegación `QfSectionNav`:** Segmentos CyberCore para desplazamiento directo a las 4 secciones; solo muestra las secciones con datos disponibles en la ficha.
+  - **Sección Resumen («CÓMO LLEGAN»):**
+    - Interruptor `TODOS | CASA·FUERA` con recálculo dinámico de estadísticas según ámbito (oculto si no hay promedios casa/fuera).
+    - Radar pentagonal `QfRadar` con normalización matemática rigurosa según §5.9 (`ataque = min(gf/2.5, 1)`, `creación = min(xf/2.5, 1)`, `remate = min(sp/7, 1)`, `córners = min(c/9, 1)`, `defensa = 1 - min(gc/2.5, 1)`, mínimo visual 0.08).
+    - Tira de dominancia de 10 puntos `QfDominanceDots` enfrentando las 10 métricas.
+    - 10 filas de barras divergentes `QfDivergingRow` con valores y etiquetas limpias, y tratamiento elegante «—» para valores nulos (p.ej. xG no reportado).
+  - **Sección Forma:**
+    - Tarjeta por equipo con `QfFormPills` expandidas en fila de 5 partidos (orden invertido de cronología para mostrar el más reciente a la derecha con tag `ÚLTIMO`), escudo rival, resultado con color de victoria/empate/derrota y letra de sede (`C` / `F`).
+    - Chips de racha invicta / victorias consecutivas y balance de goles (`GF: N · GC: M`).
+  - **Sección Cara a Cara (H2H):**
+    - Fila de victorias locales, empates y victorias visitantes.
+    - Barra horizontal proporcional `QfStackedBar` con tres colores CyberCore (`#05FFA1`, `#2A2D3A`, `#FF2A85`).
+    - Chips de goles por partido, ambos marcan (%) y más de 2.5 (%).
+    - Últimos 3 enfrentamientos directos en formato compacto.
+    - Botón CyberCore `VER LOS N PARTIDOS` que dispara la transición a la pestaña Cara a cara (`onH2h`).
+  - **Sección Clasificación (Tabla):**
+    - `QfStandingsTable` con filas enfocadas alrededor de ambos contendientes, separador CyberCore `···` si no son contiguos, leyenda de zonas coloreadas (`ascenso/champions` verde, `play-off/promoción` cian, `descenso` magenta), y callout dinámico destacando la diferencia de puntos y posiciones entre los dos equipos.
+  - **Reemplazo de `fl_chart` RadarChart:** Eliminada la dependencia del radar heredado en `live_statistics.dart` sustituyéndolo por el nuevo `QfRadar` CyberCore; `MatchStatistics` delega fluidamente en `FootballAnalysis`.
+- **Internacionalización (l10n):**
+  - 51 claves de traducción agregadas en los 6 idiomas (`es, en, pt, fr, it, de`) vía `tool/l10n_add.py` (`anNav*`, `anMetric*`, `anRadar*`, `anStreak*`, `anStandings*`, etc.).
+  - Cumplimiento estricto de `test/l10n_test.dart` sin textos fijos en español en la interfaz.
+- **Suites de pruebas:**
+  - `test/analysis_football_test.dart`: 13 pruebas exhaustivas (fixture real Mallorca vs Córdoba, variantes sin tabla, sin forma, sin H2H, xG null, y responsividad multilingüe a 360 y 390 dp).
+  - `test/product_navigation_test.dart`: 42 pruebas adaptadas al nuevo `QfRadar` y pasando limpias.
+  - `test/l10n_test.dart`: 6 pruebas pasando al 100%.
+  - Suite completa de la app: 618 pruebas pasando (`618/618 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F4d — Análisis de NBA (`SportAnalysisTab` para baloncesto, 7 filas de comparativa, forma con margen, H2H y clasificación 15 casillas).
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4b completada (`app/rediseno-f4b-pronostico-props`)
 
 - **Objetivo de F4b alcanzado:** Pestaña de Pronósticos renovada con tarjeta destacada «PICK DESTACADO · GRATIS» CyberCore (`_FeaturedCard`), cabecera «MERCADOS DEL MODELO» y lista estilizada `_MarketRow` con logos/avatares y tipografía CyberCore. Nueva pestaña de Props NBA (`SportPropsTab`) con filtros chip (`TODOS · PUNTOS · REBOTES · ASIST. · TRIPLES`), tarjetas de props de jugadores (`SportPropCard`) con avatares circulares de 52 dp y emblemas de equipo superpuestos de 20 dp, nombre en `qfDisplay`, selección en verde CyberCore o difuminada con ImageFilter blur si está bloqueado, barra de últimos 5 partidos y soporte para cuotas u opción VIP.

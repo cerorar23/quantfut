@@ -514,6 +514,326 @@ abstract class AppLocalizations {
   /// **'Sancionado'**
   String get alertsSuspended;
 
+  /// No description provided for @anAveragesLast10.
+  ///
+  /// In es, this message translates to:
+  /// **'// Promedios · Últimos 10'**
+  String get anAveragesLast10;
+
+  /// No description provided for @anBttsShort.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBOS MARCAN'**
+  String get anBttsShort;
+
+  /// No description provided for @anDrawsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} EMPATES'**
+  String anDrawsCount(int count);
+
+  /// No description provided for @anGoalsDiff.
+  ///
+  /// In es, this message translates to:
+  /// **'{gf} GF · {gc} GC'**
+  String anGoalsDiff(int gf, int gc);
+
+  /// No description provided for @anGoalsPerMatchShort.
+  ///
+  /// In es, this message translates to:
+  /// **'GOLES / PARTIDO'**
+  String get anGoalsPerMatchShort;
+
+  /// No description provided for @anH2hMatchCount.
+  ///
+  /// In es, this message translates to:
+  /// **'// {n} PARTIDOS'**
+  String anH2hMatchCount(int n);
+
+  /// No description provided for @anHowTheyArrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo llegan'**
+  String get anHowTheyArrive;
+
+  /// No description provided for @anLast5Matches.
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS 5 PARTIDOS'**
+  String get anLast5Matches;
+
+  /// No description provided for @anLastMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMO'**
+  String get anLastMatch;
+
+  /// No description provided for @anLeagueRound.
+  ///
+  /// In es, this message translates to:
+  /// **'// {league} · JORNADA {round}'**
+  String anLeagueRound(String league, String round);
+
+  /// No description provided for @anMetricBtts.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBOS MARCAN'**
+  String get anMetricBtts;
+
+  /// No description provided for @anMetricCleanSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'PORTERÍA A CERO'**
+  String get anMetricCleanSheet;
+
+  /// No description provided for @anMetricCorners.
+  ///
+  /// In es, this message translates to:
+  /// **'CÓRNERS'**
+  String get anMetricCorners;
+
+  /// No description provided for @anMetricGoalsAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'GOLES EN CONTRA'**
+  String get anMetricGoalsAgainst;
+
+  /// No description provided for @anMetricGoalsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'GOLES A FAVOR'**
+  String get anMetricGoalsFor;
+
+  /// No description provided for @anMetricOver25.
+  ///
+  /// In es, this message translates to:
+  /// **'MÁS DE 2,5 GOLES'**
+  String get anMetricOver25;
+
+  /// No description provided for @anMetricShots.
+  ///
+  /// In es, this message translates to:
+  /// **'TIROS'**
+  String get anMetricShots;
+
+  /// No description provided for @anMetricShotsOnTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'TIROS A PUERTA'**
+  String get anMetricShotsOnTarget;
+
+  /// No description provided for @anMetricXgAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'xG EN CONTRA'**
+  String get anMetricXgAgainst;
+
+  /// No description provided for @anMetricXgFor.
+  ///
+  /// In es, this message translates to:
+  /// **'xG A FAVOR'**
+  String get anMetricXgFor;
+
+  /// No description provided for @anNavForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Forma'**
+  String get anNavForm;
+
+  /// No description provided for @anNavH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Cara a cara'**
+  String get anNavH2h;
+
+  /// No description provided for @anNavStandings.
+  ///
+  /// In es, this message translates to:
+  /// **'Tabla'**
+  String get anNavStandings;
+
+  /// No description provided for @anNavSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get anNavSummary;
+
+  /// No description provided for @anNoForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Forma no disponible'**
+  String get anNoForm;
+
+  /// No description provided for @anNoH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin enfrentamientos previos registrados'**
+  String get anNoH2h;
+
+  /// No description provided for @anNoStandings.
+  ///
+  /// In es, this message translates to:
+  /// **'Clasificación no disponible'**
+  String get anNoStandings;
+
+  /// No description provided for @anOver25Short.
+  ///
+  /// In es, this message translates to:
+  /// **'MÁS DE 2,5'**
+  String get anOver25Short;
+
+  /// No description provided for @anPlayoff.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAY-OFF'**
+  String get anPlayoff;
+
+  /// No description provided for @anPointsOutOf.
+  ///
+  /// In es, this message translates to:
+  /// **'{points} PTS DE 15'**
+  String anPointsOutOf(int points);
+
+  /// No description provided for @anPromotion.
+  ///
+  /// In es, this message translates to:
+  /// **'ASCENSO'**
+  String get anPromotion;
+
+  /// No description provided for @anRadarAttack.
+  ///
+  /// In es, this message translates to:
+  /// **'ATAQUE'**
+  String get anRadarAttack;
+
+  /// No description provided for @anRadarCorners.
+  ///
+  /// In es, this message translates to:
+  /// **'CÓRNERS'**
+  String get anRadarCorners;
+
+  /// No description provided for @anRadarCreation.
+  ///
+  /// In es, this message translates to:
+  /// **'CREACIÓN'**
+  String get anRadarCreation;
+
+  /// No description provided for @anRadarDefense.
+  ///
+  /// In es, this message translates to:
+  /// **'DEFENSA'**
+  String get anRadarDefense;
+
+  /// No description provided for @anRadarFinishing.
+  ///
+  /// In es, this message translates to:
+  /// **'REMATE'**
+  String get anRadarFinishing;
+
+  /// No description provided for @anRelegation.
+  ///
+  /// In es, this message translates to:
+  /// **'DESCENSO'**
+  String get anRelegation;
+
+  /// No description provided for @anScopeAll.
+  ///
+  /// In es, this message translates to:
+  /// **'TODOS'**
+  String get anScopeAll;
+
+  /// No description provided for @anScopeHomeAway.
+  ///
+  /// In es, this message translates to:
+  /// **'CASA · FUERA'**
+  String get anScopeHomeAway;
+
+  /// No description provided for @anScopeHomeAwayCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'EN CASA · FUERA'**
+  String get anScopeHomeAwayCaption;
+
+  /// No description provided for @anScopeLast10Caption.
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS 10 · 10'**
+  String get anScopeLast10Caption;
+
+  /// No description provided for @anSeenFrom.
+  ///
+  /// In es, this message translates to:
+  /// **'Visto desde {team}'**
+  String anSeenFrom(String team);
+
+  /// No description provided for @anStandingsCalloutAhead.
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} {posA}.º · {ptsA} pts · +{diff} sobre {teamB} ({posB}.º, {ptsB} pts)'**
+  String anStandingsCalloutAhead(
+    String teamA,
+    int posA,
+    int ptsA,
+    int diff,
+    String teamB,
+    int posB,
+    int ptsB,
+  );
+
+  /// No description provided for @anStandingsCalloutTied.
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} y {teamB} empatados a {pts} pts'**
+  String anStandingsCalloutTied(String teamA, String teamB, int pts);
+
+  /// No description provided for @anStandingsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Clasificación'**
+  String get anStandingsTitle;
+
+  /// No description provided for @anStreakLosses.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 DERROTA} other{{count} DERROTAS SEGUIDAS}}'**
+  String anStreakLosses(int count);
+
+  /// No description provided for @anStreakUnbeaten.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} SIN PERDER'**
+  String anStreakUnbeaten(int count);
+
+  /// No description provided for @anStreakWins.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 VICTORIA} other{{count} VICTORIAS SEGUIDAS}}'**
+  String anStreakWins(int count);
+
+  /// No description provided for @anVenueAway.
+  ///
+  /// In es, this message translates to:
+  /// **'FUERA'**
+  String get anVenueAway;
+
+  /// No description provided for @anVenueHome.
+  ///
+  /// In es, this message translates to:
+  /// **'CASA'**
+  String get anVenueHome;
+
+  /// No description provided for @anViewAllMatches.
+  ///
+  /// In es, this message translates to:
+  /// **'VER LOS {n} PARTIDOS'**
+  String anViewAllMatches(int n);
+
+  /// No description provided for @anWinsTeam.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} VICTORIAS {team}'**
+  String anWinsTeam(int count, String team);
+
   /// No description provided for @apiGoogleNotVerified.
   ///
   /// In es, this message translates to:
