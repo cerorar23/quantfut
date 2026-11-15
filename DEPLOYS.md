@@ -33,6 +33,20 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-15 14:55 UTC · Tenis: alias para ATP Tour Finals y WTA Finals · imagen `quantfut-tenis:sp-finals-fix` (PR #432)
+- **Motivo:** El proveedor de fixtures publica las finales de temporada como "Tour Finals Turin" y "WTA Tour Finals", mientras que el dataset canónico los cataloga como "ATP Finals" y "WTA Finals". Por falta de coincidencia en `Directory.tournament()`, el motor de sellado descartaba los eventos con `Tournament unknown`, dejando vacía la cartelera de tenis de hoy 15-nov.
+- **Qué se tocó:**
+  - `apps/tennis/tennis_intake_v1/__init__.py`: se añade diccionario `TOURNAMENT_ALIASES` mapeando variantes de "Tour Finals Turin", "Nitto ATP Finals" y "WTA Tour Finals" a "ATP Finals" y "WTA Finals".
+  - `apps/tennis/tests/test_intake_v1.py`: nueva prueba `test_tournament_aliases` (446 pruebas de tenis pasando).
+  - Servidor: imagen `quantfut-tenis:sp-finals-fix` construida en `~/quantfut-tenis/deployments/finals-alias-20261115/ctx` basada en `quantfut-tenis:sp-258629e` con el `__init__.py` actualizado.
+  - `~/quantfut-tenis/IMAGE` apunta a `quantfut-tenis:sp-finals-fix`. Respaldo en `~/quantfut-tenis/backup/IMAGE.antes_finals_20261115` (`quantfut-tenis:sp-258629e`).
+- **Verificado:**
+  - `seal_new` ejecutado con éxito en el servidor: Ben Shelton vs. Arthur Fils (ATP Tour Finals) y Elina Svitolina vs. Mirra Andreeva (WTA Tour Finals) sellados con cuotas en vivo de PropLine y 55 mercados calculados.
+  - `publicar_tenis_web.py` ejecutado: 29 eventos en `tennis.json` (sube de 27).
+  - `publicar_tenis_estadisticas.py` ejecutado: estadísticas de jugadores generadas para los nuevos partidos.
+  - Verificado en producción en `https://pronosticosdeportivos.pro/web/deportes/tenis`: los 2 partidos programados aparecen en la cartelera con estado `scheduled`, sello SHA-256 válido y sus mercados y estadísticas disponibles. El partido de Zverev vs. Jódar (iniciado a las 07:00 CDMX) se omite correctamente por la regla estricta de no sellado retroactivo.
+- **Vuelta atrás:** `cp -p ~/quantfut-tenis/backup/IMAGE.antes_finals_20261115 ~/quantfut-tenis/IMAGE`.
+
 ### 2026-11-15 14:52 UTC · Fix de fotos de jugadores y asignación de equipos en disponibilidad NBA · nba-api (PR #431; `main` `4a4392f3`)
 - **Motivo:** Las fotos de los jugadores en la pestaña de disponibilidad de la NBA no cargaban en la web (aparecía la silueta predeterminada del CDN de la NBA) porque `nba-api` devolvía identificadores internos del proveedor de cuotas (`id_en_fuente` de rotowire, ej. `3572` para Embiid) en vez del `personId` oficial de la NBA (`203954`). Adicionalmente, jugadores ausentes como Furphy, McConnell y Nesmith se repartían 50/50 arbitrariamente al equipo local por falta de vinculación de equipo.
 - **Servicio `nba-api`:** Imagen `nba-api:disponibilidad-4a4392f3` construida sobre `nba-api:regla-8e9fe9a2` en `~/quantfut/releases/nba-api-4a4392f3/`. Consulta en `nba.entidad` el `id_en_fuente` oficial numérico (`fuente = 'nba_oficial'`) vinculando por `canonica_id`, `entidad_id` o `nombre_norm`. Resuelve el equipo real del jugador cruzando con las métricas históricas de `equipo_del_jugador` de la entidad oficial. Contenedor anterior parado como `nba-api-antes-disponibilidad-4a4392f3` (restart: no) y nuevo contenedor desplegado a las 14:52 UTC (fuera de :11 y :41) con redes `nba-api-red` y `nba-red`.
