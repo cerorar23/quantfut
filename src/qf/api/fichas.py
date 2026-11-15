@@ -275,6 +275,34 @@ def _alineaciones(match_id: str) -> dict:
                         "capturada": f["captured_at"]} for f in filas}
 
 
+def _posiciones(jugadores: list[tuple[int, str | None]]) -> dict[tuple[int, str], str]:
+    """
+    Posición (G|D|M|F) de cada jugador según su último once conocido EN LA MISMA
+    FUENTE: los ids de SofaScore/FotMob no son los de API-Football. Sin once
+    previo no hay posición (None); no se infiere.
+    """
+    ids = sorted({pid for pid, _ in jugadores if pid})
+    if not ids:
+        return {}
+    filas = query(
+        """SELECT DISTINCT ON (pid, src) pid, src, pos FROM (
+               SELECT (p->>'player_id')::bigint AS pid,
+                      COALESCE(p->>'src', 'api_football') AS src,
+                      upper(left(p->>'pos', 1)) AS pos, m.kickoff_utc
+               FROM lineups l
+               JOIN matches m ON m.match_id = l.match_id
+               CROSS JOIN LATERAL jsonb_array_elements(l.starters) p
+               WHERE jsonb_typeof(l.starters) = 'array'
+                 AND p->>'player_id' ~ '^[0-9]+$'
+                 AND (p->>'player_id')::bigint = ANY(%s)
+                 AND p->>'pos' IS NOT NULL) t
+           WHERE pos IN ('G', 'D', 'M', 'F')
+           ORDER BY pid, src, kickoff_utc DESC""",
+        (ids,),
+    )
+    return {(r["pid"], r["src"]): r["pos"] for r in filas}
+
+
 def _bajas(match_id: str) -> dict | None:
     """
     Bajas de la ÚLTIMA comprobación. Cada fila lleva su propia hora de
@@ -295,14 +323,26 @@ def _bajas(match_id: str) -> dict | None:
         return salida
     previa = (log[1]["captured_at"] if len(log) > 1
               else datetime(1970, 1, 1, tzinfo=timezone.utc))
-    for f in query(
-        """SELECT side, player_name, status_type, reason FROM injuries
+    filas = query(
+        """SELECT side, player_id, player_name, status_type, reason, source,
+                  expected_return
+           FROM injuries
            WHERE match_id = %s AND captured_at > %s AND captured_at <= %s
            ORDER BY side, player_name""",
         (match_id, previa, ultima["captured_at"]),
-    ):
-        salida[f["side"]].append({"jugador": f["player_name"],
-                                  "tipo": f["status_type"], "motivo": f["reason"]})
+    )
+    posiciones = _posiciones([(f["player_id"], f["source"]) for f in filas])
+    for f in filas:
+        fuente = f["source"] or "api_football"
+        regreso = f["expected_return"]
+        salida[f["side"]].append({
+            "jugador": f["player_name"], "tipo": f["status_type"],
+            "motivo": f["reason"],
+            "regreso_fecha": regreso.isoformat() if regreso else None,
+            "jugador_id": f["player_id"],
+            "foto": lineup_photo({"src": fuente, "player_id": f["player_id"]}),
+            "posicion": posiciones.get((f["player_id"], fuente)),
+        })
     return salida
 
 

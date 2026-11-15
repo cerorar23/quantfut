@@ -243,3 +243,60 @@ def test_ultimo_once_se_formatea_sin_inventar():
     assert fichas._formatear_once(None) is None
     assert fichas._formatear_once({**fila, "starters": []}) is None
     assert fichas._formatear_once({**fila, "starters": [{"pos": "M"}]}) is None
+
+
+# --- F7a: bajas con regreso, id, foto y posición ---------------------------------
+
+def _bajas_con(monkeypatch, bajas, posiciones):
+    t1 = datetime(2026, 9, 20, 10, tzinfo=timezone.utc)
+
+    def falsa(sql, params=()):
+        if "injuries_capture_log" in sql:
+            return [{"captured_at": t1, "n_reported": len(bajas)}]
+        if "FROM injuries" in sql:
+            return bajas
+        if "FROM lineups" in sql:
+            return posiciones
+        raise AssertionError(sql)
+
+    monkeypatch.setattr(fichas, "query", falsa)
+    return fichas._bajas("m1")
+
+
+def _baja(pid, fuente, regreso=None, side="home"):
+    return {"side": side, "player_id": pid, "player_name": f"J{pid}",
+            "status_type": "Injured", "reason": "Knock", "source": fuente,
+            "expected_return": regreso}
+
+
+def test_baja_lleva_regreso_id_foto_y_posicion(monkeypatch):
+    from datetime import date
+    r = _bajas_con(monkeypatch,
+                   [_baja(7, "sofascore", date(2026, 12, 3)), _baja(9, "api_football")],
+                   [{"pid": 7, "src": "sofascore", "pos": "D"},
+                    {"pid": 9, "src": "api_football", "pos": "G"}])
+    a, b = r["home"]
+    assert a["jugador"] == "J7" and a["tipo"] == "Injured" and a["motivo"] == "Knock"
+    assert a["regreso_fecha"] == "2026-12-03" and a["jugador_id"] == 7
+    assert a["foto"] and a["posicion"] == "D"
+    assert b["regreso_fecha"] is None and b["foto"] and b["posicion"] == "G"
+
+
+def test_baja_fotmob_no_tiene_foto_y_sin_once_no_hay_posicion(monkeypatch):
+    r = _bajas_con(monkeypatch, [_baja(5, "fotmob")], [])
+    baja = r["home"][0]
+    assert baja["foto"] is None and baja["posicion"] is None
+    assert baja["jugador_id"] == 5 and baja["regreso_fecha"] is None
+
+
+def test_la_posicion_no_cruza_fuentes(monkeypatch):
+    """El mismo número en otra fuente es otro jugador."""
+    r = _bajas_con(monkeypatch, [_baja(7, "sofascore")],
+                   [{"pid": 7, "src": "api_football", "pos": "F"}])
+    assert r["home"][0]["posicion"] is None
+
+
+def test_baja_sin_source_se_trata_como_api_football(monkeypatch):
+    r = _bajas_con(monkeypatch, [_baja(3, None)],
+                   [{"pid": 3, "src": "api_football", "pos": "M"}])
+    assert r["home"][0]["posicion"] == "M" and r["home"][0]["foto"]
