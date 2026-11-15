@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 15-nov-2026 · Reto escalera: dos retos con el mismo partido (retos #23 y #24) → candado común de elección (`fix/escalera-candado-eleccion`)
+
+- **Causa:** carrera entre el job diario (09:00 UTC) y el reemplazo intradía (`*/5`, también a las 09:00). Cada uno lee los escalones ocupados y elige ~50 s después. A las 09:00:51 el reemplazo anuló el escalón 4 del reto #23 (Langmo–Holmgren, 6 h sin resultado) y eligió Clarke–Nordquist; el diario, que había leído el estado antes, eligió el mismo partido para el #24. Insertaron con 0,26 s de diferencia (09:01:41) sin verse. La regla «un partido no se repite entre retos» (`planificar`/`ocupados`) estaba bien; lo que faltaba era que solo un proceso eligiera a la vez. El `flock` del cron solo protegía al reemplazo de sí mismo.
+- **Decisión:** candado de Postgres (`pg_advisory_xact_lock`, `escalera_datos._turno`) alrededor de `select_and_persist` y `reemplazar_nulos`; el segundo espera y lee el estado ya con el escalón del primero. En la base y no en un archivo para que valga también si algún día corren en contenedores distintos. Los ensayos (`dry_run`) no lo toman.
+- **Lo que no se toca:** los escalones 5 del #23 y 4 del #24 están sellados e inmutables; siguen los dos con Clarke–Nordquist hasta liquidarse.
+
 ## 15-nov-2026 · Fix alineaciones en vivo: soporte para claves FotMob (name, number) en QfPitch (`fix/mobile-lineup-player-keys`)
 
 - **Causa resuelta:** En partidos con alineación en vivo (desde FotMob o SofaScore), la tabla `lineups.starters` almacena claves en inglés (`name`, `number`, `pos`), mientras que `PitchPlayer.fromJson` leía únicamente `json['nombre']` y `json['numero']`. Esto provocaba que `player.name` fuera una cadena vacía, resultando en nombres ausentes bajo los avatares, fallback al símbolo `?` en lugar de las iniciales reales, y dorsal `0` en todos los jugadores. Además, el subtítulo del equipo mostraba un punto colgante (`Tenerife · `) al no haber rival histórico en partidos del día.
