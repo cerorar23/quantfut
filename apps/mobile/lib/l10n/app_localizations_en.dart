@@ -1931,6 +1931,88 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String nbaInjuriesBadgeBajasDudas(int bajas, int dudas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      bajas,
+      locale: localeName,
+      other: '$bajas out',
+      one: '$bajas out',
+    );
+    return '$_temp0 · $dudas questionable';
+  }
+
+  @override
+  String nbaInjuriesBadgeBajasOnly(int bajas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      bajas,
+      locale: localeName,
+      other: '$bajas out',
+      one: '$bajas out',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nbaInjuriesBadgeDudasOnly(int dudas) {
+    return '$dudas questionable';
+  }
+
+  @override
+  String get nbaInjuriesClean =>
+      'No suspensions or injury absences on the official report.';
+
+  @override
+  String get nbaInjuriesFullRoster => 'Full roster';
+
+  @override
+  String nbaInjuriesImpactMinutes(String team) {
+    return 'Minutes · $team';
+  }
+
+  @override
+  String nbaInjuriesImpactPoints(String team) {
+    return 'Points · $team';
+  }
+
+  @override
+  String get nbaInjuriesImpactTitle => 'Estimated model impact from absences';
+
+  @override
+  String get nbaInjuriesNoReason => 'No reason reported';
+
+  @override
+  String get nbaInjuriesNotYetSubmitted =>
+      'Report not yet submitted to the league by the team.';
+
+  @override
+  String get nbaInjuriesPdfLink => 'Official NBA report (PDF)';
+
+  @override
+  String get nbaInjuriesSub =>
+      'Official NBA availability report issued before the game.';
+
+  @override
+  String get nbaInjuriesTitle => 'Injuries and suspensions';
+
+  @override
+  String get nbaInjuryStatusAvailable => 'Available';
+
+  @override
+  String get nbaInjuryStatusDoubtful => 'Doubtful';
+
+  @override
+  String get nbaInjuryStatusOut => 'Out';
+
+  @override
+  String get nbaInjuryStatusProbable => 'Probable';
+
+  @override
+  String get nbaInjuryStatusQuestionable => 'Questionable';
+
+  @override
+  String get nbaInjuryStatusSuspended => 'Suspended';
+
+  @override
   String nbaLastSeason(String record) {
     return 'Last season $record';
   }

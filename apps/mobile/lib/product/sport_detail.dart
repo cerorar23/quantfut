@@ -78,6 +78,8 @@ class SportDetail extends StatefulWidget {
 class _SportDetailState extends State<SportDetail> {
   int tab = 0;
   late final Future<JsonMap?> stats;
+  Future<JsonMap?>? _availability;
+  Future<JsonMap?> get availability => _availability ??= _loadAvailability();
 
   @override
   void initState() {
@@ -88,6 +90,19 @@ class _SportDetailState extends State<SportDetail> {
   SportEvent get e => widget.event;
   bool get nba => e.sport == kNba;
   Color get accent => sportCatalog.spec(e.sport).accent;
+
+  /// Disponibilidad oficial NBA (lesiones, suspensiones y PDF de la liga).
+  Future<JsonMap?> _loadAvailability() async {
+    if (!nba) return null;
+    try {
+      final path =
+          '/nba/v1/partido/${Uri.encodeComponent(e.id)}/disponibilidad';
+      final r = await widget.api.request(path);
+      return r is Map<String, dynamic> ? r : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Estadísticas públicas del partido; cualquier fallo (404 incluido) es «no hay».
   Future<JsonMap?> _loadStats() async {
@@ -151,7 +166,12 @@ class _SportDetailState extends State<SportDetail> {
             api: widget.api,
             images: widget.images,
           ),
-          _ => SportAlerts(event: e),
+          _ => SportAlerts(
+            event: e,
+            availability: availability,
+            api: widget.api,
+            images: widget.images,
+          ),
         };
       }
       return switch (tab) {
@@ -175,7 +195,12 @@ class _SportDetailState extends State<SportDetail> {
           api: widget.api,
           images: widget.images,
         ),
-        _ => SportAlerts(event: e),
+        _ => SportAlerts(
+          event: e,
+          availability: availability,
+          api: widget.api,
+          images: widget.images,
+        ),
       };
     }
 
