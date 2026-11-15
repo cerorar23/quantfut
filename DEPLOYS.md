@@ -43,6 +43,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - **Sin verificar:** móvil real, la app Flutter (no se tocó) y las versiones `en`/`pt`.
 - Vuelta atrás (`quantfut-api:e8c6757d` sigue en el host): `cd ~/quantfut && cp -p releases/compose-antes-20261115-094855.yml docker-compose.yml && cp -p ~/respaldos/historial_neto_20261115/frontend_antes/{app.js,index.html} frontend/ && docker compose up -d --no-deps --no-build --force-recreate api` (fuera de :11 y :41).
 
+### 2026-11-15 15:09 UTC · Reto escalera: candado común de elección · worker `quantfut-worker:d156e7ae` (PR #434; `main` `d156e7ae`)
+- **Motivo:** los retos #23 y #24 recibieron el mismo partido (Clarke–Nordquist) porque el job diario de las 09:00 UTC y el reemplazo intradía (`*/5`) eligieron a la vez. `escalera_datos._turno` (`pg_advisory_xact_lock`) los serializa.
+- **Qué se tocó:** solo el worker (`scripts/deploy.sh construir|ensayo|desplegar worker`; ensayo sin módulos con error). Antes de desplegar, `estado` daba 1 archivo distinto (`publish/escalera_datos.py`, el del cambio). Corría `5473bbde`. API sin tocar. Recreado en el minuto :08, sin `python -m` en curso.
+- **Verificado:** contenedor `Up` con `quantfut-worker:d156e7ae`; la pasada del reemplazo de las 15:10 UTC tomó el candado y terminó en `sin_reemplazos` sin traza. Sin verificar: una coincidencia real diario + reemplazo (primera ocasión, 09:00 UTC del 16-nov).
+- **No cambia:** los escalones 5 del #23 y 4 del #24, ya sellados, siguen con el mismo partido.
+- **Vuelta atrás:** `cd ~/quantfut && cp -p releases/compose-antes-20261115-090851.yml docker-compose.yml && docker compose up -d --no-deps --no-build worker`.
 
 ### 2026-11-15 14:55 UTC · Tenis: alias para ATP Tour Finals y WTA Finals · imagen `quantfut-tenis:sp-finals-fix` (PR #432)
 - **Motivo:** El proveedor de fixtures publica las finales de temporada como "Tour Finals Turin" y "WTA Tour Finals", mientras que el dataset canónico los cataloga como "ATP Finals" y "WTA Finals". Por falta de coincidencia en `Directory.tournament()`, el motor de sellado descartaba los eventos con `Tournament unknown`, dejando vacía la cartelera de tenis de hoy 15-nov.
