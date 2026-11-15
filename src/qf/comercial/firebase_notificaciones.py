@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from ..db import conn
 from .firebase import admin_app
 
+SPORTS = ("futbol", "nba", "tenis")
 _MATCH = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
 _TEXT = {
     "es": ("Nuevo aviso de QuantFut", "Abre la app para consultar la información disponible."),
@@ -26,8 +27,13 @@ _TEXT = {
 
 
 def enqueue(account_id: int, event_key: str, expires_at: datetime,
-            match_id: str | None = None) -> int:
-    """Only trusted server code may enqueue an already-authorized publication."""
+            match_id: str | None = None, sport: str | None = None) -> int:
+    """Only trusted server code may enqueue an already-authorized publication.
+
+    `sport` ('futbol'|'nba'|'tenis') respeta `firebase_preferences.push_sports`; sin deporte el aviso es
+    general y no se filtra. El aviso queda en la bandeja aunque el push de ese deporte esté apagado."""
+    if sport is not None and sport not in SPORTS:
+        raise ValueError("Invalid sport")
     if not event_key or len(event_key) > 200:
         raise ValueError("Invalid event key")
     if expires_at.tzinfo is None or expires_at <= datetime.now(timezone.utc):
@@ -38,10 +44,10 @@ def enqueue(account_id: int, event_key: str, expires_at: datetime,
         prefs = c.execute("SELECT language FROM firebase_preferences WHERE account_id=%s", (account_id,)).fetchone()
         title, body = _TEXT.get(prefs["language"] if prefs else "es", _TEXT["es"])
         notification = c.execute(
-            """INSERT INTO account_notifications (account_id,event_key,title,body,match_id,expires_at)
-               VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (account_id,event_key)
+            """INSERT INTO account_notifications (account_id,event_key,title,body,match_id,expires_at,sport)
+               VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (account_id,event_key)
                DO NOTHING RETURNING notification_id""",
-            (account_id, event_key, title, body, match_id, expires_at)).fetchone()
+            (account_id, event_key, title, body, match_id, expires_at, sport)).fetchone()
         if not notification:
             return c.execute("SELECT notification_id FROM account_notifications WHERE account_id=%s AND event_key=%s",
                              (account_id, event_key)).fetchone()["notification_id"]
@@ -52,7 +58,8 @@ def enqueue(account_id: int, event_key: str, expires_at: datetime,
                JOIN firebase_preferences p USING (account_id)
                JOIN accounts a USING (account_id)
                WHERE d.account_id=%s AND d.enabled AND p.push_enabled AND a.status='active'
-               ON CONFLICT DO NOTHING""", (notification_id, account_id))
+               AND (%s::text IS NULL OR p.push_sports IS NULL OR %s::text = ANY(p.push_sports))
+               ON CONFLICT DO NOTHING""", (notification_id, account_id, sport, sport))
         return notification_id
 
 
@@ -94,6 +101,7 @@ def deliver(limit: int = 30) -> dict:
                    JOIN accounts a USING(account_id)
                    JOIN account_notifications n ON n.notification_id=%s AND n.account_id=d.account_id
                    WHERE d.installation_id=%s AND d.account_id=%s AND d.enabled AND p.push_enabled
+                   AND (n.sport IS NULL OR p.push_sports IS NULL OR n.sport = ANY(p.push_sports))
                    AND a.status='active' AND n.expires_at>now() FOR UPDATE OF d,p,a""",
                 (item["notification_id"], item["installation_id"], item["account_id"])).fetchone()
             if not row:

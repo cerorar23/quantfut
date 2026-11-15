@@ -1,6 +1,11 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+
+## 15-nov-2026 · Avisos push por deporte (F7c): el servidor guarda `push_sports` y la app lo usa (`api/avisos-por-deporte`)
+- **Decisión:** `NULL` = todos los deportes (cuentas y apps antiguas no cambian), lista vacía = ninguno; el aviso sin `sport` es general y no se filtra. El filtro vive en SQL en `enqueue` y se vuelve a comprobar en `deliver` (si el usuario apaga un deporte con avisos ya en cola, no salen).
+- Un aviso de un deporte apagado **sigue en la bandeja** (solo se evita el push): la bandeja es consulta, no interrupción.
+- `enqueue` no tiene llamadores en `src/`: el envío de avisos sigue sin ponerse en marcha; esto solo prepara el filtro para cuando se haga.
 ## 15-nov-2026 · Rediseño de la app, F7 del servidor: bajas con foto/posición y fotos de tenistas SofaScore (`servidor/bajas-con-foto-y-posicion`)
 
 - **Por qué:** la app CyberCore 1.2.0+13 ya lee `regreso_fecha`, `posicion`, `jugador_id` y `foto` de las bajas y salían vacíos. `_bajas()` los añade sin quitar `jugador/tipo/motivo` (app publicada intacta).
