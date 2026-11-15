@@ -441,7 +441,7 @@ class MatchRow extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: QfColors.text,
-                                    fontFamily: 'Gilroy Bold',
+                                    fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
                                 ),

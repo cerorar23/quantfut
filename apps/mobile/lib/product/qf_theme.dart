@@ -48,10 +48,6 @@ abstract final class QfColors {
   static const success = green;
   static const danger = magenta;
 
-  // Colores de catálogo para compatibilidad con specs heredadas
-  static const football = Color(0xFF22D3EE);
-  static const nba = Color(0xFFB58CFF);
-  static const tennis = Color(0xFFD4F53C);
 }
 
 /// Espaciados del sistema CyberCore.

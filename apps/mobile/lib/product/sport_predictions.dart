@@ -130,7 +130,7 @@ class _HitRateCard extends StatelessWidget {
                     l10n.picksTrustTitle,
                     style: const TextStyle(
                       color: QfColors.text,
-                      fontFamily: 'Gilroy Bold',
+                      fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
                   ),
@@ -190,7 +190,7 @@ class _DayHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: QfColors.text,
-              fontFamily: 'Gilroy ExtraBold',
+              fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
               fontSize: 16,
             ),
           ),
@@ -251,7 +251,7 @@ class _PickCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: QfColors.success,
-                      fontFamily: 'Gilroy Bold',
+                      fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
                   ),
