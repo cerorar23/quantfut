@@ -1,6 +1,8 @@
 """Cola de Meta contra Postgres real. Se omite sin QF_TEST_PG_DSN."""
+import json
 import os
 import uuid
+from datetime import timedelta
 
 import httpx
 import pytest
@@ -27,6 +29,8 @@ def _env(monkeypatch):
     monkeypatch.setenv("META_CAPI_ENABLED", "1")
     monkeypatch.setenv("META_DATASET_ID", "123")
     monkeypatch.setenv("META_CAPI_TOKEN", "t")
+    monkeypatch.delenv("META_TEST_EVENT_CODE", raising=False)
+    monkeypatch.setattr(meta_capi, "DEVICE_WAIT", timedelta(0))   # sin espera salvo en su propia prueba
 
 
 def _cuenta():
@@ -94,6 +98,39 @@ def test_fallo_de_meta_reintenta_y_marca_fallido_al_quinto(monkeypatch):
     assert _status(eid) == {"status": "fallido", "attempts": 5}
     # Avisa al tercer intento; `>= 1` porque la base de pruebas puede traer otros eventos.
     assert len(alerts) >= 1
+
+
+def test_un_evento_invalido_no_arrastra_al_resto_del_lote(monkeypatch):
+    monkeypatch.setattr(meta_capi, "_alert", lambda text: None)
+    acc = _cuenta()
+    bueno, malo = f"pur:{uuid.uuid4().hex}", f"malo:{uuid.uuid4().hex}"
+    with db.conn() as c:
+        c.execute("UPDATE meta_events SET status = 'omitido' WHERE status = 'pendiente'")
+        meta_capi.enqueue(c, acc["account_id"], "Purchase", bueno)
+        meta_capi.enqueue(c, acc["account_id"], "Purchase", malo)
+
+    def handler(request):
+        ids = [e["event_id"] for e in json.loads(request.content)["data"]]
+        return httpx.Response(400 if malo in ids else 200, json={"events_received": len(ids)})
+
+    out = meta_capi.send_pending(client=httpx.Client(transport=httpx.MockTransport(handler)))
+    assert out["enviados"] == 1 and out["fallidos"] == 1
+    assert _status(bueno) == {"status": "enviado", "attempts": 1}
+    assert _status(malo) == {"status": "pendiente", "attempts": 1}
+
+
+def test_evento_de_app_espera_al_dispositivo_antes_de_salir(monkeypatch):
+    monkeypatch.setattr(meta_capi, "DEVICE_WAIT", timedelta(minutes=15))
+    acc = _cuenta()
+    eid = f"pur:{uuid.uuid4().hex}"
+    with db.conn() as c:
+        meta_capi.enqueue(c, acc["account_id"], "Purchase", eid)
+    ok = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json={})))
+    meta_capi.send_pending(client=ok)
+    assert _status(eid) == {"status": "pendiente", "attempts": 0}
+    db.execute("UPDATE meta_events SET created_at = now() - interval '20 minutes' WHERE event_id = %s", (eid,))
+    meta_capi.send_pending(client=ok)
+    assert _status(eid)["status"] == "enviado"
 
 
 def test_alta_por_correo_encola_complete_registration():
