@@ -1946,6 +1946,89 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String nbaInjuriesBadgeBajasDudas(int bajas, int dudas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      bajas,
+      locale: localeName,
+      other: '$bajas bajas',
+      one: '$bajas baja',
+    );
+    return '$_temp0 · $dudas en duda';
+  }
+
+  @override
+  String nbaInjuriesBadgeBajasOnly(int bajas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      bajas,
+      locale: localeName,
+      other: '$bajas bajas',
+      one: '$bajas baja',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nbaInjuriesBadgeDudasOnly(int dudas) {
+    return '$dudas en duda';
+  }
+
+  @override
+  String get nbaInjuriesClean =>
+      'Sin suspensiones ni bajas por lesión en el reporte oficial.';
+
+  @override
+  String get nbaInjuriesFullRoster => 'Plantilla completa';
+
+  @override
+  String nbaInjuriesImpactMinutes(String team) {
+    return 'Minutos · $team';
+  }
+
+  @override
+  String nbaInjuriesImpactPoints(String team) {
+    return 'Puntos · $team';
+  }
+
+  @override
+  String get nbaInjuriesImpactTitle =>
+      'Impacto estimado en el modelo por bajas';
+
+  @override
+  String get nbaInjuriesNoReason => 'Sin motivo reportado';
+
+  @override
+  String get nbaInjuriesNotYetSubmitted =>
+      'Reporte aún no enviado a la liga por el equipo (Not Yet Submitted).';
+
+  @override
+  String get nbaInjuriesPdfLink => 'Parte oficial NBA (PDF)';
+
+  @override
+  String get nbaInjuriesSub =>
+      'Reporte oficial de disponibilidad emitido por la NBA antes del encuentro.';
+
+  @override
+  String get nbaInjuriesTitle => 'Lesiones y suspensiones';
+
+  @override
+  String get nbaInjuryStatusAvailable => 'Disponible';
+
+  @override
+  String get nbaInjuryStatusDoubtful => 'Poco probable';
+
+  @override
+  String get nbaInjuryStatusOut => 'Lesionado';
+
+  @override
+  String get nbaInjuryStatusProbable => 'Probable';
+
+  @override
+  String get nbaInjuryStatusQuestionable => 'En duda';
+
+  @override
+  String get nbaInjuryStatusSuspended => 'Suspendido';
+
+  @override
   String nbaLastSeason(String record) {
     return 'Temp. pasada $record';
   }
