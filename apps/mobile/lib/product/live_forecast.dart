@@ -6,6 +6,8 @@ import 'featured_rule.dart';
 import 'live_api.dart';
 import 'live_statistics.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
 export '../l10n/pick_labels.dart' show marketName;
 
@@ -41,10 +43,12 @@ class LiveScoreStrip extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: statsPanel,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: liveGreen.withValues(alpha: .35)),
+      decoration: const ShapeDecoration(
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 10,
+          border: BorderSide(color: Color.fromRGBO(5, 255, 161, 0.35)),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,16 +245,11 @@ class ForecastPanel extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: liveGreen.withValues(alpha: .45)),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                liveGreen.withValues(alpha: .08),
-                const Color(0xff0c1520),
-              ],
+          decoration: const ShapeDecoration(
+            color: QfColors.surface,
+            shape: CutCornerBorder(
+              cut: 12,
+              border: BorderSide(color: QfColors.border),
             ),
           ),
           child: Column(
@@ -278,10 +277,15 @@ class ForecastPanel extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: liveGreen.withValues(alpha: .07),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: liveGreen.withValues(alpha: .3)),
+                decoration: const ShapeDecoration(
+                  color: Color.fromRGBO(5, 255, 161, 0.06),
+                  shape: CutCornerBorder(
+                    cut: 10,
+                    border: BorderSide(
+                      color: Color.fromRGBO(5, 255, 161, 0.4),
+                      width: 1,
+                    ),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,9 +450,12 @@ class ForecastPanel extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: .25),
-                  borderRadius: BorderRadius.circular(14),
+                decoration: const ShapeDecoration(
+                  color: QfColors.bg,
+                  shape: CutCornerBorder(
+                    cut: 8,
+                    border: BorderSide(color: QfColors.border),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,10 +521,12 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .04),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: Colors.white.withValues(alpha: .07)),
+    decoration: const ShapeDecoration(
+      color: QfColors.surface,
+      shape: CutCornerBorder(
+        cut: 8,
+        border: BorderSide(color: QfColors.border),
+      ),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

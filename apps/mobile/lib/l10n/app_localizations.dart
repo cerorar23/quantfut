@@ -796,6 +796,24 @@ abstract class AppLocalizations {
   /// **'Comprobado: {date}'**
   String detailChecked(String date);
 
+  /// No description provided for @detailFeaturedPickFree.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK DESTACADO · GRATIS'**
+  String get detailFeaturedPickFree;
+
+  /// No description provided for @detailFeaturedPickUnlocked.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK DESTACADO · DESBLOQUEADO'**
+  String get detailFeaturedPickUnlocked;
+
+  /// No description provided for @detailFeaturedPickVip.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK DESTACADO · VIP'**
+  String get detailFeaturedPickVip;
+
   /// No description provided for @detailFormationPending.
   ///
   /// In es, this message translates to:
@@ -825,6 +843,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Alineaciones todavía no confirmadas.'**
   String get detailLineupsPending;
+
+  /// No description provided for @detailLockedWithCoinsOrVip.
+  ///
+  /// In es, this message translates to:
+  /// **'con monedas o VIP'**
+  String get detailLockedWithCoinsOrVip;
+
+  /// No description provided for @detailModelMarkets.
+  ///
+  /// In es, this message translates to:
+  /// **'MERCADOS DEL MODELO'**
+  String get detailModelMarkets;
 
   /// No description provided for @detailNoFeatured.
   ///
@@ -873,6 +903,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin titulares confirmados.'**
   String get detailNoStarters;
+
+  /// No description provided for @detailOddAtPublish.
+  ///
+  /// In es, this message translates to:
+  /// **'cuota al publicar {odd}'**
+  String detailOddAtPublish(String odd);
 
   /// No description provided for @detailReferee.
   ///
@@ -3453,6 +3489,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'triples'**
   String get propStatThrees;
+
+  /// No description provided for @propsEmptyFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay props disponibles en esta categoría.'**
+  String get propsEmptyFilter;
+
+  /// No description provided for @propsFilterAssists.
+  ///
+  /// In es, this message translates to:
+  /// **'ASIST.'**
+  String get propsFilterAssists;
+
+  /// No description provided for @propsFilterPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS'**
+  String get propsFilterPoints;
+
+  /// No description provided for @propsFilterRebounds.
+  ///
+  /// In es, this message translates to:
+  /// **'REBOTES'**
+  String get propsFilterRebounds;
+
+  /// No description provided for @propsFilterThrees.
+  ///
+  /// In es, this message translates to:
+  /// **'TRIPLES'**
+  String get propsFilterThrees;
+
+  /// No description provided for @propsLastFive.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} de los últimos 5'**
+  String propsLastFive(int count);
 
   /// Casa de apuestas y hora local de la cuota de referencia.
   ///

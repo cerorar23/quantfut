@@ -28,6 +28,8 @@ class SportMarket {
     this.publishable,
     this.family,
     this.principal = false,
+    this.last5,
+    this.locked = false,
   });
 
   final String id, label, selection;
@@ -65,6 +67,12 @@ class SportMarket {
 
   /// Contrato: el servidor lo marca como mercado principal del partido.
   final bool principal;
+
+  /// Props NBA: aciertos en los últimos 5 partidos (0 a 5); null si el servidor no lo incluye.
+  final int? last5;
+
+  /// Si el pronóstico está protegido para suscriptores VIP / con monedas.
+  final bool locked;
 }
 
 class SportEvent {
@@ -452,6 +460,8 @@ List<SportMarket> nbaGameMarkets(JsonMap data, SportEvent event) {
       book: quoted ? book : null,
       quotedAt: quoted ? _stamp(row['odds_at']) : null,
       publishable: row['publicable'] is bool ? row['publicable'] as bool : null,
+      last5: row['last5'] is int ? row['last5'] as int : (row['ultimos5'] is int ? row['ultimos5'] as int : null),
+      locked: row['locked'] == true,
     );
     // Un pronóstico por línea: el lado de mayor probabilidad (hándicap: `|línea|` junta al local y al visitante).
     final key = winner

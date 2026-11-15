@@ -7,7 +7,11 @@ import 'qf_theme.dart';
 /// Rectángulo con esquinas cortadas arriba-derecha y abajo-izquierda (hexágono
 /// de 6 puntos), silueta del sistema CyberCore (10 dp o 16 dp).
 class CutCornerBorder extends OutlinedBorder {
-  const CutCornerBorder({this.cut = 10, super.side = BorderSide.none});
+  const CutCornerBorder({
+    this.cut = 10,
+    BorderSide? border,
+    BorderSide side = BorderSide.none,
+  }) : super(side: border ?? side);
 
   final double cut;
 

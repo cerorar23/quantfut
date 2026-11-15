@@ -426,6 +426,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get detailFeaturedPickFree => 'FEATURED PICK · FREE';
+
+  @override
+  String get detailFeaturedPickUnlocked => 'FEATURED PICK · UNLOCKED';
+
+  @override
+  String get detailFeaturedPickVip => 'FEATURED PICK · VIP';
+
+  @override
   String get detailFormationPending => 'Formation pending';
 
   @override
@@ -439,6 +448,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailLineupsPending => 'Lineups not confirmed yet.';
+
+  @override
+  String get detailLockedWithCoinsOrVip => 'with coins or VIP';
+
+  @override
+  String get detailModelMarkets => 'MODEL MARKETS';
 
   @override
   String get detailNoFeatured =>
@@ -467,6 +482,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailNoStarters => 'No confirmed starters.';
+
+  @override
+  String detailOddAtPublish(String odd) {
+    return 'odds at publish $odd';
+  }
 
   @override
   String get detailReferee => 'Referee';
@@ -2020,6 +2040,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get propStatThrees => 'threes';
+
+  @override
+  String get propsEmptyFilter => 'No props available in this category.';
+
+  @override
+  String get propsFilterAssists => 'AST.';
+
+  @override
+  String get propsFilterPoints => 'POINTS';
+
+  @override
+  String get propsFilterRebounds => 'REBOUNDS';
+
+  @override
+  String get propsFilterThrees => '3-POINTERS';
+
+  @override
+  String propsLastFive(int count) {
+    return '$count of the last 5';
+  }
 
   @override
   String quoteBookAt(String book, String time) {

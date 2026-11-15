@@ -367,11 +367,16 @@
       }
     }
   },
+  "detailFeaturedPickFree": "PICK DESTACADO · GRATIS",
+  "detailFeaturedPickUnlocked": "PICK DESTACADO · DESBLOQUEADO",
+  "detailFeaturedPickVip": "PICK DESTACADO · VIP",
   "detailFormationPending": "Formación pendiente",
   "detailH2hTitle": "Historial directo (H2H)",
   "detailInjuries": "Bajas reportadas",
   "detailLineups": "Alineaciones",
   "detailLineupsPending": "Alineaciones todavía no confirmadas.",
+  "detailLockedWithCoinsOrVip": "con monedas o VIP",
+  "detailModelMarkets": "MERCADOS DEL MODELO",
   "detailNoFeatured": "Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 75 % o más). Los abiertos están en la lista de abajo.",
   "detailNoH2h": "No hay enfrentamientos registrados para este partido.",
   "detailNoInjuries": "Sin bajas en el reporte disponible.",
@@ -386,6 +391,14 @@
     "description": "Detalle del partido sin pronóstico sellado; los mercados del modelo de debajo están con candado VIP."
   },
   "detailNoStarters": "Sin titulares confirmados.",
+  "detailOddAtPublish": "cuota al publicar {odd}",
+  "@detailOddAtPublish": {
+    "placeholders": {
+      "odd": {
+        "type": "String"
+      }
+    }
+  },
   "detailReferee": "Árbitro",
   "detailRefereePending": "Árbitro pendiente de confirmar.",
   "detailTabAlerts": "Alertas",
@@ -1781,6 +1794,19 @@
   "propStatPoints": "puntos",
   "propStatRebounds": "rebotes",
   "propStatThrees": "triples",
+  "propsEmptyFilter": "No hay props disponibles en esta categoría.",
+  "propsFilterAssists": "ASIST.",
+  "propsFilterPoints": "PUNTOS",
+  "propsFilterRebounds": "REBOTES",
+  "propsFilterThrees": "TRIPLES",
+  "propsLastFive": "{count} de los últimos 5",
+  "@propsLastFive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "quoteBookAt": "{book} · {time}",
   "@quoteBookAt": {
     "description": "Casa de apuestas y hora local de la cuota de referencia.",

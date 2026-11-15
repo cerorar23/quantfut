@@ -14,6 +14,7 @@ import 'screen_definition.dart';
 import 'sport_contract.dart';
 import 'sport_detail_tabs.dart';
 import 'sport_images.dart';
+import 'sport_props.dart';
 import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
@@ -129,12 +130,13 @@ class _SportDetailState extends State<SportDetail> {
             accent: accent,
             quotes: widget.quotes,
           ),
-          1 => _Predictions(
+          1 => SportPropsTab(
             api: widget.api,
             event: e,
             images: widget.images,
-            accent: accent,
             quotes: widget.quotes,
+            onVip: widget.onVip,
+            onUnlock: widget.onUnlock,
           ),
           2 => SportAnalysis(stats: stats, event: e),
           3 => SportH2h(stats: stats, event: e),
@@ -421,18 +423,26 @@ class _Predictions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (featured != null) ...[
-          QfCard(
-            accent: accent,
-            child: _MarketRow(
-              api: api,
-              market: featured,
-              quote: quoteFor(event, featured, quotes),
-              l10n: l10n,
-              big: true,
-            ),
+          _FeaturedCard(
+            api: api,
+            event: event,
+            market: featured,
+            quote: quoteFor(event, featured, quotes),
+            l10n: l10n,
           ),
           const SizedBox(height: 12),
         ],
+        Text(
+          l10n.detailModelMarkets,
+          style: const TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            letterSpacing: 1.4,
+            color: QfColors.text,
+          ),
+        ),
+        const SizedBox(height: 8),
         for (final m in ordered)
           if (!identical(m, featured))
             Padding(
@@ -440,6 +450,8 @@ class _Predictions extends StatelessWidget {
               child: QfCard(
                 child: _MarketRow(
                   api: api,
+                  event: event,
+                  images: images,
                   market: m,
                   quote: quoteFor(event, m, quotes),
                   l10n: l10n,
@@ -500,16 +512,101 @@ class _SealCard extends StatelessWidget {
   }
 }
 
+class _FeaturedCard extends StatelessWidget {
+  const _FeaturedCard({
+    required this.api,
+    required this.event,
+    required this.market,
+    required this.quote,
+    required this.l10n,
+  });
+
+  final QuantFutApi api;
+  final SportEvent event;
+  final SportMarket market;
+  final SportQuote? quote;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = market;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: const ShapeDecoration(
+        color: Color.fromRGBO(5, 255, 161, 0.06),
+        shape: CutCornerBorder(
+          cut: 10,
+          side: BorderSide(
+            color: Color.fromRGBO(5, 255, 161, 0.4),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.detailFeaturedPickFree,
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 1.4,
+                    color: QfColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  sportPickText(l10n, m),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    color: QfColors.text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                QuoteLabel(quote: quote),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            realPercent(m.probability),
+            style: const TextStyle(
+              fontFamily: qfMono,
+              fontWeight: FontWeight.w700,
+              fontSize: 30,
+              color: QfColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MarketRow extends StatelessWidget {
   const _MarketRow({
     required this.api,
     required this.market,
     required this.quote,
     required this.l10n,
+    this.event,
+    this.images,
     this.big = false,
     this.title,
   });
   final QuantFutApi api;
+  final SportEvent? event;
+  final ImageCatalog? images;
   final SportMarket market;
 
   /// Título de la familia ya resuelto (deportes del catálogo sin pantalla propia); null = el de siempre.
@@ -518,11 +615,27 @@ class _MarketRow extends StatelessWidget {
   final AppLocalizations l10n;
   final bool big;
 
+  Widget _teamLogo(String name, double size) {
+    final ev = event;
+    if (ev != null && ev.sport == kNba) {
+      final code = nbaTricode(name);
+      final path = code == null ? null : (images?.nbaLogo(code) ?? '/web/imagenes/nba/${code.toUpperCase()}.png');
+      return QfAvatar(url: serverImageUrl(api, path), name: name, size: size, shape: AvatarShape.contain);
+    }
+    return QfAvatar(
+      url: serverImageUrl(api, images?.tennisPhoto(name)?.path),
+      name: name,
+      size: size,
+      shape: AvatarShape.circle,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final m = market;
     final won = m.outcome == 'win', lost = m.outcome == 'loss';
     final id = m.playerId;
+    final ev = event;
     return Row(
       children: [
         if (m.player != null && id != null) ...[
@@ -532,6 +645,24 @@ class _MarketRow extends StatelessWidget {
             size: 36,
             shape: AvatarShape.circle,
           ),
+          const SizedBox(width: 10),
+        ] else if (ev != null && ev.home.isNotEmpty) ...[
+          if (m.market == 'winner' || m.id == 'winner')
+            _teamLogo(m.selection, 30)
+          else
+            SizedBox(
+              width: 44,
+              height: 30,
+              child: Stack(
+                children: [
+                  _teamLogo(ev.home, 28),
+                  Positioned(
+                    left: 16,
+                    child: _teamLogo(ev.away, 28),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(width: 10),
         ],
         Expanded(

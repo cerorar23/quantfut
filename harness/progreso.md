@@ -1,6 +1,21 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4b completada (`app/rediseno-f4b-pronostico-props`)
+
+- **Objetivo de F4b alcanzado:** Pestaña de Pronósticos renovada con tarjeta destacada «PICK DESTACADO · GRATIS» CyberCore (`_FeaturedCard`), cabecera «MERCADOS DEL MODELO» y lista estilizada `_MarketRow` con logos/avatares y tipografía CyberCore. Nueva pestaña de Props NBA (`SportPropsTab`) con filtros chip (`TODOS · PUNTOS · REBOTES · ASIST. · TRIPLES`), tarjetas de props de jugadores (`SportPropCard`) con avatares circulares de 52 dp y emblemas de equipo superpuestos de 20 dp, nombre en `qfDisplay`, selección en verde CyberCore o difuminada con ImageFilter blur si está bloqueado, barra de últimos 5 partidos y soporte para cuotas u opción VIP.
+- **Pestaña Pronóstico (`lib/product/sport_detail.dart`, `live_forecast.dart`, `live_match_markets.dart`):**
+  - `_FeaturedCard`: contenedor de 10 dp con `CutCornerBorder(cut: 10, side: BorderSide(color: Color.fromRGBO(5, 255, 161, 0.4)))`, fondo con tinte verde suave, etiqueta «PICK DESTACADO · GRATIS» en verde primario, selección en `qfDisplay` 20 bold, cuota de referencia integrada con `QuoteLabel` (evita desbordes y preserva semánticas accesibles «Sin cuota») y gran probabilidad en mono 30 bold cian/primario.
+  - `_MarketRow`: logos de equipos NBA (`_teamLogo`) con `nbaTricode` y `serverImageUrl` o enfrentamiento en doble logo apilado para mercados de total, y fotos circulares para tenistas o jugadores NBA.
+  - `ForecastPanel` y `_OpenRow`/`_LockedRow`: actualizados con tokens CyberCore (`CutCornerBorder`, `QfColors.surface`, tipografías display y mono) preservando todos los localizadores y flujos de compra/desbloqueo.
+- **Pestaña Props NBA (`lib/product/sport_props.dart`):**
+  - `SportPropsTab`: barra horizontal de chips responsivos con `FittedBox` para evitar desbordes en idiomas extensos (como de, it, fr) a 320 px, filtrando por mercados `player_points`, `player_rebounds`, `player_assists`, `player_threes`. Estado vacío accesible con `propsEmptyFilter`.
+  - `SportPropCard`: tarjeta interactiva con padding 12x10, avatar circular de 52 dp con borde `QfColors.border`, insignia de equipo circular de 20 dp en la esquina inferior derecha, nombre en `qfDisplay` 15 bold, selección en verde `QfColors.primary` (o difuminada si `market.locked`), barra de pips horizontales de 8x6 para los últimos 5 partidos (leída de los datos cuando existe, omitida completamente si es `null` sin inventar datos), y a la derecha probabilidad en mono 20 cian con `QuoteLabel` o estado VIP en amarillo con `detailLockedWithCoinsOrVip`.
+- **Internacionalización y Pruebas:**
+  - Nuevas claves en `app_*.arb` (`detailModelMarkets`, `detailOddAtPublish`, `detailLockedWithCoinsOrVip`, `detailFeaturedPickFree`, `detailFeaturedPickVip`, `detailFeaturedPickUnlocked`, `propsFilterPoints`, `propsFilterRebounds`, `propsFilterAssists`, `propsFilterThrees`, `propsLastFive`, `propsEmptyFilter`) en los 6 idiomas oficiales (`es, en, pt, fr, it, de`).
+  - Suite unitaria `test/sport_props_test.dart` (12 tests) cubriendo con/sin cuota de referencia, jugadores sin foto o id inválido, bloqueo VIP, filtros y ausencia de desbordes en 320 px para todos los idiomas.
+  - Verificación global: 605 pruebas en verde (`flutter test --no-pub`), `flutter analyze --no-pub` limpio (0 issues). PR en `app/rediseno-f4b-pronostico-props`.
+
 ## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4a completada (`app/rediseno-f4a-match-shell`)
 
 - **Objetivo de F4a alcanzado:** Contenedor unificado `MatchShell` implementado para el detalle de partido en fútbol (`LiveMatchDetail`) y deportes generales como NBA y Tenis (`SportDetail`), compartiendo cabecera top bar 56 dp, hero en 3 columnas CyberCore, barra de pestañas segmentadas `MatchTabs` y barra fija inferior de acción `MatchBottomBar`.
