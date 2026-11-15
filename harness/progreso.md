@@ -1419,3 +1419,29 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
   - `flutter analyze --no-pub`: **0 issues**.
 
 
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5d — Actualización y Privacidad
+- **Diálogos de Actualización (`lib/core/app_update.dart`):** rediseño completo de `AppUpdateDialog` conforme a `capturas/Actualizacion.png` y `capturas/ActualizacionObligatoria.png`.
+  - Caja de icono 56×56 dp con esquina cortada (`CutCornerBorder(cut: 8)`), fondo `QfColors.surfaceElevated`, icono de flecha hacia arriba cian (`QfColors.primary`) y resplandor cian.
+  - Título Rajdhani 20 bold en mayúsculas (`ACTUALIZACIÓN DISPONIBLE` u `OBLIGATORIA`).
+  - Badge verde mono con borde (`VERSIÓN {version}`) con preservación de contrato de búsqueda en tests.
+  - Mensaje descriptivo con estilo CyberCore legible.
+  - Botón primario `FilledButton` de altura >= 44 dp con clave `ValueKey('update-now')`, fondo cian `QfColors.primary` y texto negro bold.
+  - Botón secundario `TextButton` (`updateLater`) cuando la actualización es opcional, oculto cuando es obligatoria.
+  - Retención de tipo raíz `AlertDialog` con borde `CutCornerBorder(cut: 16)` y preservación del bloqueo de retroceso `PopScope(canPop: !widget.update.required)`.
+- **Aviso de Privacidad (`lib/product/live_shell.dart`):** rediseño de `showPrivacyNotice()` conforme a `capturas/PrivacidadActualizada.png`.
+  - Caja de icono 56×56 dp con esquina cortada, icono de escudo cian y resplandor cian.
+  - Título Rajdhani 20 bold en mayúsculas `ACTUALIZAMOS LA PRIVACIDAD`.
+  - 2 viñetas informativas con fondo oscuro y borde cian atenuado:
+    1. Suscripciones mediante Google Play / App Store con icono verde `Icons.check_circle_rounded`.
+    2. Meta y analíticas de marketing con icono amarillo `Icons.check_circle_rounded`.
+  - Párrafo explicativo legal con tipografía muted legible.
+  - Botón primario verde CTA de 48 dp con gradiente `qfGreenGradient` (`ENTENDIDO`).
+  - Botón secundario delineado en cian (`OutlinedButton`) con borde cian para `LEER LA POLÍTICA · AJUSTAR PREFERENCIAS`.
+- **Internacionalización (l10n):** 5 nuevas claves traducidas a los 6 idiomas (`es, en, pt, fr, it, de`) en `app_*.arb`: `privacyBullet1`, `privacyBullet2`, `privacyReadAndAdjust`, `updateVersion`, `updateRequiredTitle`.
+- **Pruebas y Verificación:**
+  - `test/app_update_test.dart`: 6/6 tests pasados (versión, diálogo opcional, diálogo obligatorio sin botón más tarde, fallback a tienda web, estado de error y formato de versión).
+  - `test/l10n_test.dart`: 6/6 tests pasados en todos los idiomas.
+  - Suite completa de la app en verde: **667/667 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.

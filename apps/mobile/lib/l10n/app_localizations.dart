@@ -4056,6 +4056,24 @@ abstract class AppLocalizations {
   /// **'Privacidad y preferencias'**
   String get prefsTitle;
 
+  /// No description provided for @privacyBullet1.
+  ///
+  /// In es, this message translates to:
+  /// **'Suscripciones con Google Play o App Store'**
+  String get privacyBullet1;
+
+  /// No description provided for @privacyBullet2.
+  ///
+  /// In es, this message translates to:
+  /// **'Medición de uso, diagnóstico y anuncios (Meta): activados'**
+  String get privacyBullet2;
+
+  /// No description provided for @privacyReadAndAdjust.
+  ///
+  /// In es, this message translates to:
+  /// **'Leer la política · ajustar preferencias'**
+  String get privacyReadAndAdjust;
+
   /// No description provided for @privacyUpdateBody.
   ///
   /// In es, this message translates to:
@@ -6259,6 +6277,12 @@ abstract class AppLocalizations {
   /// **'Actualiza QuantFut para continuar.'**
   String get updateRequired;
 
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualiza para continuar'**
+  String get updateRequiredTitle;
+
   /// No description provided for @updateStoreError.
   ///
   /// In es, this message translates to:
@@ -6270,6 +6294,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Actualización disponible'**
   String get updateTitle;
+
+  /// No description provided for @updateVersion.
+  ///
+  /// In es, this message translates to:
+  /// **'VERSIÓN'**
+  String get updateVersion;
 
   /// No description provided for @vip7Days.
   ///

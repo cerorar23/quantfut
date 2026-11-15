@@ -256,26 +256,192 @@ class _ProductShellState extends State<ProductShell>
     if (await prefs.getString('consent_notice') == consentVersion || !mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => qfAlert(
-        icon: Icons.privacy_tip_outlined,
-        title: dialogContext.l10n.privacyUpdateTitle,
-        content: Text(dialogContext.l10n.privacyUpdateBody),
-        actions: [
-          TextButton(
-            style: qfText(),
-            onPressed: () => launchUrl(
-              Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
-              mode: LaunchMode.externalApplication,
+      barrierColor: Colors.black.withValues(alpha: 0.75),
+      builder: (dialogContext) {
+        final l10n = dialogContext.l10n;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: QfColors.cyan.withValues(alpha: 0.2),
+                  blurRadius: 60,
+                ),
+              ],
             ),
-            child: Text(dialogContext.l10n.privacyUpdateRead),
+            child: Material(
+              color: QfColors.surface,
+              shape: const CutCornerBorder(
+                cut: 16,
+                side: BorderSide(color: QfColors.borderStrong, width: 1.2),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: ShapeDecoration(
+                            color: QfColors.cyan.withValues(alpha: 0.1),
+                            shape: const CutCornerBorder(
+                              cut: 8,
+                              side: BorderSide(color: QfColors.borderStrong),
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.shield_outlined, color: QfColors.cyan, size: 28),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            l10n.privacyUpdateTitle.toUpperCase(),
+                            style: const TextStyle(
+                              fontFamily: qfDisplay,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              height: 1.05,
+                              letterSpacing: 0.6,
+                              color: QfColors.text,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.02),
+                        border: Border.all(color: QfColors.divider),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.check, size: 16, color: QfColors.green),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  l10n.privacyBullet1,
+                                  style: const TextStyle(fontFamily: 'Exo 2', fontSize: 13, color: QfColors.text),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.check, size: 16, color: QfColors.yellow),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  l10n.privacyBullet2,
+                                  style: const TextStyle(fontFamily: 'Exo 2', fontSize: 13, color: QfColors.text),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.privacyUpdateBody,
+                      style: const TextStyle(
+                        fontFamily: 'Exo 2',
+                        color: QfColors.text2,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 52,
+                      child: Container(
+                        decoration: ShapeDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF05FFA1), Color(0xFF8AFFDF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shadows: [
+                            BoxShadow(
+                              color: const Color(0xFF05FFA1).withValues(alpha: 0.16),
+                              blurRadius: 28,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                          shape: const CutCornerBorder(cut: 10),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: const CutCornerBorder(cut: 10),
+                            onTap: () => Navigator.pop(dialogContext),
+                            child: Center(
+                              child: Text(
+                                l10n.privacyUpdateOk.toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: qfDisplay,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  letterSpacing: 1.2,
+                                  color: Color(0xFF03110F),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 46,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: QfColors.cyan,
+                          side: const BorderSide(color: QfColors.borderStrong),
+                          backgroundColor: QfColors.cyan.withValues(alpha: 0.05),
+                          shape: const CutCornerBorder(cut: 8),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          launchUrl(
+                            Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                        child: Text(
+                          l10n.privacyReadAndAdjust.toUpperCase(),
+                          style: const TextStyle(
+                            fontFamily: qfDisplay,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            letterSpacing: 1.0,
+                            color: QfColors.cyan,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          FilledButton(
-            style: qfFilled(QfColors.primary),
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(dialogContext.l10n.privacyUpdateOk),
-          ),
-        ],
-      ),
+        );
+      },
     );
     await prefs.setString('consent_notice', consentVersion);
   }

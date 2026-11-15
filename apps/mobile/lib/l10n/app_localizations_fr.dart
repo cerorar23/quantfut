@@ -2454,6 +2454,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get prefsTitle => 'Confidentialité et préférences';
 
   @override
+  String get privacyBullet1 => 'Abonnements avec Google Play ou App Store';
+
+  @override
+  String get privacyBullet2 =>
+      'Mesure d\'utilisation, diagnostic et publicités (Meta) : activés';
+
+  @override
+  String get privacyReadAndAdjust =>
+      'Lire la politique · ajuster les préférences';
+
+  @override
   String get privacyUpdateBody =>
       'Vous pouvez désormais vous abonner via Google Play ou l\'App Store, et la mesure d\'utilisation, le diagnostic et la mesure publicitaire Meta sont activés. Vous pouvez les désactiver dans Préférences.';
 
@@ -3834,10 +3845,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get updateRequired => 'Mettez QuantFut à jour pour continuer.';
 
   @override
+  String get updateRequiredTitle => 'Mettre à jour pour continuer';
+
+  @override
   String get updateStoreError => 'Impossible d’ouvrir la boutique. Réessayez.';
 
   @override
   String get updateTitle => 'Mise à jour disponible';
+
+  @override
+  String get updateVersion => 'VERSION';
 
   @override
   String get vip7Days => '7 JOURS';

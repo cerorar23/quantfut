@@ -2427,6 +2427,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prefsTitle => 'Privacy and preferences';
 
   @override
+  String get privacyBullet1 => 'Subscriptions with Google Play or App Store';
+
+  @override
+  String get privacyBullet2 =>
+      'Usage analytics, diagnostics, and ads (Meta): enabled';
+
+  @override
+  String get privacyReadAndAdjust => 'Read privacy policy · adjust settings';
+
+  @override
   String get privacyUpdateBody =>
       'You can now subscribe with Google Play or the App Store, and usage measurement, diagnostics and Meta ad measurement are turned on. You can turn them off in Preferences.';
 
@@ -3799,10 +3809,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateRequired => 'Update QuantFut to continue.';
 
   @override
+  String get updateRequiredTitle => 'Update to continue';
+
+  @override
   String get updateStoreError => 'Could not open the store. Please try again.';
 
   @override
   String get updateTitle => 'Update available';
+
+  @override
+  String get updateVersion => 'VERSION';
 
   @override
   String get vip7Days => '7 DAYS';
