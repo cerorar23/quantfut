@@ -4,6 +4,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/l10n/pick_labels.dart';
+import 'package:gobet/product/alerts_model.dart';
 import 'package:gobet/product/live_api.dart';
 
 void main() {
@@ -63,5 +64,73 @@ void main() {
     expect(awaitingResult(ko.toIso8601String(), ko.add(const Duration(minutes: 100))), isFalse);
     expect(awaitingResult(ko.toIso8601String(), ko.add(matchSpan)), isTrue);
     expect(awaitingResult(null), isFalse);
+  });
+
+  group('interpretReturnDate y motivos de bajas', () {
+    test('interpreta fechas de regreso en inglés (Early/Mid/Late) y con año futuro', () async {
+      await AppLocale.instance.select('es');
+      expect(interpretReturnDate('Early December 2026'), 'principios de dic.');
+      expect(interpretReturnDate('Mid November 2026'), 'mediados de nov.');
+      expect(interpretReturnDate('Late November 2026'), 'finales de nov.');
+      expect(interpretReturnDate('Early May 2027'), 'principios de may. 2027');
+      expect(interpretReturnDate('Texto desconocido 123'), 'Texto desconocido 123');
+
+      await AppLocale.instance.select('en');
+      expect(interpretReturnDate('Early December 2026'), 'early Dec');
+      expect(interpretReturnDate('Mid November 2026'), 'mid-Nov');
+      expect(interpretReturnDate('Late November 2026'), 'late Nov');
+      expect(interpretReturnDate('Early May 2027'), 'early May 2027');
+    });
+
+    test('absenceReturnText formatea selección, regreso y vuelta a entrenamientos', () async {
+      await AppLocale.instance.select('es');
+      final valjent = Absence.of({
+        'jugador': 'Martin Valjent',
+        'tipo': 'internationalDuty',
+        'motivo': 'Mid November 2026',
+      });
+      expect(absenceReturnText(valjent), 'Con su selección · vuelve a mediados de nov.');
+
+      final morlanes = Absence.of({
+        'jugador': 'Manu Morlanes',
+        'tipo': 'injury',
+        'motivo': 'Early December 2026',
+      });
+      expect(absenceReturnText(morlanes), 'Vuelve a principios de dic.');
+
+      final medina = Absence.of({
+        'jugador': 'Kevin Medina',
+        'tipo': 'injury',
+        'motivo': 'Back in training',
+      });
+      expect(absenceReturnText(medina), 'Ya entrena con el grupo');
+
+      final sima = Absence.of({
+        'jugador': 'A. Sima',
+        'tipo': 'Missing Fixture',
+        'motivo': 'Muscle Injury',
+      });
+      expect(absenceReturnText(sima), isNull);
+    });
+
+    test('insignias de baja: LESIÓN, SELECCIÓN, SANCIÓN, DUDA, VUELVE', () async {
+      await AppLocale.instance.select('es');
+      final l10n = AppLocale.instance.l10n;
+
+      final injury = Absence.of({'jugador': 'A', 'tipo': 'injury', 'motivo': 'Early December 2026'});
+      expect(absenceBadgeLabel(injury, l10n), 'LESIÓN');
+
+      final duty = Absence.of({'jugador': 'B', 'tipo': 'internationalDuty', 'motivo': 'Mid November 2026'});
+      expect(absenceBadgeLabel(duty, l10n), 'SELECCIÓN');
+
+      final susp = Absence.of({'jugador': 'C', 'tipo': 'suspension', 'motivo': 'Red Card'});
+      expect(absenceBadgeLabel(susp, l10n), 'SANCIÓN');
+
+      final doubt = Absence.of({'jugador': 'D', 'tipo': 'injury', 'motivo': 'Doubtful'});
+      expect(absenceBadgeLabel(doubt, l10n), 'DUDA');
+
+      final returns = Absence.of({'jugador': 'E', 'tipo': 'injury', 'motivo': 'Back in training'});
+      expect(absenceBadgeLabel(returns, l10n), 'VUELVE');
+    });
   });
 }

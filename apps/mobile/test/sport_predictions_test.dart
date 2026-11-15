@@ -230,10 +230,6 @@ void main() {
         'Hándicap del partido',
         'Total de puntos del partido',
         'Puntos por equipo',
-        'Puntos del jugador',
-        'Rebotes del jugador',
-        'Asistencias del jugador',
-        'Triples del jugador',
       ]) {
         expect(find.text(title), findsOneWidget, reason: title);
       }
@@ -242,8 +238,21 @@ void main() {
       // Solo cuentan los publicados: el 98 % queda fuera de la banda 60–95 %.
       expect(find.text('Publicado 1/1'), findsOneWidget);
       expect(find.text('Publicado 0/1'), findsOneWidget);
-      expect(find.text('Sin publicaciones aún'), findsNWidgets(6));
+      expect(find.text('Sin publicaciones aún'), findsNWidgets(2));
       expect(find.text('1/2 publicados acertados · 50,0 %'), findsOneWidget);
+
+      await tester.tap(find.text('JUGADORES'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 400));
+      for (final title in [
+        'Puntos del jugador',
+        'Rebotes del jugador',
+        'Asistencias del jugador',
+        'Triples del jugador',
+      ]) {
+        expect(find.text(title), findsOneWidget, reason: title);
+      }
+      expect(find.text('Sin publicaciones aún'), findsNWidgets(4));
     },
   );
 
@@ -276,23 +285,33 @@ void main() {
       await pump(tester, markets(kTennis, feed));
       for (final title in [
         'Ganador del partido',
-        'Juegos totales',
-        'Hándicap de juegos',
         'Ganador del set',
         'Hándicap de sets',
         'Total de sets',
-        'Tie-break',
       ]) {
         expect(find.text(title), findsOneWidget, reason: title);
       }
       expect(find.text('7'), findsOneWidget);
-      expect(find.text('Abiertos 0 · Resueltos 1'), findsNWidgets(2));
+      expect(find.text('Abiertos 0 · Resueltos 1'), findsOneWidget);
+
+      await tester.tap(find.text('JUEGOS'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 400));
+      for (final title in [
+        'Juegos totales',
+        'Hándicap de juegos',
+        'Tie-break',
+      ]) {
+        expect(find.text(title), findsOneWidget, reason: title);
+      }
+      expect(find.text('Abiertos 0 · Resueltos 1'), findsOneWidget);
+
       await tester.tap(find.text('Juegos totales'));
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Tasa de acierto'), findsOneWidget);
-      expect(find.text('Hoy (0)'), findsOneWidget);
-      await tester.tap(find.text('Anteriores'));
+      expect(find.text('HOY (0)'), findsOneWidget);
+      await tester.tap(find.text('ANTERIORES'));
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Acertó'), findsOneWidget);

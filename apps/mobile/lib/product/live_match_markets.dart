@@ -4,6 +4,8 @@ import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
 // Los identificadores de categoría son los que envía el servidor (en español);
 // no son texto visible: se traducen con `groupLabel`.
@@ -131,12 +133,14 @@ class _OpenRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xff0f1925),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: chance ? liveGold : color.withValues(alpha: .28),
-          width: chance ? 1.4 : 1,
+      decoration: ShapeDecoration(
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 8,
+          border: BorderSide(
+            color: chance ? QfColors.yellow : color.withValues(alpha: .28),
+            width: chance ? 1.4 : 1,
+          ),
         ),
       ),
       child: Column(
@@ -275,10 +279,12 @@ class _LockedRow extends StatelessWidget {
       onTap: onVip,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xff0c131c),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white10),
+        decoration: const ShapeDecoration(
+          color: QfColors.surface,
+          shape: CutCornerBorder(
+            cut: 8,
+            border: BorderSide(color: QfColors.border),
+          ),
         ),
         child: Row(
           children: [
@@ -319,10 +325,12 @@ class _Scores extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xff0c131c),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white10),
+          decoration: const ShapeDecoration(
+            color: QfColors.surface,
+            shape: CutCornerBorder(
+              cut: 8,
+              border: BorderSide(color: QfColors.border),
+            ),
           ),
           child: Row(
             children: [

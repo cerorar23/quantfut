@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'live_widgets.dart';
 import 'qf_theme.dart';
 
 /// Lluvia breve de monedas con un «+N monedas» que sube y se desvanece. Se reproduce una vez al
@@ -57,8 +56,9 @@ class _CoinBurstState extends State<CoinBurst>
                   child: Text(
                     widget.label,
                     style: const TextStyle(
-                      color: liveGold,
-                      fontFamily: 'Gilroy ExtraBold',
+                      color: QfColors.yellow,
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
                       fontSize: 34,
                       shadows: [Shadow(blurRadius: 14, color: Colors.black54)],
                     ),
@@ -93,7 +93,7 @@ class _BurstPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(x, y),
         radius,
-        Paint()..color = liveGold.withValues(alpha: alpha),
+        Paint()..color = QfColors.yellow.withValues(alpha: alpha),
       );
       canvas.drawCircle(
         Offset(x, y),

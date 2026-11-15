@@ -96,7 +96,10 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? accent : QfColors.text2;
+    final fg = selected ? QfColors.onGreen : QfColors.text2;
+    final bg = selected ? QfColors.cyan : QfColors.surface;
+    final border = selected ? QfColors.cyan : QfColors.border;
+    final countColor = selected ? QfColors.onGreen : QfColors.muted;
     return Semantics(
       button: true,
       selected: selected,
@@ -104,12 +107,12 @@ class _Chip extends StatelessWidget {
       onTap: onTap,
       child: ExcludeSemantics(
         child: Material(
-          color: selected ? accent.withValues(alpha: 0.14) : QfColors.surface,
+          color: bg,
           shape: CutCornerBorder(
             cut: 8,
             side: BorderSide(
-              color: selected ? accent : QfColors.border,
-              width: selected ? 2 : 1,
+              color: border,
+              width: 1,
             ),
           ),
           child: InkWell(
@@ -129,11 +132,11 @@ class _Chip extends StatelessWidget {
                         Icons.check,
                         key: const ValueKey('sport-selected-mark'),
                         size: 16,
-                        color: color,
+                        color: fg,
                       ),
                       const SizedBox(width: 4),
                     ],
-                    Icon(icon, size: 18, color: color),
+                    Icon(icon, size: 18, color: fg),
                     const SizedBox(width: 4),
                     Flexible(
                       // Nunca se recorta con «…»: si no cabe, se reduce un poco.
@@ -143,7 +146,7 @@ class _Chip extends StatelessWidget {
                           label.toUpperCase(),
                           maxLines: 1,
                           style: TextStyle(
-                            color: color,
+                            color: fg,
                             fontFamily: qfDisplay,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
@@ -157,9 +160,10 @@ class _Chip extends StatelessWidget {
                       Text(
                         '$count',
                         style: TextStyle(
-                          color: color,
+                          color: countColor,
                           fontFamily: qfMono,
                           fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],

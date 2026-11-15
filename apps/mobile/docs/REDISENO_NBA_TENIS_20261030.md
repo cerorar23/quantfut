@@ -1,6 +1,8 @@
 # Rediseño de la app para sumar NBA y tenis (propuesta v3, 30-oct-2026)
 
-Estado: **implementado en la rama `app/nba-tenis-rediseno`, pendiente de PR**.
+> **Nota (14-nov-2026):** Este documento queda sustituido por [PLAN_REDISENO_CYBERCORE_20261114.md](PLAN_REDISENO_CYBERCORE_20261114.md) (rediseño integral CyberCore de QuantFut).
+
+Estado: **sustituido por el rediseño CyberCore (14-nov-2026)**.
 
 Historial de decisiones del titular (30-oct):
 - v2: **NBA y tenis aprobados para publicar picks**; nada de etiquetas «En validación». Estética de referencia: **CyberCore CSS** ([demo](https://sebyx07.github.io/cybercore-css/#/), [repo](https://github.com/sebyx07/cybercore-css), MIT) y skill **ui-ux-pro-max**.

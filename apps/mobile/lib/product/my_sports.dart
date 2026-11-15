@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
 import 'live_widgets.dart';
+import 'qf_controls.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'sports.dart';
@@ -97,19 +98,44 @@ class _MySportsSectionState extends State<MySportsSection> {
       key: const ValueKey('my-sports'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        qfTitle(l10n.profileMySports),
-        Text(l10n.profileMySportsHint, style: const TextStyle(fontSize: 12, color: QfColors.text2)),
-        const SizedBox(height: 4),
-        for (final (i, sport) in order.indexed)
-          _SportRow(
-            key: ValueKey('my-sport-$sport'),
-            sport: sport,
-            shown: !hidden.contains(sport),
-            isDefault: sport == first,
-            onUp: i == 0 || saving ? null : () => _move(i, i - 1),
-            onDown: i == order.length - 1 || saving ? null : () => _move(i, i + 1),
-            onToggle: saving ? null : (v) => _toggle(sport, v),
+        const SizedBox(height: 14),
+        Text(
+          l10n.profileMySports.toUpperCase(),
+          style: const TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            letterSpacing: 1.4,
+            color: QfColors.text,
           ),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.profileMySportsHint, style: const TextStyle(fontSize: 12, color: QfColors.text2)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: ShapeDecoration(
+            color: QfColors.surface,
+            shape: const CutCornerBorder(
+              cut: 10,
+              side: BorderSide(color: QfColors.border),
+            ),
+          ),
+          child: Column(
+            children: [
+              for (final (i, sport) in order.indexed)
+                _SportRow(
+                  key: ValueKey('my-sport-$sport'),
+                  sport: sport,
+                  shown: !hidden.contains(sport),
+                  isDefault: sport == first,
+                  isLast: i == order.length - 1,
+                  onUp: i == 0 || saving ? null : () => _move(i, i - 1),
+                  onDown: i == order.length - 1 || saving ? null : () => _move(i, i + 1),
+                  onToggle: saving ? null : (v) => _toggle(sport, v),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -121,13 +147,14 @@ class _SportRow extends StatelessWidget {
     required this.sport,
     required this.shown,
     required this.isDefault,
+    this.isLast = false,
     required this.onUp,
     required this.onDown,
     required this.onToggle,
   });
 
   final SportId sport;
-  final bool shown, isDefault;
+  final bool shown, isDefault, isLast;
   final VoidCallback? onUp, onDown;
   final ValueChanged<bool>? onToggle;
 
@@ -138,20 +165,47 @@ class _SportRow extends StatelessWidget {
     final name = spec.label(l10n);
     return Container(
       constraints: const BoxConstraints(minHeight: 52),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: QfColors.border))),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        border: isLast ? null : const Border(bottom: BorderSide(color: QfColors.divider)),
+      ),
       child: Row(
         children: [
-          Icon(spec.icon, size: 20, color: shown ? spec.accent : QfColors.muted),
+          const Icon(Icons.drag_handle, size: 18, color: QfColors.muted),
+          const SizedBox(width: 8),
+          Icon(spec.icon, size: 20, color: shown ? QfColors.cyan : QfColors.muted),
           const SizedBox(width: 10),
           Expanded(
             child: Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 6,
               children: [
-                Text(name, style: TextStyle(fontSize: 14, color: shown ? QfColors.text : QfColors.text2)),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: shown ? QfColors.text : QfColors.muted,
+                  ),
+                ),
                 if (spec.isBeta) QfBadge(l10n.sportBeta, key: ValueKey('my-sport-beta-$sport'), color: spec.accent),
                 if (isDefault)
-                  Text(l10n.profileMySportsDefault, style: const TextStyle(fontSize: 11, color: QfColors.text2)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: QfColors.borderStrong),
+                    ),
+                    child: Text(
+                      l10n.profileMySportsDefault,
+                      style: const TextStyle(
+                        fontFamily: qfDisplay,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: QfColors.cyan,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -171,18 +225,12 @@ class _SportRow extends StatelessWidget {
             onPressed: onDown,
             icon: const Icon(Icons.arrow_downward),
           ),
-          Semantics(
-            label: l10n.profileMySportsShow(name),
-            child: Switch(
-              key: ValueKey('my-sport-switch-$sport'),
-              materialTapTargetSize: MaterialTapTargetSize.padded,
-              value: shown,
-              activeThumbColor: QfColors.onPrimary,
-              activeTrackColor: QfColors.primary,
-              inactiveThumbColor: QfColors.text2,
-              inactiveTrackColor: QfColors.border,
-              onChanged: onToggle,
-            ),
+          QfSwitch(
+            key: ValueKey('my-sport-switch-$sport'),
+            semanticLabel: l10n.profileMySportsShow(name),
+            value: shown,
+            onChanged: onToggle,
+            minTouchTarget: true,
           ),
         ],
       ),

@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
+import 'analysis_nba.dart';
+import 'analysis_tennis.dart';
 import 'live_api.dart';
 import 'live_widgets.dart' show valueBars;
+import 'qf_h2h_view.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'sport_contract.dart';
+import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
 
@@ -161,84 +165,24 @@ class _StatLine extends StatelessWidget {
   );
 }
 
-String? _record(dynamic r) => r is Map && r['won'] is num && r['lost'] is num
-    ? '${(r['won'] as num).toInt()}-${(r['lost'] as num).toInt()}'
-    : null;
-
 String? _number(dynamic v, [int digits = 1]) =>
     v is num && v.isFinite ? decimalText(v, digits) : null;
 
-String? _signed(dynamic v) =>
-    v is num && v != 0 ? '${v > 0 ? '+' : ''}${v.toInt()}' : null;
-
 class SportAnalysis extends StatelessWidget {
-  const SportAnalysis({super.key, required this.stats, required this.event});
+  const SportAnalysis({
+    super.key,
+    required this.stats,
+    required this.event,
+    this.api,
+    this.images,
+    this.onH2h,
+  });
+
   final Future<JsonMap?> stats;
   final SportEvent event;
-
-  List<Widget> nbaTeam(AppLocalizations l10n, JsonMap t) {
-    final scoring = jsonMap(t['scoring']);
-    final standing = jsonMap(t['standing']);
-    final rows = <(String, String?)>[
-      (l10n.sportStatSeason, _record(t['season'])),
-      (l10n.sportStatHome, _record(t['home'])),
-      (l10n.sportStatAway, _record(t['away'])),
-      (l10n.sportStatLast6, _record(t['last6'])),
-      (l10n.sportStatPointsFor, _number(scoring['points_for'])),
-      (l10n.sportStatPointsAgainst, _number(scoring['points_against'])),
-      (l10n.sportStatStreak, _signed(t['streak'])),
-      (
-        l10n.sportStatRest,
-        t['rest_days'] is num ? '${(t['rest_days'] as num).toInt()}' : null,
-      ),
-      (
-        l10n.sportStatStanding,
-        standing['rank'] is num && standing['of'] is num
-            ? '${standing['rank']} / ${standing['of']}'
-            : null,
-      ),
-    ];
-    return [
-      for (final (label, value) in rows)
-        if (value != null) _StatLine(label, value),
-      if (t['back_to_back'] == true) ...[
-        const SizedBox(height: 6),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: QfBadge(
-            l10n.sportStatBackToBack,
-            color: QfColors.text2,
-            icon: Icons.event_repeat,
-          ),
-        ),
-      ],
-    ];
-  }
-
-  List<Widget> tennisPlayer(AppLocalizations l10n, JsonMap p) {
-    final surfaces = jsonMap(p['surfaces']);
-    final key = (event.surface ?? '').trim().toLowerCase();
-    final form = p['form'] is Map ? jsonMap(p['form']) : <String, dynamic>{};
-    final rows = <(String, String?)>[
-      (l10n.sportStatRank, p['rank'] != null ? '${p['rank']}' : null),
-      (
-        l10n.sportStatAge,
-        p['age'] is num ? '${(p['age'] as num).toInt()}' : null,
-      ),
-      (l10n.sportStatSeason, _record(p['season'])),
-      (l10n.sportStatCareer, _record(p['career'])),
-      (l10n.sportStatSurface, _record(jsonMap(surfaces[key])['career'])),
-      (
-        l10n.sportStatFormIndex,
-        form['index'] is num ? '${(form['index'] as num).toInt()}' : null,
-      ),
-      (l10n.sportStatStreak, _signed(form['streak'])),
-    ];
-    return [
-      for (final (label, value) in rows)
-        if (value != null) _StatLine(label, value),
-    ];
-  }
+  final QuantFutApi? api;
+  final ImageCatalog? images;
+  final VoidCallback? onH2h;
 
   @override
   Widget build(BuildContext context) => _StatsGate(
@@ -247,7 +191,26 @@ class SportAnalysis extends StatelessWidget {
     builder: (data) {
       final l10n = context.l10n;
       final nba = event.sport == kNba;
-      final items = jsonRows(data[nba ? 'teams' : 'players']);
+      if (nba) {
+        return NbaAnalysis(
+          event: event,
+          data: data,
+          api: api,
+          images: images,
+          onH2h: onH2h,
+        );
+      }
+      final tennis = event.sport == kTennis;
+      if (tennis) {
+        return TennisAnalysis(
+          event: event,
+          data: data,
+          api: api,
+          images: images,
+          onH2h: onH2h,
+        );
+      }
+      final items = jsonRows(data['players']);
       if (items.isEmpty) return SportNote(l10n.sportStatsUnavailable);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -268,8 +231,6 @@ class SportAnalysis extends StatelessWidget {
                         color: QfColors.text,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    ...(nba ? nbaTeam(l10n, t) : tennisPlayer(l10n, t)),
                   ],
                 ),
               ),
@@ -281,104 +242,259 @@ class SportAnalysis extends StatelessWidget {
 }
 
 class SportH2h extends StatelessWidget {
-  const SportH2h({super.key, required this.stats, required this.event});
+  const SportH2h({
+    super.key,
+    required this.stats,
+    required this.event,
+    this.api,
+    this.images,
+  });
+
   final Future<JsonMap?> stats;
   final SportEvent event;
+  final QuantFutApi? api;
+  final ImageCatalog? images;
 
-  String _date(dynamic v) {
+  String _date(dynamic v, BuildContext context) {
+    if (v == null || v == '' || v == '—') return '—';
     final d = dateValue(v);
-    return d == null ? '' : localDate(DateFormat.yMd, d);
+    if (d == null) return '$v';
+    final locale = Localizations.localeOf(context).languageCode;
+    return DateFormat.yMMM(locale).format(d).toLowerCase();
   }
 
-  Widget row(String date, String text) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 84,
-          child: Text(
-            date,
-            style: const TextStyle(
-              fontFamily: qfMono,
-              fontSize: 11,
-              color: QfColors.muted,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 13, color: QfColors.text),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget nba(AppLocalizations l10n, JsonMap h2h) {
+  Widget nba(BuildContext context, AppLocalizations l10n, JsonMap h2h) {
     final matches = jsonRows(h2h['matches']);
-    var homeWins = 0, awayWins = 0;
-    for (final m in matches) {
-      final hp = m['home_points'], ap = m['away_points'];
-      if (hp is! num || ap is! num || hp == ap) continue;
-      final winner = hp > ap ? m['home'] : m['away'];
-      if (winner == event.home) homeWins++;
-      if (winner == event.away) awayWins++;
+    var homeWins = (h2h['home_wins'] as num?)?.toInt() ?? 0;
+    var awayWins = (h2h['away_wins'] as num?)?.toInt() ?? 0;
+    if (homeWins == 0 && awayWins == 0) {
+      for (final m in matches) {
+        final hp = m['home_points'], ap = m['away_points'];
+        if (hp is! num || ap is! num || hp == ap) continue;
+        final winner = hp > ap ? m['home'] : m['away'];
+        if (winner == event.home) homeWins++;
+        if (winner == event.away) awayWins++;
+      }
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (homeWins + awayWins > 0)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              l10n.sportH2hRecord(event.home, event.away, homeWins, awayWins),
-              style: const TextStyle(
-                fontFamily: qfDisplay,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: QfColors.text,
-              ),
-            ),
-          ),
-        for (final m in matches)
-          row(
-            _date(m['date']),
-            '${m['home']} ${m['home_points']} · ${m['away']} ${m['away_points']}',
-          ),
+
+    if (matches.isEmpty && homeWins + awayWins == 0) {
+      return SportNote(l10n.detailNoH2h);
+    }
+
+    final homeCode = nbaTricode(event.home);
+    final awayCode = nbaTricode(event.away);
+    final homePath = homeCode == null
+        ? null
+        : (images?.nbaLogo(homeCode) ??
+            '/web/imagenes/nba/${homeCode.toUpperCase()}.png');
+    final awayPath = awayCode == null
+        ? null
+        : (images?.nbaLogo(awayCode) ??
+            '/web/imagenes/nba/${awayCode.toUpperCase()}.png');
+    final homeUrl = api != null && homePath != null
+        ? serverImageUrl(api!, homePath)
+        : null;
+    final awayUrl = api != null && awayPath != null
+        ? serverImageUrl(api!, awayPath)
+        : null;
+
+    final matchItems = <QfH2hMatchItem>[];
+    for (final m in matches) {
+      final mHome = '${m['home'] ?? ''}';
+      final mAway = '${m['away'] ?? ''}';
+      final hp = m['home_points'];
+      final ap = m['away_points'];
+      final text = '$mHome $hp · $mAway $ap';
+      final isHomeWinner = (hp is num && ap is num) ? hp > ap : false;
+      final winnerTeam = isHomeWinner ? mHome : mAway;
+      final winnerCode = nbaTricode(winnerTeam);
+      final winnerPath = winnerCode == null
+          ? null
+          : (images?.nbaLogo(winnerCode) ??
+              '/web/imagenes/nba/${winnerCode.toUpperCase()}.png');
+      final winnerUrl = api != null && winnerPath != null
+          ? serverImageUrl(api!, winnerPath)
+          : null;
+      final badge = winnerCode ??
+          (winnerTeam.length > 3
+              ? winnerTeam.substring(0, 3).toUpperCase()
+              : winnerTeam.toUpperCase());
+
+      final mHomeCode = nbaTricode(mHome);
+      final mAwayCode = nbaTricode(mAway);
+      final mHomeUrl = api != null && mHomeCode != null
+          ? serverImageUrl(
+              api!,
+              images?.nbaLogo(mHomeCode) ??
+                  '/web/imagenes/nba/${mHomeCode.toUpperCase()}.png',
+            )
+          : null;
+      final mAwayUrl = api != null && mAwayCode != null
+          ? serverImageUrl(
+              api!,
+              images?.nbaLogo(mAwayCode) ??
+                  '/web/imagenes/nba/${mAwayCode.toUpperCase()}.png',
+            )
+          : null;
+
+      matchItems.add(
+        QfH2hMatchItem(
+          date: _date(m['date'], context),
+          text: text,
+          winnerBadge: badge,
+          winnerImageUrl: winnerUrl,
+          winnerName: winnerTeam,
+          isCircle: false,
+          leftImageUrl: mHomeUrl,
+          leftName: mHome,
+          rightImageUrl: mAwayUrl,
+          rightName: mAway,
+        ),
+      );
+    }
+
+    final stackedParts = <(String, double, Color)>[];
+    if (homeWins + awayWins > 0) {
+      stackedParts.add((homeCode ?? event.home, homeWins.toDouble(), QfColors.cyan));
+      stackedParts.add((awayCode ?? event.away, awayWins.toDouble(), QfColors.chrome));
+    }
+
+    return QfH2hView(
+      summary: [
+        QfH2hSummaryItem(
+          label: homeCode ?? event.home,
+          count: homeWins,
+          imageUrl: homeUrl,
+          isCircle: false,
+        ),
+        QfH2hSummaryItem(
+          label: awayCode ?? event.away,
+          count: awayWins,
+          imageUrl: awayUrl,
+          isCircle: false,
+        ),
       ],
+      stackedBarParts: stackedParts,
+      matches: matchItems,
     );
   }
 
-  Widget tennis(AppLocalizations l10n, JsonMap data, JsonMap h2h) {
+  Widget tennis(
+    BuildContext context,
+    AppLocalizations l10n,
+    JsonMap data,
+    JsonMap h2h,
+  ) {
     final players = jsonRows(data['players']);
-    final first = players.isNotEmpty ? '${players[0]['name']}' : event.home;
-    final second = players.length > 1 ? '${players[1]['name']}' : event.away;
-    final fw = h2h['first_wins'], sw = h2h['second_wins'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (fw is num && sw is num)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              l10n.sportH2hRecord(first, second, fw.toInt(), sw.toInt()),
-              style: const TextStyle(
-                fontFamily: qfDisplay,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: QfColors.text,
-              ),
-            ),
+    final first = event.home.trim().isNotEmpty
+        ? event.home.trim()
+        : (players.isNotEmpty ? '${players[0]['name']}' : '');
+    final second = event.away.trim().isNotEmpty
+        ? event.away.trim()
+        : (players.length > 1 ? '${players[1]['name']}' : '');
+    final fw = h2h['first_wins'];
+    final sw = h2h['second_wins'];
+    final firstWins = (fw as num?)?.toInt() ?? 0;
+    final secondWins = (sw as num?)?.toInt() ?? 0;
+    final matches = jsonRows(h2h['matches']);
+
+    String surname(String fullName) {
+      final parts = fullName.trim().split(RegExp(r'\s+'));
+      return parts.isNotEmpty ? parts.last : fullName;
+    }
+
+    final firstShort = surname(first);
+    final secondShort = surname(second);
+
+    final photo1 = images?.tennisPhoto(first);
+    final photo2 = images?.tennisPhoto(second);
+    final photo1Url = photo1 != null && api != null
+        ? serverImageUrl(api!, photo1.path)
+        : null;
+    final photo2Url = photo2 != null && api != null
+        ? serverImageUrl(api!, photo2.path)
+        : null;
+
+    // Estado «primer duelo» (tenis 0–0 y sin partidos)
+    if (firstWins == 0 && secondWins == 0 && matches.isEmpty) {
+      return QfH2hView(
+        summary: [
+          QfH2hSummaryItem(
+            label: firstShort,
+            count: 0,
+            imageUrl: photo1Url,
+            isCircle: true,
           ),
-        for (final m in jsonRows(h2h['matches']))
-          row(
-            _date(m['date']),
-            '${m['tournament'] ?? ''} · ${m['won'] == true ? first : second}'
-            '${m['score'] != null ? ' ${m['score']}' : ''}',
+          QfH2hSummaryItem(
+            label: secondShort,
+            count: 0,
+            imageUrl: photo2Url,
+            isCircle: true,
           ),
+        ],
+        matches: [
+          QfH2hMatchItem(
+            date: '—',
+            text: l10n.h2hFirstDuelRow,
+            winnerBadge: '0–0',
+            winnerImageUrl: photo1Url,
+            winnerName: first,
+            isCircle: true,
+          ),
+        ],
+      );
+    }
+
+    // Partidos registrados
+    final matchItems = <QfH2hMatchItem>[];
+    for (final m in matches) {
+      final won = m['won'] == true;
+      final winnerName = won ? first : second;
+      final winnerShort = won ? firstShort : secondShort;
+      final winnerUrl = won ? photo1Url : photo2Url;
+      final score = m['score'] != null ? ' ${m['score']}' : '';
+      final tourn = m['tournament'] != null && '${m['tournament']}'.isNotEmpty
+          ? '${m['tournament']} · '
+          : '';
+      final text = '$tourn$winnerName$score'.trim();
+      final badge = winnerShort.length > 3
+          ? winnerShort.substring(0, 3).toUpperCase()
+          : winnerShort.toUpperCase();
+      matchItems.add(
+        QfH2hMatchItem(
+          date: _date(m['date'], context),
+          text: text,
+          winnerBadge: badge,
+          winnerImageUrl: winnerUrl,
+          winnerName: winnerName,
+          isCircle: true,
+        ),
+      );
+    }
+
+    final stackedParts = <(String, double, Color)>[];
+    if (firstWins + secondWins > 0) {
+      stackedParts.add((firstShort, firstWins.toDouble(), QfColors.cyan));
+      stackedParts.add((secondShort, secondWins.toDouble(), QfColors.chrome));
+    }
+
+    return QfH2hView(
+      summary: [
+        QfH2hSummaryItem(
+          label: firstShort,
+          count: firstWins,
+          imageUrl: photo1Url,
+          isCircle: true,
+        ),
+        QfH2hSummaryItem(
+          label: secondShort,
+          count: secondWins,
+          imageUrl: photo2Url,
+          isCircle: true,
+        ),
       ],
+      stackedBarParts: stackedParts,
+      matches: matchItems,
     );
   }
 
@@ -389,12 +505,14 @@ class SportH2h extends StatelessWidget {
     builder: (data) {
       final l10n = context.l10n;
       final h2h = jsonMap(data['h2h']);
-      if (jsonRows(h2h['matches']).isEmpty) return SportNote(l10n.detailNoH2h);
-      return QfCard(
-        child: event.sport == kNba
-            ? nba(l10n, h2h)
-            : tennis(l10n, data, h2h),
-      );
+      if (event.sport == kNba) {
+        return nba(context, l10n, h2h);
+      } else {
+        if (h2h.isEmpty && jsonRows(data['players']).isEmpty) {
+          return SportNote(l10n.detailNoH2h);
+        }
+        return tennis(context, l10n, data, h2h);
+      }
     },
   );
 }

@@ -127,6 +127,9 @@ void main() {
       'Gilroy Bold': 'fonts/Gilroy-Bold.otf',
       'Gilroy ExtraBold': 'fonts/Gilroy-ExtraBold.otf',
       'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
+      'Exo 2': 'fonts/Exo2-Regular.ttf',
+      'Rajdhani': 'fonts/Rajdhani-Bold.ttf',
+      'JetBrains Mono': 'fonts/JetBrainsMono-Bold.ttf',
     }.entries) {
       await (FontLoader(f.key)..addFont(rootBundle.load(f.value))).load();
     }

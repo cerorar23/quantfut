@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../bottombar.dart';
 import '../l10n/app_locale.dart';
-import '../l10n/language_picker.dart';
 import '../product/qf_shapes.dart';
 import '../product/qf_theme.dart';
 import '../product/welcome_art.dart';
@@ -19,33 +18,34 @@ final welcomePages = [
   WelcomePage(
     (l10n) => l10n.welcome1Title,
     (l10n) => l10n.welcome1Body,
-    QfColors.football,
+    QfColors.cyan,
   ),
   WelcomePage(
     (l10n) => l10n.welcome2Title,
     (l10n) => l10n.welcome2Body,
-    QfColors.primary,
+    QfColors.green,
   ),
   WelcomePage(
     (l10n) => l10n.welcome3Title,
     (l10n) => l10n.welcome3Body,
-    QfColors.success,
+    QfColors.yellow,
   ),
   WelcomePage(
     (l10n) => l10n.welcome4Title,
     (l10n) => l10n.welcome4Body,
-    QfColors.nba,
+    QfColors.cyan,
   ),
   WelcomePage(
     (l10n) => l10n.welcome5Title,
     (l10n) => l10n.welcome5Body,
-    QfColors.tennis,
+    QfColors.green,
   ),
 ];
 
 class SecondScreen extends StatefulWidget {
   const SecondScreen({super.key, this.onFinished});
   final VoidCallback? onFinished;
+
   @override
   State<SecondScreen> createState() => _SecondScreenState();
 }
@@ -103,114 +103,124 @@ class _SecondScreenState extends State<SecondScreen> {
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 12, 0),
+                    // Header: contador de páginas (ej. 1 / 5) y botón SALTAR
+                    Container(
+                      height: 56,
+                      padding: const EdgeInsets.only(left: 20, right: 8),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            '// ', // l10n-ignore (marca)
-                            style: TextStyle(
-                              fontFamily: qfDisplay,
+                          Text(
+                            '${_page + 1} / ${welcomePages.length}',
+                            style: const TextStyle(
+                              fontFamily: qfMono,
                               fontWeight: FontWeight.w700,
-                              fontSize: 20,
-                              color: QfColors.primary,
+                              fontSize: 12,
+                              color: Color(0xFF939AB0),
                             ),
                           ),
-                          const Text(
-                            'QUANTFUT', // l10n-ignore (marca)
-                            style: TextStyle(
-                              fontFamily: qfDisplay,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                              letterSpacing: 1.2,
-                              color: QfColors.text,
-                            ),
-                          ),
-                          const Spacer(),
-                          const LanguageButton(color: QfColors.text2),
                           TextButton(
                             onPressed: _finish,
                             style: TextButton.styleFrom(
-                              foregroundColor: QfColors.primary,
-                              minimumSize: const Size(64, 48),
+                              foregroundColor: QfColors.muted,
+                              minimumSize: const Size(64, 44),
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
                             ),
-                            child: Text(l10n.welcomeSkip),
+                            child: Text(
+                              l10n.welcomeSkip.toUpperCase(),
+                              style: const TextStyle(
+                                fontFamily: qfDisplay,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                letterSpacing: 1.4,
+                                color: QfColors.muted,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    // Contenido en carrusel
                     Expanded(
                       child: PageView.builder(
                         controller: _controller,
                         itemCount: welcomePages.length,
                         onPageChanged: (index) => setState(() => _page = index),
-                        itemBuilder: (context, index) => LayoutBuilder(
-                          builder: (context, box) {
-                            final page = welcomePages[index];
-                            final artSize = (box.maxHeight * .46).clamp(
-                              135.0,
-                              265.0,
-                            );
-                            return SingleChildScrollView(
-                              key: ValueKey('welcome-scroll-$index'),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: box.maxHeight,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 18,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                        itemBuilder: (context, index) {
+                          final page = welcomePages[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              children: [
+                                // Área de ilustración con resplandor radial
+                                Expanded(
+                                  flex: 5,
+                                  child: Stack(
+                                    alignment: Alignment.center,
                                     children: [
-                                      ExcludeSemantics(
-                                        child: SizedBox(
-                                          width: artSize,
-                                          height: artSize,
-                                          child: WelcomeArt(
-                                            index: index,
-                                            accent: page.color,
-                                            active: index == _page,
+                                      Positioned.fill(
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            gradient: RadialGradient(
+                                              center: const Alignment(0, -0.1),
+                                              radius: 0.65,
+                                              colors: [
+                                                QfColors.cyan.withValues(alpha: 0.16),
+                                                Colors.transparent,
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 30),
+                                      WelcomeArt(
+                                        index: index,
+                                        accent: page.color,
+                                        active: index == _page,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Textos principales
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
                                       Text(
                                         page.title(l10n),
                                         key: ValueKey('welcome-title-$index'),
-                                        textAlign: TextAlign.center,
                                         style: const TextStyle(
                                           color: QfColors.text,
                                           fontFamily: qfDisplay,
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 30,
-                                          height: 1.08,
+                                          fontSize: 32,
+                                          height: 1.05,
+                                          letterSpacing: 0.3,
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 10),
                                       Text(
                                         page.description(l10n),
-                                        textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          color: QfColors.text2,
-                                          fontFamily: 'Gilroy Medium',
-                                          fontSize: 15,
-                                          height: 1.55,
+                                          color: QfColors.muted,
+                                          fontFamily: 'Exo 2',
+                                          fontSize: 14,
+                                          height: 1.4,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ),
+                    // Pie: puntos indicadores y botón de acción principal
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 22),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -219,40 +229,79 @@ class _SecondScreenState extends State<SecondScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(
-                                5,
-                                (index) => SizedBox(
-                                  width: 44,
-                                  height: 44,
-                                  child: IconButton(
-                                    tooltip: l10n.welcomeGoTo(index + 1),
-                                    onPressed: () => _goTo(index),
-                                    padding: EdgeInsets.zero,
-                                    icon: AnimatedContainer(
-                                      duration:
-                                          MediaQuery.disableAnimationsOf(
-                                            context,
-                                          )
-                                          ? Duration.zero
-                                          : const Duration(milliseconds: 200),
-                                      height: 6,
-                                      width: _page == index ? 24 : 6,
-                                      color: _page == index
-                                          ? QfColors.primary
-                                          : QfColors.border,
+                                welcomePages.length,
+                                (index) => Semantics(
+                                  button: true,
+                                  selected: _page == index,
+                                  label: l10n.welcomeGoTo(index + 1),
+                                  child: GestureDetector(
+                                    onTap: () => _goTo(index),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: SizedBox(
+                                      width: 44,
+                                      height: 44,
+                                      child: Center(
+                                        child: AnimatedContainer(
+                                          duration: MediaQuery.disableAnimationsOf(context)
+                                              ? Duration.zero
+                                              : const Duration(milliseconds: 200),
+                                          height: 6,
+                                          width: _page == index ? 26 : 6,
+                                          decoration: BoxDecoration(
+                                            color: _page == index
+                                                ? QfColors.cyan
+                                                : const Color(0xFF3A3F55),
+                                            borderRadius: BorderRadius.circular(1),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
+                          const SizedBox(height: 10),
+                          // Botón SIGUIENTE / EMPEZAR en gradiente verde CyberCore
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
-                            child: FilledButton(
-                              onPressed: () =>
-                                  _page == 4 ? _finish() : _goTo(_page + 1),
-                              style: qfFilled(QfColors.primary),
-                              child: Text(_page == 4 ? l10n.welcomeStart : l10n.welcomeNext),
+                            height: 54,
+                            child: Container(
+                              decoration: ShapeDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF05FFA1), Color(0xFF8AFFDF)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shadows: [
+                                  BoxShadow(
+                                    color: const Color(0xFF05FFA1).withValues(alpha: 0.18),
+                                    blurRadius: 28,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                                shape: const CutCornerBorder(cut: 10),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  customBorder: const CutCornerBorder(cut: 10),
+                                  onTap: () =>
+                                      _page == 4 ? _finish() : _goTo(_page + 1),
+                                  child: Center(
+                                    child: Text(
+                                      (_page == 4 ? l10n.welcomeStart : l10n.welcomeNext).toUpperCase(),
+                                      style: const TextStyle(
+                                        fontFamily: qfDisplay,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 17,
+                                        letterSpacing: 1.5,
+                                        color: Color(0xFF03110F),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],

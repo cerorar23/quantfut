@@ -196,6 +196,12 @@ abstract class AppLocalizations {
   /// **'Si existe la cuenta, recibirás instrucciones por correo.'**
   String get accessForgotSent;
 
+  /// No description provided for @accessFreeToStart.
+  ///
+  /// In es, this message translates to:
+  /// **'GRATIS PARA EMPEZAR'**
+  String get accessFreeToStart;
+
   /// No description provided for @accessGenericError.
   ///
   /// In es, this message translates to:
@@ -261,6 +267,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Contraseña anterior'**
   String get accessLinkPassword;
+
+  /// No description provided for @accessNoCard.
+  ///
+  /// In es, this message translates to:
+  /// **'SIN TARJETA'**
+  String get accessNoCard;
 
   /// No description provided for @accessOtherAccount.
   ///
@@ -406,11 +418,71 @@ abstract class AppLocalizations {
   /// **'Sin ventajas reportadas.'**
   String get alertsAdvantageEmpty;
 
+  /// Player back in group training
+  ///
+  /// In es, this message translates to:
+  /// **'Ya entrena con el grupo'**
+  String get alertsBackTrainingDesc;
+
+  /// Badge for applied injury report
+  ///
+  /// In es, this message translates to:
+  /// **'APLICADO'**
+  String get alertsBadgeApplied;
+
+  /// Badge for doubtful player
+  ///
+  /// In es, this message translates to:
+  /// **'DUDA'**
+  String get alertsBadgeDoubt;
+
+  /// Badge for player on international duty
+  ///
+  /// In es, this message translates to:
+  /// **'SELECCIÓN'**
+  String get alertsBadgeDuty;
+
+  /// Badge for injured player absence
+  ///
+  /// In es, this message translates to:
+  /// **'LESIÓN'**
+  String get alertsBadgeInjury;
+
+  /// Badge when there are no alerts
+  ///
+  /// In es, this message translates to:
+  /// **'SIN ALERTAS'**
+  String get alertsBadgeNone;
+
+  /// Badge for pending injury report
+  ///
+  /// In es, this message translates to:
+  /// **'PENDIENTE'**
+  String get alertsBadgePending;
+
+  /// Badge for player returning/back in training
+  ///
+  /// In es, this message translates to:
+  /// **'VUELVE'**
+  String get alertsBadgeReturns;
+
+  /// Badge for suspended player
+  ///
+  /// In es, this message translates to:
+  /// **'SANCIÓN'**
+  String get alertsBadgeSuspension;
+
   /// Cuándo se comprobaron las bajas por última vez.
   ///
   /// In es, this message translates to:
   /// **'Comprobado {when}'**
   String alertsChecked(String when);
+
+  /// Footer for alerts checking timestamp
+  ///
+  /// In es, this message translates to:
+  /// **'COMPROBADO {when} · se actualiza cada hora'**
+  String alertsCheckedFooter(String when);
 
   /// Sección: bajas de este equipo.
   ///
@@ -430,11 +502,83 @@ abstract class AppLocalizations {
   /// **'Duda'**
   String get alertsDoubt;
 
+  /// Description for international duty with return date
+  ///
+  /// In es, this message translates to:
+  /// **'Con su selección · vuelve a {when}'**
+  String alertsDutyReturns(String when);
+
+  /// Early in month
+  ///
+  /// In es, this message translates to:
+  /// **'principios de {month}'**
+  String alertsEarlyMonth(String month);
+
+  /// Subtitle for last starting XI
+  ///
+  /// In es, this message translates to:
+  /// **'último once, vs {rival} · {date}'**
+  String alertsLastElevenVs(String rival, String date);
+
+  /// Late in month
+  ///
+  /// In es, this message translates to:
+  /// **'finales de {month}'**
+  String alertsLateMonth(String month);
+
+  /// Kicker above lineups pitch
+  ///
+  /// In es, this message translates to:
+  /// **'// ALINEACIONES'**
+  String get alertsLineupsKicker;
+
+  /// Title for pitch lineups
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMO ONCE CONOCIDO'**
+  String get alertsLineupsTitle;
+
+  /// Mid month
+  ///
+  /// In es, this message translates to:
+  /// **'mediados de {month}'**
+  String alertsMidMonth(String month);
+
+  /// NBA team injury report summary
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 jugador en el reporte} other{{count} jugadores en el reporte}} · {minutes} min de bajas'**
+  String alertsNbaReportSummary(num count, num minutes);
+
+  /// Body when match has no alerts
+  ///
+  /// In es, this message translates to:
+  /// **'No hay bajas ni dudas registradas para este partido.'**
+  String get alertsNoAlertsBody;
+
+  /// Title when match has no alerts
+  ///
+  /// In es, this message translates to:
+  /// **'SIN ALERTAS'**
+  String get alertsNoAlertsTitle;
+
   /// No hay comprobación de bajas: no equivale a «sin lesionados».
   ///
   /// In es, this message translates to:
   /// **'Todavía no hay una comprobación de bajas para este partido. Si su liga no tiene este dato, eso no significa que no haya lesionados.'**
   String get alertsNoCheck;
+
+  /// Description when lineup is not yet confirmed
+  ///
+  /// In es, this message translates to:
+  /// **'El once se confirma una hora antes del partido y aparecerá aquí con foto.'**
+  String get alertsNoLineupDesc;
+
+  /// Header when team has no saved lineup
+  ///
+  /// In es, this message translates to:
+  /// **'{team} · sin alineación guardada'**
+  String alertsNoLineupSaved(String team);
 
   /// Aviso al pie de la pestaña de alertas.
   ///
@@ -496,6 +640,12 @@ abstract class AppLocalizations {
   /// **'Motivo no indicado'**
   String get alertsReasonUnknown;
 
+  /// Return date formatted
+  ///
+  /// In es, this message translates to:
+  /// **'Vuelve a {when}'**
+  String alertsReturnsWhen(String when);
+
   /// Proveedor de los datos de bajas.
   ///
   /// In es, this message translates to:
@@ -513,6 +663,332 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sancionado'**
   String get alertsSuspended;
+
+  /// Tennis player without issues
+  ///
+  /// In es, this message translates to:
+  /// **'Sin incidencias en los últimos 7 días'**
+  String get alertsTennisNoIssues;
+
+  /// No description provided for @anAveragesLast10.
+  ///
+  /// In es, this message translates to:
+  /// **'// Promedios · Últimos 10'**
+  String get anAveragesLast10;
+
+  /// No description provided for @anBttsShort.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBOS MARCAN'**
+  String get anBttsShort;
+
+  /// No description provided for @anDrawsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} EMPATES'**
+  String anDrawsCount(int count);
+
+  /// No description provided for @anGoalsDiff.
+  ///
+  /// In es, this message translates to:
+  /// **'{gf} GF · {gc} GC'**
+  String anGoalsDiff(int gf, int gc);
+
+  /// No description provided for @anGoalsPerMatchShort.
+  ///
+  /// In es, this message translates to:
+  /// **'GOLES / PARTIDO'**
+  String get anGoalsPerMatchShort;
+
+  /// No description provided for @anH2hMatchCount.
+  ///
+  /// In es, this message translates to:
+  /// **'// {n} PARTIDOS'**
+  String anH2hMatchCount(int n);
+
+  /// No description provided for @anHowTheyArrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo llegan'**
+  String get anHowTheyArrive;
+
+  /// No description provided for @anLast5Matches.
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS 5 PARTIDOS'**
+  String get anLast5Matches;
+
+  /// No description provided for @anLastMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMO'**
+  String get anLastMatch;
+
+  /// No description provided for @anLeagueRound.
+  ///
+  /// In es, this message translates to:
+  /// **'// {league} · JORNADA {round}'**
+  String anLeagueRound(String league, String round);
+
+  /// No description provided for @anMetricBtts.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBOS MARCAN'**
+  String get anMetricBtts;
+
+  /// No description provided for @anMetricCleanSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'PORTERÍA A CERO'**
+  String get anMetricCleanSheet;
+
+  /// No description provided for @anMetricCorners.
+  ///
+  /// In es, this message translates to:
+  /// **'CÓRNERS'**
+  String get anMetricCorners;
+
+  /// No description provided for @anMetricGoalsAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'GOLES EN CONTRA'**
+  String get anMetricGoalsAgainst;
+
+  /// No description provided for @anMetricGoalsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'GOLES A FAVOR'**
+  String get anMetricGoalsFor;
+
+  /// No description provided for @anMetricOver25.
+  ///
+  /// In es, this message translates to:
+  /// **'MÁS DE 2,5 GOLES'**
+  String get anMetricOver25;
+
+  /// No description provided for @anMetricShots.
+  ///
+  /// In es, this message translates to:
+  /// **'TIROS'**
+  String get anMetricShots;
+
+  /// No description provided for @anMetricShotsOnTarget.
+  ///
+  /// In es, this message translates to:
+  /// **'TIROS A PUERTA'**
+  String get anMetricShotsOnTarget;
+
+  /// No description provided for @anMetricXgAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'xG EN CONTRA'**
+  String get anMetricXgAgainst;
+
+  /// No description provided for @anMetricXgFor.
+  ///
+  /// In es, this message translates to:
+  /// **'xG A FAVOR'**
+  String get anMetricXgFor;
+
+  /// No description provided for @anNavForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Forma'**
+  String get anNavForm;
+
+  /// No description provided for @anNavH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Cara a cara'**
+  String get anNavH2h;
+
+  /// No description provided for @anNavStandings.
+  ///
+  /// In es, this message translates to:
+  /// **'Tabla'**
+  String get anNavStandings;
+
+  /// No description provided for @anNavSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get anNavSummary;
+
+  /// No description provided for @anNoForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Forma no disponible'**
+  String get anNoForm;
+
+  /// No description provided for @anNoH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin enfrentamientos previos registrados'**
+  String get anNoH2h;
+
+  /// No description provided for @anNoStandings.
+  ///
+  /// In es, this message translates to:
+  /// **'Clasificación no disponible'**
+  String get anNoStandings;
+
+  /// No description provided for @anOver25Short.
+  ///
+  /// In es, this message translates to:
+  /// **'MÁS DE 2,5'**
+  String get anOver25Short;
+
+  /// No description provided for @anPlayoff.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAY-OFF'**
+  String get anPlayoff;
+
+  /// No description provided for @anPointsOutOf.
+  ///
+  /// In es, this message translates to:
+  /// **'{points} PTS DE 15'**
+  String anPointsOutOf(int points);
+
+  /// No description provided for @anPromotion.
+  ///
+  /// In es, this message translates to:
+  /// **'ASCENSO'**
+  String get anPromotion;
+
+  /// No description provided for @anRadarAttack.
+  ///
+  /// In es, this message translates to:
+  /// **'ATAQUE'**
+  String get anRadarAttack;
+
+  /// No description provided for @anRadarCorners.
+  ///
+  /// In es, this message translates to:
+  /// **'CÓRNERS'**
+  String get anRadarCorners;
+
+  /// No description provided for @anRadarCreation.
+  ///
+  /// In es, this message translates to:
+  /// **'CREACIÓN'**
+  String get anRadarCreation;
+
+  /// No description provided for @anRadarDefense.
+  ///
+  /// In es, this message translates to:
+  /// **'DEFENSA'**
+  String get anRadarDefense;
+
+  /// No description provided for @anRadarFinishing.
+  ///
+  /// In es, this message translates to:
+  /// **'REMATE'**
+  String get anRadarFinishing;
+
+  /// No description provided for @anRelegation.
+  ///
+  /// In es, this message translates to:
+  /// **'DESCENSO'**
+  String get anRelegation;
+
+  /// No description provided for @anScopeAll.
+  ///
+  /// In es, this message translates to:
+  /// **'TODOS'**
+  String get anScopeAll;
+
+  /// No description provided for @anScopeHomeAway.
+  ///
+  /// In es, this message translates to:
+  /// **'CASA · FUERA'**
+  String get anScopeHomeAway;
+
+  /// No description provided for @anScopeHomeAwayCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'EN CASA · FUERA'**
+  String get anScopeHomeAwayCaption;
+
+  /// No description provided for @anScopeLast10Caption.
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS 10 · 10'**
+  String get anScopeLast10Caption;
+
+  /// No description provided for @anSeenFrom.
+  ///
+  /// In es, this message translates to:
+  /// **'Visto desde {team}'**
+  String anSeenFrom(String team);
+
+  /// No description provided for @anStandingsCalloutAhead.
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} {posA}.º · {ptsA} pts · +{diff} sobre {teamB} ({posB}.º, {ptsB} pts)'**
+  String anStandingsCalloutAhead(
+    String teamA,
+    int posA,
+    int ptsA,
+    int diff,
+    String teamB,
+    int posB,
+    int ptsB,
+  );
+
+  /// No description provided for @anStandingsCalloutTied.
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} y {teamB} empatados a {pts} pts'**
+  String anStandingsCalloutTied(String teamA, String teamB, int pts);
+
+  /// No description provided for @anStandingsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Clasificación'**
+  String get anStandingsTitle;
+
+  /// No description provided for @anStreakLosses.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 DERROTA} other{{count} DERROTAS SEGUIDAS}}'**
+  String anStreakLosses(int count);
+
+  /// No description provided for @anStreakUnbeaten.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} SIN PERDER'**
+  String anStreakUnbeaten(int count);
+
+  /// No description provided for @anStreakWins.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 VICTORIA} other{{count} VICTORIAS SEGUIDAS}}'**
+  String anStreakWins(int count);
+
+  /// No description provided for @anVenueAway.
+  ///
+  /// In es, this message translates to:
+  /// **'FUERA'**
+  String get anVenueAway;
+
+  /// No description provided for @anVenueHome.
+  ///
+  /// In es, this message translates to:
+  /// **'CASA'**
+  String get anVenueHome;
+
+  /// No description provided for @anViewAllMatches.
+  ///
+  /// In es, this message translates to:
+  /// **'VER LOS {n} PARTIDOS'**
+  String anViewAllMatches(int n);
+
+  /// No description provided for @anWinsTeam.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} VICTORIAS {team}'**
+  String anWinsTeam(int count, String team);
 
   /// No description provided for @apiGoogleNotVerified.
   ///
@@ -622,11 +1098,35 @@ abstract class AppLocalizations {
   /// **'DATOS + TU CRITERIO'**
   String get artHeading4;
 
+  /// No description provided for @artLost.
+  ///
+  /// In es, this message translates to:
+  /// **'FALLADO'**
+  String get artLost;
+
   /// No description provided for @artNba.
   ///
   /// In es, this message translates to:
   /// **'NBA'**
   String get artNba;
+
+  /// No description provided for @artNotCertainty.
+  ///
+  /// In es, this message translates to:
+  /// **'NO ES UNA CERTEZA'**
+  String get artNotCertainty;
+
+  /// No description provided for @artProbability.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD'**
+  String get artProbability;
+
+  /// No description provided for @artRegisteredRate.
+  ///
+  /// In es, this message translates to:
+  /// **'ACIERTO REGISTRADO'**
+  String get artRegisteredRate;
 
   /// No description provided for @artStats.
   ///
@@ -640,11 +1140,23 @@ abstract class AppLocalizations {
   /// **'ANALIZA. COMPARA. EXPLORA.'**
   String get artTagline;
 
+  /// No description provided for @artTennis.
+  ///
+  /// In es, this message translates to:
+  /// **'TENIS'**
+  String get artTennis;
+
   /// No description provided for @artTransparency.
   ///
   /// In es, this message translates to:
   /// **'TRANSPARENCIA'**
   String get artTransparency;
+
+  /// No description provided for @artWon.
+  ///
+  /// In es, this message translates to:
+  /// **'GANADO'**
+  String get artWon;
 
   /// No description provided for @bannerAwaiting.
   ///
@@ -796,6 +1308,24 @@ abstract class AppLocalizations {
   /// **'Comprobado: {date}'**
   String detailChecked(String date);
 
+  /// No description provided for @detailFeaturedPickFree.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK DESTACADO · GRATIS'**
+  String get detailFeaturedPickFree;
+
+  /// No description provided for @detailFeaturedPickUnlocked.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK DESTACADO · DESBLOQUEADO'**
+  String get detailFeaturedPickUnlocked;
+
+  /// No description provided for @detailFeaturedPickVip.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK DESTACADO · VIP'**
+  String get detailFeaturedPickVip;
+
   /// No description provided for @detailFormationPending.
   ///
   /// In es, this message translates to:
@@ -825,6 +1355,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Alineaciones todavía no confirmadas.'**
   String get detailLineupsPending;
+
+  /// No description provided for @detailLockedWithCoinsOrVip.
+  ///
+  /// In es, this message translates to:
+  /// **'con monedas o VIP'**
+  String get detailLockedWithCoinsOrVip;
+
+  /// No description provided for @detailModelMarkets.
+  ///
+  /// In es, this message translates to:
+  /// **'MERCADOS DEL MODELO'**
+  String get detailModelMarkets;
 
   /// No description provided for @detailNoFeatured.
   ///
@@ -874,6 +1416,12 @@ abstract class AppLocalizations {
   /// **'Sin titulares confirmados.'**
   String get detailNoStarters;
 
+  /// No description provided for @detailOddAtPublish.
+  ///
+  /// In es, this message translates to:
+  /// **'cuota al publicar {odd}'**
+  String detailOddAtPublish(String odd);
+
   /// No description provided for @detailReferee.
   ///
   /// In es, this message translates to:
@@ -904,11 +1452,23 @@ abstract class AppLocalizations {
   /// **'Pronósticos'**
   String get detailTabPredictions;
 
+  /// Pestaña de props de jugador en la ficha de partido de NBA
+  ///
+  /// In es, this message translates to:
+  /// **'Props'**
+  String get detailTabProps;
+
   /// No description provided for @detailTabStats.
   ///
   /// In es, this message translates to:
   /// **'Análisis'**
   String get detailTabStats;
+
+  /// Botón para desbloquear todos los pronósticos del partido
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEAR TODO · {cost}'**
+  String detailUnlockAll(Object cost);
 
   /// No description provided for @detailVipPickNotice.
   ///
@@ -1528,6 +2088,36 @@ abstract class AppLocalizations {
   /// **'Es información y entretenimiento'**
   String get guideHead6;
 
+  /// Botón para avanzar al siguiente tema de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente'**
+  String get guideNext;
+
+  /// Botón para volver al tema anterior de la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Anterior'**
+  String get guidePrevious;
+
+  /// Regla de responsabilidad 1 en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo con dinero que puedas perder'**
+  String get guideRespRule1;
+
+  /// Regla de responsabilidad 2 en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo si eres mayor de edad'**
+  String get guideRespRule2;
+
+  /// Regla de responsabilidad 3 en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'Si deja de ser un pasatiempo, pide ayuda'**
+  String get guideRespRule3;
+
   /// Subtítulo de la guía.
   ///
   /// In es, this message translates to:
@@ -1576,11 +2166,47 @@ abstract class AppLocalizations {
   /// **'RESPONSABILIDAD'**
   String get guideTopic6;
 
+  /// Contador de temas en la guía.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} temas'**
+  String guideTopicCount(int count);
+
+  /// Insignia de empate en la lista de partidos de H2H
+  ///
+  /// In es, this message translates to:
+  /// **'EMP'**
+  String get h2hDrawBadge;
+
+  /// Etiqueta para la tarjeta de empates en H2H de fútbol
+  ///
+  /// In es, this message translates to:
+  /// **'EMPATES'**
+  String get h2hDraws;
+
+  /// Texto de fila cuando dos rivales nunca se han enfrentado
+  ///
+  /// In es, this message translates to:
+  /// **'Primer duelo entre ambos'**
+  String get h2hFirstDuelRow;
+
+  /// Título de la sección de últimos enfrentamientos en H2H
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS ENFRENTAMIENTOS'**
+  String get h2hRecentMatches;
+
   /// No description provided for @historyWebSince.
   ///
   /// In es, this message translates to:
   /// **'Historial web desde el 26/10/2026'**
   String get historyWebSince;
+
+  /// Título de la sección de agenda
+  ///
+  /// In es, this message translates to:
+  /// **'Agenda'**
+  String get homeAgendaTitle;
 
   /// Cierra el aviso de la parte superior.
   ///
@@ -1593,6 +2219,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Partidos por fecha y horario'**
   String get homeByDate;
+
+  /// Desbloqueos posibles con el saldo de monedas
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{Te alcanza para 1 desbloqueo} other{Te alcanza para {count} desbloqueos}}'**
+  String homeCoinsUnlocks(int count);
 
   /// Antetítulo de la tarjeta grande de Inicio con el pronóstico de mayor probabilidad del deporte elegido.
   ///
@@ -1617,6 +2249,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pronóstico pendiente'**
   String get homeForecastPending;
+
+  /// Título de la tarjeta de acierto en los últimos 30 días
+  ///
+  /// In es, this message translates to:
+  /// **'Acierto · 30 días'**
+  String get homeHitTitle;
 
   /// Botón que abre el menú Más.
   ///
@@ -1684,6 +2322,12 @@ abstract class AppLocalizations {
   /// **'Mañana'**
   String get homeTomorrow;
 
+  /// Botón del destacado del día para ver el pronóstico gratis
+  ///
+  /// In es, this message translates to:
+  /// **'Ver pronóstico gratis'**
+  String get homeViewFreePick;
+
   /// No description provided for @imageCredits.
   ///
   /// In es, this message translates to:
@@ -1701,6 +2345,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Todavía no tienes avisos.'**
   String get inboxEmpty;
+
+  /// Subtítulo explicativo cuando la bandeja de avisos está vacía.
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí verás los pronósticos nuevos, las bajas y los resultados de tus deportes.'**
+  String get inboxEmptySubtitle;
 
   /// No description provided for @inboxMatch.
   ///
@@ -1720,11 +2370,23 @@ abstract class AppLocalizations {
   /// **'Avisos'**
   String get inboxTitle;
 
+  /// Contador de avisos pendientes de leer.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} sin leer'**
+  String inboxUnread(int count);
+
   /// Resumen sobre las tarjetas del Reto Escalera.
   ///
   /// In es, this message translates to:
   /// **'{count, plural, one{1 reto en marcha} other{{count} retos en marcha}}'**
   String ladderActiveCount(int count);
+
+  /// No description provided for @ladderActiveReto.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalera · Reto activo'**
+  String get ladderActiveReto;
 
   /// Etiqueta bajo el multiplicador del saldo del reto.
   ///
@@ -1828,11 +2490,23 @@ abstract class AppLocalizations {
   /// **'Falta elegir el siguiente escalón; puede tardar días. El reto sigue vivo.'**
   String get ladderNoteToPick;
 
+  /// No description provided for @ladderOddsAccumulated.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota acumulada'**
+  String get ladderOddsAccumulated;
+
   /// Escalones que faltan para cerrar el reto.
   ///
   /// In es, this message translates to:
   /// **'{remaining, plural, one{falta 1} other{faltan {remaining}}}'**
   String ladderRemaining(int remaining);
+
+  /// No description provided for @ladderRestartHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Si un escalón falla, la escalera vuelve a empezar.'**
+  String get ladderRestartHint;
 
   /// Despliega los escalones de un reto.
   ///
@@ -1852,6 +2526,18 @@ abstract class AppLocalizations {
   /// **'Por elegir'**
   String get ladderStatusToPick;
 
+  /// No description provided for @ladderStepOf.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalón {current} de {goal}'**
+  String ladderStepOf(int current, int goal);
+
+  /// No description provided for @ladderStepProb.
+  ///
+  /// In es, this message translates to:
+  /// **'Prob. de este escalón'**
+  String get ladderStepProb;
+
   /// No description provided for @ladderTitle.
   ///
   /// In es, this message translates to:
@@ -1863,6 +2549,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{won} de {goal} ganados'**
   String ladderWonOf(int won, int goal);
+
+  /// No description provided for @languageChangeLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Podrás cambiarlo después desde tu Perfil.'**
+  String get languageChangeLater;
+
+  /// No description provided for @languageDetected.
+  ///
+  /// In es, this message translates to:
+  /// **'DETECTADO'**
+  String get languageDetected;
 
   /// Etiqueta de la pantalla inicial de elección de idioma (se muestra en mayúsculas).
   ///
@@ -2446,6 +3144,12 @@ abstract class AppLocalizations {
   /// **'No se pudo abrir la tienda de aplicaciones.'**
   String get moreStoreError;
 
+  /// Subtítulo del acceso VIP en el menú Más.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los pronósticos, sin monedas'**
+  String get moreVipSubtitle;
+
   /// No description provided for @navCoins.
   ///
   /// In es, this message translates to:
@@ -2464,6 +3168,12 @@ abstract class AppLocalizations {
   /// **'Mercados'**
   String get navMarkets;
 
+  /// Etiqueta de la pestaña Picks en la barra de navegación inferior
+  ///
+  /// In es, this message translates to:
+  /// **'Picks'**
+  String get navPicks;
+
   /// No description provided for @navPredictions.
   ///
   /// In es, this message translates to:
@@ -2475,6 +3185,282 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Perfil'**
   String get navProfile;
+
+  /// No description provided for @nbaAvailFootnote.
+  ///
+  /// In es, this message translates to:
+  /// **'Los minutos de bajas suman los minutos medios de los jugadores que aparecen en el reporte. Si un equipo no envía su reporte, se avisa aquí.'**
+  String get nbaAvailFootnote;
+
+  /// No description provided for @nbaAvailKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// REPORTE OFICIAL DE LESIONES'**
+  String get nbaAvailKicker;
+
+  /// No description provided for @nbaAvailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'DISPONIBILIDAD'**
+  String get nbaAvailTitle;
+
+  /// Récord del equipo visitante
+  ///
+  /// In es, this message translates to:
+  /// **'VISITANTE · {record}'**
+  String nbaAwayRecord(String record);
+
+  /// No description provided for @nbaBackToBackYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'BACK-TO-BACK · JUGÓ AYER'**
+  String get nbaBackToBackYesterday;
+
+  /// Dominancia en métricas comparativas
+  ///
+  /// In es, this message translates to:
+  /// **'{team} mejor en {n} de {total}'**
+  String nbaCompDom(String team, int n, int total);
+
+  /// Empate en número de métricas
+  ///
+  /// In es, this message translates to:
+  /// **'Empate en métricas ({n} de {total})'**
+  String nbaCompTied(int n, int total);
+
+  /// No description provided for @nbaCompTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'COMPARATIVA'**
+  String get nbaCompTitle;
+
+  /// No description provided for @nbaConfEast.
+  ///
+  /// In es, this message translates to:
+  /// **'Este'**
+  String get nbaConfEast;
+
+  /// Kicker de clasificación de conferencia NBA
+  ///
+  /// In es, this message translates to:
+  /// **'// CONFERENCIA {conf} · {n} EQUIPOS'**
+  String nbaConfStandingsKicker(String conf, int n);
+
+  /// No description provided for @nbaConfWest.
+  ///
+  /// In es, this message translates to:
+  /// **'Oeste'**
+  String get nbaConfWest;
+
+  /// No description provided for @nbaFactorAwayForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Rinde fuera de casa'**
+  String get nbaFactorAwayForm;
+
+  /// No description provided for @nbaFactorHomeForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuerte en casa'**
+  String get nbaFactorHomeForm;
+
+  /// No description provided for @nbaFactorRecordBest.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor récord'**
+  String get nbaFactorRecordBest;
+
+  /// No description provided for @nbaFactorRecordTied.
+  ///
+  /// In es, this message translates to:
+  /// **'Récord empatado'**
+  String get nbaFactorRecordTied;
+
+  /// No description provided for @nbaFactorRestAdvantage.
+  ///
+  /// In es, this message translates to:
+  /// **'Más descanso'**
+  String get nbaFactorRestAdvantage;
+
+  /// No description provided for @nbaFactorRestTied.
+  ///
+  /// In es, this message translates to:
+  /// **'Descanso igual'**
+  String get nbaFactorRestTied;
+
+  /// No description provided for @nbaFactorStreakBest.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor racha'**
+  String get nbaFactorStreakBest;
+
+  /// No description provided for @nbaFactorStreakTied.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha igualada'**
+  String get nbaFactorStreakTied;
+
+  /// No description provided for @nbaFormLast6.
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS 6 PARTIDOS'**
+  String get nbaFormLast6;
+
+  /// Kicker para enfrentamientos cara a cara
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS {n} PARTIDOS'**
+  String nbaH2hLastN(int n);
+
+  /// Récord del equipo local
+  ///
+  /// In es, this message translates to:
+  /// **'LOCAL · {record}'**
+  String nbaHomeRecord(String record);
+
+  /// Récord de la temporada anterior
+  ///
+  /// In es, this message translates to:
+  /// **'Temp. pasada {record}'**
+  String nbaLastSeason(String record);
+
+  /// No description provided for @nbaLegendOut.
+  ///
+  /// In es, this message translates to:
+  /// **'FUERA (11–15)'**
+  String get nbaLegendOut;
+
+  /// No description provided for @nbaLegendPlayIn.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAY-IN (7–10)'**
+  String get nbaLegendPlayIn;
+
+  /// No description provided for @nbaLegendPlayoffs.
+  ///
+  /// In es, this message translates to:
+  /// **'PLAYOFFS DIRECTOS (1–6)'**
+  String get nbaLegendPlayoffs;
+
+  /// No description provided for @nbaMarginLoss.
+  ///
+  /// In es, this message translates to:
+  /// **'MARGEN EN DERROTA'**
+  String get nbaMarginLoss;
+
+  /// No description provided for @nbaMarginWin.
+  ///
+  /// In es, this message translates to:
+  /// **'MARGEN EN VICTORIA'**
+  String get nbaMarginWin;
+
+  /// No description provided for @nbaMatchFactors.
+  ///
+  /// In es, this message translates to:
+  /// **'FACTORES DEL PARTIDO'**
+  String get nbaMatchFactors;
+
+  /// No description provided for @nbaMetricAwayHome.
+  ///
+  /// In es, this message translates to:
+  /// **'VISITANTE · LOCAL'**
+  String get nbaMetricAwayHome;
+
+  /// No description provided for @nbaMetricDiff.
+  ///
+  /// In es, this message translates to:
+  /// **'DIFERENCIAL'**
+  String get nbaMetricDiff;
+
+  /// No description provided for @nbaMetricLast6.
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS 6'**
+  String get nbaMetricLast6;
+
+  /// No description provided for @nbaMetricPointsAgainst.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS EN CONTRA'**
+  String get nbaMetricPointsAgainst;
+
+  /// No description provided for @nbaMetricPointsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS A FAVOR'**
+  String get nbaMetricPointsFor;
+
+  /// No description provided for @nbaMetricRecord.
+  ///
+  /// In es, this message translates to:
+  /// **'RÉCORD'**
+  String get nbaMetricRecord;
+
+  /// No description provided for @nbaMetricRestDays.
+  ///
+  /// In es, this message translates to:
+  /// **'DESCANSO (DÍAS)'**
+  String get nbaMetricRestDays;
+
+  /// Minutos de ausencia de jugadores
+  ///
+  /// In es, this message translates to:
+  /// **'{minutes} min de bajas'**
+  String nbaMinutesMissing(int minutes);
+
+  /// No description provided for @nbaNavAvail.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponibilidad'**
+  String get nbaNavAvail;
+
+  /// No description provided for @nbaNavComp.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparativa'**
+  String get nbaNavComp;
+
+  /// No description provided for @nbaNavProb.
+  ///
+  /// In es, this message translates to:
+  /// **'Probabilidad'**
+  String get nbaNavProb;
+
+  /// No description provided for @nbaNoH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin duelos directos registrados esta temporada'**
+  String get nbaNoH2h;
+
+  /// No description provided for @nbaNoStats.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas NBA no disponibles'**
+  String get nbaNoStats;
+
+  /// Indica que un equipo jugó el día anterior
+  ///
+  /// In es, this message translates to:
+  /// **'{team} jugó ayer (back-to-back)'**
+  String nbaPlayedYesterday(String team);
+
+  /// Promedio de puntos a favor y en contra
+  ///
+  /// In es, this message translates to:
+  /// **'{pf} – {pa} pts'**
+  String nbaPtsAvg(String pf, String pa);
+
+  /// Puesto en la clasificación
+  ///
+  /// In es, this message translates to:
+  /// **'{rank}.º de {total}'**
+  String nbaRankOf(int rank, int total);
+
+  /// Días de descanso
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{DESCANSÓ 1 DÍA} other{DESCANSÓ {count} DÍAS}}'**
+  String nbaRestedDays(int count);
 
   /// Encabezado de la tarjeta de un partido de NBA que aún no tiene pronóstico sellado.
   ///
@@ -2511,6 +3497,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pronóstico pendiente'**
   String get nbaSealPendingTitle;
+
+  /// Kicker de temporada para la comparativa
+  ///
+  /// In es, this message translates to:
+  /// **'// TEMPORADA {season}'**
+  String nbaSeasonKicker(String season);
+
+  /// Diferencia de puestos en la conferencia
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} está {diff} puestos por encima de {teamB} en el {conf}.'**
+  String nbaStandingsCallout(String teamA, int diff, String teamB, String conf);
+
+  /// Empate de puestos en la conferencia
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} y {teamB} están empatados en el {conf}.'**
+  String nbaStandingsCalloutTied(String teamA, String teamB, String conf);
+
+  /// Texto de racha
+  ///
+  /// In es, this message translates to:
+  /// **'RACHA: {text}'**
+  String nbaStreakLabel(String text);
+
+  /// Comparación de rachas de ambos equipos
+  ///
+  /// In es, this message translates to:
+  /// **'{teamA} lleva {countA} seguidas · {teamB} {countB}'**
+  String nbaStreakSummary(String teamA, int countA, String teamB, int countB);
+
+  /// No description provided for @nbaTotalPtsPerGame.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS TOTALES POR PARTIDO'**
+  String get nbaTotalPtsPerGame;
+
+  /// No description provided for @nbaViewAllH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'VER TODOS EN H2H'**
+  String get nbaViewAllH2h;
+
+  /// No description provided for @nbaWinProbTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD DE GANAR'**
+  String get nbaWinProbTitle;
+
+  /// No description provided for @nbaWinsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'VICTORIAS'**
+  String get nbaWinsLabel;
 
   /// No description provided for @noteExpectedAverage.
   ///
@@ -2566,11 +3606,23 @@ abstract class AppLocalizations {
   /// **'Hasta {count} parlays · cuota {min}–{max}'**
   String parleyChipLine(int count, String min, String max);
 
+  /// No description provided for @parleyCombOddsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuota combinada'**
+  String get parleyCombOddsLabel;
+
   /// No description provided for @parleyDayCount.
   ///
   /// In es, this message translates to:
   /// **'{count, plural, one{{count} parlay} other{{count} parlays}}'**
   String parleyDayCount(int count);
+
+  /// No description provided for @parleyDaySelections.
+  ///
+  /// In es, this message translates to:
+  /// **'Parley del día · {count} selecciones'**
+  String parleyDaySelections(int count);
 
   /// No description provided for @parleyDaySettled.
   ///
@@ -2632,6 +3684,12 @@ abstract class AppLocalizations {
   /// **'{percent} de probabilidad conjunta · {legs, plural, one{{legs} pata} other{{legs} patas}}'**
   String parleyJointProb(String percent, int legs);
 
+  /// No description provided for @parleyJointProbLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Prob. conjunta'**
+  String get parleyJointProbLabel;
+
   /// No description provided for @parleyLoadError.
   ///
   /// In es, this message translates to:
@@ -2655,6 +3713,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Hoy no hay parlays'**
   String get parleyNoneTitle;
+
+  /// No description provided for @parleyNotCertaintyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Una probabilidad no es una certeza: de cada 3 parleys como este se espera acertar 1.'**
+  String get parleyNotCertaintyHint;
 
   /// No description provided for @parleyOddsBetween.
   ///
@@ -2992,6 +4056,24 @@ abstract class AppLocalizations {
   /// **'Privacidad y preferencias'**
   String get prefsTitle;
 
+  /// No description provided for @privacyBullet1.
+  ///
+  /// In es, this message translates to:
+  /// **'Suscripciones con Google Play o App Store'**
+  String get privacyBullet1;
+
+  /// No description provided for @privacyBullet2.
+  ///
+  /// In es, this message translates to:
+  /// **'Medición de uso, diagnóstico y anuncios (Meta): activados'**
+  String get privacyBullet2;
+
+  /// No description provided for @privacyReadAndAdjust.
+  ///
+  /// In es, this message translates to:
+  /// **'Leer la política · ajustar preferencias'**
+  String get privacyReadAndAdjust;
+
   /// No description provided for @privacyUpdateBody.
   ///
   /// In es, this message translates to:
@@ -3304,6 +4386,42 @@ abstract class AppLocalizations {
   /// **'triples'**
   String get propStatThrees;
 
+  /// No description provided for @propsEmptyFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay props disponibles en esta categoría.'**
+  String get propsEmptyFilter;
+
+  /// No description provided for @propsFilterAssists.
+  ///
+  /// In es, this message translates to:
+  /// **'ASIST.'**
+  String get propsFilterAssists;
+
+  /// No description provided for @propsFilterPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'PUNTOS'**
+  String get propsFilterPoints;
+
+  /// No description provided for @propsFilterRebounds.
+  ///
+  /// In es, this message translates to:
+  /// **'REBOTES'**
+  String get propsFilterRebounds;
+
+  /// No description provided for @propsFilterThrees.
+  ///
+  /// In es, this message translates to:
+  /// **'TRIPLES'**
+  String get propsFilterThrees;
+
+  /// No description provided for @propsLastFive.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} de los últimos 5'**
+  String propsLastFive(int count);
+
   /// Casa de apuestas y hora local de la cuota de referencia.
   ///
   /// In es, this message translates to:
@@ -3321,6 +4439,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cuota de referencia de la captura usada al sellar el pronóstico'**
   String get quoteReference;
+
+  /// No description provided for @radarAttack.
+  ///
+  /// In es, this message translates to:
+  /// **'ATAQUE'**
+  String get radarAttack;
+
+  /// No description provided for @radarCreation.
+  ///
+  /// In es, this message translates to:
+  /// **'CREACIÓN'**
+  String get radarCreation;
+
+  /// No description provided for @radarDefense.
+  ///
+  /// In es, this message translates to:
+  /// **'DEFENSA'**
+  String get radarDefense;
+
+  /// No description provided for @radarFinishing.
+  ///
+  /// In es, this message translates to:
+  /// **'REMATE'**
+  String get radarFinishing;
 
   /// No description provided for @resultLabel.
   ///
@@ -3484,6 +4626,24 @@ abstract class AppLocalizations {
   /// **'Código de quien te invitó'**
   String get rewardsInviterCode;
 
+  /// No description provided for @rewardsLedgerBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Saldo'**
+  String get rewardsLedgerBalance;
+
+  /// No description provided for @rewardsLedgerEarlier.
+  ///
+  /// In es, this message translates to:
+  /// **'Anteriores'**
+  String get rewardsLedgerEarlier;
+
+  /// No description provided for @rewardsLedgerEarned.
+  ///
+  /// In es, this message translates to:
+  /// **'Ganadas'**
+  String get rewardsLedgerEarned;
+
   /// No description provided for @rewardsLedgerEmpty.
   ///
   /// In es, this message translates to:
@@ -3501,6 +4661,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver más'**
   String get rewardsLedgerMore;
+
+  /// No description provided for @rewardsLedgerSpent.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastadas'**
+  String get rewardsLedgerSpent;
 
   /// No description provided for @rewardsLedgerTitle.
   ///
@@ -3957,6 +5123,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Inicia sesión en Perfil para usar tus monedas.'**
   String get shellSignInForCoins;
+
+  /// No description provided for @shellUnlockAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquear · {cost}'**
+  String shellUnlockAction(Object cost);
 
   /// No description provided for @shellUnlockBody.
   ///
@@ -4517,6 +5689,324 @@ abstract class AppLocalizations {
   /// **'Parley'**
   String get streamParley;
 
+  /// Edad y país del tenista
+  ///
+  /// In es, this message translates to:
+  /// **'{age} AÑOS · {country}'**
+  String tenAgeYears(int age, String country);
+
+  /// No description provided for @tenFormIndex.
+  ///
+  /// In es, this message translates to:
+  /// **'ÍNDICE DE FORMA'**
+  String get tenFormIndex;
+
+  /// No description provided for @tenFormKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// ÚLTIMOS PARTIDOS'**
+  String get tenFormKicker;
+
+  /// Diferencia de ranking entre los dos tenistas
+  ///
+  /// In es, this message translates to:
+  /// **'{player} está {diff} puestos por encima en el ranking {circuit}.'**
+  String tenGapLeader(String player, int diff, String circuit);
+
+  /// Empate de puesto en ranking de tenis
+  ///
+  /// In es, this message translates to:
+  /// **'{playerA} y {playerB} tienen el mismo puesto en el ranking {circuit}.'**
+  String tenGapTied(String playerA, String playerB, String circuit);
+
+  /// No description provided for @tenH2hFirstDuel.
+  ///
+  /// In es, this message translates to:
+  /// **'PRIMER DUELO'**
+  String get tenH2hFirstDuel;
+
+  /// Explicación de primer duelo cara a cara en tenis
+  ///
+  /// In es, this message translates to:
+  /// **'Nunca se han enfrentado. Sin historial directo, el modelo se apoya en su forma reciente y en su rendimiento sobre {surface}.'**
+  String tenH2hFirstDuelDesc(String surface);
+
+  /// Cantidad de últimos partidos en forma de tenis
+  ///
+  /// In es, this message translates to:
+  /// **'ÚLTIMOS {count}'**
+  String tenLastMatchesCount(int count);
+
+  /// Línea de juegos esperados aproximados
+  ///
+  /// In es, this message translates to:
+  /// **'≈ {line}'**
+  String tenModelGamesExpectedApprox(String line);
+
+  /// Explicación del cruce de juegos esperados
+  ///
+  /// In es, this message translates to:
+  /// **'Con {line1} juegos el modelo da {p1} %; con {line2}, {p2} %: espera un partido de unos {expected} juegos.'**
+  String tenModelGamesExpectedCaption(
+    String line1,
+    int p1,
+    String line2,
+    int p2,
+    String expected,
+  );
+
+  /// No description provided for @tenModelGamesExpectedLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'JUEGOS ESPERADOS'**
+  String get tenModelGamesExpectedLabel;
+
+  /// Aviso simple de juegos esperados
+  ///
+  /// In es, this message translates to:
+  /// **'El modelo espera un partido de unos {expected} juegos.'**
+  String tenModelGamesExpectedSimple(String expected);
+
+  /// Título de hándicap de juegos para un tenista
+  ///
+  /// In es, this message translates to:
+  /// **'HÁNDICAP DE JUEGOS · {player}'**
+  String tenModelHandicap(String player);
+
+  /// Porcentaje de partido terminado en 2 sets
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% en 2 sets'**
+  String tenModelIn2Sets(int pct);
+
+  /// Porcentaje de partido terminado en 3 sets
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% en 3 sets'**
+  String tenModelIn3Sets(int pct);
+
+  /// No description provided for @tenModelKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// LO QUE ESPERA EL MODELO'**
+  String get tenModelKicker;
+
+  /// No description provided for @tenModelMatchDuration.
+  ///
+  /// In es, this message translates to:
+  /// **'DURACIÓN DEL PARTIDO'**
+  String get tenModelMatchDuration;
+
+  /// No description provided for @tenModelSet1.
+  ///
+  /// In es, this message translates to:
+  /// **'SET 1'**
+  String get tenModelSet1;
+
+  /// No description provided for @tenModelSet2.
+  ///
+  /// In es, this message translates to:
+  /// **'SET 2'**
+  String get tenModelSet2;
+
+  /// No description provided for @tenModelSet3.
+  ///
+  /// In es, this message translates to:
+  /// **'SET 3'**
+  String get tenModelSet3;
+
+  /// No description provided for @tenModelSet3Footnote.
+  ///
+  /// In es, this message translates to:
+  /// **'El 3.er set solo se juega si hay empate 1–1.'**
+  String get tenModelSet3Footnote;
+
+  /// No description provided for @tenModelSets.
+  ///
+  /// In es, this message translates to:
+  /// **'SETS'**
+  String get tenModelSets;
+
+  /// No description provided for @tenModelTiebreak.
+  ///
+  /// In es, this message translates to:
+  /// **'HABRÁ TIE-BREAK'**
+  String get tenModelTiebreak;
+
+  /// No description provided for @tenModelTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'MODELO'**
+  String get tenModelTitle;
+
+  /// No description provided for @tenModelTotalGames.
+  ///
+  /// In es, this message translates to:
+  /// **'JUEGOS TOTALES · PROBABILIDAD DE «MÁS DE»'**
+  String get tenModelTotalGames;
+
+  /// Probabilidad de ganar cada set para el jugador favorito
+  ///
+  /// In es, this message translates to:
+  /// **'{player} GANA CADA SET'**
+  String tenModelWinsEachSet(String player);
+
+  /// No description provided for @tenNavModel.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo'**
+  String get tenNavModel;
+
+  /// No description provided for @tenNavProb.
+  ///
+  /// In es, this message translates to:
+  /// **'Probabilidad'**
+  String get tenNavProb;
+
+  /// No description provided for @tenNavSurface.
+  ///
+  /// In es, this message translates to:
+  /// **'Superficie'**
+  String get tenNavSurface;
+
+  /// No description provided for @tenNoStats.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas de tenis no disponibles'**
+  String get tenNoStats;
+
+  /// Número de ranking individual en tenis
+  ///
+  /// In es, this message translates to:
+  /// **'N.º {rank}'**
+  String tenRankNumber(int rank);
+
+  /// Ranking y puntos ATP/WTA
+  ///
+  /// In es, this message translates to:
+  /// **'{rank} · {pts} pts'**
+  String tenRankPts(String rank, String pts);
+
+  /// No description provided for @tenRoundFinal.
+  ///
+  /// In es, this message translates to:
+  /// **'Final'**
+  String get tenRoundFinal;
+
+  /// No description provided for @tenRoundQ16.
+  ///
+  /// In es, this message translates to:
+  /// **'Dieciseisavos'**
+  String get tenRoundQ16;
+
+  /// No description provided for @tenRoundQualFinal.
+  ///
+  /// In es, this message translates to:
+  /// **'Final de clasificación'**
+  String get tenRoundQualFinal;
+
+  /// No description provided for @tenRoundQuarterfinals.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuartos'**
+  String get tenRoundQuarterfinals;
+
+  /// No description provided for @tenRoundR128.
+  ///
+  /// In es, this message translates to:
+  /// **'Ronda de 128'**
+  String get tenRoundR128;
+
+  /// No description provided for @tenRoundR16.
+  ///
+  /// In es, this message translates to:
+  /// **'Octavos'**
+  String get tenRoundR16;
+
+  /// No description provided for @tenRoundR32.
+  ///
+  /// In es, this message translates to:
+  /// **'Ronda de 32'**
+  String get tenRoundR32;
+
+  /// No description provided for @tenRoundR64.
+  ///
+  /// In es, this message translates to:
+  /// **'Ronda de 64'**
+  String get tenRoundR64;
+
+  /// No description provided for @tenRoundSemifinals.
+  ///
+  /// In es, this message translates to:
+  /// **'Semifinal'**
+  String get tenRoundSemifinals;
+
+  /// Rendimiento en una superficie a lo largo de la carrera
+  ///
+  /// In es, this message translates to:
+  /// **'{surface} · CARRERA'**
+  String tenSurfaceCareer(String surface);
+
+  /// No description provided for @tenSurfaceClay.
+  ///
+  /// In es, this message translates to:
+  /// **'TIERRA BATIDA'**
+  String get tenSurfaceClay;
+
+  /// No description provided for @tenSurfaceGrass.
+  ///
+  /// In es, this message translates to:
+  /// **'HIERBA'**
+  String get tenSurfaceGrass;
+
+  /// No description provided for @tenSurfaceHard.
+  ///
+  /// In es, this message translates to:
+  /// **'PISTA DURA'**
+  String get tenSurfaceHard;
+
+  /// No description provided for @tenSurfaceKicker.
+  ///
+  /// In es, this message translates to:
+  /// **'// RENDIMIENTO POR SUPERFICIE'**
+  String get tenSurfaceKicker;
+
+  /// Rendimiento en una superficie en la temporada actual
+  ///
+  /// In es, this message translates to:
+  /// **'{surface} · ESTA TEMPORADA'**
+  String tenSurfaceSeason(String surface);
+
+  /// No description provided for @tenSurfaceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'SUPERFICIE'**
+  String get tenSurfaceTitle;
+
+  /// No description provided for @tenSurfaceToday.
+  ///
+  /// In es, this message translates to:
+  /// **'HOY'**
+  String get tenSurfaceToday;
+
+  /// Porcentaje de partidos decididos a 3 sets
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% a 3 sets'**
+  String tenThreeSets(int pct);
+
+  /// Porcentaje de partidos que tuvieron al menos un tie-break
+  ///
+  /// In es, this message translates to:
+  /// **'{pct}% con tie-break'**
+  String tenTiebreakPct(int pct);
+
+  /// No description provided for @tenWinProbTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PROBABILIDAD DE GANAR'**
+  String get tenWinProbTitle;
+
   /// No description provided for @tileFairOdds.
   ///
   /// In es, this message translates to:
@@ -4637,6 +6127,132 @@ abstract class AppLocalizations {
   /// **'VIP'**
   String get tooltipVip;
 
+  /// Botón principal de desbloqueo con saldo
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEAR · {cost} MONEDAS'**
+  String unlockActionCost(int cost);
+
+  /// Etiqueta superior de saldo del usuario
+  ///
+  /// In es, this message translates to:
+  /// **'TU SALDO'**
+  String get unlockBalanceHeader;
+
+  /// Primer beneficio del desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'El pronóstico, su probabilidad y la cuota'**
+  String get unlockBullet1;
+
+  /// Segundo beneficio del desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis, cara a cara y alertas del partido'**
+  String get unlockBullet2;
+
+  /// Tercer beneficio del desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Se queda abierto para este partido'**
+  String get unlockBullet3;
+
+  /// Unidad de monedas en mayúsculas
+  ///
+  /// In es, this message translates to:
+  /// **'MONEDAS'**
+  String get unlockCoinsUnit;
+
+  /// Etiqueta superior de costo
+  ///
+  /// In es, this message translates to:
+  /// **'COSTO'**
+  String get unlockCostHeader;
+
+  /// Botón principal de ganar monedas cuando falta saldo
+  ///
+  /// In es, this message translates to:
+  /// **'GANAR {count} MONEDAS'**
+  String unlockEarnAction(int count);
+
+  /// Aviso legal al pie de la hoja de desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Las monedas se ganan dentro de la app. No se cobra dinero.'**
+  String get unlockFooterTerms;
+
+  /// Subtítulo de la hoja cuando no hay suficientes monedas
+  ///
+  /// In es, this message translates to:
+  /// **'Gana monedas en unos minutos o hazte VIP'**
+  String get unlockMissingSub;
+
+  /// Título de la hoja cuando no hay suficientes monedas
+  ///
+  /// In es, this message translates to:
+  /// **'TE FALTAN {count} MONEDAS'**
+  String unlockMissingTitle(int count);
+
+  /// Comparativa de monedas necesarias y disponibles
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas {need} · tienes {have}'**
+  String unlockNeedHave(int need, int have);
+
+  /// Monedas restantes tras el desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Te quedarán {count} monedas'**
+  String unlockRemainingCoins(int count);
+
+  /// Subtítulo de la hoja de desbloqueo cuando hay saldo
+  ///
+  /// In es, this message translates to:
+  /// **'Se abre al instante'**
+  String get unlockSheetSub;
+
+  /// Título de la hoja de desbloqueo cuando hay saldo
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEAR PRONÓSTICO'**
+  String get unlockSheetTitle;
+
+  /// Atajo para ganar monedas con asistencia diaria
+  ///
+  /// In es, this message translates to:
+  /// **'ASISTENCIA'**
+  String get unlockShortcutAttendance;
+
+  /// Atajo para ganar monedas con ofertas
+  ///
+  /// In es, this message translates to:
+  /// **'OFERTAS'**
+  String get unlockShortcutOffers;
+
+  /// Atajo para ganar monedas viendo un video
+  ///
+  /// In es, this message translates to:
+  /// **'VER UN VIDEO'**
+  String get unlockShortcutVideo;
+
+  /// Subtítulo de la tarjeta VIP sin precio
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastar monedas'**
+  String get unlockVipSubNoPrice;
+
+  /// Subtítulo de la tarjeta VIP con precio mensual
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastar monedas · desde {price} al mes'**
+  String unlockVipSubPrice(String price);
+
+  /// Título de la tarjeta VIP en la hoja de desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'O desbloquea todos con VIP'**
+  String get unlockVipTitle;
+
   /// No description provided for @updateLater.
   ///
   /// In es, this message translates to:
@@ -4661,6 +6277,12 @@ abstract class AppLocalizations {
   /// **'Actualiza QuantFut para continuar.'**
   String get updateRequired;
 
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualiza para continuar'**
+  String get updateRequiredTitle;
+
   /// No description provided for @updateStoreError.
   ///
   /// In es, this message translates to:
@@ -4672,6 +6294,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Actualización disponible'**
   String get updateTitle;
+
+  /// No description provided for @updateVersion.
+  ///
+  /// In es, this message translates to:
+  /// **'VERSIÓN'**
+  String get updateVersion;
+
+  /// No description provided for @vip7Days.
+  ///
+  /// In es, this message translates to:
+  /// **'7 DÍAS'**
+  String get vip7Days;
 
   /// Botón de los pronósticos bloqueados y difuminados: lleva a la compra de la suscripción VIP.
   ///
@@ -4745,6 +6379,54 @@ abstract class AppLocalizations {
   /// **'Cuotas y análisis del partido'**
   String get vipBenefit4Title;
 
+  /// No description provided for @vipBenefitAlertsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Bajas y dudas antes del partido'**
+  String get vipBenefitAlertsSub;
+
+  /// No description provided for @vipBenefitAlertsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis, H2H y alertas'**
+  String get vipBenefitAlertsTitle;
+
+  /// No description provided for @vipBenefitAllPicksSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastar monedas, en los tres deportes'**
+  String get vipBenefitAllPicksSub;
+
+  /// No description provided for @vipBenefitAllPicksTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los picks del día'**
+  String get vipBenefitAllPicksTitle;
+
+  /// No description provided for @vipBenefitCombosSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Con probabilidad conjunta y cuota'**
+  String get vipBenefitCombosSub;
+
+  /// No description provided for @vipBenefitCombosTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalera y Parley completos'**
+  String get vipBenefitCombosTitle;
+
+  /// No description provided for @vipBenefitPropsSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Probabilidad, cuota y casa de apuestas'**
+  String get vipBenefitPropsSub;
+
+  /// No description provided for @vipBenefitPropsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Props de jugadores NBA'**
+  String get vipBenefitPropsTitle;
+
   /// No description provided for @vipBenefitSportsBody.
   ///
   /// In es, this message translates to:
@@ -4763,6 +6445,12 @@ abstract class AppLocalizations {
   /// **'★ MEJOR PRECIO'**
   String get vipBestPrice;
 
+  /// No description provided for @vipCancelAnytime.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancela cuando quieras'**
+  String get vipCancelAnytime;
+
   /// No description provided for @vipCheckAccess.
   ///
   /// In es, this message translates to:
@@ -4775,11 +6463,197 @@ abstract class AppLocalizations {
   /// **'Inicia sesión en Perfil para comprobar tu acceso.'**
   String get vipCheckSignIn;
 
+  /// No description provided for @vipChoosePlan.
+  ///
+  /// In es, this message translates to:
+  /// **'ELIGE TU PLAN'**
+  String get vipChoosePlan;
+
+  /// No description provided for @vipCompareFreeHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'GRATIS'**
+  String get vipCompareFreeHeader;
+
+  /// No description provided for @vipCompareHide.
+  ///
+  /// In es, this message translates to:
+  /// **'OCULTAR COMPARACIÓN'**
+  String get vipCompareHide;
+
+  /// No description provided for @vipCompareRow1Free.
+  ///
+  /// In es, this message translates to:
+  /// **'10 % del día'**
+  String get vipCompareRow1Free;
+
+  /// No description provided for @vipCompareRow1Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Picks de alta probabilidad'**
+  String get vipCompareRow1Label;
+
+  /// No description provided for @vipCompareRow1Vip.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get vipCompareRow1Vip;
+
+  /// No description provided for @vipCompareRow2Free.
+  ///
+  /// In es, this message translates to:
+  /// **'Parcial'**
+  String get vipCompareRow2Free;
+
+  /// No description provided for @vipCompareRow2Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Escalera y Parley'**
+  String get vipCompareRow2Label;
+
+  /// No description provided for @vipCompareRow2Vip.
+  ///
+  /// In es, this message translates to:
+  /// **'Completos'**
+  String get vipCompareRow2Vip;
+
+  /// No description provided for @vipCompareRow3Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Props de jugadores NBA'**
+  String get vipCompareRow3Label;
+
+  /// No description provided for @vipCompareRow4Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis, H2H y alertas'**
+  String get vipCompareRow4Label;
+
+  /// No description provided for @vipCompareRow5Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Historial de aciertos'**
+  String get vipCompareRow5Label;
+
+  /// No description provided for @vipCompareRow6Free.
+  ///
+  /// In es, this message translates to:
+  /// **'40 por pick'**
+  String get vipCompareRow6Free;
+
+  /// No description provided for @vipCompareRow6Label.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloqueo con monedas'**
+  String get vipCompareRow6Label;
+
+  /// No description provided for @vipCompareRow6Vip.
+  ///
+  /// In es, this message translates to:
+  /// **'No hace falta'**
+  String get vipCompareRow6Vip;
+
+  /// No description provided for @vipCompareToggle.
+  ///
+  /// In es, this message translates to:
+  /// **'VER GRATIS VS VIP'**
+  String get vipCompareToggle;
+
+  /// No description provided for @vipCompareVipHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'VIP'**
+  String get vipCompareVipHeader;
+
   /// No description provided for @vipDays.
   ///
   /// In es, this message translates to:
   /// **'{days, plural, one{{days} día} other{{days} días}}'**
   String vipDays(int days);
+
+  /// No description provided for @vipDisclaimer.
+  ///
+  /// In es, this message translates to:
+  /// **'Los pronósticos son probabilidades de un modelo estadístico: cualquier partido puede acabar distinto. Una probabilidad no es una certeza.'**
+  String get vipDisclaimer;
+
+  /// Precio mensual equivalente
+  ///
+  /// In es, this message translates to:
+  /// **'Equivale a {price} al mes'**
+  String vipEquivMonth(String price);
+
+  /// Equivalencia mensual y diaria
+  ///
+  /// In es, this message translates to:
+  /// **'{month} al mes · {day} al día'**
+  String vipEquivMonthDay(String month, String day);
+
+  /// No description provided for @vipFaq1A.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde Google Play › Pagos y suscripciones (o Ajustes › ID de Apple en iOS). VIP sigue activo hasta el final del periodo pagado.'**
+  String get vipFaq1A;
+
+  /// No description provided for @vipFaq1Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo cancelo?'**
+  String get vipFaq1Q;
+
+  /// No description provided for @vipFaq2A.
+  ///
+  /// In es, this message translates to:
+  /// **'No. Son probabilidades de un modelo estadístico; cualquier partido puede acabar distinto. Por eso el historial es público.'**
+  String get vipFaq2A;
+
+  /// No description provided for @vipFaq2Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Los pronósticos siempre aciertan?'**
+  String get vipFaq2Q;
+
+  /// No description provided for @vipFaq3A.
+  ///
+  /// In es, this message translates to:
+  /// **'Muestran la cuota que publicó una casa de apuestas como referencia. En la app no se apuesta ni se mueve dinero.'**
+  String get vipFaq3A;
+
+  /// No description provided for @vipFaq3Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Muestran cuotas o dinero?'**
+  String get vipFaq3Q;
+
+  /// No description provided for @vipFaq4A.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicia sesión con la misma cuenta y toca «Restaurar compras».'**
+  String get vipFaq4A;
+
+  /// No description provided for @vipFaq4Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo uso VIP en otro dispositivo?'**
+  String get vipFaq4Q;
+
+  /// No description provided for @vipFaq5A.
+  ///
+  /// In es, this message translates to:
+  /// **'Los que tenga tu cuenta de Google Play o App Store: tarjeta, saldo o pago con operador.'**
+  String get vipFaq5A;
+
+  /// No description provided for @vipFaq5Q.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué métodos de pago puedo usar?'**
+  String get vipFaq5Q;
+
+  /// No description provided for @vipFaqTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'PREGUNTAS FRECUENTES'**
+  String get vipFaqTitle;
 
   /// No description provided for @vipFreeAccess.
   ///
@@ -4792,6 +6666,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'¡Listo! Tu acceso VIP está activo.'**
   String get vipGranted;
+
+  /// No description provided for @vipHeaderTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'ACCESO VIP'**
+  String get vipHeaderTitle;
+
+  /// No description provided for @vipHeroHighlight.
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEADOS.'**
+  String get vipHeroHighlight;
+
+  /// Subtítulo de bienvenida VIP con contador total de pronósticos
+  ///
+  /// In es, this message translates to:
+  /// **'{count} picks de fútbol, NBA y tenis, cada uno sellado antes del partido.'**
+  String vipHeroSub(int count);
+
+  /// No description provided for @vipHeroSubGeneric.
+  ///
+  /// In es, this message translates to:
+  /// **'Picks de fútbol, NBA y tenis, cada uno sellado antes del partido.'**
+  String get vipHeroSubGeneric;
+
+  /// No description provided for @vipHeroTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'TODOS LOS PRONÓSTICOS DE HOY, '**
+  String get vipHeroTitle;
 
   /// No description provided for @vipHistoryNote.
   ///
@@ -4810,6 +6714,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'🔒  Tu acceso VIP queda vinculado a tu cuenta'**
   String get vipLinked;
+
+  /// Fallos de pronósticos
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 fallo} other{{count} fallos}}'**
+  String vipLostCount(int count);
 
   /// No description provided for @vipManage.
   ///
@@ -4847,6 +6757,24 @@ abstract class AppLocalizations {
   /// **'Pago pendiente. Te daremos acceso en cuanto la tienda lo confirme.'**
   String get vipPending;
 
+  /// No description provided for @vipPerMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'al mes'**
+  String get vipPerMonth;
+
+  /// Periodo de suscripción en meses
+  ///
+  /// In es, this message translates to:
+  /// **'cada {count} meses'**
+  String vipPerMonths(int count);
+
+  /// No description provided for @vipPerYear.
+  ///
+  /// In es, this message translates to:
+  /// **'al año'**
+  String get vipPerYear;
+
   /// No description provided for @vipPickLabel.
   ///
   /// In es, this message translates to:
@@ -4865,17 +6793,59 @@ abstract class AppLocalizations {
   /// **'Precios del catálogo del servidor.'**
   String get vipPricesNote;
 
+  /// No description provided for @vipPrivacyPolicy.
+  ///
+  /// In es, this message translates to:
+  /// **'Política de privacidad'**
+  String get vipPrivacyPolicy;
+
   /// No description provided for @vipPurchasesPending.
   ///
   /// In es, this message translates to:
   /// **'Compras en preparación: aún no se cobra nada desde la app.'**
   String get vipPurchasesPending;
 
+  /// Texto legal de renovación del plan VIP
+  ///
+  /// In es, this message translates to:
+  /// **'Se renueva por {price} {period}. Cancela cuando quieras en {store} › Suscripciones.'**
+  String vipRenewalPhrase(String price, String period, String store);
+
   /// No description provided for @vipRestore.
   ///
   /// In es, this message translates to:
   /// **'Restaurar compras'**
   String get vipRestore;
+
+  /// Insignia de ahorro en planes VIP
+  ///
+  /// In es, this message translates to:
+  /// **'AHORRA {pct}%'**
+  String vipSavingsBadge(int pct);
+
+  /// No description provided for @vipSealAppStore.
+  ///
+  /// In es, this message translates to:
+  /// **'PAGO POR APP STORE'**
+  String get vipSealAppStore;
+
+  /// No description provided for @vipSealCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'CANCELA CUANDO QUIERAS'**
+  String get vipSealCancel;
+
+  /// No description provided for @vipSealGooglePlay.
+  ///
+  /// In es, this message translates to:
+  /// **'PAGO POR GOOGLE PLAY'**
+  String get vipSealGooglePlay;
+
+  /// No description provided for @vipSealSealed.
+  ///
+  /// In es, this message translates to:
+  /// **'SELLADO ANTES DEL PARTIDO'**
+  String get vipSealSealed;
 
   /// No description provided for @vipSportsNote.
   ///
@@ -4889,11 +6859,29 @@ abstract class AppLocalizations {
   /// **'Acierto registrado por deporte'**
   String get vipSportsTitle;
 
+  /// Botón principal de suscripción VIP
+  ///
+  /// In es, this message translates to:
+  /// **'EMPEZAR VIP {plan} · {price}'**
+  String vipStartCta(String plan, String price);
+
+  /// No description provided for @vipStoreAppStore.
+  ///
+  /// In es, this message translates to:
+  /// **'App Store'**
+  String get vipStoreAppStore;
+
   /// No description provided for @vipStoreFailed.
   ///
   /// In es, this message translates to:
   /// **'No se pudo confirmar la compra. Lo reintentaremos al volver a abrir la app.'**
   String get vipStoreFailed;
+
+  /// No description provided for @vipStoreGooglePlay.
+  ///
+  /// In es, this message translates to:
+  /// **'Google Play'**
+  String get vipStoreGooglePlay;
 
   /// No description provided for @vipStoreTerms.
   ///
@@ -4918,6 +6906,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Verificando la compra con la tienda…'**
   String get vipVerifying;
+
+  /// No description provided for @vipWhatYouUnlock.
+  ///
+  /// In es, this message translates to:
+  /// **'QUÉ DESBLOQUEAS'**
+  String get vipWhatYouUnlock;
+
+  /// Aciertos de pronósticos
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 acierto} other{{count} aciertos}}'**
+  String vipWonCount(int count);
+
+  /// No description provided for @vipYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'AYER'**
+  String get vipYesterday;
 
   /// No description provided for @welcome1Body.
   ///
@@ -4984,6 +6990,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ir a bienvenida {number}'**
   String welcomeGoTo(int number);
+
+  /// No description provided for @welcomeHistoryMatch1.
+  ///
+  /// In es, this message translates to:
+  /// **'Mallorca – Córdoba · Más de 1,5'**
+  String get welcomeHistoryMatch1;
+
+  /// No description provided for @welcomeHistoryMatch2.
+  ///
+  /// In es, this message translates to:
+  /// **'Fritz – Musetti · Gana Fritz'**
+  String get welcomeHistoryMatch2;
+
+  /// No description provided for @welcomeHistoryMatch3.
+  ///
+  /// In es, this message translates to:
+  /// **'Heat – Lakers · Más de 220,5'**
+  String get welcomeHistoryMatch3;
+
+  /// No description provided for @welcomeMarket1.
+  ///
+  /// In es, this message translates to:
+  /// **'CÓRNERS'**
+  String get welcomeMarket1;
+
+  /// No description provided for @welcomeMarket2.
+  ///
+  /// In es, this message translates to:
+  /// **'HÁNDICAP ASIÁTICO'**
+  String get welcomeMarket2;
+
+  /// No description provided for @welcomeMarket3.
+  ///
+  /// In es, this message translates to:
+  /// **'DOBLE OPORTUNIDAD'**
+  String get welcomeMarket3;
+
+  /// No description provided for @welcomeMarket4.
+  ///
+  /// In es, this message translates to:
+  /// **'PROPS DE JUGADORES NBA'**
+  String get welcomeMarket4;
+
+  /// No description provided for @welcomeMarket5.
+  ///
+  /// In es, this message translates to:
+  /// **'JUEGOS TOTALES · TENIS'**
+  String get welcomeMarket5;
+
+  /// No description provided for @welcomeMarket6.
+  ///
+  /// In es, this message translates to:
+  /// **'AMBOS MARCAN'**
+  String get welcomeMarket6;
 
   /// No description provided for @welcomeNext.
   ///

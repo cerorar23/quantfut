@@ -203,60 +203,166 @@ class _UpdateDialogState extends State<AppUpdateDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final title = widget.update.required
+        ? l10n.updateRequiredTitle
+        : l10n.updateTitle;
+
     return PopScope(
       canPop: !widget.update.required,
       child: AlertDialog(
-        backgroundColor: QfColors.surface2,
-        shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
-        icon: const Icon(Icons.system_update, color: QfColors.primary),
-        title: Text(
-          l10n.updateTitle.toUpperCase(),
-          style: const TextStyle(
-            fontFamily: qfDisplay,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-            color: QfColors.text,
-          ),
+        backgroundColor: QfColors.surface,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: const CutCornerBorder(
+          cut: 16,
+          side: BorderSide(color: QfColors.borderStrong, width: 1.2),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: ShapeDecoration(
+                color: QfColors.cyan.withValues(alpha: 0.1),
+                shadows: [
+                  BoxShadow(
+                    color: QfColors.cyan.withValues(alpha: 0.28),
+                    blurRadius: 24,
+                  ),
+                ],
+                shape: const CutCornerBorder(
+                  cut: 8,
+                  side: BorderSide(color: QfColors.borderStrong),
+                ),
+              ),
+              child: const Center(
+                child: Icon(Icons.system_update, color: QfColors.cyan, size: 28),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title.toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      height: 1.05,
+                      letterSpacing: 0.6,
+                      color: QfColors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: QfColors.green.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${l10n.updateVersion.toUpperCase()} ',
+                          style: const TextStyle(
+                            fontFamily: qfMono,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            color: QfColors.green,
+                          ),
+                        ),
+                        Text(
+                          widget.update.version,
+                          style: const TextStyle(
+                            fontFamily: qfMono,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            color: QfColors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               _failed
                   ? l10n.updateStoreError
                   : widget.update.required
-                  ? l10n.updateRequired
-                  : l10n.updateOptional,
-              style: const TextStyle(color: QfColors.text2, height: 1.4),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.update.version,
-              style: const TextStyle(fontFamily: qfMono, fontSize: 12, color: QfColors.muted),
+                      ? l10n.updateRequired
+                      : l10n.updateOptional,
+              style: const TextStyle(
+                fontFamily: 'Exo 2',
+                color: QfColors.text2,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
           ],
         ),
         actions: [
-          if (!widget.update.required)
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: QfColors.primary,
-                minimumSize: const Size(64, 44),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 50,
+                child: FilledButton(
+                  key: const ValueKey('update-now'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: QfColors.primary,
+                    foregroundColor: QfColors.onPrimary,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: const CutCornerBorder(cut: 10),
+                    elevation: 0,
+                  ),
+                  onPressed: _opening ? null : _open,
+                  child: Text(
+                    l10n.updateNow,
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      letterSpacing: 1.2,
+                      color: QfColors.onGreen,
+                    ),
+                  ),
+                ),
               ),
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.updateLater),
-            ),
-          FilledButton(
-            key: const ValueKey('update-now'),
-            style: FilledButton.styleFrom(
-              backgroundColor: QfColors.primary,
-              foregroundColor: QfColors.onPrimary,
-              minimumSize: const Size(64, 44),
-              shape: const CutCornerBorder(cut: 8),
-            ),
-            onPressed: _opening ? null : _open,
-            child: Text(l10n.updateNow),
+              if (!widget.update.required) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: QfColors.muted,
+                    minimumSize: const Size(double.infinity, 44),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    l10n.updateLater,
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: 1.0,
+                      color: QfColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),

@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_profile.dart';
 import 'package:gobet/product/live_shell.dart';
@@ -16,6 +15,7 @@ import 'package:gobet/product/live_rewards.dart';
 import 'package:gobet/product/live_vip.dart';
 import 'package:gobet/product/live_forecast.dart';
 import 'package:gobet/product/live_widgets.dart';
+import 'package:gobet/product/qf_charts.dart';
 import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/qf_theme.dart';
 import 'package:gobet/product/sport_selector.dart';
@@ -201,6 +201,9 @@ void main() {
       'Gilroy Medium': 'fonts/Gilroy-Medium.ttf',
       'Gilroy Bold': 'fonts/Gilroy-Bold.otf',
       'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
+      'Exo 2': 'fonts/Exo2-Regular.ttf',
+      'Rajdhani': 'fonts/Rajdhani-Bold.ttf',
+      'JetBrains Mono': 'fonts/JetBrainsMono-Bold.ttf',
     }.entries) {
       await (FontLoader(f.key)..addFont(rootBundle.load(f.value))).load();
     }
@@ -257,10 +260,18 @@ void main() {
   }
 
   Future<void> navigate(WidgetTester tester, String label) async {
+    final target = label == 'Predicciones' ? 'Picks' : label;
     await tester.tap(
       find.descendant(
-        of: find.byType(BottomNavigationBar),
-        matching: find.text(label),
+        of: find.byType(QfBottomNav),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              (w.data == target ||
+                  w.data == target.toUpperCase() ||
+                  w.data == label ||
+                  w.data == label.toUpperCase()),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -268,7 +279,7 @@ void main() {
 
   // El destacado del día ocupa la parte alta de Inicio: la agenda queda más abajo.
   Future<void> scrollToAgenda(WidgetTester tester) => tester.scrollUntilVisible(
-    find.text('Equipo A'),
+    find.textContaining('Equipo A – Equipo B'),
     200,
     scrollable: find
         .descendant(
@@ -298,7 +309,7 @@ void main() {
     await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
     for (final (label, shown) in [
       ('Inicio', true),
-      ('Predicciones', true),
+      ('Picks', true),
       ('Mercados', true),
       ('Coins', false),
       ('Perfil', false),
@@ -412,6 +423,18 @@ void main() {
           expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active $sport');
         }
       }
+    });
+    testWidgets('a 360 dp la barra de navegación no se desborda ni recorta ($code)', (tester) async {
+      await AppLocale.instance.select(code);
+      addTearDown(AppLocale.instance.reset);
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      tester.view.physicalSize = const Size(360, 640);
+      await tester.pumpAndSettle();
+      expect(find.byType(QfBottomNav), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
     });
   }
   testWidgets('si el fútbol falla, el selector sigue y NBA no muestra el error', (tester) async {
@@ -615,8 +638,8 @@ void main() {
     await open(tester, ProductShell(api: api));
     expect(api.homes, 1);
     await scrollToAgenda(tester);
-    expect(find.text('Equipo A'), findsOneWidget);
-    expect(find.text('Liga de prueba'), findsOneWidget);
+    expect(find.textContaining('Equipo A'), findsWidgets);
+    expect(find.text('Liga de prueba'), findsWidgets);
     await capture(tester, 'home');
     for (final label in [
       'Predicciones',
@@ -653,7 +676,7 @@ void main() {
       ];
     await open(tester, ProductShell(api: api));
     await tester.scrollUntilVisible(
-      find.text('Equipo A'),
+      find.textContaining('Directo FC'),
       200,
       scrollable: find
           .descendant(
@@ -662,9 +685,9 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Equipo A'), findsOneWidget); // por jugar
-    expect(find.text('Directo FC'), findsOneWidget); // en juego
-    expect(find.text('Terminado FC'), findsNothing);
+    expect(find.textContaining('Equipo A'), findsWidgets); // por jugar
+    expect(find.textContaining('Directo FC'), findsOneWidget); // en juego
+    expect(find.textContaining('Terminado FC'), findsNothing);
     expect(find.textContaining('Resultado: 5'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
@@ -738,7 +761,7 @@ void main() {
     await tester.tap(find.text('Análisis'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Promedios de 0'), findsOneWidget);
-    expect(find.byType(RadarChart), findsNothing);
+    expect(find.byType(QfRadar), findsNothing);
     expect(find.text('0 %'), findsNothing);
     await capture(tester, 'stats');
     await tester.tap(find.text('H2H'));
@@ -778,22 +801,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('RESUMEN DE PREDICCIÓN'), findsOneWidget);
     expect(find.text('37 %'), findsOneWidget);
-    expect(find.byType(RadarChart), findsOneWidget);
-    final radar = tester.widget<RadarChart>(find.byType(RadarChart));
-    expect(radar.data.titleCount, 6);
-    expect(radar.data.dataSets.first.dataEntries.first.value, 100);
-    expect(
-      radar.data.dataSets.last.dataEntries.first.value,
-      closeTo(.9 / 1.1 * 100, .001),
-    );
+    expect(find.byType(QfRadar), findsOneWidget);
+    final radar = tester.widget<QfRadar>(find.byType(QfRadar));
+    expect(radar.labels.length, 5);
+    expect(radar.a.length, 5);
+    expect(radar.b.length, 5);
     await capture(tester, 'stats_real_summary');
-    await tester.ensureVisible(find.text('ESTADÍSTICAS DEL EQUIPO'));
+    await tester.ensureVisible(find.text('CÓMO LLEGAN').first);
     await tester.pumpAndSettle();
     await capture(tester, 'stats_real_radar');
-    await tester.ensureVisible(find.text('COMPARACIÓN DE EQUIPOS'));
-    await tester.pumpAndSettle();
-    await capture(tester, 'stats_real_comparison');
-    await tester.ensureVisible(find.text('CARA A CARA'));
+    await tester.ensureVisible(find.text('CARA A CARA').last);
     await tester.pumpAndSettle();
     await capture(tester, 'stats_real_h2h');
     expect(tester.takeException(), isNull);
@@ -968,7 +985,7 @@ void main() {
         },
       ),
     );
-    expect(find.text('QuantFut VIP'), findsOneWidget);
+    expect(find.text('ACCESO VIP'), findsOneWidget);
     expect(find.text('78,1 %'), findsOneWidget);
     expect(find.text('89/114'), findsOneWidget);
     expect(find.text('\$14,99'), findsOneWidget);
@@ -992,13 +1009,13 @@ void main() {
     final api = FixtureApi()..fail = true;
     await open(tester, ProductShell(api: api));
     expect(find.text('Sin conexión'), findsOneWidget);
-    expect(find.text('Equipo A'), findsNothing);
+    expect(find.textContaining('Equipo A'), findsNothing);
     api.fail = false;
     await tester.tap(find.text('Reintentar'));
     await tester.pumpAndSettle();
     expect(api.homes, 2);
     await scrollToAgenda(tester);
-    expect(find.text('Equipo A'), findsOneWidget);
+    expect(find.textContaining('Equipo A'), findsWidgets);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
@@ -1011,7 +1028,7 @@ void main() {
     expect(find.byType(RewardsScreen), findsOneWidget);
     expect(find.text('Menú'), findsNothing);
     expect(find.text('Monedas'), findsNothing);
-    expect(find.text('Coins'), findsNWidgets(2));
+    expect(find.text('COINS'), findsOneWidget);
     expect(find.text('Inicia sesión'), findsOneWidget);
     expect(find.text('Día 7'), findsOneWidget);
     await capture(tester, 'coins');

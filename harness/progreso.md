@@ -1,6 +1,294 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4f completada (`app/rediseno-f4f-alertas`)
+
+- **Objetivo de F4f alcanzado:** Pestaña de Alertas y Alineaciones (`AlertsTab` en `lib/product/live_alerts.dart` y nueva pizarra táctica `QfPitch` en `lib/product/lineup_pitch.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoAlertas.png`, `PartidoAlertasCompleto.png` y `pantallas/Partido.dc.html`.
+- **Implementación y Arquitectura (`lib/product/live_alerts.dart`, `alerts_model.dart`, `lineup_pitch.dart`, `pick_labels.dart`):**
+  - **1. Filas de baja (`_AbsenceCard`):** 68 dp de altura mínima, `QfAvatar` de 44 dp con iniciales en JetBrains Mono cian y gradiente oscuro (o foto real si está disponible), con escudo de club de 20 dp en la esquina inferior derecha; nombre del jugador en 14 bold; subtítulo «POS · Equipo» (omite POS si es nulo); motivo traducido o texto de regreso en JetBrains Mono 11; insignia temática con borde fino CyberCore (`LESIÓN` magenta, `SELECCIÓN` cian, `SANCIÓN` magenta, `DUDA` amarillo, `VUELVE` verde).
+  - **2. Interpretación de fechas y traducción de motivos (`pick_labels.dart`):** Funciones puras `interpretReturnDate` y `absenceReturnText` con soporte para formato en inglés («Early/Mid/Late <Month> [<Year>]») con traducción del mes y periodo a los 6 idiomas (`principios de dic.`, `mediados de nov.`, `finales de nov.`, `principios de may. 2027`), fechas ISO del servidor, y textos de estado (`Con su selección · vuelve a {when}`, `Vuelve a {when}`, `Ya entrena con el grupo`). Texto desconocido se conserva tal cual.
+  - **3. Pizarra táctica de alineaciones (`QfPitch` en `lineup_pitch.dart`):** Contenedor de 400 dp con borde verde CyberCore y gradiente de césped (`#0a1d16` a `#08140f`), línea de medio campo, círculo central de 84 dp, áreas de penalti de 70 dp en ambos extremos; layout táctico dinámico (`PitchPlayer.layoutPlayers`) que mapea formaciones (`4-3-1-2`, `4-3-3`, `4-4-2`, `3-5-2`, `4-2-3-1`...) con orden vertical (portero abajo en y ≈ 89%, delanteros arriba en y ≈ 13%) y distribución horizontal simétrica; 11 avatares circulares de 42 dp con borde cian de 2 dp, dorsal mono cian en caja negra 18x18 dp y nombre/apellido con sombra de 3 px; soporte robusto para plantillas con menos de 11 jugadores sin desbordes.
+  - **4. Bloque de alineaciones al final de Alertas (`_LineupsSection`):** Muestra el último once conocido de cada equipo con cabecera `// ALINEACIONES` y título `ÚLTIMO ONCE CONOCIDO`, formación en badge cian, fecha y rival (`último once, vs {rival} · {date}`), y el campo táctico `QfPitch`. Para equipos sin alineación guardada, despliega la tarjeta con borde discontinuo CyberCore («{Equipo} · sin alineación guardada — El once se confirma una hora antes del partido y aparecerá aquí con foto.»).
+  - **5. Pie y estado sin alertas:** Pie con fecha formateada «> COMPROBADO {date} · se actualiza cada hora» y tarjeta CyberCore para partidos sin incidencias.
+- **Internacionalización (l10n):** 24 nuevas cadenas de texto añadidas en los 6 idiomas (`es, en, pt, fr, it, de`) vía `tool/add_f4f_keys.py` (`alertsBadge*`, `alertsDutyReturns`, `alertsReturnsWhen`, `alertsBackTrainingDesc`, `alertsEarlyMonth`, `alertsMidMonth`, `alertsLateMonth`, `alertsLineups*`, `alertsLastElevenVs`, `alertsNoLineup*`, `alertsNoAlerts*`, `alertsCheckedFooter`, `alertsTennisNoIssues`, `alertsNbaReportSummary`).
+- **Pruebas y Verificación:**
+  - Nueva suite `test/lineup_pitch_test.dart` con pruebas exhaustivas para formaciones tácticas (4-3-3, 4-4-2, 3-5-2, 4-2-3-1, 4-3-1-2, <11 jugadores, lista vacía) y renderizado responsive en 320 px, 360 px y 390 px.
+  - Pruebas unitarias de interpretación de fechas en `test/pick_labels_test.dart`.
+  - Pruebas de integración de la pestaña en `test/alerts_tab_test.dart` y `test/alerts_model_test.dart`.
+  - Suite completa de la app en verde: **647/647 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4e completada (`app/rediseno-f4e-analisis-tenis`)
+
+- **Objetivo de F4e alcanzado:** Pestaña de Análisis de Tenis (`TennisAnalysis` en `lib/product/analysis_tennis.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoTenis.png`, `PartidoTenisAnalisis.png`, `PartidoTenisAnalisisCompleto.png` y `pantallas/Partido.dc.html`, retirando el listado plano obsoleto de `SportAnalysis.tennisPlayer` en `sport_detail_tabs.dart`.
+- **Implementación y Arquitectura (`lib/product/analysis_tennis.dart`, `sport_detail_tabs.dart`, `pick_labels.dart`):**
+  - `TennisAnalysis`: Widget principal con `QfSectionNav` que maneja 5 secciones navegables: `PROBABILIDAD`, `FORMA`, `SUPERFICIE`, `CARA A CARA` y `MODELO`. Oculta dinámicamente las secciones ausentes en la respuesta de estadísticas.
+  - **1. Probabilidad:** 2 tarjetas de jugador con fotos redondas de 76 dp y borde cian (`_playerAvatar`), porcentaje del ganador en JetBrains Mono 34 con resplandor cian, ranking y puntos (`#12 · 3095 pts ▲`), edad y país (`29 AÑOS · USA`), barra proporcional apilada `QfStackedBar`, y banner CyberCore destacando la brecha de ranking (`Fritz está 41 puestos por encima en el ranking ATP`). Si falta el mercado sellado de ganador, se muestran sin porcentaje («—») sin inventar datos.
+  - **2. Forma:** Tarjeta por tenista con índice de forma (0–100) en barra horizontal cian, 5 últimos partidos ordenados con resultado `G`/`P` en corte angular `CutCornerBorder(cut: 4)`, rival, ronda traducida mediante `tennisRoundLabel` («Semifinal», «Octavos de final», «Cuartos», «Ronda de 32», «Ronda de 64»...), marcador del partido, chip de racha invicta / derrotas en verde o magenta (`RACHA: 2 VICTORIAS`), y chips con porcentaje de partidos a 3 sets (`22% a 3 sets`) y partidos con tie-break (`33% con tie-break`).
+  - **3. Superficie:** Cabecera con avatares de ambos jugadores, fila destacada de la superficie del partido de hoy con badge `HOY` en cian (`PISTA DURA · CARRERA` y `PISTA DURA · ESTA TEMPORADA`), filas de otras superficies (tierra batida y hierba) y barras apiladas `QfStackedBar` proporcionales a las tasas de victoria carrera y temporada con conteos `won–lost` y porcentajes.
+  - **4. Cara a cara:** Si no hay enfrentamientos directos previos (`first_wins == 0 && second_wins == 0 && matches.isEmpty`), despliega el estado CyberCore `0 – 0 · PRIMER DUELO` con descripción contextual («Taylor Fritz y Thiago Tirante nunca se han enfrentado en el circuito profesional en pista dura ni en otra superficie»); si hay historial, muestra resumen de victorias con números mono gigantes, barra apilada `QfStackedBar`, lista de hasta 4 partidos recientes con fecha, torneo, superficie y marcador, y botón «VER TODOS EN H2H» que navega a la pestaña Cara a Cara vía `onH2h`.
+  - **5. Modelo:** Métricas avanzadas derivadas de los mercados del modelo de QuantFut: duración esperada del partido en 2 sets vs 3 sets con `QfStackedBar` a partir de `sets_total`, probabilidad de ganar cada set (sets 1, 2 y 3) con barras verticales, barras de probabilidad de «más de» juegos totales para las líneas existentes (`games_total-*`) con extracción segura de líneas numéricas, tarjetas de hándicap de juegos para líneas negativas principales (`-5.5`, `-3.5`, `-1.5`), probabilidad de tie-break (`tiebreak-*`) y callout explicativo de juegos esperados donde la probabilidad cruza el 50% («≈ N juegos»).
+- **Internacionalización (l10n):** 52 nuevas cadenas de texto añadidas a los 6 idiomas (`es, en, pt, fr, it, de`) vía `tool/l10n_add.py` (`tenNav*`, `tenWinProb*`, `tenRank*`, `tenGap*`, `tenForm*`, `tenThreeSets`, `tenTiebreakPct`, `tenSurface*`, `tenH2h*`, `tenModel*`, `tenRound*`), validadas al 100% por `test/l10n_test.dart`.
+- **Pruebas y Verificación:**
+  - Nueva suite `test/analysis_tennis_test.dart` con 9 pruebas que cubren: fixture real Fritz vs Tirante con las 5 secciones y todos sus componentes, interacción con `QfSectionNav`, variante con historial H2H y botón «VER TODOS EN H2H», variantes con datos ausentes (sin H2H, sin superficie, sin mercados del modelo), manejo de rondas desconocidas sin fallo (`tennisRoundLabel`), y pruebas de adaptabilidad en 360×800 (`de`) y 390×844 (`es`) sin desbordes.
+  - Pruebas existentes adaptadas sin relajar aserciones (`sport_detail_test.dart`).
+  - `flutter analyze --no-pub`: 0 issues.
+  - Suite completa: 635 pruebas pasando al 100% en verde.
+
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4d completada (`app/rediseno-f4d-analisis-nba`)
+
+- **Objetivo de F4d alcanzado:** Pestaña de Análisis de NBA (`NbaAnalysis` en `lib/product/analysis_nba.dart`) totalmente construida e integrada con estética CyberCore conforme a `capturas/PartidoNBA.png`, `PartidoNBAAnalisisCompleto.png` y `pantallas/Partido.dc.html`, retirando el listado plano obsoleto de `SportAnalysis.nbaTeam` en `sport_detail_tabs.dart`.
+- **Implementación y Arquitectura (`lib/product/analysis_nba.dart`, `sport_detail_tabs.dart`, `sport_detail.dart`, `qf_charts.dart`, `qf_controls.dart`):**
+  - `NbaAnalysis`: Widget principal con `QfSectionNav` que maneja 6 secciones navegables: `PROBABILIDAD`, `COMPARATIVA`, `FORMA`, `CARA A CARA`, `CLASIFICACIÓN` y `DISPONIBILIDAD`. Las secciones ausentes o vacías en los datos se ocultan de la navegación y del cuerpo.
+  - **1. Probabilidad:** 2 tarjetas de equipo con avatar/logo oficial de NBA, probabilidad mono 32 con brillo cian, récord visitante/local, barra proporcional horizontal de 10 dp, y 4 factores del partido calculados puramente a partir de estadísticas (récord, visitante/local, descanso y racha). Si el partido aún no tiene pronóstico sellado, muestra banner CyberCore con `nbaSealHeading` / `nbaSealPendingTitle` y tarjetas sin porcentaje («—») sin inventar datos.
+  - **2. Comparativa:** Tira de dominancia `QfDominanceDots` enfrentando métricas y 7 filas divergentes `QfDivergingRow`: RÉCORD, VISITANTE·LOCAL, PUNTOS A FAVOR, PUNTOS EN CONTRA (`lowerIsBetter: true`), DIFERENCIAL, ÚLTIMOS 6 y DESCANSO (DÍAS).
+  - **3. Forma:** Tarjeta por equipo con 6 partidos ordenados cronológicamente (más antiguo a la izquierda, último a la derecha con tag cian `ÚLTIMO`), logo rival, píldora con resultado `G`/`P` en corte angular, marcador, columnas de margen vertical verde/magenta proporcionales a `puntos - rival`, chips de racha (`RACHA: N VICTORIAS SEGUIDAS` o `N DERROTAS SEGUIDAS`), promedios de puntos y leyenda de márgenes.
+  - **4. Cara a cara:** Resumen de victorias cara a cara con números mono gigantes, barra apilada horizontal `QfStackedBar`, promedio de puntos totales por partido, lista de hasta 4 enfrentamientos recientes con marcador y código del ganador, y botón CyberCore «VER TODOS EN H2H» con callback `onH2h`.
+  - **5. Clasificación:** Pista de 15 posiciones `QfSeasonTrack` con marcadores hexagonales y logo para ambos equipos en su conferencia (Este u Oeste), dos tarjetas resumen de posición y récord, leyenda de zonas (Playoffs 1-6 cian, Play-In 7-10 slate, Fuera 11-15 track) y callout dinámico de distancia de puestos.
+  - **6. Disponibilidad:** Datos leídos de `event.availability` (ya parseado por `SportAlerts`) sin recalcular; estado oficial con badge verde `OFICIAL` o neutro `PENDIENTE`, barra visual de minutos de bajas con semáforo por umbrales (<20 min verde, 20-50 min amarillo, >=50 min magenta), tag de descanso (`BACK-TO-BACK · JUGÓ AYER` o `DESCANSÓ N DÍAS`), conteo de jugadores reportados y nota explicativa al pie.
+- **Localización (i18n):** 55 nuevas cadenas de texto añadidas a los 6 idiomas (`es, en, pt, fr, it, de`) en los archivos ARB correspondientes, pasando al 100% las verificaciones de `l10n_test.dart`.
+- **Pruebas y Verificación:**
+  - Nueva suite `test/analysis_nba_test.dart` con 8 pruebas que cubren: fixture real Heat vs Pistons con las 6 secciones, navegación horizontal de chips, variantes extremas (sin disponibilidad, sin standing, sin form, sin mercado ganador, sin h2h), y pruebas de responsividad y localización en 360×800 (`de`) y 390×844 (`es`) sin desbordes.
+  - Pruebas existentes adaptadas sin relajar aserciones (`sport_detail_test.dart`).
+  - `flutter analyze --no-pub`: 0 issues.
+  - Suite completa: 626/626 pruebas pasando en verde (`All tests passed!`).
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4c completada (`app/rediseno-f4c-analisis-futbol`)
+
+- **Objetivo de F4c alcanzado:** Pestaña de Análisis de fútbol (`FootballAnalysis` en `lib/product/analysis_football.dart`) totalmente reimplementada con estética CyberCore conforme a `capturas/PartidoAnalisis.png` y `pantallas/Partido.dc.html`, integrando sub-navegación `QfSectionNav` («RESUMEN · FORMA · CARA A CARA · TABLA»), selector TODOS|CASA·FUERA, radar `QfRadar` de 5 ejes, 10 métricas enfrentadas con dominancia `QfDominanceDots` y barras divergentes `QfDivergingRow`, tarjetas de forma con `QfFormPills` expandidas de 5 partidos, histórico Cara a Cara con barra apilada `QfStackedBar` y botón de salto a H2H, y tabla de clasificación `QfStandingsTable` con leyenda y callout de puntos.
+- **Implementación y Arquitectura (`lib/product/analysis_football.dart`, `live_statistics.dart`, `live_detail.dart`, `qf_charts.dart`):**
+  - `FootballAnalysis`: `StatefulWidget` que recibe la ficha estructurada de fútbol y callback `onH2h`.
+  - **Sub-navegación `QfSectionNav`:** Segmentos CyberCore para desplazamiento directo a las 4 secciones; solo muestra las secciones con datos disponibles en la ficha.
+  - **Sección Resumen («CÓMO LLEGAN»):**
+    - Interruptor `TODOS | CASA·FUERA` con recálculo dinámico de estadísticas según ámbito (oculto si no hay promedios casa/fuera).
+    - Radar pentagonal `QfRadar` con normalización matemática rigurosa según §5.9 (`ataque = min(gf/2.5, 1)`, `creación = min(xf/2.5, 1)`, `remate = min(sp/7, 1)`, `córners = min(c/9, 1)`, `defensa = 1 - min(gc/2.5, 1)`, mínimo visual 0.08).
+    - Tira de dominancia de 10 puntos `QfDominanceDots` enfrentando las 10 métricas.
+    - 10 filas de barras divergentes `QfDivergingRow` con valores y etiquetas limpias, y tratamiento elegante «—» para valores nulos (p.ej. xG no reportado).
+  - **Sección Forma:**
+    - Tarjeta por equipo con `QfFormPills` expandidas en fila de 5 partidos (orden invertido de cronología para mostrar el más reciente a la derecha con tag `ÚLTIMO`), escudo rival, resultado con color de victoria/empate/derrota y letra de sede (`C` / `F`).
+    - Chips de racha invicta / victorias consecutivas y balance de goles (`GF: N · GC: M`).
+  - **Sección Cara a Cara (H2H):**
+    - Fila de victorias locales, empates y victorias visitantes.
+    - Barra horizontal proporcional `QfStackedBar` con tres colores CyberCore (`#05FFA1`, `#2A2D3A`, `#FF2A85`).
+    - Chips de goles por partido, ambos marcan (%) y más de 2.5 (%).
+    - Últimos 3 enfrentamientos directos en formato compacto.
+    - Botón CyberCore `VER LOS N PARTIDOS` que dispara la transición a la pestaña Cara a cara (`onH2h`).
+  - **Sección Clasificación (Tabla):**
+    - `QfStandingsTable` con filas enfocadas alrededor de ambos contendientes, separador CyberCore `···` si no son contiguos, leyenda de zonas coloreadas (`ascenso/champions` verde, `play-off/promoción` cian, `descenso` magenta), y callout dinámico destacando la diferencia de puntos y posiciones entre los dos equipos.
+  - **Reemplazo de `fl_chart` RadarChart:** Eliminada la dependencia del radar heredado en `live_statistics.dart` sustituyéndolo por el nuevo `QfRadar` CyberCore; `MatchStatistics` delega fluidamente en `FootballAnalysis`.
+- **Internacionalización (l10n):**
+  - 51 claves de traducción agregadas en los 6 idiomas (`es, en, pt, fr, it, de`) vía `tool/l10n_add.py` (`anNav*`, `anMetric*`, `anRadar*`, `anStreak*`, `anStandings*`, etc.).
+  - Cumplimiento estricto de `test/l10n_test.dart` sin textos fijos en español en la interfaz.
+- **Suites de pruebas:**
+  - `test/analysis_football_test.dart`: 13 pruebas exhaustivas (fixture real Mallorca vs Córdoba, variantes sin tabla, sin forma, sin H2H, xG null, y responsividad multilingüe a 360 y 390 dp).
+  - `test/product_navigation_test.dart`: 42 pruebas adaptadas al nuevo `QfRadar` y pasando limpias.
+  - `test/l10n_test.dart`: 6 pruebas pasando al 100%.
+  - Suite completa de la app: 618 pruebas pasando (`618/618 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F4d — Análisis de NBA (`SportAnalysisTab` para baloncesto, 7 filas de comparativa, forma con margen, H2H y clasificación 15 casillas).
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4b completada (`app/rediseno-f4b-pronostico-props`)
+
+- **Objetivo de F4b alcanzado:** Pestaña de Pronósticos renovada con tarjeta destacada «PICK DESTACADO · GRATIS» CyberCore (`_FeaturedCard`), cabecera «MERCADOS DEL MODELO» y lista estilizada `_MarketRow` con logos/avatares y tipografía CyberCore. Nueva pestaña de Props NBA (`SportPropsTab`) con filtros chip (`TODOS · PUNTOS · REBOTES · ASIST. · TRIPLES`), tarjetas de props de jugadores (`SportPropCard`) con avatares circulares de 52 dp y emblemas de equipo superpuestos de 20 dp, nombre en `qfDisplay`, selección en verde CyberCore o difuminada con ImageFilter blur si está bloqueado, barra de últimos 5 partidos y soporte para cuotas u opción VIP.
+- **Pestaña Pronóstico (`lib/product/sport_detail.dart`, `live_forecast.dart`, `live_match_markets.dart`):**
+  - `_FeaturedCard`: contenedor de 10 dp con `CutCornerBorder(cut: 10, side: BorderSide(color: Color.fromRGBO(5, 255, 161, 0.4)))`, fondo con tinte verde suave, etiqueta «PICK DESTACADO · GRATIS» en verde primario, selección en `qfDisplay` 20 bold, cuota de referencia integrada con `QuoteLabel` (evita desbordes y preserva semánticas accesibles «Sin cuota») y gran probabilidad en mono 30 bold cian/primario.
+  - `_MarketRow`: logos de equipos NBA (`_teamLogo`) con `nbaTricode` y `serverImageUrl` o enfrentamiento en doble logo apilado para mercados de total, y fotos circulares para tenistas o jugadores NBA.
+  - `ForecastPanel` y `_OpenRow`/`_LockedRow`: actualizados con tokens CyberCore (`CutCornerBorder`, `QfColors.surface`, tipografías display y mono) preservando todos los localizadores y flujos de compra/desbloqueo.
+- **Pestaña Props NBA (`lib/product/sport_props.dart`):**
+  - `SportPropsTab`: barra horizontal de chips responsivos con `FittedBox` para evitar desbordes en idiomas extensos (como de, it, fr) a 320 px, filtrando por mercados `player_points`, `player_rebounds`, `player_assists`, `player_threes`. Estado vacío accesible con `propsEmptyFilter`.
+  - `SportPropCard`: tarjeta interactiva con padding 12x10, avatar circular de 52 dp con borde `QfColors.border`, insignia de equipo circular de 20 dp en la esquina inferior derecha, nombre en `qfDisplay` 15 bold, selección en verde `QfColors.primary` (o difuminada si `market.locked`), barra de pips horizontales de 8x6 para los últimos 5 partidos (leída de los datos cuando existe, omitida completamente si es `null` sin inventar datos), y a la derecha probabilidad en mono 20 cian con `QuoteLabel` o estado VIP en amarillo con `detailLockedWithCoinsOrVip`.
+- **Internacionalización y Pruebas:**
+  - Nuevas claves en `app_*.arb` (`detailModelMarkets`, `detailOddAtPublish`, `detailLockedWithCoinsOrVip`, `detailFeaturedPickFree`, `detailFeaturedPickVip`, `detailFeaturedPickUnlocked`, `propsFilterPoints`, `propsFilterRebounds`, `propsFilterAssists`, `propsFilterThrees`, `propsLastFive`, `propsEmptyFilter`) en los 6 idiomas oficiales (`es, en, pt, fr, it, de`).
+  - Suite unitaria `test/sport_props_test.dart` (12 tests) cubriendo con/sin cuota de referencia, jugadores sin foto o id inválido, bloqueo VIP, filtros y ausencia de desbordes en 320 px para todos los idiomas.
+  - Verificación global: 605 pruebas en verde (`flutter test --no-pub`), `flutter analyze --no-pub` limpio (0 issues). PR en `app/rediseno-f4b-pronostico-props`.
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F4a completada (`app/rediseno-f4a-match-shell`)
+
+- **Objetivo de F4a alcanzado:** Contenedor unificado `MatchShell` implementado para el detalle de partido en fútbol (`LiveMatchDetail`) y deportes generales como NBA y Tenis (`SportDetail`), compartiendo cabecera top bar 56 dp, hero en 3 columnas CyberCore, barra de pestañas segmentadas `MatchTabs` y barra fija inferior de acción `MatchBottomBar`.
+- **Contenedor unificado (`lib/product/match_shell.dart`):**
+  - `MatchTopBar`: altura fija de 56 dp, competición en `qfDisplay` 13 bold verde con kicker sutil, fecha/hora mono 11 y botón de cierre `IconButton` (44x44 dp) con icono `Icons.close` en `QfColors.text2`.
+  - `MatchHero`:
+    - Rejilla central en 3 columnas: lado A (escudo/foto 58 dp + nombre `qfDisplay` 15 bold + subtexto), centro (gran probabilidad en JetBrains Mono 38 px bold cian con resplandor `Shadow(color: 0x7300F0FF, blurRadius: 18)`, etiqueta en `qfDisplay` 12 y `centerExtra` para score o `@`), lado B (escudo/foto 58 dp + nombre + subtexto).
+    - Barra segmentada de probabilidad de 6 dp con separador de 3 dp y proporciones reales del modelo (`probs`).
+    - Leyenda antidesborde inferior con `Expanded` y texto mono 11 centrado/alineado a los extremos con `TextOverflow.ellipsis`.
+    - Insignias de cabecera (`badges`) y créditos de fotografía (`credits`).
+  - `MatchTabs`: barra de pestañas segmentadas CyberCore con selector visual cian al 10% y borde cian de 1.5 dp, etiqueta en `qfDisplay` 12/11 bold, e insignia de alerta en magenta con `ValueKey('alerts-tab-badge')`.
+  - `MatchBottomBar`: barra fija inferior persistente con botón primario de desbloqueo (flex 2, degradado verde `qfGreenGradient`, icono de candado, texto `DESBLOQUEAR TODO · {cost}`) y botón secundario VIP (flex 1, amarillo).
+  - `MatchShell`: estructura reutilizable que admite cuerpo con scroll (`children`) o cuerpo propio con scroll gestionado por la pestaña activa (`body`).
+- **Adaptación de detalle de fútbol (`lib/product/live_detail.dart`):**
+  - Migrado a `MatchShell`, `MatchTopBar`, `MatchHero`, `MatchTabs`, `MatchBottomBar`.
+  - Cálculo de probabilidades 1X2 del modelo o del pronóstico destacado para alimentar `MatchHero`.
+  - Preserva intactos todos los flujos y componentes internos: `LiveScoreStrip`, `ForecastPanel`, `MatchMarkets`, `MatchStatistics`, `AlertsTab`, y alineaciones tácticas.
+- **Adaptación de detalle de NBA y Tenis (`lib/product/sport_detail.dart`):**
+  - Migrado a `MatchShell` con cabecera `MatchHero` (escudos NBA 58 dp, fotos de tenis 58 dp, probabilidad central, etiqueta de ganador, score o `@` central).
+  - Pestañas dinámicas: 5 pestañas para NBA (`[Pronósticos, Props, Análisis, H2H, Alertas]`) y 4 para otros deportes como tenis (`[Pronósticos, Análisis, H2H, Alertas]`).
+  - Navegación interna adaptada a los índices de pestañas según la presencia de Props.
+- **Visuales de partido (`lib/product/match_visuals.dart`):**
+  - Actualizados `MatchTeams` y `LockedVipMatchCard` a tokens CyberCore (`qfDisplay`, `qfMono`, `CutCornerBorder`, `QfColors`).
+  - Preservadas claves de prueba como `ValueKey('locked-vip-cta')`.
+- **Localización (l10n):**
+  - Claves agregadas a los 6 idiomas (`es, en, pt, fr, it, de`): `detailTabProps` ("Props"), `detailUnlockAll` ("DESBLOQUEAR TODO · {cost}").
+- **Suites de pruebas:**
+  - `match_facts_test.dart`: 11 pruebas pasando (100% verde).
+  - `sport_detail_test.dart`: 4 pruebas pasando (100% verde).
+  - `alerts_tab_test.dart`: 4 pruebas pasando (100% verde).
+  - `live_score_strip_test.dart`: 5 pruebas pasando (100% verde).
+  - `generic_sport_ui_test.dart`: 18 pruebas pasando (100% verde).
+  - `detail_no_sealed_test.dart`: 2 pruebas pasando (100% verde).
+  - `product_navigation_test.dart`: 42 pruebas pasando (100% verde).
+  - Suite completa de la app: 593 pruebas pasando al 100% (`593/593 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F4b — Pestaña Pronóstico + Props NBA (`MatchForecastTab`, selector de props, cuotas y casas).
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F3b completada (`app/rediseno-f3b-predicciones`)
+
+- **Objetivo de F3b alcanzado:** Pantalla de Predicciones CyberCore implementada en sus 3 secciones (Alta probabilidad, Reto Escalera, Parley) con diseño idéntico a `Predicciones.dc.html` y barra de acción fija inferior con `DESBLOQUEAR · {coste}` (verde) y `VIP` (amarillo).
+- **Alta Probabilidad (`lib/product/live_picks.dart`, `live_widgets.dart`):**
+  - `_TrustCard`: tarjeta de acierto histórico con `CutCornerBorder(cut: 10)`, borde verde sutil, tasa real destacada en mono 28 bold y eliminación de la línea de sello redundante.
+  - `PickTile`: anatomía CyberCore con kicker meta (liga · hora) en mono 11, insignia `GRATIS` (verde) o `VIP` (amarillo), escudos/avatares solapados de 36 dp, nombre del partido en 15 px bold, selección en Rajdhani 17 cian, probabilidad en JetBrains Mono 26 bold cian, cuota al publicar en mono amarillo y enlace al análisis detallado.
+  - `LockedPicksGroup`: contenedor de pronósticos VIP agrupados con `CutCornerBorder(cut: 10)`, borde y acento amarillo, botón de acción `liveButton` con `CutCornerBorder(cut: 8)`, y difuminado `LockedBlur` de selecciones protegidas.
+- **Reto Escalera (`lib/product/live_ladder.dart`):**
+  - `LadderChallengeCard`: tarjeta principal con `CutCornerBorder(cut: 16)`, cabecera con `ESCALERA · RETO ACTIVO` y `ESCALÓN N DE M` en cian mono.
+  - `_StepBar`: barra de segmentos de 10 dp de altura con gap de 4 dp: escalones ganados en verde (`#05FFA1`), escalón en juego en cian (`#00F0FF`) con resplandor `BoxShadow(color: Color(0x9900F0FF), blurRadius: 10)`, y pendientes en color de pista (`#2A2D3A`).
+  - Tarjetas de métrica en rejilla de 2 columnas: `CUOTA ACUMULADA` y `PROB. DE ESTE ESCALÓN` en mono 22 bold cian.
+  - Nota de pie: «Si un escalón falla, la escalera vuelve a empezar».
+  - `LadderHistoryCard` y `_SettledStep`: adaptados con `CutCornerBorder` y paleta CyberCore.
+- **Parley del día (`lib/product/live_parley.dart`):**
+  - `_TicketCard`: contenedor con `CutCornerBorder(cut: 16)`, cabecera con `PARLEY DEL DÍA · N SELECCIONES` y chips `ESCALÓN N` / estado.
+  - `_Leg`: selecciones con etiqueta de deporte mono (FUT, NBA, TEN), equipos, mercado en Rajdhani 14 cian, cuota en mono amarillo, probabilidad y resultado.
+  - Rejilla de métricas de 2 columnas: `PROB. CONJUNTA` (mono 22 bold cian) y `CUOTA COMBINADA` (mono 22 bold).
+  - Nota de probabilidad: «Una probabilidad no es una certeza: de cada 3 parleys como este se espera acertar 1».
+  - Soporte completo para Parley v2 (fútbol, tenis y NBA).
+- **Barra fija inferior de acción (`lib/product/live_shell.dart`):**
+  - Barra persistente sobre `QfBottomNav` visible en la pestaña Predicciones (`tab == 1`):
+    - Botón primario (flex 2): `DESBLOQUEAR · {coste}` con degradado verde `qfGreenGradient`, texto oscuro Rajdhani 15 bold, icono de candado y `CutCornerBorder(cut: 8)`. Desencadena el flujo de desbloqueo o solicitud de monedas si son insuficientes.
+    - Botón secundario (flex 1): `VIP` con borde y texto amarillo sobre fondo amarillo al 8% y `CutCornerBorder(cut: 8)`. Abre la pantalla VIP.
+    - El diálogo de confirmación de desbloqueo migró su acción principal de ámbar a verde (`QfColors.primary`).
+- **Localización (l10n):**
+  - Claves agregadas en los 6 idiomas (`es, en, pt, fr, it, de`): `ladderActiveReto`, `ladderStepOf`, `ladderOddsAccumulated`, `ladderStepProb`, `ladderRestartHint`, `parleyDaySelections`, `parleyJointProbLabel`, `parleyCombOddsLabel`, `parleyNotCertaintyHint`, `shellUnlockAction`.
+- **Suites de pruebas:**
+  - `predictions_ui_test.dart`: 14 pruebas pasando (100% verde).
+  - `live_ladder_test.dart`: 18 pruebas pasando (100% verde).
+  - `ladder_progress_test.dart`: 7 pruebas pasando (100% verde).
+  - `live_parley_test.dart`: 7 pruebas pasando (100% verde).
+  - `pick_labels_test.dart`: 5 pruebas pasando (100% verde).
+  - `sport_predictions_test.dart`: 8 pruebas pasando (100% verde).
+  - `product_navigation_test.dart`: 42 pruebas pasando (100% verde).
+  - `home_screen_test.dart`: 25 pruebas pasando (100% verde).
+  - `l10n_test.dart`: 6 pruebas pasando (100% verde).
+  - Verificación global de la app: 581 pruebas pasando al 100% (`581/581 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F3c — Mercados y detalle (`MarketsDashboard`, `MarketsHero`, `MarketTile`, `MarketTilesGrid`, `MarketScaffold`).
+
+- **Objetivo de F3a alcanzado:** Pantalla de Inicio CyberCore (`HomeTab`, `_CoinsCard`, `_HitCard`, `_TicketCard`), tarjeta destacada del día (`HomeHero`), tira de 5 días (`DayStrip`) y agenda compacta CyberCore (`MatchRow`, `AgendaDay`, `home_sport.dart`) implementados y verificados.
+- **Destacado del día (`lib/product/home_hero.dart`):**
+  - Implementado con `QfCard(cut: 16, strong: true, glow: true)`.
+  - Kicker en `QfColors.green` («DESTACADO DEL DÍA») + subtítulo de competición/fecha en `QfColors.muted` con protección antidesborde para 320 px y multilingüe.
+  - Fila central con escudos/fotos redondas de 58 dp (`TeamCrest` / `QfAvatar`), probabilidad en JetBrains Mono 40 px bold cian con resplandor (`glowColor: 0x7300F0FF`, blur 18) y descripción del pick.
+  - Barra de 2-3 partes con proporciones reales y leyenda inferior.
+  - Botón de acción verde de ancho completo: `VER PRONÓSTICO GRATIS` con `qfGreenGradient`, `CutCornerBorder(cut: 8)`, texto en Rajdhani 15 dp bold e icono chevron derecho.
+- **Tarjetas resumen en 2 columnas y boletos (`lib/product/live_home.dart`):**
+  - Fila en 2 columnas con altura equiparable:
+    - Tarjeta izquierda (`_HitCard`): acierto en 30 días del deporte elegido (`homeHitTitle`), porcentaje verde en mono 24 bold y detalle de picks sellados (`picksTrustDetail`).
+    - Tarjeta derecha (`_CoinsCard`): saldo en JetBrains Mono 24 bold amarillo y subtítulo dinámico con plurales `homeCoinsUnlocks` («Te alcanza para N desbloqueos»).
+  - Boletos del día: tarjetas con `CutCornerBorder(cut: 8)`, fondo `QfColors.surface` y protección de desborde a 320 px en cuotas `@ cuota`.
+  - Avisos (banner de Remote Config y modo mantenimiento): tarjeta cian con `CutCornerBorder(cut: 8)` e icono de información.
+- **Tira de días y Agenda (`lib/product/home_agenda.dart`):**
+  - `DayStrip`: tira persistente con botones de 44 dp con `CutCornerBorder(cut: 8)`, estado activo con fondo cian 10% y borde cian 1 dp, semántica accesible, contadores por día y claves `day-search`, `day-picker`, `day-{dateKey}`.
+  - `DayHeader`: encabezado con barra indicadora cian y fecha formateada con `dayLabel`.
+  - `MatchRow`: fila compacta de 52 dp según diseño CyberCore:
+    - Columna 1: hora en mono 12 dp.
+    - Columna 2: escudos solapados de 30 dp, texto «Local – Visitante» en negrita y nombre de competición debajo.
+    - Columna 3: badge verde de probabilidad con borde y fondo sutil, candado VIP amarillo, etiqueta «desde HH:MM» o marcador si ya terminó.
+- **Deportes adicionales (NBA y tenis en `lib/product/home_sport.dart`):**
+  - Adaptados a la misma anatomía CyberCore: escudos/fotos 58 dp en el destacado, `_EventRow` con miniaturas 30 dp solapadas y badge mono verde.
+- **Localización (l10n):**
+  - Claves añadidas a los 6 idiomas (`es, en, pt, fr, it, de`): `homeViewFreePick`, `homeHitTitle`, `homeCoinsUnlocks`, `homeAgendaTitle`.
+  - Pruebas `l10n_test.dart` y `l10n_runtime_test.dart` en verde.
+- **Suites de pruebas:**
+  - `home_screen_test.dart`: 25 pruebas pasando (100% verde).
+  - `home_sport_test.dart`: 17 pruebas pasando (100% verde).
+  - `featured_pick_test.dart`: 9 pruebas pasando (100% verde).
+  - `published_history_test.dart`: 3 pruebas pasando (100% verde).
+  - `product_navigation_test.dart`: 42 pruebas pasando (100% verde).
+  - Verificación global de la app: 581 pruebas pasando al 100% (`581/581 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F3b — Predicciones (`HighProbabilityView`, `PickTile`, `LadderChallengeCard` con barra de 5 segmentos, `ParleyTab` y barra fija inferior de desbloqueo/VIP).
+
+## 14-nov-2026 · Rediseño CyberCore de la app Flutter: Fase F2 completada (`app/rediseno-f2-cascara`)
+
+- **Objetivo de F2 alcanzado:** Cabecera de 56 dp, barra inferior `QfBottomNav` de 64 dp con etiqueta `navPicks` («Picks»), selector de deporte `SportSelector` CyberCore y selector de sección `PredictionsSwitcher` segmentado implementados y probados.
+- **Cabecera (`lib/product/live_shell.dart`):**
+  - Altura 56 dp, fondo `QfColors.bg`, borde inferior de 1 dp en `QfColors.border`.
+  - Botón de menú `☰` de 44x44 dp con clave `ValueKey('home-menu')`, icono 22 dp en `QfColors.muted`, conservando la llamada a `showMoreSheet(context, onMySports: openMySports)`.
+  - Logomarca tipográfica `QUANT` (blanco/texto) + `FUT` (cian) en Rajdhani 21 dp bold con letterSpacing 2.8.
+  - Chip de monedas en miniatura `_CoinsChip`: altura 44 dp con `CutCornerBorder(cut: 8)`, fondo `yellow` 8%, borde `yellow` 40%, icono `Icons.toll` de 16 dp y saldo en JetBrains Mono 13 dp bold; oculto cuando la pestaña activa es Coins (`tab == 3`).
+  - Botón de acceso VIP: 44x44 dp con icono `Icons.workspace_premium` en `QfColors.yellow`.
+  - Botón de refresco: `Icons.refresh` en `QfColors.primary`.
+- **Barra inferior (`QfBottomNav`):**
+  - Barra propia de 64 dp de altura con fondo `QfColors.surface` y borde superior de 1 dp en `QfColors.border`.
+  - 5 destinos con los mismos índices (0: Inicio, 1: Picks, 2: Mercados, 3: Coins, 4: Perfil) y preservando analítica `services?.screen(...)` y refresco de monedas al salir de Coins.
+  - Etiqueta del 2.º destino actualizada a la nueva clave `navPicks` («Picks» en todos los idiomas).
+  - Estado activo: subrayado superior de 2 dp en `QfColors.cyan`, fondo `QfColors.cyan` 7%, icono 22 dp cian y texto uppercase en Rajdhani 11 dp bold con letterSpacing 0.88.
+  - Estado inactivo: fondo transparente, icono en `QfColors.muted` y texto uppercase en Rajdhani 11 dp semibold.
+- **Selector de deporte (`lib/product/sport_selector.dart`):**
+  - Chips de 44 dp con `CutCornerBorder(cut: 8)`.
+  - Activo: fondo cian, borde cian, icono/texto/marca en `QfColors.onGreen` y contador en JetBrains Mono 11 bold.
+  - Inactivo: fondo surface, borde border, texto en `QfColors.text2` y contador en `QfColors.muted`.
+  - Conserva `ValueKey('sport-selected-mark')`, fila desplazable + botón «Más» para >4 deportes y sin cambio de pestaña.
+- **Selector de tipo (`lib/product/predictions_switcher.dart`):**
+  - Segmentado tipo `QfTabs` de 44 dp de altura con `CutCornerBorder(cut: 8)`.
+  - Deslizador animado con clave `ValueKey('streams-indicator')` en color cian primario.
+  - Segmentos interactivos con claves `ValueKey('streams-$id')`, preservando `order`, `swipe()` y badges numéricos en mono.
+- **Localización (l10n):**
+  - Añadida clave `navPicks` con traducción a los 6 idiomas (`es: "Picks"`, `en: "Picks"`, `pt: "Picks"`, `fr: "Picks"`, `it: "Picks"`, `de: "Picks"`).
+  - Regenerado `AppLocalizations` mediante `flutter gen-l10n`.
+- **Suites de pruebas:**
+  - `product_navigation_test.dart`: 42 pruebas pasando (incluyendo navegación entre pestañas, persistencia de deporte y pruebas a 360 dp en los 6 idiomas sin desbordes).
+  - `l10n_runtime_test.dart`: 8 pruebas pasando en los 6 idiomas.
+  - `home_screen_test.dart`: 24 pruebas pasando.
+  - Verificación global: 580 pruebas pasando al 100% (`580/580 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+- **Siguiente paso:** Fase F3a — Pantalla Inicio (`HomeTab`, destacado del día fuerte, tarjetas de acierto y monedas, franja 5 días y agenda).
+
+- **Objetivo de F1 alcanzado:** Tokens CyberCore, familias tipográficas Exo 2 / JetBrains Mono / Rajdhani, paleta de colores y componentes visuales reutilizables listos y probados sin romper ninguna de las pantallas heredadas.
+- **Fuentes:**
+  - Descargadas e incorporadas en `apps/mobile/fonts/`: `Exo2-Regular.ttf`, `Exo2-Medium.ttf`, `Exo2-SemiBold.ttf`, `Exo2-Bold.ttf`, `JetBrainsMono-Bold.ttf`, `OFL-Exo2.txt`.
+  - Declaradas en `apps/mobile/pubspec.yaml` manteniendo `Gilroy*` y `Rajdhani` para retrocompatibilidad.
+  - Actualizado `adaptive_icon_background: '#07080C'`.
+- **Tokens y estilos (`lib/product/qf_theme.dart`):**
+  - Implementada la paleta completa CyberCore: `bg` (#07080C), `surface` (#12141D), `surface2` (#181A25), `text` (#F0F1F5), `text2` (#B2B7C7), `muted` (#939AB0), `chrome` (#D1D4DE), `slate` (#747D99), `track` (#2A2D3A), `cyan` (#00F0FF), `green` (#05FFA1), `yellow` (#FCEE0A), `magenta` (#FF2A6D), `magentaText` (#FF7AA3), `onGreen` (#03110F), `onYellow` (#1A1800).
+  - Derivados de diseño como constantes ARGB compilables: `border` (cyan 20%), `borderStrong` (cyan 48%), `divider` (slate 22%), `chipActiveBg` (cyan 10%).
+  - Escala tipográfica precalculada `QfText` (`brand`, `heroTitle`, `sectionTitle`, `sectionTag`, `tab`, `chip`, `button`, `badge`, `statLarge`, `statMedium`, `statSmall`, `meta`, `body`, `bodyMedium`, `bodySmall`, `teamName`).
+  - Espaciados `QfSpace` y gradiente verde de acción `qfGreenGradient`.
+- **Componentes base CyberCore implementados y testeados:**
+  - `qf_shapes.dart`: `CutCornerBorder`, `BottomSheetCutShape`, `ScanlinesPainter`, `QfCard` (con `cut`, `strong`, `glow`, `accent`), `QfBadge` con `QfBadgeKind` (`free, won, vip, lost, live, review, voided, doubt`), `qfSectionTag`.
+  - `qf_controls.dart`: `QfButton` (`primary`, `secondary`, `vip`, `danger`, `google`), `QfSwitch` (52x30 dp), `QfCheckbox` (área táctil 44x44 dp), `QfTabs` (segmentado y chips con scroll), `QfSectionNav`, `QfStepDots`.
+  - `qf_charts.dart`: `QfRing` (con gradiente y glow), `QfRadar`, `QfDivergingRow`, `QfDominanceDots`, `QfFormPills`, `QfMarginBars`, `QfStackedBar`, `QfSeasonTrack`, `QfPips`, `QfSegmentedChart`.
+  - `qf_sheets.dart`: `QfBottomSheet` (con cabecera, muesca y corte) y `QfDialogCard`.
+  - `qf_standings.dart`: `QfStandingsTable` (clasificación con zonas de color CyberCore).
+  - `sport_images.dart`: `QfAvatar` soportando `kind: QfAvatarKind.person / QfAvatarKind.logo` (aro cian 2 dp para personas, cuadrado contain para equipos).
+  - `live_widgets.dart`: tokens CyberCore mapeados en alias `live*`.
+- **Suites de pruebas:**
+  - Nuevas pruebas: `qf_theme_test.dart` (contraste WCAG >= 4.5:1), `qf_shapes_test.dart`, `qf_controls_test.dart`, `qf_charts_test.dart`, `qf_sheets_test.dart`, `qf_standings_test.dart`, `qf_gallery_test.dart` (render a 360 y 390 dp, touch targets >= 44 dp).
+  - Verificación global: 574 pruebas ejecutadas y pasando al 100% (`574/574 passed`).
+  - `flutter analyze --no-pub`: 0 errores / 0 avisos.
+  - `l10n_test.dart`: 100% verde (sin textos fijos en español en `lib/`).
+- **Siguiente paso:** Fase F2 — Cáscara de navegación (`AppBar` 56 dp, `QfBottomNav` 64 dp con `navPicks`, `SportSelector`, `PredictionsSwitcher`).
+
+## 14-nov-2026 · Inicio del Rediseño CyberCore de la app Flutter (Fase F0 completada)
+
+- **Planes de referencia:** `apps/mobile/docs/PLAN_REDISENO_CYBERCORE_20261114.md` (especificación de diseño, tokens, widgets y contratos) y `apps/mobile/docs/PLAN_REDISENO_FASES_20261114.md` (fases F0 a F8 con criterios de aceptación y dependencias).
+- **Referencia visual:** 36 capturas de pantalla aprobadas por el titular en `apps/mobile/docs/render_cybercore_20261114/capturas/` y especificación numérica dp en `pantallas/*.dc.html`.
+- **Línea base medida (F0):**
+  - Entorno: Flutter 3.47.7 (Dart 3.13.5) en Windows.
+  - `flutter analyze --no-pub`: 0 avisos / 0 errores (limpio).
+  - `flutter test --no-pub`: 545 pruebas pasando (545/545 passed).
+  - Fixtures de datos reales del render copiadas a `apps/mobile/test/fixtures/` para pruebas unitarias de las fichas deportivas (`ficha_futbol_real.json`, `nba_cartelera_real.json`, `nba_estadisticas_real.json`, `tenis_estadisticas_real.json`, `tenis_evento_real.json`).
+  - Verificación del script de traducciones `apps/mobile/tool/l10n_add.py` y regla de 6 idiomas (es, en, pt, fr, it, de).
+- **Siguiente paso:** Fase F1 (tokens CyberCore, fuentes Exo 2 / JetBrains Mono Bold, widgets base y suite de galería a 360 dp).
+
 ## 14-nov-2026 · Respaldo de cuotas: clave gratuita de The Odds API cuando vence la de pago (rama `cuotas/odds-api-clave-gratis`)
 
 - **Decisión del titular:** el plan de 100.000 créditos (NBA) fue de un solo mes y no se renueva; después solo cuenta el plan gratuito (500/mes, sin histórico). `ODDS_API_KEY` del servidor y del `.env` está muerta (401 `DEACTIVATED_KEY`); la de pago vive en `ODDS_API_RESPALDO_KEY`.
@@ -1055,3 +1343,141 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
 - **Fallo intermitente de `apps/nba/tests/v2/test_estres.py`:** la prueba usaba `reloj = datetime.now(UTC)` y fijaba `recibido_en` de los partidos históricos a las `06:00 UTC` del día siguiente. Entre `04:00` y `06:29 UTC`, `reloj.astimezone(motor.ET).date()` ya cruzaba la medianoche ET y la víspera quedaba en el futuro respecto a `corte = reloj - 30 min`, causando 15 falsos `sin_hora` en `CANDIDATOS` (`run 42962886704` a las `05:06 UTC`). **No se puede sustituir `datetime.now(UTC)` por un reloj fijo antiguo** porque `sellado.sellar()` valida contra `clock_timestamp()` real de Postgres (`el partido ya empezó antes de persistir`), así que se mantiene `reloj = datetime.now(UTC)` por defecto con parámetro opcional `reloj` y se acota `limite_final = reloj - timedelta(hours=1)` al sembrar la historia; añadida prueba parametrizada de regresión (`05:15 UTC`, `06:15 UTC`, `04:15 UTC`) con `simulacro=True`.
 - **Arquitecto (`CLAUDE.md`):** añadidas las decisiones aprobadas por el titular (textos ES/EN, CSP estricta sin beacon CF, 19 lotes históricos en `historico_sin_publicar/`) y el diseño previo de `/control/configuracion` (páginas base + traducción por API Market + usuarios sociales) en `harness/tareas.md` en espera de aclaraciones antes de implementar.
 - **Panel `/control/configuracion` + APIMart (`feat/control-configuracion-web`):** implementado con PostgreSQL como fuente editable (`db/110_web_config.sql`), cliente OpenAI-compatible en `src/qf/api/apimart.py` (cifrado AES-GCM en `apimart_key_enc` sin exposición en GET), catálogo inicial sembrado desde todas las páginas reales (`ui:frontend`, 9 `spa:*`, 3 `pagina:*`, 3 `legal:*`, 3 `tool:*`, 3 `sport:*`), traductores dinámicos de `idiomas.py` (`registrar_traductor`) para no publicar en sitemap/`hreflang` páginas SPA o legales aún sin traducir, endpoint ligero `GET /web/config` e hidratación segura en `frontend/{conversion.css,rutas.js,app.js}`. Verificado en local con `npm --prefix frontend run check` (`238/238`) y `scripts/test_local_windows.ps1` (`2671 passed, 130 skipped`).
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F3c — Mercados y detalle
+- **Hero de Mercados:** insignia «MODELO ACTIVO» con punto verde y glow, cifra grande Rajdhani bold 54 px con el total de familias en el radar, texto de evidencia histórica, píldora con acierto `{won}/{total} publicados acertados · {pct} %` y radar animado (`RadarClock` / `_RadarPainter`).
+- **Rejilla 2 columnas `MarketTile`:** bordes redondeados 16 dp con esquina y fondo con gradiente tintado por color de familia (`marketLook`), anillo `QfRing` con % o «–» cuando no hay publicaciones, icono de la familia, título Rajdhani, contador «Abiertos N · Resueltos M», indicador «Publicado won/cases», fila de 10 puntos (`_TenDotsRow` con círculos llenos según tasa de acierto y huecos pendientes) y fila «HOY» con avatares solapados (hasta 4 escudos/logos de 26 dp).
+- **Pestañas internas por deporte `QfTabs`:** fútbol (`PARTIDO | GOLES`), NBA (`PARTIDO | JUGADORES`), tenis (`PARTIDO | JUEGOS`) con filtrado dinámico de familias y avatares según el catálogo del modelo.
+- **Detalle de mercado `MarketScaffold`:** cabecera CyberCore con botón atrás, título Rajdhani 18 dp, subtítulo mono con deporte y categoría, insignia verde `LÍNEA CONFIRMADA` con acceso a la hoja `showLinesSheet` de líneas validadas.
+- **Tarjeta de acierto `MarketRateCard`:** esquinas cortadas 12 dp con líneas de barrido decorativas (`_ScanPainter`), columna izquierda Acierto Global (32 px mono cyan con brillo y desglose won/cases), columna derecha Hoy (32 px mono blanco con pronósticos del día), y botón de líneas validadas.
+- **Pestañas Hoy / Anteriores y contenido:** `QfTabs` («HOY (n) · ANTERIORES»), tarjetas `MarketPickCard` y `MarketLockedCard` con `CutCornerBorder(cut: 8)`, insignias de resultado («Acertó», «Falló», «Anulado»), cuota y casa de apuestas, y barra inferior fija `_MarketBottomBar` con botón verde `DESBLOQUEAR · {coste}` y botón VIP amarillo.
+- **Pruebas y verificación:** 581 tests pasando en verde (`flutter test --no-pub`). `flutter analyze --no-pub` limpio (0 issues).
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F3d — Coins y Movimientos
+- **Hero de Coins (`_Hero`):** borde amarillo `CutCornerBorder(cut: 16, side: BorderSide(color: Color(0x73FCEE0A)))`, fondo `QfColors.surface` con scan lines amarillas tenues (`_YellowScanlinesPainter`), saldo en 48 px Mono bold en amarillo `QfColors.yellow` con sombra de brillo, avance en porcentaje `realPercent(progress.fraction)`, barra `SegmentedBar` en amarillo con 5 pips, y chips `_HeroChip` para racha de días y tasa de conversión de pronósticos.
+- **Asistencia diaria (`_AttendanceCard`):** tarjeta con `CutCornerBorder(cut: 10)`, 7 casillas (`coins-day-$i`) con borde verde `QfColors.cta` en hoy, fondo tintado y check verde en días completados, y botón verde «Marcar asistencia · +N» con texto oscuro (`QfColors.onCta`), o cuenta atrás con reloj mono cuando ya se reclamó hoy.
+- **Acciones y ganar monedas:** tarjetas con cortes CyberCore para ofertas (`_OffersCard` con cohete cian y botón «Ver ofertas»), videos (`AdsCard` con icono cian de video y control de cooldown/tope), e invitación (`_InviteCard` con código mono, botón copiar, compartir y campo de pegado con validación).
+- **Nueva pantalla Mis Movimientos (`MovimientosScreen`):** cabecera con botón atrás y título `MIS MOVIMIENTOS`, tarjeta de resumen de 3 columnas (SALDO en mono 30px amarillo bold con glow, GANADAS en mono 18px verde y GASTADAS en mono 18px gris, calculadas sumando el ledger visible), lista de movimientos agrupada por día (`HOY`, `AYER`, `ANTERIORES`) con icono temático por tipo en caja cortada (`_MovementIcon`), importe mono (+verde / −gris), botón «VER MÁS / VER MENOS» (5 a todos), y estado vacío con acción para ganar monedas. Fila de acceso «Mis movimientos» en `RewardsScreen`.
+- **Celebración de monedas (`CoinBurst`):** actualizado con amarillo `QfColors.yellow` y tipografía Rajdhani display bold.
+- **Internacionalización y pruebas:** nuevas cadenas en los 6 idiomas (`rewardsLedgerBalance`, `rewardsLedgerEarned`, `rewardsLedgerSpent`, `rewardsLedgerEarlier`). Pruebas unitarias completas en `test/coins_ui_test.dart`, `test/rewards_ads_card_test.dart` y nueva suite `test/movimientos_ui_test.dart` pasando al 100% (incluyendo pruebas sin desbordes a 320 px y 390 px). `flutter analyze --no-pub` limpio (0 issues).
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F3e — Perfil, Preferencias, Avisos, Menú y Guía
+- **Tarjeta de cuenta CyberCore (`LiveProfileScreen`):** avatar 46x46 con corte CyberCore e iniciales en mono cian, email enmascarado (`ju•••@correo.com`), insignias `PLAN GRATUITO` / `ACCESO VIP` y `VERIFICADO` / `PENDIENTE`, botón amarillo `VER PLANES VIP` de 48 dp, acción primary de `Actualizar mi acceso` para cuentas autenticadas, filas de preferencias (`Notificaciones`, `Idioma`, `Formato de cuotas`, `Privacidad y medición`), versión comprobable con `AppUpdate` y botón de cerrar sesión en magenta.
+- **Mis deportes (`MySportsSection`):** icono de arrastre, icono de deporte en cian o apagado según visibilidad, etiqueta `Beta`, chip cian «POR DEFECTO» en el primer elemento activo, botones subir/bajar con área táctil accesible >= 44 dp, e interruptor `QfSwitch` con área táctil >= 44 dp.
+- **Menú «Más» modal (`showMoreSheet`):** hoja inferior con corte CyberCore de 18 dp, cabecera con logo QUANTFUT y botón de cierre, fila destacada de Acceso VIP en amarillo, y secciones en cian `// APRENDE` (Guía de pronósticos), `// APP` (Mis deportes, Evaluar, Compartir), `// LEGAL` (Términos, Privacidad) y aviso de responsabilidad.
+- **Preferencias y Bandeja de Avisos (`FirebasePreferencesScreen`, `FirebaseInbox`):** top bar Rajdhani de 56 dp, secciones en cian `// NOTIFICACIONES`, `// IDIOMA`, `// MEDICIÓN Y DIAGNÓSTICO`, `// TUS DERECHOS`, interruptores de analítica, diagnóstico y anuncios de Meta con botón «VER MÁS / VER MENOS», eliminación de cuenta en magenta, y bandeja con chips de filtro por deporte (`TODOS`, `FÚTBOL`, `NBA`, `TENIS`), insignia no leídos y estado vacío CyberCore.
+- **Guía ilustrada (`GuideScreen`):** 6 temas con selector scrollable y diagramas visuales CyberCore adaptativos (probabilidad con cajas responsivas >= 320 px, cuotas decimales con barras comparativas, línea temporal de sellado con gradiente, fórmula multiplicativa de parley, barra de progreso de escalera con escalón en juego, e insignia 18+ con reglas de juego responsable).
+- **Internacionalización y pruebas:** 9 nuevas claves l10n en 6 idiomas (`es`, `en`, `pt`, `fr`, `it`, `de`). Nueva suite de pruebas `test/guide_and_menu_test.dart` y cobertura completa en `test/profile_sports_test.dart`, `test/inbox_sport_test.dart`, `test/consent_defaults_test.dart`, `test/sport_catalog_ui_test.dart` y `test/product_navigation_test.dart` pasando al 100% (73/73 tests). `flutter analyze --no-pub` limpio (0 issues).
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F4g — H2H
+- **Componente unificado `QfH2hView` (`lib/product/qf_h2h_view.dart`):** utilizado para la pestaña H2H en los 3 deportes (fútbol, NBA y tenis).
+- **Tarjetas de resumen superior:** tarjetas con borde cian tenue y fondo surface, avatares de 44 dp con iniciales/foto o 'X' en empates, gran cifra en JetBrains Mono 26 bold cian (`QfColors.cyan`) y etiqueta en Rajdhani 11 bold slate (`QfColors.slate`). Muestra 2 tarjetas en tenis y NBA, y 3 tarjetas en fútbol (local, empates, visitante).
+- **Barra proporcional `QfStackedBar`:** barra apilada de 8 dp de altura que muestra las proporciones relativas de victorias (y empates en fútbol). Se oculta automáticamente cuando no hay enfrentamientos registrados (suma total = 0).
+- **Lista de partidos y cabecera:** cabecera `ÚLTIMOS ENFRENTAMIENTOS` en Rajdhani 13 bold, contenedor con borde `QfColors.border`, filas de 48 dp mínimo con fecha en mono 11 slate, marcador/enfrentamiento en 13 semibold, avatares de los rivales y caja de insignia del ganador/empate en mono 11 cian con borde (`MAL`, `DET`, `EMP`, etc.).
+- **Estado «Primer duelo» (Tenis 0–0):** coincidente exactamente con `PartidoTenis.dc.html` y la referencia visual `capturas/PartidoTenis.png`. Presenta las 2 tarjetas de los jugadores con marcador `0`, cabecera `ÚLTIMOS ENFRENTAMIENTOS`, y una fila especial con fecha `—`, texto `Primer duelo entre ambos` e insignia `0–0` con el avatar del jugador.
+- **Internacionalización y pruebas:** 4 nuevas claves de traducción añadidas en los 6 idiomas (`h2hRecentMatches`, `h2hFirstDuelRow`, `h2hDraws`, `h2hDrawBadge`). Nueva suite unitaria y widget `test/sport_h2h_test.dart` (6 pruebas) cubriendo tenis 0–0, tenis con partidos, NBA H2H, fútbol H2H, responsive a 320, 360 y 390 dp sin desbordes, y traducciones en los 6 idiomas. 653 tests pasando al 100% en la app. `flutter analyze --no-pub` limpio (0 issues).
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5a — Desbloquear
+- **Hoja inferior `QfUnlockSheet` (`lib/product/qf_unlock_sheet.dart`):** sustitución de los dos diálogos anteriores en `live_shell.dart` por la hoja inferior modal CyberCore `QfBottomSheet` con las dos variantes de diseño coincidentes con `capturas/Desbloquear.png` y `capturas/DesbloquearSinMonedas.png`.
+- **Variante «Con saldo»:** icono 44×44 con esquina cortada y candado abierto en verde (`QfColors.green`), título `DESBLOQUEAR PRONÓSTICO` y subtítulo `Se abre al instante`. Tarjeta de preview del partido con dos escudos/avatares solapados (38 dp, margen −8 dp), liga y fecha en mono slate, enfrentamiento, selección difuminada con `ImageFilter.blur` en cian Rajdhani 15 y badge VIP amarillo. 3 viñetas con tick verde (`El pronóstico, su probabilidad y la cuota`, `Análisis, cara a cara y alertas del partido`, `Se queda abierto para este partido`).
+- **Bloque de costo y saldo:** contenedor con borde amarillo 35% y fondo amarillo 5%, valores numéricos en JetBrains Mono 26 bold (`COSTO {cost} MONEDAS` vs `TU SALDO {saldo}`), barra `QfPips` de 12 casillas proporcionales (saldo restante en amarillo, coste a gastar en cian con borde) y leyenda mono `Te quedarán {quedan} monedas`.
+- **Botón CTA con saldo:** botón verde de 54 dp mínimo con gradiente `qfGreenGradient`, corte de esquina 8 dp, icono de candado y texto `DESBLOQUEAR · {cost} MONEDAS` conservando la clave de prueba obligatoria `ValueKey('unlock-confirm')`. Manejo dinámico de errores: si la API responde `monedas_insuficientes`, conmuta en caliente a la variante sin saldo sin cerrar abruptamente la lámina.
+- **Variante «Sin saldo»:** candado en magenta (`QfColors.magenta`), título `TE FALTAN {faltan} MONEDAS`, subtítulo `Gana monedas en unos minutos o hazte VIP`, barra de 12 pips (saldo en amarillo, faltantes en magenta con borde) y leyenda `Necesitas {cost} · tienes {saldo}`. Tres atajos rápidos (+5 video, +10 asistencia, +200 ofertas) que dirigen a Coins, y botón verde CTA `GANAR {faltan} MONEDAS` con `ValueKey('need-coins-go')`.
+- **Salida VIP:** tarjeta amarilla CyberCore con corona, titular `O desbloquea todos con VIP` y subtítulo dinámico con el precio mensual real del plan más corto (`Sin gastar monedas · desde $X al mes`) o fallback `Sin gastar monedas` si no hay precios disponibles. Al tocar abre `LiveVipScreen`.
+- **Internacionalización y pruebas:** 21 nuevas cadenas l10n añadidas a los 6 idiomas (`es`, `en`, `pt`, `fr`, `it`, `de`). Nueva suite de pruebas `test/unlock_sheet_test.dart` (6 pruebas) cubriendo variante con saldo, variante sin saldo, fallback sin precio, transición dinámica por fallo de saldo en API, 6 idiomas y responsive a 390×844, 360×800 y 320×640 dp. 659 tests pasando al 100% en la app (`flutter test --no-pub`). `flutter analyze --no-pub` limpio (0 issues).
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5b — VIP
+- **Pantalla VIP CyberCore (`lib/product/live_vip.dart`) y panel de prueba (`lib/product/vip_performance.dart`):** rediseño completo de la experiencia de suscripción VIP conforme a `capturas/Vip.png` y `pantallas/Vip.dc.html`.
+- **Cabecera y tarjetas de deporte:** Top bar 56 dp con corona amarilla y texto Rajdhani `ACCESO VIP` con botón de cierre 44×44 dp. 3 tarjetas deportivas superiores con acierto registrado en ventana temporal (`FÚTBOL · 30 DÍAS`, `NBA · 7 DÍAS`, `TENIS · 7 DÍAS`), iconos 56×56 dp (circular para tenis), porcentajes mono y recuentos de aciertos preservando las protecciones de test.
+- **Hero y panel de rendimiento:** Hero Rajdhani 28 bold con remate en cian `DESBLOQUEADOS.` y subtítulo dinámico con recuento de pronósticos. Panel `VipPerformancePanel` con dos tarjetas de prueba:
+  - **Ayer:** anillo de 54×54 dp dibujado con `CustomPainter` (verde `#05ffa1` aciertos / magenta `#ff2a6d` fallos), porcentaje de acierto central y desglose de aciertos/fallos.
+  - **7 Días:** gráfico de 7 barras verticales apiladas de aciertos ganados/perdidos con borde cian de 2 dp en el día actual (hoy) y porcentaje global en cabecera.
+- **Selector de planes:** Lista de opciones con esquinas cortadas `CutCornerBorder(cut: 10)`, radio button estilizado, cálculo dinámico de ahorro relativo (`AHORRA X%`) respecto al plan más corto, desglose de precio mensual/diario equivalente, badge `MEJOR PRECIO` en el plan óptimo, semántica de botón/selección y claves de prueba `vip-plan-best` y `vip-plan-$index`. Preselección del plan más largo al abrir.
+- **Beneficios y comparativa plegable:** 4 filas de beneficios CyberCore (picks del día, escalera/parley, props NBA, alertas) y botón conmutador `VER GRATIS VS VIP` / `OCULTAR COMPARACIÓN` que despliega `VipFeatureComparison`: tabla de 6 filas que contrasta Free vs VIP con marcas de verificación, candados y cabecera VIP cian.
+- **Sellos de confianza y FAQ:** 3 sellos en píldoras oscuras (sellado previo al partido, cancelación en cualquier momento y pago gestionado por la tienda según plataforma iOS/Android). Acordeón interactivo de 5 preguntas frecuentes con notas estadísticas. Botón de refresco para cuentas VIP existentes (`Actualizar mi acceso`).
+- **Barra de acción fija inferior:** Botón verde CTA `EMPEZAR VIP {plan} · {precio}` de 54 dp mínimo con gradiente `qfGreenGradient` (`ValueKey('vip-subscribe')`), frase explicativa de renovación automática en la tienda, enlaces de acción a `Restaurar compras` y `Política de privacidad` (`https://pronosticosdeportivos.pro/legal/privacidad`).
+- **Internacionalización (l10n):** 63 nuevas claves traducidas a los 6 idiomas (`es, en, pt, fr, it, de`) en `app_*.arb` validadas por `l10n_test.dart` y `l10n_runtime_test.dart`.
+- **Pruebas y Verificación:**
+  - Nueva suite `test/vip_screen_test.dart` (8 pruebas): selección de planes, cálculo de ahorros, equivalencias mensuales/diarias, botón de comprobación para usuarios VIP, fallos de tienda, 6 idiomas y responsive a 390×844, 360×800 y 320×640 dp.
+  - Verificadas suites existentes `test/vip_sports_test.dart` (5 pruebas) y `test/product_navigation_test.dart`.
+  - Suite completa de la app en verde: **667/667 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5c — Idioma, Bienvenida y Acceso
+- **Selección de Idioma (`lib/l10n/language_selection_screen.dart`):** rediseño completo coincidente con `capturas/Idioma.png` y `pantallas/Idioma.dc.html`. Cabecera animada con órbitas concéntricas (`_OrbitsPainter`), caja de 68×68 dp con esquina cortada y globo terráqueo, titular Rajdhani «SELECCIONA TU IDIOMA» y badge de configuración en cian. 6 filas de idioma de 58 dp mínimo con código en caja mono (`ES`, `EN`, `PT`, `FR`, `IT`, `DE`), nombre nativo, liga correspondiente, etiqueta «DETECTADO» en el idioma del dispositivo y marca de verificación `Icons.check` en la selección activa.
+- **Pantalla de Bienvenida (`lib/onbonding_screen/second_screen.dart` y `lib/product/welcome_art.dart`):** 5 pantallas interactivas con ilustraciones CyberCore nativas en `FittedBox` adaptable que garantizan ausencia de desbordes en cualquier tamaño de pantalla (390×844, 360×800 y 320×568 dp):
+  - **Diapositiva 0:** 3 tarjetas deportivas (fútbol rotada −6°, tenis rotada +6°, y NBA central elevada con sombra cian resplandeciente) más barra inferior de 3 proporciones (58 cian, 24 pizarra, 18 atenuado).
+  - **Diapositiva 1:** mini radar pentagonal de 5 ejes (Ataque, Creación, Remate, Córners, Defensa) con polígono del equipo A en cian sólido, equipo B en pizarra punteado y 3 pestañas CyberCore (`FORMA`, `CARA A CARA`, `ESTADÍSTICAS`).
+  - **Diapositiva 2:** cuadrícula 2×3 con 6 fichas de mercados (`CÓRNERS`, `HÁNDICAP ASIÁTICO`, `DOBLE OPORTUNIDAD`, `PROPS DE JUGADORES NBA`, `JUEGOS TOTALES · TENIS`, `AMBOS MARCAN`), cada una con su anillo cónico de porcentaje y cifra en JetBrains Mono.
+  - **Diapositiva 3:** anillo de acierto del 76% (verde aciertos / magenta fallos) con recuento de 16 aciertos y 5 fallos, más tarjeta de historial con 3 partidos (Mallorca-Córdoba GANADO, Fritz-Musetti GANADO, Heat-Lakers FALLADO) con iconos de verificación/cruz.
+  - **Diapositiva 4:** caja cortada 74×74 dp con escudo e iluminación cian, tarjeta de probabilidad al 62% con barra segmentada de 10 casillas y advertencia amarilla `NO ES UNA CERTEZA`.
+  - **Controles de navegación:** contador superior `1 / 5` .. `5 / 5` en JetBrains Mono y enlace `SALTAR`; barra de puntos `QfStepDots` táctiles de 44×44 dp accesibles; botón verde CTA de 54 dp mínimo con gradiente `qfGreenGradient` (`SIGUIENTE` / `EMPEZAR`).
+- **Pantalla de Acceso (`lib/core/access_screen.dart`):** cabecera 56 dp con marca QUANTFUT y selector compacto de idioma; carrusel superior con 3 tarjetas deportivas decorativas, kicker en cian, título Rajdhani 26 bold, descripción y puntos de navegación táctiles 30×44 dp; tarjeta inferior fija con sombra cian, título `Inicia sesión para continuar`, badges «GRATIS PARA EMPEZAR» (verde) y «SIN TARJETA» (atenuado), botón Google blanco oficial (`OutlinedButton` de 54 dp con `GoogleLogo`), casilla 18+ con enlaces a Términos y Privacidad, error en línea inmediato si no se marca la casilla (sin apagar el botón) y pie de aviso informativo legal.
+- **Internacionalización (l10n):** 23 nuevas claves traducidas a los 6 idiomas (`es, en, pt, fr, it, de`) en `app_*.arb` validadas por `l10n_test.dart` y `l10n_runtime_test.dart`.
+- **Pruebas y Verificación:**
+  - `test/language_selection_test.dart`: 10/10 tests pasados.
+  - `test/access_screen_test.dart`: 15/15 tests pasados en todos los idiomas y resoluciones (390×844 y 320×568 dp).
+  - `test/consent_defaults_test.dart`: 3/3 tests pasados.
+  - `test/app_smoke_test.dart`: 4/4 tests pasados.
+  - `test/l10n_test.dart`: 6/6 tests pasados.
+  - Suite completa de la app en verde: **667/667 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
+
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F5d — Actualización y Privacidad
+- **Diálogos de Actualización (`lib/core/app_update.dart`):** rediseño completo de `AppUpdateDialog` conforme a `capturas/Actualizacion.png` y `capturas/ActualizacionObligatoria.png`.
+  - Caja de icono 56×56 dp con esquina cortada (`CutCornerBorder(cut: 8)`), fondo `QfColors.surfaceElevated`, icono de flecha hacia arriba cian (`QfColors.primary`) y resplandor cian.
+  - Título Rajdhani 20 bold en mayúsculas (`ACTUALIZACIÓN DISPONIBLE` u `OBLIGATORIA`).
+  - Badge verde mono con borde (`VERSIÓN {version}`) con preservación de contrato de búsqueda en tests.
+  - Mensaje descriptivo con estilo CyberCore legible.
+  - Botón primario `FilledButton` de altura >= 44 dp con clave `ValueKey('update-now')`, fondo cian `QfColors.primary` y texto negro bold.
+  - Botón secundario `TextButton` (`updateLater`) cuando la actualización es opcional, oculto cuando es obligatoria.
+  - Retención de tipo raíz `AlertDialog` con borde `CutCornerBorder(cut: 16)` y preservación del bloqueo de retroceso `PopScope(canPop: !widget.update.required)`.
+- **Aviso de Privacidad (`lib/product/live_shell.dart`):** rediseño de `showPrivacyNotice()` conforme a `capturas/PrivacidadActualizada.png`.
+  - Caja de icono 56×56 dp con esquina cortada, icono de escudo cian y resplandor cian.
+  - Título Rajdhani 20 bold en mayúsculas `ACTUALIZAMOS LA PRIVACIDAD`.
+  - 2 viñetas informativas con fondo oscuro y borde cian atenuado:
+    1. Suscripciones mediante Google Play / App Store con icono verde `Icons.check_circle_rounded`.
+    2. Meta y analíticas de marketing con icono amarillo `Icons.check_circle_rounded`.
+  - Párrafo explicativo legal con tipografía muted legible.
+  - Botón primario verde CTA de 48 dp con gradiente `qfGreenGradient` (`ENTENDIDO`).
+  - Botón secundario delineado en cian (`OutlinedButton`) con borde cian para `LEER LA POLÍTICA · AJUSTAR PREFERENCIAS`.
+- **Internacionalización (l10n):** 5 nuevas claves traducidas a los 6 idiomas (`es, en, pt, fr, it, de`) en `app_*.arb`: `privacyBullet1`, `privacyBullet2`, `privacyReadAndAdjust`, `updateVersion`, `updateRequiredTitle`.
+- **Pruebas y Verificación:**
+  - `test/app_update_test.dart`: 6/6 tests pasados (versión, diálogo opcional, diálogo obligatorio sin botón más tarde, fallback a tienda web, estado de error y formato de versión).
+  - `test/l10n_test.dart`: 6/6 tests pasados en todos los idiomas.
+  - Suite completa de la app en verde: **667/667 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F6 — Imágenes (cliente)
+- **Reglas únicas de imagen en toda la app (`lib/product/sport_images.dart`, `lib/product/live_widgets.dart`, `lib/product/home_sport.dart`):**
+  - **Personas (`QfAvatarKind.person` / `AvatarShape.circle`):** contenedor circular `Clip.antiAlias` con fondo `QfColors.surface2`, aro cian perimetral de 2 dp (`QfColors.cyan`), `BoxFit.cover` centrado en el tercio superior del rostro (`Alignment(0, -0.7)`). En caso de error o ausencia de imagen, iniciales en Rajdhani 700 (`qfTitleFont`) en cian y bandera de país si corresponde.
+  - **Escudos y logos (`QfAvatarKind.logo` / `AvatarShape.contain`):** formato cuadrado en `BoxFit.contain` con padding perimetral de 2 dp, sin aro cian ni recorte circular. En caso de ausencia de imagen, iniciales en JetBrains Mono (`qfMono`) atenuadas sobre tarjeta `surface2` con bordes redondeados.
+  - **Eficiencia y dimensionamiento:** decodificación optimizada mediante `cacheWidth` y `cacheHeight` al triple del tamaño visual renderizado (`(size * 3).clamp(16, 1024)`), reduciendo la huella de memoria sin degradación visual en pantallas de alta densidad (390×844 y 360×800).
+- **Catálogo de Imágenes (`ImageCatalog`):**
+  - Extendido para soportar el bloque `tenis_sofascore` (F7b) prefiriéndolo sobre el catálogo histórico de Wikimedia (`tenis`).
+  - Soporte de nombres invertidos comunes en tenis (`"Alcaraz Carlos"`, `"Alcaraz, Carlos"`, `"De Minaur Alex"` frente a `"Carlos Alcaraz"`, `"Alex De Minaur"`).
+  - Manejo estricto de duplicados: las listas en SofaScore (ej. `Coleman Wong` con múltiples IDs de jugador) se resuelven a `null` para desplegar iniciales, garantizando que nunca se muestre la imagen de otra persona.
+  - Jugadores sin registro de imagen (ej. `Ruien Zhang`) caen limpiamente a iniciales.
+- **Pruebas y Verificación:**
+  - Suite `test/sport_images_test.dart` ampliada a 13 pruebas: persona vs logo, fallback con tipografía y borde cian, bandera de país, preferencia SofaScore, nombres invertidos, duplicados, sin imagen, URLs maliciosas/inseguras, y resiliencia offline/404 sin iconos rotos.
+  - Verificadas todas las suites existentes (`home_sport_test.dart`, `sport_detail_test.dart`, etc.).
+  - Suite completa de la app en verde: **673/673 tests pasados**.
+  - `flutter analyze --no-pub`: **0 issues**.
+
+
+## 14-nov-2026 · Rediseño CyberCore Mobile: F8 — Cierre y release
+- **Cierre del rediseño CyberCore de QuantFut:**
+  - **Versión oficial:** código de versión actualizado a `1.2.0+13` en `apps/mobile/pubspec.yaml` para el nuevo release CyberCore.
+  - **Icono adaptativo:** fondo actualizado a `#07080C` en `android/app/src/main/res/values/colors.xml` para alineación visual con el tema oscuro CyberCore de la aplicación.
+  - **Documentación histórica:** `apps/mobile/docs/REDISENO_NBA_TENIS_20261030.md` actualizado con aviso de sustitución por `PLAN_REDISENO_CYBERCORE_20261114.md`.
+  - **Internacionalización completa:** verificación estricta con `test/l10n_test.dart` y `test/l10n_runtime_test.dart` (14 pruebas) en los 6 idiomas soportados (`es, en, pt, fr, it, de`), sin textos hardcodeados en código Dart y con paridad total de claves ICU.
+  - **Verificación final:**
+    - `flutter analyze --no-pub`: **0 issues**.
+    - `flutter test --no-pub`: **673/673 tests pasados al 100%**.
+    - Rediseño completo concluido a través de todas las fases autorizadas: F0, F1, F2, F3a-e, F4a-g, F5a-d, F6 y F8.

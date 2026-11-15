@@ -16,27 +16,35 @@ const _terms = 'https://pronosticosdeportivos.pro/legal/terminos';
 const _privacy = 'https://pronosticosdeportivos.pro/legal/privacidad';
 // l10n-ignore-end
 
-/// Menú «Más»: guía, mis deportes, evaluar y compartir la app, y los documentos legales.
+/// Menú «Más» CyberCore: VIP, guía, mis deportes, evaluar y compartir la app, y los documentos legales.
 /// `onMySports` lleva al Perfil, a la sección «Mis deportes» (solo dentro del shell).
-Future<void> showMoreSheet(BuildContext context, {VoidCallback? onMySports}) =>
+Future<void> showMoreSheet(
+  BuildContext context, {
+  VoidCallback? onMySports,
+  VoidCallback? onVip,
+}) =>
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: QfColors.surface,
-      shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+      shape: const CutCornerBorder(
+        cut: 18,
+        side: BorderSide(color: QfColors.borderStrong),
+      ),
       builder: (sheet) => Theme(
         data: liveTheme(),
-        child: _MoreSheet(host: context, onMySports: onMySports),
+        child: _MoreSheet(host: context, onMySports: onMySports, onVip: onVip),
       ),
     );
 
 class _MoreSheet extends StatelessWidget {
-  const _MoreSheet({required this.host, this.onMySports});
+  const _MoreSheet({required this.host, this.onMySports, this.onVip});
 
   /// Contexto de la pantalla que abrió la hoja: sigue vivo cuando la hoja se cierra.
   final BuildContext host;
   final VoidCallback? onMySports;
+  final VoidCallback? onVip;
 
   Future<void> _open(String url) async {
     if (!await launchUrl(
@@ -80,113 +88,322 @@ class _MoreSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(width: 40, height: 4, color: QfColors.border),
-            const SizedBox(height: 14),
+            Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: QfColors.slate.withValues(alpha: .4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
-                const Text(
-                  '//', // l10n-ignore (marca)
-                  style: TextStyle(
-                    fontFamily: qfDisplay,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 22,
-                    color: QfColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 const Expanded(
-                  child: Text(
-                    'QUANTFUT', // l10n-ignore (marca)
-                    style: TextStyle(
-                      fontFamily: qfDisplay,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 22,
-                      letterSpacing: 1.2,
-                      color: QfColors.text,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'QUANT',
+                        style: TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 21,
+                          letterSpacing: 1.4,
+                          color: QfColors.text,
+                        ),
+                      ),
+                      Text(
+                        'FUT',
+                        style: TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 21,
+                          letterSpacing: 1.4,
+                          color: QfColors.cyan,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
                   key: const ValueKey('more-close'),
                   tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                  icon: const Icon(Icons.close, color: QfColors.text2, size: 22),
                   onPressed: close,
-                  icon: const Icon(Icons.close),
                 ),
               ],
             ),
-            _Section(l10n.moreLearn, [
-              _Item(
-                key: const ValueKey('more-guide'),
-                icon: Icons.menu_book_outlined,
-                title: l10n.moreGuide,
-                subtitle: l10n.moreGuideSub,
-                onTap: () {
-                  close();
-                  Navigator.of(host).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          Theme(data: liveTheme(), child: const GuideScreen()),
-                    ),
-                  );
-                },
-              ),
-              if (onMySports != null)
-                _Item(
-                  key: const ValueKey('more-sports'),
-                  icon: Icons.tune,
-                  title: l10n.profileMySports,
-                  subtitle: l10n.moreMySportsSub,
-                  onTap: () {
-                    close();
-                    onMySports!();
-                  },
+            const SizedBox(height: 10),
+
+            // Acceso VIP
+            InkWell(
+              onTap: () {
+                close();
+                onVip?.call();
+              },
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 56),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: ShapeDecoration(
+                  color: QfColors.yellow.withValues(alpha: .07),
+                  shape: CutCornerBorder(
+                    cut: 10,
+                    side: BorderSide(color: QfColors.yellow.withValues(alpha: .5)),
+                  ),
                 ),
-            ]),
-            _Section(l10n.moreApp, [
-              _Item(
-                key: const ValueKey('more-rate'),
-                icon: Icons.star_outline,
-                title: l10n.moreRate,
-                subtitle: l10n.moreRateSub,
-                onTap: () {
-                  close();
-                  _rate();
-                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.workspace_premium, size: 26, color: QfColors.yellow),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.commonSeeVip,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: QfColors.yellow,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.moreVipSubtitle,
+                            style: const TextStyle(fontSize: 12, color: QfColors.text2),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 18, color: QfColors.yellow),
+                  ],
+                ),
               ),
-              _Item(
-                key: const ValueKey('more-share'),
-                icon: Icons.share_outlined,
-                title: l10n.moreShare,
-                subtitle: l10n.moreShareSub,
-                onTap: () {
-                  close();
-                  SharePlus.instance.share(
-                    ShareParams(text: l10n.moreShareMessage),
-                  );
-                },
+            ),
+            const SizedBox(height: 14),
+
+            // // APRENDE
+            Text(
+              '// ${l10n.moreLearn.toUpperCase()}',
+              style: const TextStyle(
+                fontFamily: qfDisplay,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                letterSpacing: 1.8,
+                color: QfColors.cyan,
               ),
-            ]),
-            _Section(l10n.moreLegal, [
-              _Item(
-                key: const ValueKey('more-terms'),
-                icon: Icons.description_outlined,
-                title: l10n.accessTerms,
-                onTap: () {
-                  close();
-                  _open(_terms);
-                },
+            ),
+            const SizedBox(height: 6),
+            InkWell(
+              key: const ValueKey('more-guide'),
+              onTap: () {
+                close();
+                Navigator.of(host).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        Theme(data: liveTheme(), child: const GuideScreen()),
+                  ),
+                );
+              },
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 62),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: ShapeDecoration(
+                  color: QfColors.cyan.withValues(alpha: .06),
+                  shape: const CutCornerBorder(
+                    cut: 10,
+                    side: BorderSide(color: QfColors.borderStrong),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: QfColors.cyan.withValues(alpha: .1),
+                        border: Border.all(color: QfColors.borderStrong),
+                      ),
+                      child: const Icon(Icons.menu_book_outlined, color: QfColors.cyan, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.moreGuide,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: QfColors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.moreGuideSub,
+                            style: const TextStyle(fontSize: 12, color: QfColors.text2),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 18, color: QfColors.cyan),
+                  ],
+                ),
               ),
-              _Item(
-                key: const ValueKey('more-privacy'),
-                icon: Icons.privacy_tip_outlined,
-                title: l10n.accessPrivacy,
-                onTap: () {
-                  close();
-                  _open(_privacy);
-                },
+            ),
+            const SizedBox(height: 14),
+
+            // // APP
+            Text(
+              '// ${l10n.moreApp.toUpperCase()}',
+              style: const TextStyle(
+                fontFamily: qfDisplay,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                letterSpacing: 1.8,
+                color: QfColors.cyan,
               ),
-            ]),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              decoration: ShapeDecoration(
+                color: QfColors.surface2,
+                shape: const CutCornerBorder(
+                  cut: 10,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: Column(
+                children: [
+                  if (onMySports != null)
+                    _Item(
+                      key: const ValueKey('more-sports'),
+                      icon: Icons.tune,
+                      title: l10n.profileMySports,
+                      subtitle: l10n.moreMySportsSub,
+                      onTap: () {
+                        close();
+                        onMySports!();
+                      },
+                    ),
+                  _Item(
+                    key: const ValueKey('more-rate'),
+                    icon: Icons.star_outline,
+                    title: l10n.moreRate,
+                    subtitle: l10n.moreRateSub,
+                    onTap: () {
+                      close();
+                      _rate();
+                    },
+                  ),
+                  _Item(
+                    key: const ValueKey('more-share'),
+                    icon: Icons.share_outlined,
+                    title: l10n.moreShare,
+                    subtitle: l10n.moreShareSub,
+                    isLast: true,
+                    onTap: () {
+                      close();
+                      SharePlus.instance.share(
+                        ShareParams(text: l10n.moreShareMessage),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // // LEGAL
+            Text(
+              '// ${l10n.moreLegal.toUpperCase()}',
+              style: const TextStyle(
+                fontFamily: qfDisplay,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                letterSpacing: 1.8,
+                color: QfColors.cyan,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    key: const ValueKey('more-terms'),
+                    onTap: () {
+                      close();
+                      _open(_terms);
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: QfColors.border),
+                      ),
+                      child: Text(
+                        l10n.accessTerms,
+                        style: const TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          letterSpacing: 0.8,
+                          color: QfColors.text2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: InkWell(
+                    key: const ValueKey('more-privacy'),
+                    onTap: () {
+                      close();
+                      _open(_privacy);
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: QfColors.border),
+                      ),
+                      child: Text(
+                        l10n.accessPrivacy,
+                        style: const TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          letterSpacing: 0.8,
+                          color: QfColors.text2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Center(
+              child: Text(
+                'QUANTFUT · ${l10n.disclaimerProbability}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: qfMono,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: QfColors.muted,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -194,35 +411,6 @@ class _MoreSheet extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section(this.title, this.items);
-
-  final String title;
-  final List<Widget> items;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(4, 18, 4, 6),
-        child: Text(
-          title.toUpperCase(),
-          style: const TextStyle(
-            color: QfColors.text2,
-            fontFamily: qfDisplay,
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
-            letterSpacing: .9,
-          ),
-        ),
-      ),
-      ...items,
-    ],
-  );
-}
-
-/// Fila del menú: icono azul, título y subtítulo, 56 dp, separador superior.
 class _Item extends StatelessWidget {
   const _Item({
     super.key,
@@ -230,42 +418,59 @@ class _Item extends StatelessWidget {
     required this.title,
     required this.onTap,
     this.subtitle,
+    this.isLast = false,
   });
 
   final IconData icon;
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
     child: Container(
       constraints: const BoxConstraints(minHeight: 56),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: QfColors.border)),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        border: isLast ? null : const Border(bottom: BorderSide(color: QfColors.divider)),
       ),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
-            color: QfColors.surface2,
-            child: Icon(icon, color: QfColors.primary, size: 22),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: QfColors.border),
+            ),
+            child: Icon(icon, color: QfColors.text2, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                liveText(title, bold: true, color: QfColors.text),
-                if (subtitle != null)
-                  liveText(subtitle!, size: 12, color: QfColors.text2),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: QfColors.text,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: const TextStyle(fontSize: 12, color: QfColors.text2),
+                  ),
+                ],
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: QfColors.muted),
+          const Icon(Icons.chevron_right, size: 18, color: QfColors.muted),
         ],
       ),
     ),

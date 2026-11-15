@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart' show mapEquals;
 import '../l10n/app_locale.dart';
 import 'live_api.dart';
 import 'live_market_detail.dart';
+import 'live_widgets.dart';
 import 'market_catalog.dart';
 import 'market_hub.dart';
 import 'published_history.dart';
+import 'qf_controls.dart';
 
 /// Mercados del servidor que componen cada familia del catálogo.
 const familyMarkets = <String, List<String>>{
@@ -59,6 +61,7 @@ class MarketsDashboard extends StatefulWidget {
 
 class _MarketsDashboardState extends State<MarketsDashboard> {
   late Future<(MarketCatalog, List<JsonMap>)> _content;
+  int _tabIndex = 0;
 
   Future<(MarketCatalog, List<JsonMap>)> _load() {
     final history = loadFootballHistory(widget.api);
@@ -81,6 +84,23 @@ class _MarketsDashboardState extends State<MarketsDashboard> {
     }
   }
 
+  Widget _crest(JsonMap p, String side, double size) {
+    final name = '${p[side] ?? ''}';
+    final own = p['${side}_escudo'];
+    JsonMap team = {'nombre': name};
+    if (own is String && own.isNotEmpty) {
+      team = {'nombre': name, 'escudo': own};
+    } else {
+      for (final m in widget.agenda) {
+        if ('${m['match_id']}' != '${p['match_id']}') continue;
+        final t = jsonMap(m[side]);
+        if (t.isNotEmpty) team = {...t, 'nombre': t['nombre'] ?? name};
+        break;
+      }
+    }
+    return TeamCrest(team: team, api: widget.api, size: size);
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder<(MarketCatalog, List<JsonMap>)>(
     future: _content,
@@ -98,86 +118,118 @@ class _MarketsDashboardState extends State<MarketsDashboard> {
         ]);
       }
       final (catalog, rows) = snapshot.data!;
-          final families = [
-            ...catalog.forSport(sportFootball),
-            MarketFamily.publishedOnly(
-              id: 'btts',
-              title: context.l10n.marketBtts,
+      final families = [
+        ...catalog.forSport(sportFootball),
+        MarketFamily.publishedOnly(
+          id: 'btts',
+          title: context.l10n.marketBtts,
+        ),
+      ];
+      final upcoming = jsonRows(widget.alta['proximos']);
+      final locked = jsonRows(widget.alta['vip']);
+      List<JsonMap> familyRows(String id) => [
+        for (final r in rows)
+          if ((familyMarkets[id] ?? const <String>[]).contains(r['market']))
+            r,
+      ];
+      List<Widget> familyAvatars(String id) {
+        final ids = familyMarkets[id] ?? const <String>[];
+        final matches = [...upcoming, ...locked]
+            .where((p) => ids.contains(p['market']))
+            .toList();
+        final crests = <Widget>[];
+        for (final m in matches) {
+          if (crests.length >= 4) break;
+          crests.add(_crest(m, 'local', 26));
+          if (crests.length >= 4) break;
+          crests.add(_crest(m, 'visitante', 26));
+        }
+        return crests;
+      }
+
+      final tiles = [
+        for (final f in families)
+          MarketTileData(
+            id: f.id,
+            title: f.localTitle,
+            detail: context.l10n.sfCounts(
+              [...upcoming, ...locked]
+                  .where(
+                    (p) => (familyMarkets[f.id] ?? const <String>[])
+                        .contains(p['market']),
+                  )
+                  .length,
+              familyRows(f.id).length,
             ),
-          ];
-          final upcoming = jsonRows(widget.alta['proximos']);
-          final locked = jsonRows(widget.alta['vip']);
-          List<JsonMap> familyRows(String id) => [
-            for (final r in rows)
-              if ((familyMarkets[id] ?? const <String>[]).contains(r['market']))
-                r,
-          ];
-          final tiles = [
-            for (final f in families)
-              MarketTileData(
-                id: f.id,
-                title: f.localTitle,
-                detail: context.l10n.sfCounts(
-                  [...upcoming, ...locked]
-                      .where(
-                        (p) => (familyMarkets[f.id] ?? const <String>[])
-                            .contains(p['market']),
-                      )
-                      .length,
-                  familyRows(f.id).length,
-                ),
-                color: marketLook(f.id).$1,
-                icon: marketLook(f.id).$2,
-                percent: historyRecord(familyRows(f.id)).observed,
-                record: historyRecord(familyRows(f.id)),
-              ),
-          ];
-          return RadarClock(
-            builder: (context, clock) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MarketsHero(
-                  clock: clock,
-                  colors: [for (final f in families) marketLook(f.id).$1],
-                  evidence: context.l10n.historyWebSince,
-                  overall: historyRecord(rows),
-                ),
-                const SizedBox(height: 12),
-                MarketTilesGrid(
-                  clock: clock,
-                  tiles: tiles,
-                  onOpen: (t) {
-                    final family = families.firstWhere((f) => f.id == t.id);
-                    final ids = familyMarkets[family.id] ?? const <String>[];
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => MarketDetailScreen(
-                          api: widget.api,
-                          family: family,
-                          minimum: catalog.minimumCases,
-                          color: t.color,
-                          markets: ids,
-                          onVip: widget.onVip,
-                          agenda: widget.agenda,
-                          onOpenMatch: widget.onOpenMatch,
-                          locked: [
-                            for (final p in locked)
-                              if (ids.contains(p['market'])) p,
-                          ],
-                          upcoming: [
-                            for (final p in upcoming)
-                              if (ids.contains(p['market'])) p,
-                          ],
-                          record: t.record,
-                          historyItems: familyRows(family.id),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+            color: marketLook(f.id).$1,
+            icon: marketLook(f.id).$2,
+            percent: historyRecord(familyRows(f.id)).observed,
+            record: historyRecord(familyRows(f.id)),
+            todayAvatars: familyAvatars(f.id),
+          ),
+      ];
+
+      final tabLabels = [
+        context.l10n.marketsTabGame.toUpperCase(),
+        context.l10n.groupGoals.toUpperCase(),
+      ];
+      final visibleTiles = tiles.where((t) {
+        final isGoals = footballGoalsFamilies.contains(t.id);
+        return _tabIndex == 0 ? !isGoals : isGoals;
+      }).toList();
+
+      return RadarClock(
+        builder: (context, clock) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MarketsHero(
+              clock: clock,
+              colors: [for (final f in families) marketLook(f.id).$1],
+              evidence: context.l10n.historyWebSince,
+              overall: historyRecord(rows),
             ),
-          );
+            const SizedBox(height: 12),
+            QfTabs(
+              labels: tabLabels,
+              index: _tabIndex,
+              onChanged: (i) => setState(() => _tabIndex = i),
+            ),
+            const SizedBox(height: 12),
+            MarketTilesGrid(
+              clock: clock,
+              tiles: visibleTiles,
+              onOpen: (t) {
+                final family = families.firstWhere((f) => f.id == t.id);
+                final ids = familyMarkets[family.id] ?? const <String>[];
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => MarketDetailScreen(
+                      api: widget.api,
+                      family: family,
+                      minimum: catalog.minimumCases,
+                      color: t.color,
+                      markets: ids,
+                      onVip: widget.onVip,
+                      agenda: widget.agenda,
+                      onOpenMatch: widget.onOpenMatch,
+                      locked: [
+                        for (final p in locked)
+                          if (ids.contains(p['market'])) p,
+                      ],
+                      upcoming: [
+                        for (final p in upcoming)
+                          if (ids.contains(p['market'])) p,
+                      ],
+                      record: t.record,
+                      historyItems: familyRows(family.id),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
     },
   );
 }

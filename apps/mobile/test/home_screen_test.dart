@@ -226,15 +226,15 @@ void main() {
     (tester) async {
       await pump(tester);
       await tester.scrollUntilVisible(
-        find.text('Mañana A'),
+        find.textContaining('Mañana A'),
         200,
         scrollable: scroller,
       );
       expect(find.textContaining('Hoy ·'), findsOneWidget);
       expect(find.textContaining('Mañana ·'), findsOneWidget);
-      expect(find.text('Hoy Pronto'), findsOneWidget);
-      expect(find.text('Hoy Tarde'), findsOneWidget);
-      double y(String t) => tester.getTopLeft(find.text(t)).dy;
+      expect(find.textContaining('Hoy Pronto'), findsOneWidget);
+      expect(find.textContaining('Hoy Tarde'), findsOneWidget);
+      double y(String t) => tester.getTopLeft(find.textContaining(t)).dy;
       expect(y('Hoy Pronto'), lessThan(y('Hoy Tarde')));
       expect(y('Hoy Tarde'), lessThan(y('Mañana A')));
       expect(find.text('Local 43 %'), findsWidgets);
@@ -257,7 +257,7 @@ void main() {
       tester.widget<DayStrip>(find.byType(DayStrip)).active,
       dateKey(day(3)),
     );
-    expect(find.text('Pasado'), findsOneWidget);
+    expect(find.textContaining('Pasado'), findsOneWidget);
     // El día 2 no tiene partidos.
     await tester.tap(find.byKey(ValueKey('day-${dateKey(day(2))}')));
     await tester.pump();
@@ -267,12 +267,24 @@ void main() {
   testWidgets('al desplazarse, el día activo de la tira sigue a la lista', (
     tester,
   ) async {
-    await pump(tester);
+    await pump(
+      tester,
+      data: homeData(
+        agenda: [
+          for (var i = 0; i < 6; i++)
+            match('a$i', 'Hoy $i', day(0), 10 + i),
+          for (var i = 0; i < 6; i++)
+            match('b$i', 'Mañana $i', day(1), 10 + i),
+          match('c1', 'Pasado', day(3), 15),
+        ],
+      ),
+    );
     await tester.scrollUntilVisible(
-      find.text('Pasado'),
+      find.textContaining('Pasado'),
       200,
       scrollable: scroller,
     );
+    await tester.drag(scroller, const Offset(0, -300));
     await tester.pump(const Duration(milliseconds: 300));
     final strip = tester.widget<DayStrip>(find.byType(DayStrip));
     expect(strip.active == dateKey(day(0)), isFalse);
@@ -290,12 +302,12 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('home-search')), 'pasado');
     await tester.pump();
     await tester.scrollUntilVisible(
-      find.text('Pasado'),
+      find.textContaining('Pasado'),
       200,
       scrollable: scroller,
     );
-    expect(find.text('Hoy Pronto'), findsNothing);
-    expect(find.text('Mañana A'), findsNothing);
+    expect(find.textContaining('Hoy Pronto'), findsNothing);
+    expect(find.textContaining('Mañana A'), findsNothing);
     await tester.enterText(find.byKey(const ValueKey('home-search')), 'zzz');
     await tester.pump();
     expect(
@@ -348,7 +360,7 @@ void main() {
         ),
       );
       await tester.scrollUntilVisible(
-        find.text('Futuro Sin'),
+        find.textContaining('Futuro Sin'),
         200,
         scrollable: scroller,
       );
@@ -372,11 +384,11 @@ void main() {
     String? opened;
     await pump(tester, onMatch: (id) => opened = id);
     await tester.scrollUntilVisible(
-      find.text('Hoy Pronto'),
+      find.textContaining('Hoy Pronto'),
       200,
       scrollable: scroller,
     );
-    await tester.tap(find.text('Hoy Pronto'));
+    await tester.tap(find.textContaining('Hoy Pronto'));
     expect(opened, 'a1');
   });
 
@@ -601,19 +613,16 @@ void main() {
     // Acordeón: el primer tema abierto, el resto plegado hasta tocarlo.
     expect(find.textContaining('3 de cada 4'), findsOneWidget);
     expect(find.textContaining('no es una casa de apuestas'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.text('Es información y entretenimiento'),
-      300,
-    );
-    await tester.tap(find.text('Es información y entretenimiento'));
+    await tester.ensureVisible(find.byKey(const ValueKey('guide-topic-5')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.textContaining('no es una casa de apuestas'),
-      300,
-    );
+    await tester.tap(find.byKey(const ValueKey('guide-topic-5')));
+    await tester.pumpAndSettle();
     expect(find.textContaining('no es una casa de apuestas'), findsOneWidget);
     // La guía no promete ganancias: «garantiza» solo aparece negado («Ningún dato garantiza»).
-    await tester.scrollUntilVisible(find.textContaining('3 de cada 4'), -300);
+    await tester.ensureVisible(find.byKey(const ValueKey('guide-topic-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('guide-topic-0')));
+    await tester.pumpAndSettle();
     final matches = tester
         .widgetList<Text>(find.textContaining('garantiza'))
         .toList();
@@ -622,6 +631,29 @@ void main() {
       expect(t.data, contains('Ningún dato garantiza'));
     }
   });
+
+  testWidgets(
+    'fila de partido con imagen y sin imagen se pintan sin errores',
+    (tester) async {
+      final withCrest = match('m1', 'Real Madrid', day(0), 18);
+      (withCrest['local'] as Map<String, dynamic>)['escudo'] =
+          'https://x.test/escudos/rm.png';
+      (withCrest['visitante'] as Map<String, dynamic>)['escudo'] =
+          'https://x.test/escudos/fcb.png';
+
+      final noCrest = match('m2', 'Sin Imagen FC', day(0), 20);
+
+      await pump(
+        tester,
+        data: homeData(agenda: [withCrest, noCrest], picks: []),
+      );
+      expect(find.byKey(const ValueKey('match-m1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('match-m2')), findsOneWidget);
+      expect(find.textContaining('Real Madrid'), findsOneWidget);
+      expect(find.textContaining('Sin Imagen FC'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final code in languages) {
     testWidgets('Inicio se pinta en $code sin desbordes, también en 320 px', (
@@ -638,7 +670,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
         expect(tester.takeException(), isNull, reason: '$code $size arriba');
         await tester.scrollUntilVisible(
-          find.text('Pasado'),
+          find.textContaining('Pasado'),
           300,
           scrollable: scroller,
         );

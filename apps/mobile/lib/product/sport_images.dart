@@ -3,15 +3,22 @@ import 'package:flutter/material.dart';
 import 'live_api.dart';
 import 'qf_theme.dart';
 
-/// Foto de tenis del servidor (CC BY-SA): autor, licencia y página para el crédito visible.
+/// Foto de tenis del servidor (Wikimedia o SofaScore): autor, licencia y página para el crédito visible.
 class TennisPhoto {
   const TennisPhoto({
     required this.path,
     this.author = '',
     this.license = '',
     this.page = '',
+    this.id,
+    this.country,
+    this.gender,
+    this.ranking,
   });
   final String path, author, license, page;
+  final int? id;
+  final String? country, gender;
+  final int? ranking;
 }
 
 // Mismo criterio que `norm()` del servidor (scripts/imagenes/descargar_imagenes.py): NFD,
@@ -86,16 +93,26 @@ String _norm(String s) {
 
 /// Catálogo de imágenes del servidor (`/web/imagenes/manifiesto.json`).
 class ImageCatalog {
-  const ImageCatalog._(this._nba, this._tennis);
-  static const empty = ImageCatalog._({}, {});
+  const ImageCatalog._(
+    this._nba,
+    this._tennis, [
+    this._sofascore = const {},
+    this._duplicates = const {},
+  ]);
+  static const empty = ImageCatalog._({}, {}, {}, {});
   final Map<String, String> _nba;
   final Map<String, TennisPhoto> _tennis;
+  final Map<String, TennisPhoto> _sofascore;
+  final Set<String> _duplicates;
 
   factory ImageCatalog.fromManifest(JsonMap? m) {
     if (m == null) return empty;
-    final nba = m['nba'], tenis = m['tenis'];
+    final nba = m['nba'], tenis = m['tenis'], tenisSofascore = m['tenis_sofascore'];
     final nbaOut = <String, String>{};
     final tennisOut = <String, TennisPhoto>{};
+    final sofascoreOut = <String, TennisPhoto>{};
+    final duplicates = <String>{};
+
     if (nba is Map) {
       for (final e in nba.entries) {
         final v = e.value;
@@ -117,8 +134,38 @@ class ImageCatalog {
         }
       }
     }
-    if (nbaOut.isEmpty && tennisOut.isEmpty) return empty;
-    return ImageCatalog._(nbaOut, tennisOut);
+    if (tenisSofascore is Map) {
+      for (final e in tenisSofascore.entries) {
+        final k = _norm(e.key.toString());
+        final v = e.value;
+        if (v is List) {
+          // Duplicado explícito en SofaScore (ej. Coleman Wong) -> lista -> iniciales
+          duplicates.add(k);
+        } else if (v is Map && v['f'] is String && _safeFile(v['f'] as String)) {
+          if (sofascoreOut.containsKey(k)) {
+            duplicates.add(k);
+          } else {
+            sofascoreOut[k] = TennisPhoto(
+              path: '/web/imagenes/tenis/${v['f']}',
+              author: '${v['a'] ?? ''}',
+              license: '${v['l'] ?? ''}',
+              page: '${v['p'] ?? ''}',
+              id: v['id'] is int ? v['id'] as int : int.tryParse('${v['id']}'),
+              country: v['pais'] as String?,
+              gender: v['genero'] as String?,
+              ranking: v['ranking'] is int
+                  ? v['ranking'] as int
+                  : int.tryParse('${v['ranking']}'),
+            );
+          }
+        }
+      }
+    }
+    for (final d in duplicates) {
+      sofascoreOut.remove(d);
+    }
+    if (nbaOut.isEmpty && tennisOut.isEmpty && sofascoreOut.isEmpty) return empty;
+    return ImageCatalog._(nbaOut, tennisOut, sofascoreOut, duplicates);
   }
 
   static bool _safeFile(String f) =>
@@ -130,7 +177,51 @@ class ImageCatalog {
     return _nba.containsKey(k) ? '/web/imagenes/nba/$k.png' : null;
   }
 
-  TennisPhoto? tennisPhoto(String fullName) => _tennis[_norm(fullName)];
+  (TennisPhoto?, bool)? _lookup(String k) {
+    if (_duplicates.contains(k)) {
+      return (null, true);
+    }
+    if (_sofascore.containsKey(k)) {
+      return (_sofascore[k], false);
+    }
+    if (_tennis.containsKey(k)) {
+      return (_tennis[k], false);
+    }
+    return null;
+  }
+
+  TennisPhoto? tennisPhoto(String fullName) {
+    final clean = fullName.replaceAll(',', ' ');
+    final k = _norm(clean);
+    if (k.isEmpty) return null;
+
+    final direct = _lookup(k);
+    if (direct != null) {
+      if (direct.$2) return null; // duplicado -> iniciales
+      return direct.$1;
+    }
+
+    // Probar nombres invertidos (ej. "Alcaraz Carlos" vs "Carlos Alcaraz", o "De Minaur Alex")
+    final words = k.split(' ').where((w) => w.isNotEmpty).toList();
+    if (words.length >= 2) {
+      // 1. Última palabra al principio ("Alcaraz Carlos" -> "carlos alcaraz")
+      final v1 = '${words.last} ${words.sublist(0, words.length - 1).join(' ')}';
+      final r1 = _lookup(v1);
+      if (r1 != null) {
+        if (r1.$2) return null;
+        return r1.$1;
+      }
+
+      // 2. Primera palabra al final ("Carlos Alcaraz" -> "alcaraz carlos")
+      final v2 = '${words.sublist(1).join(' ')} ${words.first}';
+      final r2 = _lookup(v2);
+      if (r2 != null) {
+        if (r2.$2) return null;
+        return r2.$1;
+      }
+    }
+    return null;
+  }
 }
 
 /// Retrato NBA por id numérico; un id inválido da `''` (el avatar cae a iniciales).
@@ -197,6 +288,8 @@ Future<ImageCatalog> loadImageCatalog(QuantFutApi api, {bool refresh = false}) {
 
 enum AvatarShape { contain, circle }
 
+enum QfAvatarKind { person, logo }
+
 // (horizontal, colores). Solo banderas que son franjas lisas; el resto, sin bandera
 // (una bandera mal dibujada es peor que ninguna).
 const _stripes = <String, (bool, List<int>)>{
@@ -235,8 +328,8 @@ class _Flag extends StatelessWidget {
 }
 
 String _initials(String name) {
-  final w = name
-      .trim()
+  final clean = name.replaceAll(RegExp(r'[,.\-_/]+'), ' ').trim();
+  final w = clean
       .split(RegExp(r'\s+'))
       .where((s) => s.isNotEmpty)
       .toList();
@@ -255,6 +348,7 @@ class QfAvatar extends StatelessWidget {
     this.url,
     required this.name,
     this.size = 32,
+    this.kind,
     this.shape = AvatarShape.contain,
     this.countryCode,
     this.ring,
@@ -263,6 +357,7 @@ class QfAvatar extends StatelessWidget {
   final String? url;
   final String name;
   final double size;
+  final QfAvatarKind? kind;
   final AvatarShape shape;
   final String? countryCode;
   final Color? ring;
@@ -270,41 +365,68 @@ class QfAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final circle = shape == AvatarShape.circle;
+    final effectiveKind = kind ??
+        (shape == AvatarShape.circle ? QfAvatarKind.person : QfAvatarKind.logo);
+    final isPerson = effectiveKind == QfAvatarKind.person;
+    final borderRing = ring ?? (isPerson ? QfColors.cyan : null);
     final u = url;
     final usable = u != null && Uri.tryParse(u)?.hasScheme == true;
+    final cacheDim = (size * 3).clamp(16, 1024).round();
+
     final fallback = _Fallback(
       initials: _initials(name),
       size: size,
-      circle: circle,
+      isPerson: isPerson,
       countryCode: countryCode,
     );
-    Widget child = usable
+
+    Widget inner = usable
         ? Image.network(
             u,
             width: size,
             height: size,
+            cacheWidth: cacheDim,
+            cacheHeight: cacheDim,
             headers: const {'User-Agent': 'QuantFut/1.0 (Android; Flutter)'},
-            fit: circle ? BoxFit.cover : BoxFit.contain,
-            alignment: circle ? const Alignment(0, -0.7) : Alignment.center,
+            fit: isPerson ? BoxFit.cover : BoxFit.contain,
+            alignment: isPerson ? const Alignment(0, -0.7) : Alignment.center,
             excludeFromSemantics: true,
             errorBuilder: (_, error, stack) => fallback,
           )
         : fallback;
-    if (circle) {
-      child = ClipOval(child: child);
+
+    Widget child;
+    if (isPerson) {
       child = Container(
         width: size,
         height: size,
-        decoration: ring == null
-            ? null
-            : BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: ring!, width: 2),
-              ),
-        child: child,
+        decoration: BoxDecoration(
+          color: QfColors.surface2,
+          shape: BoxShape.circle,
+          border: borderRing != null
+              ? Border.all(color: borderRing, width: 2)
+              : null,
+        ),
+        clipBehavior: Clip.antiAlias,
+        alignment: Alignment.center,
+        child: inner,
+      );
+    } else {
+      child = Container(
+        width: size,
+        height: size,
+        decoration: !usable
+            ? BoxDecoration(
+                color: QfColors.surface2,
+                borderRadius: BorderRadius.circular(size * 0.2),
+              )
+            : null,
+        padding: usable ? const EdgeInsets.all(2) : EdgeInsets.zero,
+        alignment: Alignment.center,
+        child: inner,
       );
     }
+
     final box = SizedBox(width: size, height: size, child: child);
     return semanticLabel == null
         ? ExcludeSemantics(child: box)
@@ -316,41 +438,32 @@ class _Fallback extends StatelessWidget {
   const _Fallback({
     required this.initials,
     required this.size,
-    required this.circle,
+    required this.isPerson,
     required this.countryCode,
   });
   final String initials;
   final double size;
-  final bool circle;
+  final bool isPerson;
   final String? countryCode;
+
   @override
   Widget build(BuildContext context) {
     final cc = countryCode;
-    return Container(
-      width: size,
-      height: size,
+    return Stack(
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: QfColors.surface2,
-        shape: circle ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: circle ? null : BorderRadius.circular(size * 0.2),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Text(
-            initials,
-            style: TextStyle(
-              fontFamily: qfMono,
-              fontSize: size * 0.36,
-              fontWeight: FontWeight.w700,
-              color: QfColors.text2,
-            ),
+      children: [
+        Text(
+          initials,
+          style: TextStyle(
+            fontFamily: isPerson ? qfTitleFont : qfMono,
+            fontSize: isPerson ? size * 0.4 : size * 0.36,
+            fontWeight: FontWeight.w700,
+            color: isPerson ? QfColors.cyan : QfColors.text2,
           ),
-          if (cc != null && cc.isNotEmpty)
-            Positioned(right: 0, bottom: 0, child: _Flag(cc)),
-        ],
-      ),
+        ),
+        if (cc != null && cc.isNotEmpty)
+          Positioned(right: 0, bottom: 0, child: _Flag(cc)),
+      ],
     );
   }
 }

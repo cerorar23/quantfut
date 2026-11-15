@@ -74,6 +74,12 @@ void main() {
           ..addFont(rootBundle.load('fonts/Rajdhani-Medium.ttf'))
           ..addFont(rootBundle.load('fonts/Rajdhani-Bold.ttf')))
         .load();
+    await (FontLoader('Exo 2')
+          ..addFont(rootBundle.load('fonts/Exo2-Regular.ttf'))
+          ..addFont(rootBundle.load('fonts/Exo2-Medium.ttf'))
+          ..addFont(rootBundle.load('fonts/Exo2-SemiBold.ttf'))
+          ..addFont(rootBundle.load('fonts/Exo2-Bold.ttf')))
+        .load();
   });
   tearDown(() => AppLocale.instance.reset());
 

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
+import 'qf_shapes.dart';
 import 'qf_theme.dart';
 
-/// Menú de las tres secciones de Predicciones: píldora con un indicador que se desliza,
-/// icono y texto por segmento, y un contador opcional. Alto cómodo para el pulgar.
+/// Menú de las tres secciones de Predicciones en CyberCore:
+/// Segmentado tipo QfTabs (sin iconos), activo con indicador deslizante cian
+/// y texto en alto contraste onGreen.
 class PredictionsSwitcher extends StatelessWidget {
   const PredictionsSwitcher({
     super.key,
@@ -47,22 +49,24 @@ class PredictionsSwitcher extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final still = MediaQuery.of(context).disableAnimations;
-    final all = <(String, IconData, String)>[
-      ('high', Icons.track_changes, l10n.streamHighProb),
-      ('ladder', Icons.stairs_outlined, l10n.streamLadder),
-      ('parley', Icons.confirmation_number_outlined, l10n.streamParley),
+    final all = <(String, String)>[
+      ('high', l10n.streamHighProb),
+      ('ladder', l10n.streamLadder),
+      ('parley', l10n.streamParley),
     ];
     final items = [for (final item in all) if (streams.contains(item.$1)) item];
     final count = items.length;
     final selected = items.indexWhere((i) => i.$1 == value).clamp(0, count - 1);
     return Container(
       key: const ValueKey('streams-switcher'),
-      height: 68,
+      height: 44,
       padding: const EdgeInsets.all(_gap),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: QfColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: QfColors.border),
+        shape: const CutCornerBorder(
+          cut: 8,
+          side: BorderSide(color: QfColors.border),
+        ),
       ),
       child: LayoutBuilder(
         builder: (context, box) {
@@ -80,7 +84,7 @@ class PredictionsSwitcher extends StatelessWidget {
                   key: const ValueKey('streams-indicator'),
                   decoration: BoxDecoration(
                     color: QfColors.primary,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                 ),
               ),
@@ -91,8 +95,7 @@ class PredictionsSwitcher extends StatelessWidget {
                     Expanded(
                       child: _Segment(
                         key: ValueKey('streams-${item.$1}'),
-                        icon: item.$2,
-                        label: item.$3,
+                        label: item.$2,
                         selected: item.$1 == value,
                         badge: badges[item.$1] ?? 0,
                         onTap: () => onChanged(item.$1),
@@ -112,14 +115,12 @@ class PredictionsSwitcher extends StatelessWidget {
 class _Segment extends StatelessWidget {
   const _Segment({
     super.key,
-    required this.icon,
     required this.label,
     required this.selected,
     required this.badge,
     required this.onTap,
   });
 
-  final IconData icon;
   final String label;
   final bool selected;
   final int badge;
@@ -127,59 +128,55 @@ class _Segment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? QfColors.onPrimary : QfColors.muted;
+    final color = selected ? QfColors.onGreen : QfColors.text2;
     return Semantics(
       button: true,
       selected: selected,
       label: badge > 0 ? '$label, $badge' : label,
       child: ExcludeSemantics(
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(6),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: color),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: color,
-                            fontFamily: selected ? 'Gilroy Bold' : 'Gilroy Medium',
-                            fontSize: 12,
-                          ),
-                        ),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: color,
+                        fontFamily: qfDisplay,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        letterSpacing: 0.8,
                       ),
                     ),
-                    if (badge > 0) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: selected ? QfColors.onPrimary : QfColors.success,
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: Text(
-                          '$badge',
-                          style: TextStyle(
-                            color: selected ? QfColors.primary : QfColors.onPrimary,
-                            fontFamily: 'Gilroy Bold',
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
+                if (badge > 0) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: selected ? QfColors.onGreen : QfColors.green,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '$badge',
+                      style: TextStyle(
+                        color: selected ? QfColors.cyan : QfColors.onGreen,
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

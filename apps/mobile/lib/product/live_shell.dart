@@ -26,6 +26,7 @@ import 'home_sport.dart';
 import 'live_more.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
+import 'qf_unlock_sheet.dart';
 import 'sport_detail.dart';
 import 'sport_images.dart';
 import 'sport_markets.dart';
@@ -255,26 +256,192 @@ class _ProductShellState extends State<ProductShell>
     if (await prefs.getString('consent_notice') == consentVersion || !mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => qfAlert(
-        icon: Icons.privacy_tip_outlined,
-        title: dialogContext.l10n.privacyUpdateTitle,
-        content: Text(dialogContext.l10n.privacyUpdateBody),
-        actions: [
-          TextButton(
-            style: qfText(),
-            onPressed: () => launchUrl(
-              Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
-              mode: LaunchMode.externalApplication,
+      barrierColor: Colors.black.withValues(alpha: 0.75),
+      builder: (dialogContext) {
+        final l10n = dialogContext.l10n;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: QfColors.cyan.withValues(alpha: 0.2),
+                  blurRadius: 60,
+                ),
+              ],
             ),
-            child: Text(dialogContext.l10n.privacyUpdateRead),
+            child: Material(
+              color: QfColors.surface,
+              shape: const CutCornerBorder(
+                cut: 16,
+                side: BorderSide(color: QfColors.borderStrong, width: 1.2),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: ShapeDecoration(
+                            color: QfColors.cyan.withValues(alpha: 0.1),
+                            shape: const CutCornerBorder(
+                              cut: 8,
+                              side: BorderSide(color: QfColors.borderStrong),
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.shield_outlined, color: QfColors.cyan, size: 28),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            l10n.privacyUpdateTitle.toUpperCase(),
+                            style: const TextStyle(
+                              fontFamily: qfDisplay,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              height: 1.05,
+                              letterSpacing: 0.6,
+                              color: QfColors.text,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.02),
+                        border: Border.all(color: QfColors.divider),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.check, size: 16, color: QfColors.green),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  l10n.privacyBullet1,
+                                  style: const TextStyle(fontFamily: 'Exo 2', fontSize: 13, color: QfColors.text),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.check, size: 16, color: QfColors.yellow),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  l10n.privacyBullet2,
+                                  style: const TextStyle(fontFamily: 'Exo 2', fontSize: 13, color: QfColors.text),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.privacyUpdateBody,
+                      style: const TextStyle(
+                        fontFamily: 'Exo 2',
+                        color: QfColors.text2,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 52,
+                      child: Container(
+                        decoration: ShapeDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF05FFA1), Color(0xFF8AFFDF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shadows: [
+                            BoxShadow(
+                              color: const Color(0xFF05FFA1).withValues(alpha: 0.16),
+                              blurRadius: 28,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                          shape: const CutCornerBorder(cut: 10),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: const CutCornerBorder(cut: 10),
+                            onTap: () => Navigator.pop(dialogContext),
+                            child: Center(
+                              child: Text(
+                                l10n.privacyUpdateOk.toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: qfDisplay,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  letterSpacing: 1.2,
+                                  color: Color(0xFF03110F),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 46,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: QfColors.cyan,
+                          side: const BorderSide(color: QfColors.borderStrong),
+                          backgroundColor: QfColors.cyan.withValues(alpha: 0.05),
+                          shape: const CutCornerBorder(cut: 8),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          launchUrl(
+                            Uri.parse('https://pronosticosdeportivos.pro/legal/privacidad'),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                        child: Text(
+                          l10n.privacyReadAndAdjust.toUpperCase(),
+                          style: const TextStyle(
+                            fontFamily: qfDisplay,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            letterSpacing: 1.0,
+                            color: QfColors.cyan,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          FilledButton(
-            style: qfFilled(QfColors.primary),
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(dialogContext.l10n.privacyUpdateOk),
-          ),
-        ],
-      ),
+        );
+      },
     );
     await prefs.setString('consent_notice', consentVersion);
   }
@@ -409,85 +576,102 @@ class _ProductShellState extends State<ProductShell>
       ),
     ),
   ).then((_) => reload());
+  String? _vipMonthlyPrice() {
+    final plans = jsonRows(data?['plans']);
+    if (plans.isEmpty) return null;
+    JsonMap? shortest;
+    for (final p in plans) {
+      final days = p['duration_days'];
+      if (days is num && days > 0) {
+        if (shortest == null || days < (shortest['duration_days'] as num)) {
+          shortest = p;
+        }
+      }
+    }
+    shortest ??= plans.first;
+    final planCode = shortest['plan_code'] as String?;
+    final product = planCode != null ? store.byPlan[planCode] : null;
+    final days = shortest['duration_days'];
+    if (product != null && days is num && days > 0) {
+      return '${product.currencySymbol}${decimalText(product.rawPrice / (days / 30))}';
+    }
+    final cents = shortest['price_cents'];
+    if (cents is num && days is num && days > 0) {
+      final m = cents / 100 / (days / 30);
+      return '\$${decimalText(m)}';
+    }
+    return null;
+  }
+
   Future<void> unlock(JsonMap pick) async {
     if (!api.signedIn) {
       liveNotice(context, context.l10n.shellSignInForCoins);
       setState(() => tab = 4);
       return;
     }
-    final cost = jsonMap(data?['rewards'])['unlock_cost'];
-    final confirmed = await showDialog<bool>(
+    if (coins == null) {
+      await loadCoins();
+    }
+    if (!mounted) return;
+    final userCoins = coins ?? 0;
+    final cost = (jsonMap(data?['rewards'])['unlock_cost'] as num?)?.toInt() ?? 40;
+    final monthlyPrice = _vipMonthlyPrice();
+
+    final result = await QfUnlockSheet.show(
       context: context,
-      builder: (c) => qfAlert(
-        icon: Icons.lock_open,
-        iconColor: QfColors.cta,
-        title: context.l10n.shellUnlockTitle,
-        content: Text(context.l10n.shellUnlockBody(cost ?? '—')),
-        actions: [
-          TextButton(
-            style: qfText(),
-            onPressed: () => Navigator.pop(c, false),
-            child: Text(context.l10n.commonCancel),
-          ),
-          // La única acción ámbar del diálogo.
-          FilledButton(
-            key: const ValueKey('unlock-confirm'),
-            style: qfFilled(QfColors.cta),
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(context.l10n.commonConfirm),
-          ),
-        ],
-      ),
+      pick: pick,
+      cost: cost,
+      saldo: userCoins,
+      initialMissing: userCoins < cost,
+      monthlyPrice: monthlyPrice,
+      onUnlock: () async {
+        await api.request(
+          '/mobile/v1/rewards/unlock',
+          body: {
+            'stream': pick['_stream'] ?? 'alta_probabilidad',
+            'pick_key': pick['pick_key'],
+          },
+        );
+      },
+      onEarnCoins: () {
+        setState(() => tab = 3);
+      },
+      onVip: vip,
+      images: images,
     );
-    if (confirmed != true) return;
-    try {
-      await api.request(
-        '/mobile/v1/rewards/unlock',
-        body: {
-          'stream': pick['_stream'] ?? 'alta_probabilidad',
-          'pick_key': pick['pick_key'],
-        },
-      );
+
+    if (result == true) {
       await reload();
-      if (mounted) detail(pick['match_id']);
-    } on ApiFailure catch (e) {
-      if (!mounted) return;
-      if (e.code == 'monedas_insuficientes') {
-        await needCoins();
-      } else {
-        liveNotice(context, e.message);
+      await loadCoins();
+      if (mounted && pick['match_id'] != null) {
+        detail(pick['match_id']);
       }
-    } catch (e) {
-      if (mounted) liveNotice(context, '$e');
     }
   }
 
   /// Sin saldo suficiente no se deja al usuario en un error: se le lleva a ganar monedas.
-  Future<void> needCoins() async {
-    final l10n = context.l10n;
-    final go = await showDialog<bool>(
+  Future<void> needCoins({JsonMap? pick}) async {
+    final effectivePick = pick ?? _firstLockedPick ?? <String, dynamic>{};
+    if (coins == null) {
+      await loadCoins();
+    }
+    if (!mounted) return;
+    final userCoins = coins ?? 0;
+    final cost = (jsonMap(data?['rewards'])['unlock_cost'] as num?)?.toInt() ?? 40;
+    await QfUnlockSheet.show(
       context: context,
-      builder: (c) => qfAlert(
-        icon: Icons.toll,
-        iconColor: QfColors.cta,
-        title: l10n.shellNeedCoinsTitle,
-        content: Text(l10n.shellNeedCoinsBody),
-        actions: [
-          TextButton(
-            style: qfText(),
-            onPressed: () => Navigator.pop(c, false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            key: const ValueKey('need-coins-go'),
-            style: qfFilled(QfColors.cta),
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(l10n.shellNeedCoinsCta),
-          ),
-        ],
-      ),
+      pick: effectivePick,
+      cost: cost,
+      saldo: userCoins,
+      initialMissing: true,
+      monthlyPrice: _vipMonthlyPrice(),
+      onUnlock: () async => unlock(effectivePick),
+      onEarnCoins: () {
+        setState(() => tab = 3);
+      },
+      onVip: vip,
+      images: images,
     );
-    if (go == true && mounted) setState(() => tab = 3);
   }
 
   Widget picks(JsonMap d) {
@@ -773,47 +957,80 @@ class _ProductShellState extends State<ProductShell>
     );
   }
 
+  JsonMap? get _firstLockedPick {
+    final list = jsonRows(data?['predicciones']);
+    for (final p in list) {
+      if (p['locked'] == true) return p;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) => Theme(
     data: qfTheme(),
     child: Scaffold(
-      appBar: tab == 3
-          ? null
-          : AppBar(
-              backgroundColor: QfColors.bg,
-              leading: IconButton(
-                key: const ValueKey('home-menu'),
-                tooltip: context.l10n.homeMenuTooltip,
-                onPressed: () => showMoreSheet(context, onMySports: openMySports),
-                icon: const Icon(Icons.menu),
+      appBar: AppBar(
+        toolbarHeight: 56,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: QfColors.bg,
+        shape: const Border(
+          bottom: BorderSide(
+            color: QfColors.border,
+            width: 1,
+          ),
+        ),
+        leading: SizedBox(
+          width: 44,
+          height: 44,
+          child: IconButton(
+            key: const ValueKey('home-menu'),
+            tooltip: context.l10n.homeMenuTooltip,
+            onPressed: () => showMoreSheet(context, onMySports: openMySports, onVip: vip),
+            icon: const Icon(Icons.menu, color: QfColors.muted, size: 22),
+          ),
+        ),
+        title: const Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'QUANT',
+                style: TextStyle(color: QfColors.text),
               ),
-              title: Text(
-                '// ${_brand.toUpperCase()}',
-                style: const TextStyle(
-                  color: QfColors.text,
-                  fontFamily: qfDisplay,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 22,
-                  letterSpacing: 1.2,
-                ),
+              TextSpan(
+                text: 'FUT',
+                style: TextStyle(color: QfColors.cyan),
               ),
-              actions: [
-                _CoinsChip(
-                  coins: coins,
-                  onTap: () => setState(() => tab = 3),
-                ),
-                IconButton(
-                  tooltip: context.l10n.tooltipVip,
-                  onPressed: data == null ? null : vip,
-                  icon: const Icon(Icons.workspace_premium, color: liveGold),
-                ),
-                IconButton(
-                  tooltip: context.l10n.commonRefresh,
-                  onPressed: busy ? null : reload,
-                  icon: const Icon(Icons.refresh, color: QfColors.primary),
-                ),
-              ],
+            ],
+          ),
+          style: TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 21,
+            letterSpacing: 2.8,
+          ),
+        ),
+        actions: [
+          if (tab != 3)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: _CoinsChip(
+                coins: coins,
+                onTap: () => setState(() => tab = 3),
+              ),
             ),
+          IconButton(
+            tooltip: context.l10n.tooltipVip,
+            onPressed: data == null ? null : vip,
+            icon: const Icon(Icons.workspace_premium, color: QfColors.yellow, size: 22),
+          ),
+          IconButton(
+            tooltip: context.l10n.commonRefresh,
+            onPressed: busy ? null : reload,
+            icon: const Icon(Icons.refresh, color: QfColors.primary, size: 22),
+          ),
+        ],
+      ),
       body: tab == 3
           ? RewardsScreen(api: api, embedded: true)
           : tab == 4
@@ -832,54 +1049,298 @@ class _ProductShellState extends State<ProductShell>
               ),
             )
           : mainBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: QfColors.surface,
-        selectedItemColor: QfColors.primary,
-        unselectedItemColor: QfColors.muted,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        selectedLabelStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w700),
-        unselectedLabelStyle: const TextStyle(fontFamily: qfDisplay, fontWeight: FontWeight.w600),
-        currentIndex: tab,
-        onTap: (i) {
-          if (i == tab) return;
-          final leavingCoins = tab == 3;
-          setState(() => tab = i);
-          if (leavingCoins) unawaited(loadCoins()); // el saldo pudo cambiar allí
-          unawaited(
-            services?.screen(
-              const ['home', 'predictions', 'markets', 'rewards', 'profile'][i],
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (tab == 1)
+            _PicksBottomBar(
+              cost: (jsonMap(data?['rewards'])['unlock_cost'] as num?)?.toInt() ?? 40,
+              onUnlock: () {
+                final pick = _firstLockedPick;
+                if (pick != null) {
+                  unlock(pick);
+                } else if (!api.signedIn) {
+                  liveNotice(context, context.l10n.shellSignInForCoins);
+                  setState(() => tab = 4);
+                } else {
+                  needCoins();
+                }
+              },
+              onVip: vip,
             ),
-          );
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.grid_view),
-            label: context.l10n.navHome,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.track_changes),
-            label: context.l10n.navPredictions,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.insights),
-            label: context.l10n.navMarkets,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.toll),
-            label: context.l10n.navCoins,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outline),
-            label: context.l10n.navProfile,
+          QfBottomNav(
+            currentIndex: tab,
+            onTap: (i) {
+              if (i == tab) return;
+              final leavingCoins = tab == 3;
+              setState(() => tab = i);
+              if (leavingCoins) unawaited(loadCoins()); // el saldo pudo cambiar allí
+              unawaited(
+                services?.screen(
+                  const ['home', 'predictions', 'markets', 'rewards', 'profile'][i],
+                ),
+              );
+            },
+            items: [
+              QfBottomNavItem(
+                icon: const Icon(Icons.grid_view),
+                label: context.l10n.navHome,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.track_changes),
+                label: context.l10n.navPicks,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.insights),
+                label: context.l10n.navMarkets,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.toll),
+                label: context.l10n.navCoins,
+              ),
+              QfBottomNavItem(
+                icon: const Icon(Icons.person_outline),
+                label: context.l10n.navProfile,
+              ),
+            ],
           ),
         ],
       ),
     ),
   );
+}
+
+class _PicksBottomBar extends StatelessWidget {
+  const _PicksBottomBar({
+    required this.cost,
+    required this.onUnlock,
+    required this.onVip,
+  });
+
+  final int cost;
+  final VoidCallback onUnlock;
+  final VoidCallback onVip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Container(
+      decoration: const BoxDecoration(
+        color: QfColors.surface,
+        border: Border(top: BorderSide(color: QfColors.border)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 48,
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CutCornerBorder(cut: 8),
+                  clipBehavior: Clip.antiAlias,
+                  child: Ink(
+                    decoration: const BoxDecoration(
+                      gradient: qfGreenGradient,
+                    ),
+                    child: InkWell(
+                      onTap: onUnlock,
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.lock_open,
+                              size: 18,
+                              color: Color(0xFF03110F),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.shellUnlockAction(cost),
+                              style: const TextStyle(
+                                fontFamily: qfDisplay,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                letterSpacing: 1.2,
+                                color: Color(0xFF03110F),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 1,
+              child: SizedBox(
+                height: 48,
+                child: Material(
+                  color: const Color(0x14FCEE0A),
+                  shape: const CutCornerBorder(
+                    cut: 8,
+                    side: BorderSide(color: Color(0x80FCEE0A)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: onVip,
+                    child: const Center(
+                      child: Text(
+                        'VIP',
+                        style: TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          letterSpacing: 1.2,
+                          color: QfColors.yellow,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QfBottomNavItem {
+  const QfBottomNavItem({
+    required this.icon,
+    required this.label,
+    this.key,
+  });
+
+  final Widget icon;
+  final String label;
+  final Key? key;
+}
+
+class QfBottomNav extends StatelessWidget {
+  const QfBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+    required this.items,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final List<QfBottomNavItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: QfColors.surface,
+        border: Border(
+          top: BorderSide(
+            color: QfColors.border,
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int i = 0; i < items.length; i++)
+                Expanded(
+                  child: _QfBottomNavItemView(
+                    item: items[i],
+                    selected: i == currentIndex,
+                    onTap: () => onTap(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QfBottomNavItemView extends StatelessWidget {
+  const _QfBottomNavItemView({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final QfBottomNavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = QfColors.cyan;
+    final inactiveColor = QfColors.muted;
+    final color = selected ? activeColor : inactiveColor;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: item.label,
+      child: Material(
+        color: selected
+            ? QfColors.cyan.withValues(alpha: 0.07)
+            : Colors.transparent,
+        child: InkWell(
+          key: item.key,
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: selected ? QfColors.cyan : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconTheme(
+                  data: IconThemeData(
+                    color: color,
+                    size: 22,
+                  ),
+                  child: item.icon,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: qfDisplay,
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    letterSpacing: 0.88,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Saldo de monedas en miniatura en la cabecera; al tocarlo abre la pestaña Coins.
@@ -894,21 +1355,37 @@ class _CoinsChip extends StatelessWidget {
     child: InkWell(
       key: const ValueKey('header-coins'),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      customBorder: const CutCornerBorder(cut: 8),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: ShapeDecoration(
+          color: QfColors.yellow.withValues(alpha: 0.08),
+          shape: CutCornerBorder(
+            cut: 8,
+            side: BorderSide(
+              color: QfColors.yellow.withValues(alpha: 0.40),
+              width: 1,
+            ),
+          ),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.toll, color: liveGold, size: 20),
-            const SizedBox(width: 4),
-            liveText(coins?.toString() ?? '—', bold: true, size: 14, color: liveGold),
+            const Icon(Icons.toll, color: QfColors.yellow, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              coins?.toString() ?? '—',
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: QfColors.yellow,
+              ),
+            ),
           ],
         ),
       ),
     ),
   );
 }
-
-/// Marca de la cabecera; no se traduce.
-const _brand = 'QuantFut';

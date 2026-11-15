@@ -5,6 +5,8 @@ import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
 /// Parley del día: de 1 a 5 parlays sellados antes de los partidos, el más probable de
 /// cada escalón de cuota. Todo lo manda el servidor (`/parley`); mientras esté apagado
@@ -251,10 +253,12 @@ class _NoHistory extends StatelessWidget {
     key: const ValueKey('parley-no-history'),
     width: double.infinity,
     padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: const Color(0xff0f1a28),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white12),
+    decoration: const ShapeDecoration(
+      color: QfColors.surface,
+      shape: CutCornerBorder(
+        cut: 10,
+        side: BorderSide(color: QfColors.border),
+      ),
     ),
     child: liveText(message, size: 12, color: liveMuted),
   );
@@ -285,15 +289,17 @@ class _LockedTicket extends StatelessWidget {
       onTap: onVip,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xff0c131c),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white12),
+        decoration: ShapeDecoration(
+          color: QfColors.surface,
+          shape: CutCornerBorder(
+            cut: 16,
+            side: BorderSide(color: QfColors.yellow.withValues(alpha: .35)),
+          ),
         ),
         child: Row(
           children: [
             _TicketCard._chip(
-              context.l10n.parleyStep(ticket['escalon'] ?? '—'),
+              context.l10n.parleyStep(ticket['escalon'] ?? '—').toUpperCase(),
               liveCyan,
             ),
             const SizedBox(width: 10),
@@ -318,13 +324,14 @@ class _LockedTicket extends StatelessWidget {
 }
 
 /// Un parley como boleto: arriba escalón, estado, cuota total y probabilidad conjunta;
-/// abajo, las patas en una línea de tiempo. Las muescas y la línea punteada separan ambas partes.
+/// abajo, las patas en una línea de tiempo.
 class _TicketCard extends StatelessWidget {
   const _TicketCard({super.key, required this.ticket});
   final JsonMap ticket;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final legs = [
       for (final p in (ticket['patas'] as List? ?? const [])) jsonMap(p),
     ];
@@ -332,159 +339,183 @@ class _TicketCard extends StatelessWidget {
     final prob = ticket['prob_total'];
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: .35)),
+      decoration: ShapeDecoration(
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 16,
+          side: BorderSide(color: color.withValues(alpha: .35)),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _chip(
+                  l10n.parleyStep(ticket['escalon'] ?? '—').toUpperCase(),
+                  liveCyan,
+                ),
+                const SizedBox(width: 6),
+                _chip(label.toUpperCase(), color),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.parleyDaySelections(legs.length).toUpperCase(),
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      letterSpacing: 1.2,
+                      color: QfColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            for (final (i, leg) in legs.indexed)
+              _Leg(leg: leg, first: i == 0, last: i == legs.length - 1),
+            const SizedBox(height: 12),
+            Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          _chip(
-                            context.l10n.parleyStep(ticket['escalon'] ?? '—'),
-                            liveCyan,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: const ShapeDecoration(
+                      color: QfColors.surface2,
+                      shape: CutCornerBorder(
+                        cut: 8,
+                        side: BorderSide(color: QfColors.divider),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.parleyJointProbLabel.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: qfDisplay,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            letterSpacing: 1.4,
+                            color: QfColors.muted,
                           ),
-                          _chip(label.toUpperCase(), color),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      liveText(
-                        prob == null
-                            ? '${context.l10n.parleyV2SameGame}${ticket['estado'] == 'solo_referencia' ? ' · ${context.l10n.parleyV2Reference}' : ''}'
-                            : context.l10n.parleyJointProb(
-                                realPercent(prob),
-                                legs.length,
-                              ),
-                        size: 12,
-                        color: liveMuted,
-                      ),
-                      const SizedBox(height: 6),
-                      _Bar(value: prob is num ? prob.toDouble() : 0),
-                    ],
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            prob == null ? '—' : realPercent(prob),
+                            style: const TextStyle(
+                              fontFamily: qfMono,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 22,
+                              color: QfColors.cyan,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Text(
-                  '@${decimalText(ticket['cuota_total'])}',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontFamily: 'Gilroy ExtraBold',
-                    color: liveGold,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: const ShapeDecoration(
+                      color: QfColors.surface2,
+                      shape: CutCornerBorder(
+                        cut: 8,
+                        side: BorderSide(color: QfColors.divider),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.parleyCombOddsLabel.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: qfDisplay,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            letterSpacing: 1.4,
+                            color: QfColors.muted,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '@${decimalText(ticket['cuota_total'])}',
+                            style: const TextStyle(
+                              fontFamily: qfMono,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 22,
+                              color: QfColors.text,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const _TearLine(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Column(
-              children: [
-                for (final (i, leg) in legs.indexed)
-                  _Leg(leg: leg, first: i == 0, last: i == legs.length - 1),
-              ],
+            if (prob == null && ticket['tipo'] == 'same_game') ...[
+              const SizedBox(height: 6),
+              Text(
+                '${l10n.parleyV2SameGame}${ticket['estado'] == 'solo_referencia' ? ' · ${l10n.parleyV2Reference}' : ''}',
+                style: const TextStyle(fontSize: 11, color: QfColors.muted),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Text(
+              l10n.parleyNotCertaintyHint,
+              style: const TextStyle(
+                fontSize: 11,
+                color: QfColors.muted,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   static Widget _chip(String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: .15),
-      borderRadius: BorderRadius.circular(8),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: ShapeDecoration(
+      color: color.withValues(alpha: .12),
+      shape: CutCornerBorder(
+        cut: 4,
+        side: BorderSide(color: color.withValues(alpha: .4)),
+      ),
     ),
     child: Text(
       text,
-      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color),
+      style: TextStyle(
+        fontFamily: qfDisplay,
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+        color: color,
+      ),
     ),
   );
 }
 
-class _Bar extends StatelessWidget {
-  const _Bar({required this.value});
-  final double value;
-
-  @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(3),
-    child: Stack(
-      children: [
-        Container(height: 6, color: const Color(0xff243447)),
-        FractionallySizedBox(
-          widthFactor: value.clamp(0, 1).toDouble(),
-          child: Container(height: 6, color: liveGold),
-        ),
-      ],
-    ),
-  );
-}
-
-/// Línea punteada con una muesca a cada lado, como el corte de un boleto.
-class _TearLine extends StatelessWidget {
-  const _TearLine();
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 16,
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned.fill(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: LayoutBuilder(
-              builder: (context, box) => Row(
-                children: [
-                  for (var i = 0; i < (box.maxWidth / 9).floor(); i++) ...[
-                    Expanded(
-                      child: Container(
-                        height: 1.5,
-                        color: const Color(0xff2f4258),
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-        for (final left in [true, false])
-          Positioned(
-            left: left ? -9 : null,
-            right: left ? null : -9,
-            top: 0,
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(
-                color: liveBg,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-}
-
-/// Una pata del parley en la línea de tiempo: punto de estado, partido, pronóstico y cuota.
+/// Una pata del parley en la lista: deporte, partido, pronóstico y cuota.
 class _Leg extends StatelessWidget {
   const _Leg({required this.leg, required this.first, required this.last});
   final JsonMap leg;
@@ -495,73 +526,63 @@ class _Leg extends StatelessWidget {
     final (color, _) = _outcome(leg['outcome']);
     final outcome = leg['outcome'];
     final settled = outcome != null;
-    return IntrinsicHeight(
+    final deporte = ((leg['deporte'] as String?) ?? 'fut').toLowerCase();
+    final depTag = deporte == 'nba' ? 'NBA' : (deporte == 'tenis' ? 'TEN' : 'FUT');
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        border: Border(
+          top: first ? BorderSide.none : const BorderSide(color: QfColors.divider),
+        ),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 20,
-            child: Column(
-              children: [
-                Container(
-                  width: 2,
-                  height: 6,
-                  color: first ? Colors.transparent : const Color(0xff243447),
-                ),
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: settled ? color : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: color, width: 2),
-                  ),
-                  child: settled
-                      ? Icon(
-                          outcome == 'win'
-                              ? Icons.check
-                              : outcome == 'loss'
-                              ? Icons.close
-                              : Icons.remove,
-                          size: 8,
-                          color: liveBg,
-                        )
-                      : null,
-                ),
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: last ? Colors.transparent : const Color(0xff243447),
-                  ),
-                ),
-              ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: QfColors.surface2,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              depTag,
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: QfColors.muted,
+              ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: last ? 4 : 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${leg['local'] ?? '—'} · ${leg['visitante'] ?? '—'}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${leg['local'] ?? '—'} · ${leg['visitante'] ?? '—'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: QfColors.text,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  pickText(leg),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: QfColors.cyan,
+                  ),
+                ),
+                if (leg['marcador'] != null || leg['kickoff_utc'] != null) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    pickText(leg),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: color == liveMuted ? Colors.white70 : liveGreen,
-                    ),
-                  ),
                   liveText(
                     leg['marcador'] != null
                         ? context.l10n.parleyResultScore(leg['marcador'])
@@ -570,23 +591,45 @@ class _Leg extends StatelessWidget {
                     color: liveMuted,
                   ),
                 ],
-              ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const SizedBox(height: 4),
-              liveText(
+              Text(
                 '@${decimalText(leg['price'])}',
-                size: 14,
-                bold: true,
-                color: liveGold,
+                style: const TextStyle(
+                  fontFamily: qfMono,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: QfColors.yellow,
+                ),
               ),
-              liveText(realPercent(leg['prob']), size: 10, color: liveMuted),
+              const SizedBox(height: 2),
+              Text(
+                realPercent(leg['prob']),
+                style: const TextStyle(
+                  fontFamily: qfMono,
+                  fontSize: 11,
+                  color: QfColors.muted,
+                ),
+              ),
             ],
           ),
+          if (settled) ...[
+            const SizedBox(width: 6),
+            Icon(
+              outcome == 'win' || outcome == 'ganado'
+                  ? Icons.check_circle
+                  : (outcome == 'loss' || outcome == 'perdido'
+                      ? Icons.cancel_outlined
+                      : Icons.remove_circle_outline),
+              size: 16,
+              color: color,
+            ),
+          ],
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_markets.dart';
 import 'package:gobet/product/market_catalog.dart';
+import 'package:gobet/product/market_hub.dart';
 import 'package:gobet/l10n/app_locale.dart';
 
 class _Api extends QuantFutApi {
@@ -164,10 +165,19 @@ void main() {
   ) async {
     await open(tester);
     final football = catalog.forSport('Fútbol');
-    for (final family in football) {
+    for (final family
+        in football.where((f) => !footballGoalsFamilies.contains(f.id))) {
       expect(find.text(family.title), findsOneWidget, reason: family.id);
     }
     expect(find.text('${football.length + 1}'), findsOneWidget);
+    expect(find.text('Publicado 1/1'), findsOneWidget);
+
+    await tester.tap(find.text('GOLES'));
+    await advance(tester);
+    for (final family
+        in football.where((f) => footballGoalsFamilies.contains(f.id))) {
+      expect(find.text(family.title), findsOneWidget, reason: family.id);
+    }
     expect(find.text('Ambos marcan'), findsOneWidget);
     expect(find.textContaining('2/3 publicados'), findsOneWidget);
     expect(find.text('Publicado 1/2'), findsOneWidget);
@@ -182,6 +192,8 @@ void main() {
     tester,
   ) async {
     final api = await open(tester);
+    await tester.tap(find.text('GOLES'));
+    await advance(tester);
     await tester.tap(find.text('Goles del partido'));
     await advance(tester);
     expect(api.paths, [
@@ -190,7 +202,7 @@ void main() {
     ]);
     expect(api.lastQuery!['desde'], '2026-10-26');
     expect(find.text('Tasa de acierto'), findsOneWidget);
-    expect(find.text('Hoy (2)'), findsOneWidget); // 1 abierto + 1 VIP
+    expect(find.text('HOY (2)'), findsOneWidget); // 1 abierto + 1 VIP
     expect(find.text('Cruz Azul'), findsOneWidget);
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
     expect(find.text('Otro'), findsNothing); // otro mercado (hándicap)
@@ -202,7 +214,7 @@ void main() {
     expect(find.text('1/2'), findsOneWidget); // General, del servidor
     expect(find.text('1/1'), findsOneWidget); // Hoy: el de hoy acertó
 
-    await tester.tap(find.text('Anteriores'));
+    await tester.tap(find.text('ANTERIORES'));
     await advance(tester);
     expect(find.text('Acertó'), findsOneWidget);
     expect(find.text('Falló'), findsOneWidget);
