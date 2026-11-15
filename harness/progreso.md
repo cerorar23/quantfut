@@ -289,6 +289,13 @@
   - Verificación del script de traducciones `apps/mobile/tool/l10n_add.py` y regla de 6 idiomas (es, en, pt, fr, it, de).
 - **Siguiente paso:** Fase F1 (tokens CyberCore, fuentes Exo 2 / JetBrains Mono Bold, widgets base y suite de galería a 360 dp).
 
+## 14-nov-2026 · Respaldo de cuotas: clave gratuita de The Odds API cuando vence la de pago (rama `cuotas/odds-api-clave-gratis`)
+
+- **Decisión del titular:** el plan de 100.000 créditos (NBA) fue de un solo mes y no se renueva; después solo cuenta el plan gratuito (500/mes, sin histórico). `ODDS_API_KEY` del servidor y del `.env` está muerta (401 `DEACTIVATED_KEY`); la de pago vive en `ODDS_API_RESPALDO_KEY`.
+- **Qué hace:** `ODDS_API_GRATIS_KEY` (nueva). `cuotas_respaldo.resolver_clave` usa la de pago mientras `/v4/sports` (gratis) responda 200 con saldo >0; si no, pasa a la gratuita con suelo 0 (el de 500 la habría bloqueado desde el primer día) y tope diario propio `CUOTAS_RESPALDO_DIARIO_GRATIS=16` (≈480/mes). Sin la variable nada cambia. Aplica a NBA/tenis y a fútbol (mismo `key`).
+- **Por qué no más:** medido el 14-nov, las 7 ligas de fútbol que PropLine deja sin cuota (Allsvenskan, Superliga danesa, Super League suiza, Serie B, LaLiga 2, Eliteserien, MLS) sí tienen `h2h`/`totals` en The Odds API (12-21 casas; 2 créditos por liga y pasada con `h2h,totals`); TheRundown no incluye ninguna salvo MLS. Con 16/día solo caben unas 5 ligas por día: queda por decidir si la cascada de fútbol pide solo `h2h,totals` (2) en vez de `h2h,totals,spreads` (3) y si se rota por ligas.
+- **Pendiente de despliegue:** añadir `ODDS_API_GRATIS_KEY` al entorno del worker/API (la clave está en la cuenta del titular; no se guarda en el repo) siguiendo `DEPLOYS.md`.
+
 ## 13-nov-2026 · Worker reconstruido desde `main` (`quantfut-worker:a54955d2`): escalera y parley fallaban con fútbol
 
 - **Causa:** mezcla de versiones en el worker. Sobre la imagen del 6-nov se habían copiado archivos sueltos; `escalera_datos.py` (nuevo) llamaba a `alta_prob_datos._snapshot()` con un cuarto argumento que el `alta_prob_datos.py` del 31-oct no acepta. Fallaban el reto escalera y el parley del día en el job de las 09:00 y, cada 5 minutos, el reemplazo intradía. Solo con partidos de fútbol en la ventana: la pausa de selecciones lo tapó del 9 al 12.

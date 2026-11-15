@@ -87,6 +87,10 @@ class Settings:
     cuotas_respaldo_auto: bool = os.getenv("CUOTAS_RESPALDO_AUTO", "0") == "1"
     cuotas_respaldo_auto_max: int = int(os.getenv("CUOTAS_RESPALDO_AUTO_MAX", "100"))
     cuotas_respaldo_diario: int = int(os.getenv("CUOTAS_RESPALDO_DIARIO", "300"))
+    # Plan gratuito de The Odds API (500 créditos/mes, sin histórico): clave a la que pasa el respaldo cuando la de pago
+    # (ODDS_API_RESPALDO_KEY) deja de responder o se queda sin saldo. 16/día ≈ 480/mes; sin suelo de saldo.
+    odds_api_gratis_key: str | None = os.getenv("ODDS_API_GRATIS_KEY") or None
+    cuotas_respaldo_diario_gratis: int = int(os.getenv("CUOTAS_RESPALDO_DIARIO_GRATIS", "16"))
     # Tercer nivel de la cascada de cuotas (cuotas_sportsapipro.py): plan gratuito de 100 peticiones/día compartidas con
     # el once de fútbol y tenis. 0 = sin tope propio (decisión del titular, 9-nov-2026); el 429 del proveedor lo para.
     sportsapipro_key: str | None = os.getenv("SPORTSAPIPRO_KEY") or None

@@ -139,14 +139,19 @@ def cuotas_de_cache(entradas: Mapping, match_id: str, hasta: datetime, soft_book
 
 # --- huecos --------------------------------------------------------------------------------------------------
 
+def _tiene_basicos(claves: set) -> bool:
+    """Hueco por mercado (15-nov-2026): un partido con 1X2 pero sin ninguna línea de totales también pide respaldo."""
+    return {"h2h:home:None", "h2h:draw:None", "h2h:away:None"} <= claves and any(k.startswith("totals:over:") for k in claves)
+
+
 def huecos(now: datetime, *, propline_ok=None) -> list[dict]:
-    """Partidos que empiezan en las próximas 36 h sin cuota de 1X2 de PropLine para los suscriptores."""
+    """Partidos que empiezan en las próximas 36 h sin 1X2 o sin totales de PropLine para los suscriptores."""
     from qf.api import partido_mercados as pm
     filas = query("""SELECT m.match_id, m.league_id, m.kickoff_utc, l.odds_api_key
                      FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
                      WHERE m.status = 'scheduled' AND m.kickoff_utc > %s AND m.kickoff_utc <= %s
                      ORDER BY m.kickoff_utc""", (now, now + VENTANA))
-    ok = propline_ok or (lambda mid: {"h2h:home:None", "h2h:draw:None", "h2h:away:None"} <= set(pm.cuotas_casas(mid)))
+    ok = propline_ok or (lambda mid: _tiene_basicos(set(pm.cuotas_casas(mid))))
     return [dict(f) for f in filas if not ok(f["match_id"])]
 
 
@@ -268,9 +273,11 @@ def nivel4(cli: "crd.Cliente", pend: list[dict], entries: dict, intentos: dict, 
 
 def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, salida=print, key=None, sp_key=None,
            sp_call=None, sp_raiz=None, cache_path=None, info=None, lista_huecos=None, regiones=None, rd_key=None,
-           rd_call=None, rd_sleep=None, resolutor=None) -> dict:
+           rd_call=None, rd_sleep=None, resolutor=None, suelo_creditos=cr.SUELO) -> dict:
     now = now or datetime.now(timezone.utc)
-    key = key if key is not None else getattr(settings, "odds_api_respaldo_key", None)
+    if key is None:
+        key, gratis = cr.resolver_clave(getattr(settings, "odds_api_respaldo_key", None))
+        suelo_creditos = cr.SUELO_GRATIS if gratis else suelo_creditos
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     cache = ruta_cache(cache_path if cache_path is not None else None)
     rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
@@ -289,7 +296,7 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
         return {"estado": "seco" if not ejecutar else "sin_huecos", "huecos": len(pend)}
     intentos = cr.leer_intentos(cache)
     n2 = n3 = 0
-    cli = cr.Cliente(get or cr._transporte(key or ""), cr.Presupuesto(max_creditos), regiones or settings.odds_api_regions)
+    cli = cr.Cliente(get or cr._transporte(key or ""), cr.Presupuesto(max_creditos, suelo=suelo_creditos), regiones or settings.odds_api_regions)
     if key and max_creditos > 0:
         try:
             cli.saldo()
