@@ -26,6 +26,7 @@ import 'home_sport.dart';
 import 'live_more.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
+import 'qf_unlock_sheet.dart';
 import 'sport_detail.dart';
 import 'sport_images.dart';
 import 'sport_markets.dart';
@@ -409,84 +410,102 @@ class _ProductShellState extends State<ProductShell>
       ),
     ),
   ).then((_) => reload());
+  String? _vipMonthlyPrice() {
+    final plans = jsonRows(data?['plans']);
+    if (plans.isEmpty) return null;
+    JsonMap? shortest;
+    for (final p in plans) {
+      final days = p['duration_days'];
+      if (days is num && days > 0) {
+        if (shortest == null || days < (shortest['duration_days'] as num)) {
+          shortest = p;
+        }
+      }
+    }
+    shortest ??= plans.first;
+    final planCode = shortest['plan_code'] as String?;
+    final product = planCode != null ? store.byPlan[planCode] : null;
+    final days = shortest['duration_days'];
+    if (product != null && days is num && days > 0) {
+      return '${product.currencySymbol}${decimalText(product.rawPrice / (days / 30))}';
+    }
+    final cents = shortest['price_cents'];
+    if (cents is num && days is num && days > 0) {
+      final m = cents / 100 / (days / 30);
+      return '\$${decimalText(m)}';
+    }
+    return null;
+  }
+
   Future<void> unlock(JsonMap pick) async {
     if (!api.signedIn) {
       liveNotice(context, context.l10n.shellSignInForCoins);
       setState(() => tab = 4);
       return;
     }
-    final cost = jsonMap(data?['rewards'])['unlock_cost'];
-    final confirmed = await showDialog<bool>(
+    if (coins == null) {
+      await loadCoins();
+    }
+    if (!mounted) return;
+    final userCoins = coins ?? 0;
+    final cost = (jsonMap(data?['rewards'])['unlock_cost'] as num?)?.toInt() ?? 40;
+    final monthlyPrice = _vipMonthlyPrice();
+
+    final result = await QfUnlockSheet.show(
       context: context,
-      builder: (c) => qfAlert(
-        icon: Icons.lock_open,
-        iconColor: QfColors.primary,
-        title: context.l10n.shellUnlockTitle,
-        content: Text(context.l10n.shellUnlockBody(cost ?? '—')),
-        actions: [
-          TextButton(
-            style: qfText(),
-            onPressed: () => Navigator.pop(c, false),
-            child: Text(context.l10n.commonCancel),
-          ),
-          FilledButton(
-            key: const ValueKey('unlock-confirm'),
-            style: qfFilled(QfColors.primary),
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(context.l10n.commonConfirm),
-          ),
-        ],
-      ),
+      pick: pick,
+      cost: cost,
+      saldo: userCoins,
+      initialMissing: userCoins < cost,
+      monthlyPrice: monthlyPrice,
+      onUnlock: () async {
+        await api.request(
+          '/mobile/v1/rewards/unlock',
+          body: {
+            'stream': pick['_stream'] ?? 'alta_probabilidad',
+            'pick_key': pick['pick_key'],
+          },
+        );
+      },
+      onEarnCoins: () {
+        setState(() => tab = 3);
+      },
+      onVip: vip,
+      images: images,
     );
-    if (confirmed != true) return;
-    try {
-      await api.request(
-        '/mobile/v1/rewards/unlock',
-        body: {
-          'stream': pick['_stream'] ?? 'alta_probabilidad',
-          'pick_key': pick['pick_key'],
-        },
-      );
+
+    if (result == true) {
       await reload();
-      if (mounted) detail(pick['match_id']);
-    } on ApiFailure catch (e) {
-      if (!mounted) return;
-      if (e.code == 'monedas_insuficientes') {
-        await needCoins();
-      } else {
-        liveNotice(context, e.message);
+      await loadCoins();
+      if (mounted && pick['match_id'] != null) {
+        detail(pick['match_id']);
       }
-    } catch (e) {
-      if (mounted) liveNotice(context, '$e');
     }
   }
 
   /// Sin saldo suficiente no se deja al usuario en un error: se le lleva a ganar monedas.
-  Future<void> needCoins() async {
-    final l10n = context.l10n;
-    final go = await showDialog<bool>(
+  Future<void> needCoins({JsonMap? pick}) async {
+    final effectivePick = pick ?? _firstLockedPick ?? <String, dynamic>{};
+    if (coins == null) {
+      await loadCoins();
+    }
+    if (!mounted) return;
+    final userCoins = coins ?? 0;
+    final cost = (jsonMap(data?['rewards'])['unlock_cost'] as num?)?.toInt() ?? 40;
+    await QfUnlockSheet.show(
       context: context,
-      builder: (c) => qfAlert(
-        icon: Icons.toll,
-        iconColor: QfColors.cta,
-        title: l10n.shellNeedCoinsTitle,
-        content: Text(l10n.shellNeedCoinsBody),
-        actions: [
-          TextButton(
-            style: qfText(),
-            onPressed: () => Navigator.pop(c, false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            key: const ValueKey('need-coins-go'),
-            style: qfFilled(QfColors.cta),
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(l10n.shellNeedCoinsCta),
-          ),
-        ],
-      ),
+      pick: effectivePick,
+      cost: cost,
+      saldo: userCoins,
+      initialMissing: true,
+      monthlyPrice: _vipMonthlyPrice(),
+      onUnlock: () async => unlock(effectivePick),
+      onEarnCoins: () {
+        setState(() => tab = 3);
+      },
+      onVip: vip,
+      images: images,
     );
-    if (go == true && mounted) setState(() => tab = 3);
   }
 
   Widget picks(JsonMap d) {

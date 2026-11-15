@@ -3687,6 +3687,84 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String unlockActionCost(int cost) {
+    return 'FREISCHALTEN · $cost MÜNZEN';
+  }
+
+  @override
+  String get unlockBalanceHeader => 'DEIN GUTHABEN';
+
+  @override
+  String get unlockBullet1 =>
+      'Die Prognose, ihre Wahrscheinlichkeit und die Quote';
+
+  @override
+  String get unlockBullet2 => 'Analyse, Head-to-Head und Spiel-Warnungen';
+
+  @override
+  String get unlockBullet3 => 'Bleibt für dieses Spiel freigeschaltet';
+
+  @override
+  String get unlockCoinsUnit => 'MÜNZEN';
+
+  @override
+  String get unlockCostHeader => 'KOSTEN';
+
+  @override
+  String unlockEarnAction(int count) {
+    return '$count MÜNZEN VERDIENEN';
+  }
+
+  @override
+  String get unlockFooterTerms =>
+      'Münzen werden in der App verdient. Es wird kein Geld berechnet.';
+
+  @override
+  String get unlockMissingSub =>
+      'Verdiene Münzen in wenigen Minuten oder werde VIP';
+
+  @override
+  String unlockMissingTitle(int count) {
+    return 'DIR FEHLEN $count MÜNZEN';
+  }
+
+  @override
+  String unlockNeedHave(int need, int have) {
+    return 'Benötigt $need · du hast $have';
+  }
+
+  @override
+  String unlockRemainingCoins(int count) {
+    return 'Dir bleiben $count Münzen übrig';
+  }
+
+  @override
+  String get unlockSheetSub => 'Öffnet sich sofort';
+
+  @override
+  String get unlockSheetTitle => 'PROGNOSE FREISCHALTEN';
+
+  @override
+  String get unlockShortcutAttendance => 'CHECK-IN';
+
+  @override
+  String get unlockShortcutOffers => 'ANGEBOTE';
+
+  @override
+  String get unlockShortcutVideo => 'VIDEO ANSEHEN';
+
+  @override
+  String get unlockVipSubNoPrice => 'Ohne Münzen auszugeben';
+
+  @override
+  String unlockVipSubPrice(String price) {
+    return 'Ohne Münzen auszugeben · ab $price pro Monat';
+  }
+
+  @override
+  String get unlockVipTitle => 'Oder schalte alles frei mit VIP';
+
+  @override
   String get updateLater => 'Später';
 
   @override

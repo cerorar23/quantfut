@@ -3688,6 +3688,82 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String unlockActionCost(int cost) {
+    return 'DESBLOQUEAR · $cost MONEDAS';
+  }
+
+  @override
+  String get unlockBalanceHeader => 'TU SALDO';
+
+  @override
+  String get unlockBullet1 => 'El pronóstico, su probabilidad y la cuota';
+
+  @override
+  String get unlockBullet2 => 'Análisis, cara a cara y alertas del partido';
+
+  @override
+  String get unlockBullet3 => 'Se queda abierto para este partido';
+
+  @override
+  String get unlockCoinsUnit => 'MONEDAS';
+
+  @override
+  String get unlockCostHeader => 'COSTO';
+
+  @override
+  String unlockEarnAction(int count) {
+    return 'GANAR $count MONEDAS';
+  }
+
+  @override
+  String get unlockFooterTerms =>
+      'Las monedas se ganan dentro de la app. No se cobra dinero.';
+
+  @override
+  String get unlockMissingSub => 'Gana monedas en unos minutos o hazte VIP';
+
+  @override
+  String unlockMissingTitle(int count) {
+    return 'TE FALTAN $count MONEDAS';
+  }
+
+  @override
+  String unlockNeedHave(int need, int have) {
+    return 'Necesitas $need · tienes $have';
+  }
+
+  @override
+  String unlockRemainingCoins(int count) {
+    return 'Te quedarán $count monedas';
+  }
+
+  @override
+  String get unlockSheetSub => 'Se abre al instante';
+
+  @override
+  String get unlockSheetTitle => 'DESBLOQUEAR PRONÓSTICO';
+
+  @override
+  String get unlockShortcutAttendance => 'ASISTENCIA';
+
+  @override
+  String get unlockShortcutOffers => 'OFERTAS';
+
+  @override
+  String get unlockShortcutVideo => 'VER UN VIDEO';
+
+  @override
+  String get unlockVipSubNoPrice => 'Sin gastar monedas';
+
+  @override
+  String unlockVipSubPrice(String price) {
+    return 'Sin gastar monedas · desde $price al mes';
+  }
+
+  @override
+  String get unlockVipTitle => 'O desbloquea todos con VIP';
+
+  @override
   String get updateLater => 'Más tarde';
 
   @override

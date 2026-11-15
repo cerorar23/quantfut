@@ -6025,6 +6025,132 @@ abstract class AppLocalizations {
   /// **'VIP'**
   String get tooltipVip;
 
+  /// Botón principal de desbloqueo con saldo
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEAR · {cost} MONEDAS'**
+  String unlockActionCost(int cost);
+
+  /// Etiqueta superior de saldo del usuario
+  ///
+  /// In es, this message translates to:
+  /// **'TU SALDO'**
+  String get unlockBalanceHeader;
+
+  /// Primer beneficio del desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'El pronóstico, su probabilidad y la cuota'**
+  String get unlockBullet1;
+
+  /// Segundo beneficio del desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis, cara a cara y alertas del partido'**
+  String get unlockBullet2;
+
+  /// Tercer beneficio del desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Se queda abierto para este partido'**
+  String get unlockBullet3;
+
+  /// Unidad de monedas en mayúsculas
+  ///
+  /// In es, this message translates to:
+  /// **'MONEDAS'**
+  String get unlockCoinsUnit;
+
+  /// Etiqueta superior de costo
+  ///
+  /// In es, this message translates to:
+  /// **'COSTO'**
+  String get unlockCostHeader;
+
+  /// Botón principal de ganar monedas cuando falta saldo
+  ///
+  /// In es, this message translates to:
+  /// **'GANAR {count} MONEDAS'**
+  String unlockEarnAction(int count);
+
+  /// Aviso legal al pie de la hoja de desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Las monedas se ganan dentro de la app. No se cobra dinero.'**
+  String get unlockFooterTerms;
+
+  /// Subtítulo de la hoja cuando no hay suficientes monedas
+  ///
+  /// In es, this message translates to:
+  /// **'Gana monedas en unos minutos o hazte VIP'**
+  String get unlockMissingSub;
+
+  /// Título de la hoja cuando no hay suficientes monedas
+  ///
+  /// In es, this message translates to:
+  /// **'TE FALTAN {count} MONEDAS'**
+  String unlockMissingTitle(int count);
+
+  /// Comparativa de monedas necesarias y disponibles
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas {need} · tienes {have}'**
+  String unlockNeedHave(int need, int have);
+
+  /// Monedas restantes tras el desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'Te quedarán {count} monedas'**
+  String unlockRemainingCoins(int count);
+
+  /// Subtítulo de la hoja de desbloqueo cuando hay saldo
+  ///
+  /// In es, this message translates to:
+  /// **'Se abre al instante'**
+  String get unlockSheetSub;
+
+  /// Título de la hoja de desbloqueo cuando hay saldo
+  ///
+  /// In es, this message translates to:
+  /// **'DESBLOQUEAR PRONÓSTICO'**
+  String get unlockSheetTitle;
+
+  /// Atajo para ganar monedas con asistencia diaria
+  ///
+  /// In es, this message translates to:
+  /// **'ASISTENCIA'**
+  String get unlockShortcutAttendance;
+
+  /// Atajo para ganar monedas con ofertas
+  ///
+  /// In es, this message translates to:
+  /// **'OFERTAS'**
+  String get unlockShortcutOffers;
+
+  /// Atajo para ganar monedas viendo un video
+  ///
+  /// In es, this message translates to:
+  /// **'VER UN VIDEO'**
+  String get unlockShortcutVideo;
+
+  /// Subtítulo de la tarjeta VIP sin precio
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastar monedas'**
+  String get unlockVipSubNoPrice;
+
+  /// Subtítulo de la tarjeta VIP con precio mensual
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastar monedas · desde {price} al mes'**
+  String unlockVipSubPrice(String price);
+
+  /// Título de la tarjeta VIP en la hoja de desbloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'O desbloquea todos con VIP'**
+  String get unlockVipTitle;
+
   /// No description provided for @updateLater.
   ///
   /// In es, this message translates to:

@@ -1132,20 +1132,35 @@ class QfPips extends StatelessWidget {
     required this.filled,
     this.spend = 0,
     this.missing = 0,
+    this.filledColor = QfColors.yellow,
+    this.height = 10,
+    this.spacing = 3,
   });
 
   final int total;
   final int filled;
   final int spend;
   final int missing;
+  final Color filledColor;
+  final double height;
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         for (var i = 0; i < total; i++) ...[
-          if (i > 0) const SizedBox(width: 4),
-          Expanded(child: _PipCell(index: i, filled: filled, spend: spend, missing: missing)),
+          if (i > 0) SizedBox(width: spacing),
+          Expanded(
+            child: _PipCell(
+              index: i,
+              filled: filled,
+              spend: spend,
+              missing: missing,
+              filledColor: filledColor,
+              height: height,
+            ),
+          ),
         ],
       ],
     );
@@ -1158,47 +1173,67 @@ class _PipCell extends StatelessWidget {
     required this.filled,
     required this.spend,
     required this.missing,
+    required this.filledColor,
+    required this.height,
   });
 
   final int index;
   final int filled;
   final int spend;
   final int missing;
+  final Color filledColor;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     BoxDecoration decoration;
 
-    if (index < (filled - spend)) {
-      // Casillas llenas conservadas
-      decoration = BoxDecoration(
-        color: QfColors.cyan,
-        borderRadius: BorderRadius.circular(2),
-      );
-    } else if (index < filled) {
-      // Casillas que se gastan
-      decoration = BoxDecoration(
-        color: QfColors.cyan.withValues(alpha: .3),
-        borderRadius: BorderRadius.circular(2),
-        border: Border.all(color: QfColors.cyan, width: 1),
-      );
-    } else if (index < (filled + missing)) {
-      // Casillas que faltan
-      decoration = BoxDecoration(
-        color: QfColors.magenta.withValues(alpha: .2),
-        borderRadius: BorderRadius.circular(2),
-        border: Border.all(color: QfColors.magenta, width: 1),
-      );
+    if (missing > 0) {
+      if (index < filled) {
+        // Casillas que se tienen
+        decoration = BoxDecoration(
+          color: filledColor,
+          borderRadius: BorderRadius.circular(1.5),
+        );
+      } else if (index < (filled + missing)) {
+        // Casillas que faltan
+        decoration = BoxDecoration(
+          color: QfColors.magenta.withValues(alpha: .15),
+          borderRadius: BorderRadius.circular(1.5),
+          border: Border.all(color: QfColors.magenta, width: 1),
+        );
+      } else {
+        // Vacías
+        decoration = BoxDecoration(
+          color: Colors.white.withValues(alpha: .06),
+          borderRadius: BorderRadius.circular(1.5),
+        );
+      }
     } else {
-      // Vacías
-      decoration = BoxDecoration(
-        color: QfColors.track,
-        borderRadius: BorderRadius.circular(2),
-      );
+      if (index < (filled - spend)) {
+        // Casillas llenas conservadas
+        decoration = BoxDecoration(
+          color: filledColor,
+          borderRadius: BorderRadius.circular(1.5),
+        );
+      } else if (index < filled) {
+        // Casillas que se gastan
+        decoration = BoxDecoration(
+          color: QfColors.cyan.withValues(alpha: .18),
+          borderRadius: BorderRadius.circular(1.5),
+          border: Border.all(color: QfColors.cyan, width: 1),
+        );
+      } else {
+        // Vacías
+        decoration = BoxDecoration(
+          color: Colors.white.withValues(alpha: .06),
+          borderRadius: BorderRadius.circular(1.5),
+        );
+      }
     }
 
     return Container(
-      height: 12,
+      height: height,
       decoration: decoration,
     );
   }

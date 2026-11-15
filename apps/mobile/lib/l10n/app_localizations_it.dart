@@ -3698,6 +3698,83 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String unlockActionCost(int cost) {
+    return 'SBLOCCA · $cost MONETE';
+  }
+
+  @override
+  String get unlockBalanceHeader => 'IL TUO SALDO';
+
+  @override
+  String get unlockBullet1 => 'Il pronostico, la sua probabilità e la quota';
+
+  @override
+  String get unlockBullet2 => 'Analisi, testa a testa e avvisi della partita';
+
+  @override
+  String get unlockBullet3 => 'Rimane sbloccato per questa partita';
+
+  @override
+  String get unlockCoinsUnit => 'MONETE';
+
+  @override
+  String get unlockCostHeader => 'COSTO';
+
+  @override
+  String unlockEarnAction(int count) {
+    return 'GUADAGNA $count MONETE';
+  }
+
+  @override
+  String get unlockFooterTerms =>
+      'Le monete si guadagnano dentro l\'app. Nessun addebito di denaro.';
+
+  @override
+  String get unlockMissingSub =>
+      'Guadagna monete in pochi minuti o passa a VIP';
+
+  @override
+  String unlockMissingTitle(int count) {
+    return 'TI MANCANO $count MONETE';
+  }
+
+  @override
+  String unlockNeedHave(int need, int have) {
+    return 'Servono $need · hai $have';
+  }
+
+  @override
+  String unlockRemainingCoins(int count) {
+    return 'Ti rimarranno $count monete';
+  }
+
+  @override
+  String get unlockSheetSub => 'Si apre all\'istante';
+
+  @override
+  String get unlockSheetTitle => 'SBLOCCA PRONOSTICO';
+
+  @override
+  String get unlockShortcutAttendance => 'PRESENZA';
+
+  @override
+  String get unlockShortcutOffers => 'OFFERTE';
+
+  @override
+  String get unlockShortcutVideo => 'GUARDA UN VIDEO';
+
+  @override
+  String get unlockVipSubNoPrice => 'Senza spendere monete';
+
+  @override
+  String unlockVipSubPrice(String price) {
+    return 'Senza spendere monete · da $price al mese';
+  }
+
+  @override
+  String get unlockVipTitle => 'O sblocca tutto con VIP';
+
+  @override
   String get updateLater => 'Più tardi';
 
   @override

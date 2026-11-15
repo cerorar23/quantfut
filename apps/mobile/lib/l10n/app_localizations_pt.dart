@@ -3695,6 +3695,82 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String unlockActionCost(int cost) {
+    return 'DESBLOQUEAR · $cost MOEDAS';
+  }
+
+  @override
+  String get unlockBalanceHeader => 'SEU SALDO';
+
+  @override
+  String get unlockBullet1 => 'O palpite, sua probabilidade e a cotação';
+
+  @override
+  String get unlockBullet2 => 'Análise, confronto direto e alertas do jogo';
+
+  @override
+  String get unlockBullet3 => 'Permanece aberto para esta partida';
+
+  @override
+  String get unlockCoinsUnit => 'MOEDAS';
+
+  @override
+  String get unlockCostHeader => 'CUSTO';
+
+  @override
+  String unlockEarnAction(int count) {
+    return 'GANHAR $count MOEDAS';
+  }
+
+  @override
+  String get unlockFooterTerms =>
+      'As moedas são ganhas dentro do app. Nenhum dinheiro é cobrado.';
+
+  @override
+  String get unlockMissingSub => 'Ganhe moedas em poucos minutos ou seja VIP';
+
+  @override
+  String unlockMissingTitle(int count) {
+    return 'FALTAM $count MOEDAS';
+  }
+
+  @override
+  String unlockNeedHave(int need, int have) {
+    return 'Precisa de $need · tem $have';
+  }
+
+  @override
+  String unlockRemainingCoins(int count) {
+    return 'Você ficará com $count moedas';
+  }
+
+  @override
+  String get unlockSheetSub => 'Abre instantaneamente';
+
+  @override
+  String get unlockSheetTitle => 'DESBLOQUEAR PALPITE';
+
+  @override
+  String get unlockShortcutAttendance => 'PRESENÇA';
+
+  @override
+  String get unlockShortcutOffers => 'OFERTAS';
+
+  @override
+  String get unlockShortcutVideo => 'VER UM VÍDEO';
+
+  @override
+  String get unlockVipSubNoPrice => 'Sem gastar moedas';
+
+  @override
+  String unlockVipSubPrice(String price) {
+    return 'Sem gastar moedas · a partir de $price por mês';
+  }
+
+  @override
+  String get unlockVipTitle => 'Ou desbloqueie tudo com VIP';
+
+  @override
   String get updateLater => 'Mais tarde';
 
   @override

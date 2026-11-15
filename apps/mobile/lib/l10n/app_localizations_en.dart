@@ -3668,6 +3668,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String unlockActionCost(int cost) {
+    return 'UNLOCK · $cost COINS';
+  }
+
+  @override
+  String get unlockBalanceHeader => 'YOUR BALANCE';
+
+  @override
+  String get unlockBullet1 => 'The prediction, its probability and the odds';
+
+  @override
+  String get unlockBullet2 => 'Analysis, head-to-head and match alerts';
+
+  @override
+  String get unlockBullet3 => 'Stays unlocked for this match';
+
+  @override
+  String get unlockCoinsUnit => 'COINS';
+
+  @override
+  String get unlockCostHeader => 'COST';
+
+  @override
+  String unlockEarnAction(int count) {
+    return 'EARN $count COINS';
+  }
+
+  @override
+  String get unlockFooterTerms =>
+      'Coins are earned inside the app. No money is charged.';
+
+  @override
+  String get unlockMissingSub => 'Earn coins in a few minutes or go VIP';
+
+  @override
+  String unlockMissingTitle(int count) {
+    return 'YOU NEED $count MORE COINS';
+  }
+
+  @override
+  String unlockNeedHave(int need, int have) {
+    return 'Need $need · have $have';
+  }
+
+  @override
+  String unlockRemainingCoins(int count) {
+    return 'You will have $count coins left';
+  }
+
+  @override
+  String get unlockSheetSub => 'Opens instantly';
+
+  @override
+  String get unlockSheetTitle => 'UNLOCK PREDICTION';
+
+  @override
+  String get unlockShortcutAttendance => 'CHECK-IN';
+
+  @override
+  String get unlockShortcutOffers => 'OFFERS';
+
+  @override
+  String get unlockShortcutVideo => 'WATCH A VIDEO';
+
+  @override
+  String get unlockVipSubNoPrice => 'Without spending coins';
+
+  @override
+  String unlockVipSubPrice(String price) {
+    return 'Without spending coins · from $price / month';
+  }
+
+  @override
+  String get unlockVipTitle => 'Or unlock all with VIP';
+
+  @override
   String get updateLater => 'Later';
 
   @override

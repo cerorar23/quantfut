@@ -3473,6 +3473,123 @@
   "titleTotalGoals": "Goles totales",
   "titleWinner": "Ganador del partido",
   "tooltipVip": "VIP",
+  "unlockActionCost": "DESBLOQUEAR · {cost} MONEDAS",
+  "@unlockActionCost": {
+    "description": "Botón principal de desbloqueo con saldo",
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockBalanceHeader": "TU SALDO",
+  "@unlockBalanceHeader": {
+    "description": "Etiqueta superior de saldo del usuario"
+  },
+  "unlockBullet1": "El pronóstico, su probabilidad y la cuota",
+  "@unlockBullet1": {
+    "description": "Primer beneficio del desbloqueo"
+  },
+  "unlockBullet2": "Análisis, cara a cara y alertas del partido",
+  "@unlockBullet2": {
+    "description": "Segundo beneficio del desbloqueo"
+  },
+  "unlockBullet3": "Se queda abierto para este partido",
+  "@unlockBullet3": {
+    "description": "Tercer beneficio del desbloqueo"
+  },
+  "unlockCoinsUnit": "MONEDAS",
+  "@unlockCoinsUnit": {
+    "description": "Unidad de monedas en mayúsculas"
+  },
+  "unlockCostHeader": "COSTO",
+  "@unlockCostHeader": {
+    "description": "Etiqueta superior de costo"
+  },
+  "unlockEarnAction": "GANAR {count} MONEDAS",
+  "@unlockEarnAction": {
+    "description": "Botón principal de ganar monedas cuando falta saldo",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockFooterTerms": "Las monedas se ganan dentro de la app. No se cobra dinero.",
+  "@unlockFooterTerms": {
+    "description": "Aviso legal al pie de la hoja de desbloqueo"
+  },
+  "unlockMissingSub": "Gana monedas en unos minutos o hazte VIP",
+  "@unlockMissingSub": {
+    "description": "Subtítulo de la hoja cuando no hay suficientes monedas"
+  },
+  "unlockMissingTitle": "TE FALTAN {count} MONEDAS",
+  "@unlockMissingTitle": {
+    "description": "Título de la hoja cuando no hay suficientes monedas",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockNeedHave": "Necesitas {need} · tienes {have}",
+  "@unlockNeedHave": {
+    "description": "Comparativa de monedas necesarias y disponibles",
+    "placeholders": {
+      "need": {
+        "type": "int"
+      },
+      "have": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockRemainingCoins": "Te quedarán {count} monedas",
+  "@unlockRemainingCoins": {
+    "description": "Monedas restantes tras el desbloqueo",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockSheetSub": "Se abre al instante",
+  "@unlockSheetSub": {
+    "description": "Subtítulo de la hoja de desbloqueo cuando hay saldo"
+  },
+  "unlockSheetTitle": "DESBLOQUEAR PRONÓSTICO",
+  "@unlockSheetTitle": {
+    "description": "Título de la hoja de desbloqueo cuando hay saldo"
+  },
+  "unlockShortcutAttendance": "ASISTENCIA",
+  "@unlockShortcutAttendance": {
+    "description": "Atajo para ganar monedas con asistencia diaria"
+  },
+  "unlockShortcutOffers": "OFERTAS",
+  "@unlockShortcutOffers": {
+    "description": "Atajo para ganar monedas con ofertas"
+  },
+  "unlockShortcutVideo": "VER UN VIDEO",
+  "@unlockShortcutVideo": {
+    "description": "Atajo para ganar monedas viendo un video"
+  },
+  "unlockVipSubNoPrice": "Sin gastar monedas",
+  "@unlockVipSubNoPrice": {
+    "description": "Subtítulo de la tarjeta VIP sin precio"
+  },
+  "unlockVipSubPrice": "Sin gastar monedas · desde {price} al mes",
+  "@unlockVipSubPrice": {
+    "description": "Subtítulo de la tarjeta VIP con precio mensual",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockVipTitle": "O desbloquea todos con VIP",
+  "@unlockVipTitle": {
+    "description": "Título de la tarjeta VIP en la hoja de desbloqueo"
+  },
   "updateLater": "Más tarde",
   "updateNow": "Actualizar ahora",
   "updateOptional": "Hay una nueva versión de QuantFut disponible.",
