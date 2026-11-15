@@ -672,9 +672,9 @@ class _TeamPitchBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final form = '${lineup['formacion'] ?? '4-3-3'}';
-    final rival = '${lineup['rival'] ?? ''}';
-    final rawDate = '${lineup['fecha'] ?? ''}';
+    final form = '${lineup['formacion'] ?? lineup['formation'] ?? '4-3-3'}';
+    final rival = '${lineup['rival'] ?? ''}'.trim();
+    final rawDate = '${lineup['fecha'] ?? lineup['capturada'] ?? ''}'.trim();
     final parsedDate = DateTime.tryParse(rawDate);
     final dateStr = parsedDate != null
         ? DateFormat('d MMM', locale).format(parsedDate.toLocal())
@@ -683,7 +683,7 @@ class _TeamPitchBlock extends StatelessWidget {
         ? l10n.alertsLastElevenVs(rival, dateStr)
         : dateStr;
 
-    final titulares = jsonRows(lineup['titulares']);
+    final titulares = jsonRows(lineup['titulares'] ?? lineup['starters']);
 
     return Padding(
       padding: const EdgeInsets.all(14),
@@ -746,7 +746,10 @@ class _TeamPitchBlock extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${team['nombre']} · $cap',
+                  [
+                    '${team['nombre'] ?? ''}'.trim(),
+                    if (cap.trim().isNotEmpty) cap.trim(),
+                  ].where((s) => s.isNotEmpty).join(' · '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
