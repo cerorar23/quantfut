@@ -36,6 +36,7 @@ from pathlib import Path
 from qf.api import cuotas_nba as cn
 from qf.api import cuotas_tenis as ct
 from qf.config import settings
+from qf.ingest import cuotas_sharpapi as csh
 from qf.ingest import cuotas_sportsapipro as csp
 from qf.ingest import cuotas_therundown as crd
 from qf.ingest import propline_shared as pl
@@ -182,6 +183,8 @@ def escribir_cache(path, entries: Mapping, now: datetime | None = None) -> None:
             # Licencia de TheRundown Free: no se guardan sus datos más de 24 h.
             if e.get("fuente") == SRC_RD and pl.parse_time(e["timestamp"]) < now - crd.TTL:
                 continue
+            if e.get("fuente") == csh.FUENTE and pl.parse_time(e["timestamp"]) < now - csh.EDAD_MAX:
+                continue
             vivas[k] = e
         except Exception:
             continue
@@ -309,10 +312,10 @@ class Hueco:
 
     @property
     def mercados(self):
-        return sorted({i["odds_market"] for i in self.items})
+        return sorted({i["odds_market"] for i in self.items if i["odds_market"]})
 
 
-def huecos_nba(archive, cohortes, cache: Mapping, *, now=None) -> list[Hueco]:
+def huecos_nba(archive, cohortes, cache: Mapping, *, now=None, sharpapi=False) -> list[Hueco]:
     """Filas visibles de NBA cuyo overlay de PropLine dejó algún lado sin cuota y The Odds API soporta."""
     ganadoras = {}
     for c in sorted((c for c in cohortes if isinstance(c, Mapping) and isinstance(c.get("games"), list)), key=cn._orden):
@@ -329,15 +332,24 @@ def huecos_nba(archive, cohortes, cache: Mapping, *, now=None) -> list[Hueco]:
         for k in keys:
             f, lados = filas.get(k), quotes.get(eid, {}).get(k) or {}
             mercado = (f or {}).get("market")
-            if f is None or mercado not in NBA_MERCADOS or f"{eid}|{k}" in cache:
+            if f is None or f"{eid}|{k}" in cache:
+                continue
+            if mercado not in NBA_MERCADOS and not (sharpapi and mercado in csh.MERCADOS["nba"]):
                 continue
             if all(v is not None for v in lados.values()) and lados:
                 continue
             nombre = f.get("player_name") if mercado.startswith("player_") else None
             if mercado.startswith("player_") and not (isinstance(nombre, str) and nombre):
                 continue
-            items.append(dict(key=k, market=mercado, odds_market=NBA_MERCADOS[mercado],
-                              line=cn._linea(f.get("line")), player_name=nombre,
+            equipo = None
+            if mercado == "team_points":
+                tid = cn._entero(f.get("team_id"))
+                equipo = next((lado for lado in ("home", "away")
+                               if tid is not None and tid == cn._entero(game.get(f"{lado}_nba_team_id"))), None)
+                if equipo is None:
+                    continue
+            items.append(dict(key=k, market=mercado, odds_market=NBA_MERCADOS.get(mercado),
+                              line=cn._linea(f.get("line")), player_name=nombre, team_side=equipo,
                               sealed=pl.parse_time(f["sealed_at_utc"])))
         if items:
             out.append(Hueco("nba", eid, NBA_SPORT, game["home_team"], game["away_team"],
@@ -345,7 +357,7 @@ def huecos_nba(archive, cohortes, cache: Mapping, *, now=None) -> list[Hueco]:
     return out
 
 
-def huecos_tenis(archive, feed, sellos, cache: Mapping, *, now=None) -> list[Hueco]:
+def huecos_tenis(archive, feed, sellos, cache: Mapping, *, now=None, sharpapi=False) -> list[Hueco]:
     overlay = ct.tennis_overlay(archive, feed, sealed=sellos, now=now)
     out = []
     for eid, mercados in overlay.get("events", {}).items():
@@ -360,12 +372,16 @@ def huecos_tenis(archive, feed, sellos, cache: Mapping, *, now=None) -> list[Hue
         items = []
         for mid, q in mercados.items():
             c = contratos.get(mid)
-            if q is not None or c is None or c["kind"] not in TENIS_MERCADOS or f"{eid}|{mid}" in cache:
+            if q is not None or c is None or f"{eid}|{mid}" in cache:
                 continue
-            if c["kind"] in ("games_total", "games_handicap") and ct._linea(c.get("line")) is None:
+            if c["kind"] not in TENIS_MERCADOS and not (sharpapi and c["kind"] in csh.MERCADOS["tenis"]):
                 continue
-            items.append(dict(key=mid, market=c["kind"], odds_market=TENIS_MERCADOS[c["kind"]],
-                              line=ct._linea(c.get("line")), selection=c["selection"]))
+            linea = ct._linea(c.get("line"))
+            if c["kind"] in ct._LINEA and linea is None:
+                continue
+            items.append(dict(key=mid, market=c["kind"], odds_market=TENIS_MERCADOS.get(c["kind"]),
+                              line=linea if c["kind"] in ct._LINEA else None,
+                              selection=c["selection"], set_number=c.get("set_number")))
         if items:
             out.append(Hueco("tenis", eid, None, a, b, inicio, sellado, items))
     return out
@@ -474,8 +490,14 @@ def _ahora() -> datetime:
     return datetime.now(timezone.utc)      # los tests lo sustituyen
 
 
-def _quote(entrada, side, line, sealed):
+def _quote(entrada, side, line, sealed, *, incluir_sharpapi=False):
     recibido = pl.parse_time(entrada["timestamp"])
+    if entrada.get("fuente") == csh.FUENTE:
+        if not incluir_sharpapi or not timedelta(0) <= _ahora() - recibido <= csh.EDAD_MAX:
+            return None
+        q = best_quote(entrada["rows"], line=line, side=side, sealed_at=recibido, received_at=recibido)
+        return None if q is None else dict(price=q.price, book=q.book, as_of=q.as_of, books=q.books, side=side,
+                                           src=csh.FUENTE, post_sello=recibido > sealed)
     if entrada.get("post_sello"):
         # SportsAPIPro y TheRundown: solo existe la cuota de ahora, recibida DESPUÉS del sello. Se muestra con su hora
         # real y la marca `post_sello`, que la regla de publicación ignora; el filtro punto-en-el-tiempo se evalúa
@@ -490,36 +512,52 @@ def _quote(entrada, side, line, sealed):
     return None if q is None else dict(price=q.price, book=q.book, as_of=q.as_of, books=q.books, side=side, src=SRC)
 
 
-def aplica_nba(overlay: dict, cache: Mapping) -> dict:
+def aplica_nba(overlay: dict, cache: Mapping, *, incluir_sharpapi=False) -> dict:
     """Rellena SOLO los lados sin cuota de PropLine con la caché del respaldo. Nunca lanza."""
     for eid, ev in (overlay.get("events") or {}).items():
         for k, lados in (ev.get("quotes") or {}).items():
-            entrada = cache.get(f"{eid}|{k}")
-            if not entrada or not isinstance(lados, dict):
+            if not isinstance(lados, dict):
                 continue
             try:
                 texto = k.split("|")[2]
                 line = float(texto) if texto else None
-                sealed = pl.parse_time(entrada["sealed_at"])
-                for side, actual in lados.items():
-                    if actual is None:
-                        lados[side] = _quote(entrada, side, line, sealed)
-            except Exception:
+            except (ValueError, IndexError):
                 continue
+            clave = f"{eid}|{k}"
+            sufijos = ("", csh.SUFIJO) if incluir_sharpapi else ("",)
+            for sufijo in sufijos:
+                entrada = cache.get(clave + sufijo)
+                if not entrada:
+                    continue
+                try:
+                    sealed = pl.parse_time(entrada["sealed_at"])
+                    for side, actual in lados.items():
+                        if actual is None:
+                            lados[side] = _quote(entrada, side, line, sealed, incluir_sharpapi=incluir_sharpapi)
+                except Exception:
+                    continue
     return overlay
 
 
-def aplica_tenis(overlay: dict, cache: Mapping) -> dict:
+def aplica_tenis(overlay: dict, cache: Mapping, *, incluir_sharpapi=False) -> dict:
     for eid, mercados in (overlay.get("events") or {}).items():
         for mid, actual in list(mercados.items()):
-            entrada = cache.get(f"{eid}|{mid}")
-            if actual is not None or not entrada:
+            if actual is not None:
                 continue
-            try:
-                mercados[mid] = _quote(entrada, entrada["selection"], entrada.get("line"),
-                                       pl.parse_time(entrada["sealed_at"]))
-            except Exception:
-                continue
+            clave = f"{eid}|{mid}"
+            sufijos = ("", csh.SUFIJO) if incluir_sharpapi else ("",)
+            for sufijo in sufijos:
+                entrada = cache.get(clave + sufijo)
+                if not entrada:
+                    continue
+                try:
+                    cuota = _quote(entrada, entrada["selection"], entrada.get("line"),
+                                   pl.parse_time(entrada["sealed_at"]), incluir_sharpapi=incluir_sharpapi)
+                except Exception:
+                    continue
+                if cuota is not None:
+                    mercados[mid] = cuota
+                    break
     return overlay
 
 
@@ -529,7 +567,7 @@ def _sin_resolver(huecos, entries: Mapping) -> list[Hueco]:
     """Copias de los huecos con solo los ítems que ningún nivel anterior resolvió."""
     out = []
     for h in huecos:
-        items = [i for i in h.items if f"{h.eid}|{i['key']}" not in entries]
+        items = [i for i in h.items if i.get("odds_market") and f"{h.eid}|{i['key']}" not in entries]
         if items:
             out.append(Hueco(h.deporte, h.eid, h.sport_key, h.local, h.visitante, h.comienzo, h.sellado, items))
     return out
@@ -634,16 +672,41 @@ def _cliente_sportsapipro(sp_key, sp_call, sp_raiz, now):
                        tope=int(getattr(settings, "cuotas_sportsapipro_diario", 0) or 0))
 
 
+def nivel5_sharpapi(archivo, huecos, entries: dict) -> int:
+    nuevas = 0
+    for h in huecos:
+        captura = archivo.buscar(h.deporte, h.local, h.visitante, h.comienzo)
+        if captura is None:
+            continue
+        evento, recibido, _, _, _ = captura
+        filas_captura = list(csh.filas_validas(captura))
+        for item in h.items:
+            filas = csh.filas_item(h.deporte, item, filas_captura)
+            lados = ((item["selection"],) if h.deporte == "tenis" else
+                     ("over", "under") if item["line"] is not None else ("home", "away"))
+            if not any(best_quote(filas, line=item["line"], side=lado, sealed_at=recibido, received_at=recibido)
+                       for lado in lados):
+                continue
+            clave = f"{h.eid}|{item['key']}{csh.SUFIJO}"
+            e = _entrada(h, item, {"id": evento}, recibido, filas)
+            e.update(fuente=csh.FUENTE)
+            if entries.get(clave) != e:
+                entries[clave] = e
+                nuevas += 1
+    return nuevas
+
+
 def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", regiones="us", get=None, now=None,
            salida=print, key=None, cache_path=None, info=None, sp_key=None, sp_call=None, sp_raiz=None, rd_key=None, rd_call=None, rd_sleep=None,
-           suelo_creditos=SUELO) -> int:
+           suelo_creditos=SUELO, sharpapi_raiz=None) -> int:
     if key is None:
         key, gratis = resolver_clave(settings.odds_api_respaldo_key)
         suelo_creditos = SUELO_GRATIS if gratis else suelo_creditos
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
     cache_path = cache_path if cache_path is not None else settings.cuotas_respaldo_cache
-    if not key and not sp_key and not rd_key:
+    archivo_sharp = csh.raiz(sharpapi_raiz)
+    if not key and not sp_key and not rd_key and not archivo_sharp:
         salida("sin ODDS_API_RESPALDO_KEY, SPORTSAPIPRO_KEY ni THERUNDOWN_API_KEY: no hay nada que hacer")
         return 0
     if not cache_path:
@@ -651,25 +714,30 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
         return 0
     now = now or datetime.now(timezone.utc)
     cache = leer_cache(cache_path)
+    cache_huecos = {} if archivo_sharp else cache
     huecos = []
     archive = settings.propline_archive
     if deporte in ("nba", "todos") and settings.nba_cohorts_dir:
-        huecos += huecos_nba(archive, cn.load_cohorts(settings.nba_cohorts_dir, dias=3, now=now), cache, now=now)
+        huecos += huecos_nba(archive, cn.load_cohorts(settings.nba_cohorts_dir, dias=3, now=now), cache_huecos,
+                             now=now, sharpapi=bool(archivo_sharp))
     if deporte in ("tenis", "todos") and settings.tennis_sealed_dir:
         from qf.api import tenis_publico
         feed = tenis_publico.public_data()
         ids = [e.get("id") for e in feed.get("events", []) if isinstance(e, dict) and e.get("id") is not None]
-        huecos += huecos_tenis(archive, feed, ct.load_sealed(settings.tennis_sealed_dir, ids), cache, now=now)
+        huecos += huecos_tenis(archive, feed, ct.load_sealed(settings.tennis_sealed_dir, ids), cache_huecos,
+                               now=now, sharpapi=bool(archivo_sharp))
     huecos = [h for h in huecos if h.sellado <= now]
-    salida(f"huecos: {sum(len(h.items) for h in huecos)} filas en {len(huecos)} eventos; "
-           f"coste estimado ~{coste_estimado(huecos, regiones)} créditos (tope {max_creditos}, suelo {suelo_creditos})")
+    huecos_red = _sin_resolver(huecos, cache) if archivo_sharp else huecos
+    coste = coste_estimado(huecos_red, regiones) if key and max_creditos > 0 else 0
+    salida(f"huecos: {sum(len(h.items) for h in huecos_red)} filas en {len(huecos_red)} eventos; "
+           f"coste estimado ~{coste} créditos (tope {max_creditos}, suelo {suelo_creditos})")
     # En el modo seco se lista todo; en las pasadas reales (cron cada 10 min, sin rotación de registro) solo los 10 primeros,
     # los partidos futuros antes, para que el registro no crezca ~1,7 MB al día.
-    visibles = huecos if not ejecutar else sorted(huecos, key=lambda h: (h.comienzo <= now, h.sellado))[:10]
+    visibles = huecos_red if not ejecutar else sorted(huecos_red, key=lambda h: (h.comienzo <= now, h.sellado))[:10]
     for h in visibles:
         salida(f"  {h.deporte} {h.eid} {h.local} - {h.visitante}: {h.mercados} sello {pl.stamp(h.sellado)}")
-    if len(visibles) < len(huecos):
-        salida(f"  ... y {len(huecos) - len(visibles)} huecos más (modo seco para verlos todos)")
+    if len(visibles) < len(huecos_red):
+        salida(f"  ... y {len(huecos_red) - len(visibles)} huecos más (modo seco para verlos todos)")
     if not ejecutar:
         salida("modo seco: no se hizo ninguna petición (use --ejecutar)")
         return 0
@@ -706,7 +774,8 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
         cli4 = crd.Cliente(rd_key, call=rd_call, reserva=int(getattr(settings, "cuotas_therundown_reserva", crd.RESERVA)),
                            **({"sleep": rd_sleep} if rd_sleep else {}))
         n4 = nivel4_therundown(cli4, _sin_resolver(huecos, entries), entries, intentos, now, salida)
-    if nuevas or n3 or n4:
+    n5 = nivel5_sharpapi(csh.Archivo(archivo_sharp, now), huecos, entries) if archivo_sharp else 0
+    if nuevas or n3 or n4 or n5:
         escribir_cache(cache_path, entries, now)
     if intentos:
         try:
@@ -716,12 +785,12 @@ def correr(*, ejecutar=False, max_creditos=MAX_CREDITOS, deporte="todos", region
     if info is not None:
         info.update(gastado=cli.p.gastado, saldo=cli.p.saldo, peticiones=cli.peticiones, nuevas=nuevas, suelo=suelo,
                     nuevas_sportsapipro=n3, peticiones_sportsapipro=cli3.peticiones if cli3 else 0,
-                    nuevas_therundown=n4, peticiones_therundown=cli4.peticiones if cli4 else 0,
+                    nuevas_therundown=n4, nuevas_sharpapi=n5, peticiones_therundown=cli4.peticiones if cli4 else 0,
                     puntos_therundown=cli4.puntos if cli4 else 0,
                     restante_therundown=cli4.restante if cli4 else None)
     salida(f"entradas nuevas: {nuevas}; peticiones de pago: {cli.peticiones}; créditos gastados: "
            f"{cli.p.gastado}; saldo: {cli.p.saldo}; SportsAPIPro: {n3} entradas en "
-           f"{cli3.peticiones if cli3 else 0} peticiones; TheRundown: {n4} entradas en "
+           f"{cli3.peticiones if cli3 else 0} peticiones; SharpAPI: {n5} entradas locales; TheRundown: {n4} entradas en "
            f"{cli4.peticiones if cli4 else 0} peticiones")
     return 0
 
@@ -743,7 +812,7 @@ def _futbol(*, get, now, cache_path, key, sp_key, rd_key=None, kw, tope, estado,
         out = rf.correr(ejecutar=True, max_creditos=tope, get=get, now=now, salida=log.info, key=key, sp_key=sp_key,
                         sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"), cache_path=cache_path,
                         lista_huecos=kw.get("huecos_futbol"), rd_key=rd_key, rd_call=kw.get("rd_call"),
-                        rd_sleep=kw.get("rd_sleep"), suelo_creditos=suelo_creditos)
+                        rd_sleep=kw.get("rd_sleep"), suelo_creditos=suelo_creditos, sharpapi_raiz=kw.get("sharpapi_raiz"))
         gastado = int(out.get("gastado", 0) or 0)
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
@@ -777,13 +846,14 @@ def auto(*, get=None, now=None, cache_path=None, key=None, alerta=None, **kw) ->
         tope = min(settings.cuotas_respaldo_auto_max, diario - hoy)
         sp_key = kw.get("sp_key") if kw.get("sp_key") is not None else getattr(settings, "sportsapipro_key", None)
         rd_key = kw.get("rd_key") if kw.get("rd_key") is not None else getattr(settings, "therundown_key", None)
-        if tope <= 0 and not sp_key and not rd_key:
+        if tope <= 0 and not sp_key and not rd_key and not csh.raiz(kw.get("sharpapi_raiz")):
             return {"estado": "tope_diario", "gastado_hoy": hoy}
         # Con el tope de créditos agotado, The Odds API se salta y SportsAPIPro (nivel 3) sigue cubriendo huecos.
         run: dict = {}
         correr(ejecutar=True, max_creditos=max(tope, 0), get=get, now=now, salida=log.info, key=key,
                cache_path=cache_path, info=run, sp_key=sp_key, sp_call=kw.get("sp_call"), sp_raiz=kw.get("sp_raiz"),
-               rd_key=rd_key, rd_call=kw.get("rd_call"), rd_sleep=kw.get("rd_sleep"), suelo_creditos=suelo_creditos)
+               rd_key=rd_key, rd_call=kw.get("rd_call"), rd_sleep=kw.get("rd_sleep"), suelo_creditos=suelo_creditos,
+               sharpapi_raiz=kw.get("sharpapi_raiz"))
         gastado = int(run.get("gastado", 0))
         if gastado:
             tmp = estado.with_name(estado.name + ".tmp")
@@ -807,14 +877,32 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--ejecutar", action="store_true", help="hace las peticiones (por defecto: seco)")
     ap.add_argument("--max-creditos", type=int, default=MAX_CREDITOS)
-    ap.add_argument("--deporte", choices=("nba", "tenis", "todos"), default="todos")
+    ap.add_argument("--deporte", choices=("futbol", "nba", "tenis", "todos"), default="todos")
     ap.add_argument("--regiones", default="us")
     ap.add_argument("--auto", action="store_true", help="pasada automática (solo si CUOTAS_RESPALDO_AUTO=1)")
+    ap.add_argument("--solo-sharpapi", action="store_true", help="lee únicamente el archivo local de SharpAPI")
     a = ap.parse_args(argv)
+    if a.solo_sharpapi:
+        if a.auto:
+            ap.error("--solo-sharpapi no se combina con --auto")
+        archivo_sharp = csh.raiz()
+        if not archivo_sharp or not settings.cuotas_respaldo_cache:
+            ap.error("--solo-sharpapi requiere CUOTAS_SHARPAPI_ARCHIVO y CUOTAS_RESPALDO_CACHE")
+        if not archivo_sharp.is_dir():
+            ap.error("CUOTAS_SHARPAPI_ARCHIVO debe apuntar al directorio de capturas")
+        opciones = dict(ejecutar=a.ejecutar, max_creditos=0, key="", sp_key="", rd_key="")
+        if a.deporte in ("nba", "tenis", "todos"):
+            correr(deporte=a.deporte, **opciones)
+        if a.deporte in ("futbol", "todos"):
+            from qf.ingest import cuotas_respaldo_futbol as rf
+            print(rf.correr(**opciones))
+        return 0
     if a.auto:
         logging.basicConfig(level=logging.INFO)
         print(auto())
         return 0
+    if a.deporte == "futbol":
+        ap.error("--deporte futbol requiere --solo-sharpapi o el comando cuotas_respaldo_futbol")
     return correr(ejecutar=a.ejecutar, max_creditos=a.max_creditos, deporte=a.deporte, regiones=a.regiones)
 
 

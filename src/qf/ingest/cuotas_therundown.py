@@ -1,4 +1,4 @@
-"""Cuarto y último nivel del respaldo de cuotas: TheRundown (cuenta Free), tras PropLine, The Odds API y SportsAPIPro.
+"""Cuarto nivel del respaldo de cuotas: TheRundown (cuenta Free), tras PropLine, The Odds API y SportsAPIPro.
 
 Decisión del titular (9-nov-2026): cuando ninguna fuente anterior encuentra la cuota de un mercado, probar TheRundown,
 para fútbol, NBA y tenis. Este módulo es el cliente y el traductor; la orquestación vive en `cuotas_respaldo`
