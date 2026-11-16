@@ -63,7 +63,8 @@ class SportPredictions extends StatelessWidget {
     for (final list in byDay.values) {
       list.sort((a, b) => b.$2.probability.compareTo(a.$2.probability));
     }
-    final rates = hitRateByFamily(feed.events).values;
+    final monthStart = DateTime(clock.year, clock.month);
+    final rates = hitRateByFamily(feed.events, since: monthStart).values;
     final won = rates.fold<int>(0, (s, r) => s + r.won);
     final resolved = rates.fold<int>(0, (s, r) => s + r.resolved);
     final items = <Widget>[
@@ -127,7 +128,7 @@ class _HitRateCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    l10n.picksTrustTitle,
+                    l10n.picksTrustMonthTitle,
                     style: const TextStyle(
                       color: QfColors.text,
                       fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
@@ -156,12 +157,6 @@ class _HitRateCard extends StatelessWidget {
                 fontSize: 12,
                 color: QfColors.text2,
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.sportHitWindow(resolved),
-              key: const ValueKey('sport-hit-window'),
-              style: const TextStyle(fontSize: 11, color: QfColors.muted),
             ),
           ],
         ),

@@ -851,7 +851,17 @@ class _ProductShellState extends State<ProductShell>
         children: [
           predictionsSwitcher(),
           Expanded(
-            child: feed == null
+            child: stream != 'high' && sportStreams.contains(stream)
+                ? footballGate(
+                    () => RefreshIndicator(
+                      onRefresh: reload,
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [streamContent()],
+                      ),
+                    ),
+                  )
+                : feed == null
                 ? loading
                 : SportPredictions(
                     key: ValueKey('sport-predictions-$sport'),

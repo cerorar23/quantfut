@@ -324,7 +324,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('en NBA el switcher solo muestra Alta prob.', (tester) async {
+  testWidgets('en NBA el switcher muestra Alta prob., Reto Escalera y Parley', (tester) async {
     final api = FixtureApi();
     await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
     await navigate(tester, 'Predicciones');
@@ -332,8 +332,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sport-nba')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('streams-high')), findsOneWidget);
-    expect(find.byKey(const ValueKey('streams-ladder')), findsNothing);
-    expect(find.byKey(const ValueKey('streams-parley')), findsNothing);
+    expect(find.byKey(const ValueKey('streams-ladder')), findsOneWidget);
+    expect(find.byKey(const ValueKey('streams-parley')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });

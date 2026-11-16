@@ -88,6 +88,7 @@ Widget predictions(
   SportFeed feed, {
   ValueChanged<SportEvent>? onOpen,
   Future<void> Function()? onRetry,
+  DateTime? now,
 }) => SportPredictions(
   api: api,
   sport: sport,
@@ -95,7 +96,7 @@ Widget predictions(
   images: ImageCatalog.empty,
   onOpen: onOpen ?? (_) {},
   onRetry: onRetry ?? () async {},
-  now: DateTime(2020),
+  now: now ?? DateTime(2020),
 );
 
 Widget markets(
@@ -196,9 +197,13 @@ void main() {
         ]),
       ],
     );
-    await pump(tester, predictions(kNba, some));
+    await pump(tester, predictions(kNba, some, now: DateTime(2026, 11, 20)));
     expect(find.byKey(const ValueKey('sport-hit-rate')), findsOneWidget);
     expect(find.text('1/1 publicados'), findsOneWidget);
+    expect(find.text('Acierto de este mes'), findsOneWidget);
+    // Un partido de otro mes no entra en el cálculo del mes en curso.
+    await pump(tester, predictions(kNba, some, now: DateTime(2026, 12, 3)));
+    expect(find.byKey(const ValueKey('sport-hit-rate')), findsNothing);
   });
 
   testWidgets(
@@ -351,7 +356,7 @@ void main() {
   });
 
   testWidgets(
-    'Predicciones y Mercados rotulan la ventana de resueltos sobre la que se calcula',
+    'Predicciones cuenta solo el mes en curso y Mercados rotula su ventana de resueltos',
     (tester) async {
       final feed = SportFeed(
         ready: true,
@@ -369,8 +374,8 @@ void main() {
           ),
         ],
       );
-      await pump(tester, predictions(kNba, feed));
-      expect(find.text('Sobre los últimos 3 resueltos'), findsOneWidget);
+      await pump(tester, predictions(kNba, feed, now: DateTime(2026, 11, 20)));
+      expect(find.text('2/3 publicados'), findsOneWidget);
       await pump(tester, markets(kNba, feed));
       expect(find.text('Sobre los últimos 1 resueltos'), findsOneWidget);
     },

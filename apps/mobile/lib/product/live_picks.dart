@@ -93,7 +93,7 @@ class HighProbabilityView extends StatelessWidget {
             l10n.picksTrainingReasons('${jsonMap(report)['motivos'] ?? ''}'),
           )
         else ...[
-          _TrustCard(history: jsonMap(report['historial'])),
+          _TrustCard(history: _monthHistory(jsonMap(report['historial']))),
           liveText(
             l10n.picksRangeHint(minPercent, maxPercent, freePercent),
             color: liveMuted,
@@ -142,6 +142,16 @@ class HighProbabilityView extends StatelessWidget {
   }
 }
 
+/// Bloque del mes en curso (`por_mes`, clave `AAAA-MM` por la fecha del partido en UTC); vacío si aún no hay resueltos.
+JsonMap _monthHistory(JsonMap history, {DateTime? now}) {
+  final t = (now ?? DateTime.now()).toUtc();
+  final key = '${t.year}-${t.month.toString().padLeft(2, '0')}';
+  for (final row in jsonRows(history['por_mes'])) {
+    if (row['mes'] == key) return row;
+  }
+  return const {};
+}
+
 /// Acierto real frente al prometido, con barra. Solo si ya hay pronósticos liquidados.
 class _TrustCard extends StatelessWidget {
   const _TrustCard({required this.history});
@@ -172,7 +182,7 @@ class _TrustCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                l10n.picksTrustTitle.toUpperCase(),
+                l10n.picksTrustMonthTitle.toUpperCase(),
                 style: const TextStyle(
                   color: QfColors.muted,
                   fontFamily: qfDisplay,

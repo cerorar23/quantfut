@@ -207,7 +207,9 @@
       "icono": "baloncesto",
       "color": "#b58cff",
       "secciones": [
-        "high"
+        "high",
+        "ladder",
+        "parley"
       ],
       "familias": [
         {
@@ -336,7 +338,9 @@
       "icono": "tenis",
       "color": "#d4f53c",
       "secciones": [
-        "high"
+        "high",
+        "ladder",
+        "parley"
       ],
       "familias": [
         {
