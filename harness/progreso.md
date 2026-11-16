@@ -3,6 +3,11 @@
 
 
 
+## 16-nov-2026 · El destacado de la app es el de la web (`app/destacado-servidor`)
+- **Causa de la diferencia:** la web recibe el destacado ya elegido por el servidor (`aplicar_acceso_web`: de TODOS los mercados, también los VIP y los complementarios, con cuota de casa); la app lo calculaba sola con los pronósticos abiertos que le llegan. En Albacete–Celta II la web destacaba la doble oportunidad (78 %, 1,23) y la app solo tenía abierto «Más de 0,5» (87 %, 1,11 < 1,20), así que mostraba «ningún pronóstico entra en el destacado».
+- **Decisión del titular:** igualarlos. `mobile.mercados_partido` añade `mercados.destacado_app` (forma de pick, abierto y gratis) calculado con la regla web; la app lo pinta y solo cae a su regla local si el servidor no lo manda (versión antigua). La lista de mercados y sus candados de la app NO cambian; solo el destacado puede salir de un mercado que en la app sigue con candado.
+- Costo: la ficha de la app calcula la lista web una vez más por partido (solo para el destacado).
+
 ## 15-nov-2026 · Checkout web más claro y con señales de confianza (`web/checkout-confianza`)
 - **Causa de lo que se veía mal:** el formulario de Whop salía en tema claro sobre la web oscura; su cabecera (plan y precio) es transparente y quedaba texto oscuro sobre fondo oscuro, y debajo una caja blanca. Se pasa `appearance.theme` (`dark`, acento `jade`) a `WhopElements`: es lo único que admite la API, no se puede restilar el interior del marco.
 - **Decisión:** los pasos decían «Resumen del pedido» como etapa actual; ahora son Cuenta → Pago → Acceso activo y avanzan con el pago. Las garantías que se muestran son solo las que el flujo cumple (Whop cobra, el webhook activa, la renovación se cancela en Whop); nada de sellos ni devoluciones que no existen.

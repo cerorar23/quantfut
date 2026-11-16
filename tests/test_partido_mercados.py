@@ -273,11 +273,13 @@ def test_la_app_conserva_su_regla_sin_destacado_ni_gratis_extra(lista):
 def test_mercados_partido_pasa_la_regla_web_solo_cuando_se_pide(monkeypatch):
     from qf.api import mobile
     visto = []
-    monkeypatch.setattr(pm, 'construir', lambda *a, **k: visto.append(a[-1] if len(a) > 5 else None) or {'ok': True})
+    monkeypatch.setattr(pm, 'construir',
+                        lambda *a, **k: visto.append(a[-1] if len(a) > 5 else None) or {'ok': True, 'destacado': None})
     ficha = {'local': {'nombre': 'A'}, 'visitante': {'nombre': 'B'}}
-    mobile.mercados_partido('m', ficha, [], False)
-    mobile.mercados_partido('m', ficha, [], False, True)
-    assert visto == [False, True]                 # la app (por defecto) nunca activa la regla de la web
+    app = mobile.mercados_partido('m', ficha, [], False)
+    web = mobile.mercados_partido('m', ficha, [], False, True)
+    # La lista de la app (por defecto) nunca activa la regla de la web; solo se consulta aparte para su destacado.
+    assert visto == [False, True, True] and app['destacado_app'] is None and 'destacado_app' not in web
     import inspect
     assert inspect.signature(mobile.detail).parameters['web'].default.default is False
 
@@ -403,6 +405,34 @@ def test_construir_web_suma_las_complementarias_y_la_app_no(monkeypatch):
     app = pm.construir('m1', 'Local FC', 'Visita FC', {}, False, web=False)
     assert web['total'] > app['total'] >= 16                      # la web enseña más opciones; la app conserva su lista
     assert web['rango'] == [1.2, None] and web['destacado']['cuota'] >= 1.20
+
+
+def test_pick_de_destacado_tiene_la_forma_que_pinta_la_app():
+    assert pm.pick_de_destacado(None) is None
+    fila = pm._fila('RESULTADO', 'dc', 'double_chance', '1X', None, 'Local o empate', .78)
+    fila.update(cuota=1.23, cuota_tipo='casa', casa='Bovada')
+    pick = pm.pick_de_destacado(fila)
+    assert (pick['market'], pick['selection'], pick['texto']) == ('double_chance', '1X', 'Local o empate')
+    assert pick['prob'] == .78 and pick['ref_price'] == 1.23 and pick['ref_book'] == 'Bovada'
+    assert pick['free'] is True and pick['started'] is False and pick['outcome'] is None
+    justa = pm.pick_de_destacado(dict(fila, cuota=1.28, cuota_tipo='justa', resultado='win'))
+    assert justa['ref_price'] is None and justa['ref_book'] is None and justa['price'] == 1.28
+    assert justa['started'] is True and justa['outcome'] == 'win'
+
+
+def test_la_app_recibe_el_destacado_de_la_web_y_la_web_no_lleva_el_campo_extra(monkeypatch):
+    from qf.api import mobile
+    monkeypatch.setattr(pm, 'lambdas_goles', lambda mid: (LAM, MU, RHO))
+    monkeypatch.setattr(pm, 'lambdas_estadisticas', lambda mid: (None, None))
+    monkeypatch.setattr(pm, 'datos_partido', lambda mid: None)
+    monkeypatch.setattr(pm, 'cuotas_casas', lambda mid: {})
+    ficha = {'local': {'nombre': 'Local FC'}, 'visitante': {'nombre': 'Visita FC'}}
+    app = mobile.mercados_partido('m1', ficha, [], False)
+    web = mobile.mercados_partido('m1', ficha, [], False, web=True)
+    esperado = pm.construir('m1', 'Local FC', 'Visita FC', {}, False, web=True)['destacado']
+    assert app['destacado_app']['texto'] == esperado['seleccion'] and app['destacado_app']['prob'] == round(esperado['prob'], 4)
+    assert 'destacado_app' not in web
+    assert app['total'] < web['total']                                  # la lista de la app no se amplía
 
 
 # --- la cuota y el destacado de la web salen de la mejor casa disponible, con su nombre ------------------

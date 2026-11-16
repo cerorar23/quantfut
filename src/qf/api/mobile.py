@@ -458,12 +458,20 @@ def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool, 
     """Lista de mercados del partido con el acceso aplicado (ver partido_mercados)."""
     abiertas = {partido_mercados.clave(p.get('market'), p.get('selection'), p.get('line')): p
                 for p in picks if p.get('market')}
+    local, visitante = jsonable_name(ficha, 'local', 'Local'), jsonable_name(ficha, 'visitante', 'Visitante')
     try:
-        return partido_mercados.construir(match_id, jsonable_name(ficha, 'local', 'Local'),
-                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus, web)
+        mercados = partido_mercados.construir(match_id, local, visitante, abiertas, plus, web)
     except Exception:  # noqa: BLE001 - la lista es un extra: si falla, el detalle sigue
         logging.getLogger(__name__).exception('mercados del partido %s', match_id)
         return None
+    if mercados is not None and not web:
+        # La app conserva su lista y sus candados, pero el destacado es el de la web (decisión del titular, 2026-11-16).
+        try:
+            de_la_web = partido_mercados.construir(match_id, local, visitante, abiertas, plus, True)
+            mercados['destacado_app'] = partido_mercados.pick_de_destacado(de_la_web and de_la_web['destacado'])
+        except Exception:  # noqa: BLE001 - sin destacado la app sigue con su regla local
+            logging.getLogger(__name__).exception('destacado del partido %s', match_id)
+    return mercados
 
 
 def jsonable_name(ficha: dict, lado: str, defecto: str) -> str:

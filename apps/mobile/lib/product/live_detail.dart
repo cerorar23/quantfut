@@ -257,7 +257,12 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
             match = jsonMap(ficha['partido']);
         final picks = jsonRows(data['picks']);
         final l10n = context.l10n;
-        final featured = featuredPick(picks);
+        // El destacado es el del servidor, el mismo de la web (titular, 2026-11-16); `null` = ninguno cumple la regla.
+        // Solo si el servidor no lo manda (versión anterior) se calcula aquí con los pronósticos abiertos.
+        final serverFeatured = jsonMap(ficha['mercados'])['destacado_app'];
+        final featured = jsonMap(ficha['mercados']).containsKey('destacado_app')
+            ? (serverFeatured is Map ? jsonMap(serverFeatured) : null)
+            : featuredPick(picks);
         // Sin pronóstico sellado, los «Mercados del partido» siguen siendo estimaciones del modelo.
         final marketRows = jsonRows(jsonMap(ficha['mercados'])['filas']);
         final noPicks = marketRows.isEmpty
@@ -321,10 +326,10 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
             ),
           ];
         } else if (featured != null) {
-          final p = statisticNumber(featured['probabilidad'] ?? featured['probability']);
+          final p = statisticNumber(featured['probabilidad'] ?? featured['probability'] ?? featured['prob']);
           if (p != null) {
             bigProb = '${(p * (p <= 1 ? 100 : 1)).round()}%';
-            bigLabel = '${featured['seleccion'] ?? featured['selection'] ?? ''}';
+            bigLabel = '${featured['seleccion'] ?? featured['texto'] ?? featured['selection'] ?? ''}';
           }
         }
 
@@ -390,7 +395,7 @@ class _LiveMatchDetailState extends State<LiveMatchDetail> {
                       ],
                     ),
                   ),
-                if (picks.isEmpty && data['locked'] != true)
+                if (picks.isEmpty && featured == null && data['locked'] != true)
                   training(noPicks),
                 if (picks.isNotEmpty && featured == null)
                   training(l10n.detailNoFeatured),
