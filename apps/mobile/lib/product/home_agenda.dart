@@ -191,6 +191,7 @@ class DayStrip extends StatelessWidget {
                     date: days[i],
                     active: dateKey(days[i]) == active,
                     today: dateKey(days[i]) == dateKey(now),
+                    yesterday: dateKey(days[i]) == dateKey(DateTime(now.year, now.month, now.day - 1)),
                     matches: counts[dateKey(days[i])] ?? 0,
                     onTap: () => onDay(days[i]),
                   ),
@@ -210,12 +211,13 @@ class _DayTile extends StatelessWidget {
     required this.date,
     required this.active,
     required this.today,
+    this.yesterday = false,
     required this.matches,
     required this.onTap,
   });
 
   final DateTime date;
-  final bool active, today;
+  final bool active, today, yesterday;
   final int matches;
   final VoidCallback onTap;
 
@@ -224,6 +226,8 @@ class _DayTile extends StatelessWidget {
     final l10n = context.l10n;
     final dayLabel = today
         ? l10n.homeToday.toUpperCase()
+        : yesterday
+        ? l10n.commonYesterday.toUpperCase()
         : toBeginningOfSentenceCase(localDate(DateFormat.E, date)).toUpperCase();
     final text = '$dayLabel ${date.day}';
 

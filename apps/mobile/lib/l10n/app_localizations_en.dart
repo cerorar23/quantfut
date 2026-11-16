@@ -1777,12 +1777,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get mmOrderSettled => 'Hits first, from highest to lowest odds';
+
+  @override
   String mmProb(int value) {
     return '$value% prob.';
   }
 
   @override
   String get mmPublishedOdds => 'published odds';
+
+  @override
+  String get mmResultLoss => 'Missed';
+
+  @override
+  String get mmResultPush => 'Push';
+
+  @override
+  String get mmResultWin => 'Hit';
 
   @override
   String get mmScoresTitle => 'Most likely scores';
@@ -3258,6 +3270,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sportFamilyOthers => 'Other';
 
   @override
+  String get sportFeaturedVip => 'Top pick reserved for VIP';
+
+  @override
   String get sportFootball => 'Football';
 
   @override
@@ -3349,7 +3364,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sportTennis => 'Tennis';
 
   @override
+  String get sportVipBadge => 'VIP';
+
+  @override
   String get sportVipCall => 'See the plans to unlock more analysis.';
+
+  @override
+  String sportVipMarkets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more markets with VIP',
+      one: '1 more market with VIP',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get startupFailed => 'We could not start QuantFut. Please try again.';

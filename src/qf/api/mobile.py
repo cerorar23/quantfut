@@ -219,10 +219,14 @@ _HIGH_COLS = """a.match_id, m.league_id, m.kickoff_utc,
         b.batch_date,b.chain_sha256"""
 
 
-def visible_agenda(rows: list[dict]) -> list[dict]:
+def visible_agenda(rows: list[dict], hasta: datetime | None = None) -> list[dict]:
     """Inicio solo enseña lo que está por jugarse o en juego: un partido terminado sale de la
-    agenda (decisión del titular, 2026-10-12) y queda en los registros históricos."""
-    return [m for m in rows if m.get('estado') != 'finished']
+    agenda (decisión del titular, 2026-10-12) y queda en los registros históricos.
+
+    Excepción (titular, 2026-11-16): los terminados de un día YA cerrado (`kickoff_utc < hasta`, el inicio del día
+    de hoy del visitante) se conservan: es la vista «Ayer» de la app, con todos sus mercados y su resultado."""
+    return [m for m in rows if m.get('estado') != 'finished'
+            or (hasta is not None and isinstance(m.get('kickoff_utc'), datetime) and m['kickoff_utc'] < hasta)]
 
 
 def high_rows() -> list[dict]:
@@ -376,7 +380,8 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
         start, end = fichas.ventana(fecha, tz, acceso_reglas.dias_agenda())
     except ValueError:
         raise HTTPException(422, 'Fecha inválida') from None
-    agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []
+    hoy_inicio = fichas.ventana(None, tz, 1)[0]
+    agenda = visible_agenda(fichas._agenda(start, end, None), hoy_inicio) if flags['agenda']['enabled'] else []
     if agenda and flags['estadisticas']['enabled']:
         probabilities = {r['match_id']: uno_x_dos(r)[0] for r in query(
             "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities, market_consensus, "

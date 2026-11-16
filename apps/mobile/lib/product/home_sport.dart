@@ -18,6 +18,7 @@ import 'sport_images.dart';
 import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sport_vip_notice.dart';
 import 'sports_quotes.dart';
 
 const _stripHeight = 136.0;
@@ -213,7 +214,10 @@ class _HomeSportState extends State<HomeSport> {
     return DateTime(n.year, n.month, n.day);
   }
 
-  DateTime get _first => _start ?? _today;
+  DateTime get _yesterday => DateTime(_today.year, _today.month, _today.day - 1);
+
+  /// La tira arranca en AYER (vista de los pronósticos del día anterior); el selector puede moverla.
+  DateTime get _first => _start ?? _yesterday;
 
   @override
   void dispose() {
@@ -248,7 +252,7 @@ class _HomeSportState extends State<HomeSport> {
     final date = await showDatePicker(
       context: context,
       initialDate: _first,
-      firstDate: _today,
+      firstDate: _yesterday,
       lastDate: _today.add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return;
@@ -268,11 +272,10 @@ class _HomeSportState extends State<HomeSport> {
   @override
   Widget build(BuildContext context) {
     if (!widget.feed.ready) return _error(context);
-    final today = _today;
     final needle = search.trim().toLowerCase();
     final shown = [
       for (final e in widget.feed.events)
-        if (!e.start.toLocal().isBefore(today) && _matches(e, needle)) e,
+        if (!e.start.toLocal().isBefore(_yesterday) && _matches(e, needle)) e,
     ];
     final days = groupSportAgenda(shown);
     final counts = {for (final d in days) d.key: d.count};
@@ -305,7 +308,7 @@ class _HomeSportState extends State<HomeSport> {
         height: _stripHeight,
         child: DayStrip(
           start: _first,
-          active: _active ?? dateKey(_first),
+          active: _active ?? dateKey(_start ?? _today),
           counts: counts,
           onDay: (date) => _jump(date, counts, viewport),
           onPick: () => _pick(counts, viewport),
@@ -654,6 +657,8 @@ class _EventRow extends StatelessWidget {
                       ),
                     ),
                   )
+                else if (e.featuredVip)
+                  const SportVipBadge()
                 else
                   const Text(
                     '—',

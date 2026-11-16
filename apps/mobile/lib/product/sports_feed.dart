@@ -107,6 +107,9 @@ class SportEvent {
     this.imageHome,
     this.imageAway,
     this.generic = false,
+    this.access,
+    this.vipCount = 0,
+    this.featuredVip = false,
   });
 
   final String id;
@@ -134,8 +137,49 @@ class SportEvent {
   /// Evento de un deporte del catálogo sin pantalla propia (llegó por `/deportes/v1`): no tiene extras de NBA ni de tenis.
   final bool generic;
 
-  /// Mismo partido con otra lista de mercados (NBA: la v2 completa de `/nba/v1/partido/{id}/mercados`).
+  /// Acceso que el cupo del deporte da a este partido sin VIP (ver [applyQuota]); null = todo abierto.
+  final SportAccess? access;
+
+  /// Mercados que el cupo deja para VIP: ya NO están en [markets] (ninguna pantalla los pinta ni los cuenta).
+  final int vipCount;
+
+  /// El destacado de este partido es VIP: [featuredMarket] devuelve null y no se sustituye por otro.
+  final bool featuredVip;
+
+  /// Mismo partido con otra lista de mercados (NBA: la v2 completa de `/nba/v1/partido/{id}/mercados`). Conserva el
+  /// acceso del partido: la lista nueva pasa por el mismo cupo.
   SportEvent withMarkets(
+    List<SportMarket> value, {
+    String? featured,
+    bool serverFeaturedField = false,
+  }) => applyAccess(_withMarkets(value, featured: featured, serverFeaturedField: serverFeaturedField), access);
+
+  SportEvent _gated(List<SportMarket> open, SportAccess? value, {int vip = 0, bool featuredLocked = false}) => SportEvent(
+    id: id,
+    sport: sport,
+    home: home,
+    away: away,
+    league: league,
+    start: start,
+    status: status,
+    seal: seal,
+    sealedAt: sealedAt,
+    markets: open,
+    surface: surface,
+    score: score,
+    availability: availability,
+    plannedSeal: plannedSeal,
+    serverFeatured: serverFeatured,
+    featuredId: featuredId,
+    imageHome: imageHome,
+    imageAway: imageAway,
+    generic: generic,
+    access: value,
+    vipCount: vip,
+    featuredVip: featuredLocked,
+  );
+
+  SportEvent _withMarkets(
     List<SportMarket> value, {
     String? featured,
     bool serverFeaturedField = false,
@@ -666,9 +710,80 @@ Future<SportFeed> loadSport(QuantFutApi api, SportId sport) async {
   }
 }
 
+/// Lo que el cupo deja abierto en UN partido: si su destacado es de los gratis del día y cuántos mercados se ven.
+class SportAccess {
+  const SportAccess({required this.featuredOpen, this.markets});
+  final bool featuredOpen;
+  final int? markets;
+}
+
+/// Aplica [access] a los mercados del partido: los que quedan fuera se retiran de `markets` y solo se cuentan
+/// en `vipCount`. Con `access` null el partido queda entero.
+SportEvent applyAccess(SportEvent e, SportAccess? access) {
+  if (access == null) return e.access == null && e.vipCount == 0 ? e : e._gated(e.markets, null);
+  final featured = _publishedFeatured(e);
+  final open = <SportMarket>{if (featured != null && access.featuredOpen) featured};
+  final rest = [for (final m in e.markets) if (!identical(m, featured)) m]
+    ..sort((a, b) {
+      final byProb = b.probability.compareTo(a.probability);
+      return byProb != 0 ? byProb : a.id.compareTo(b.id);
+    });
+  final limit = access.markets;
+  final free = limit == null ? rest.length : (limit - open.length).clamp(0, rest.length);
+  open.addAll(rest.take(free));
+  return e._gated(
+    [for (final m in e.markets) if (open.contains(m)) m],
+    access,
+    vip: e.markets.length - open.length,
+    featuredLocked: featured != null && !open.contains(featured),
+  );
+}
+
+/// Aplica el cupo del deporte a la cartelera. Con VIP, sin cupo o con ambos números sin límite no cambia nada.
+/// Un partido de un día ya pasado se ve entero (igual que en la web y en fútbol).
+List<SportEvent> applyQuota(List<SportEvent> events, SportQuota? quota, {required bool plus, DateTime? now}) {
+  if (plus || quota == null || quota.unlimited) return [for (final e in events) applyAccess(e, null)];
+  final clock = (now ?? DateTime.now()).toLocal();
+  final today = DateTime(clock.year, clock.month, clock.day);
+  DateTime day(SportEvent e) {
+    final s = e.start.toLocal();
+    return DateTime(s.year, s.month, s.day);
+  }
+
+  bool current(SportEvent e) => !day(e).isBefore(today);
+  final openFeatured = <SportEvent>{};
+  final perDay = quota.featuredPerDay;
+  if (perDay != null) {
+    final byDay = <DateTime, List<(SportEvent, double)>>{};
+    for (final e in events) {
+      final featured = current(e) ? _publishedFeatured(e) : null;
+      if (featured != null) (byDay[day(e)] ??= []).add((e, featured.probability));
+    }
+    for (final list in byDay.values) {
+      list.sort((a, b) {
+        final byProb = b.$2.compareTo(a.$2);
+        return byProb != 0 ? byProb : a.$1.id.compareTo(b.$1.id);
+      });
+      openFeatured.addAll([for (final x in list.take(perDay)) x.$1]);
+    }
+  }
+  return [
+    for (final e in events)
+      applyAccess(
+        e,
+        current(e)
+            ? SportAccess(featuredOpen: perDay == null || openFeatured.contains(e), markets: quota.marketsPerMatch)
+            : null,
+      ),
+  ];
+}
+
 /// Destacado de NBA y tenis entre los elegibles (sellados antes del inicio). Si el servidor mandó el suyo
 /// (probabilidad máxima segura) solo se localiza; si no, se aplica la misma regla con la cuota del modelo (1 ÷ prob.).
-SportMarket? featuredMarket(SportEvent e) {
+/// Null también cuando el destacado del partido es VIP ([SportEvent.featuredVip]).
+SportMarket? featuredMarket(SportEvent e) => e.featuredVip ? null : _publishedFeatured(e);
+
+SportMarket? _publishedFeatured(SportEvent e) {
   final eligible = e.markets.where((m) => m.eligible);
   if (e.serverFeatured) {
     for (final m in eligible) {
