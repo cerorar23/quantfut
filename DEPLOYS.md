@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 00:35 UTC · Worker al día con `main`: filtro de avisos por deporte en `deliver` · worker `quantfut-worker:da7e5f40` (PR #443/#445; `main` `da7e5f40`)
+- **Motivo:** el worker llevaba `comercial/firebase_notificaciones.py` sin el filtro por deporte (`push_sports`) que ya corre en la API; sin él, `deliver()` no volvería a comprobar el deporte de un aviso en cola.
+- Pre-vuelo: `scripts/deploy.sh estado` mostró el worker con solo 2 archivos distintos de `main` (`api/firebase.py`, `comercial/firebase_notificaciones.py`, los del cambio); API con 0 diferencias; compose y contenedores coincidían (`quantfut-worker:bab4b6bb`). El servidor ya no entrena (`train` retirado el 26-oct), así que no se pisó ningún reentrenamiento.
+- Método: imagen `quantfut-worker:da7e5f40` construida en el servidor desde `git archive origin/main`, ensayada (`modulos con error: ninguno`) y desplegada recreando **solo `worker`** (`CONFIRMO=si scripts/deploy.sh desplegar worker quantfut-worker:da7e5f40`). API sin tocar.
+- Respaldo previo: `~/quantfut/releases/compose-antes-20261115-183456.yml`; imagen anterior `quantfut-worker:bab4b6bb` conservada en el host.
+- Verificado: contenedor `Up` con `quantfut-worker:da7e5f40`; el contenedor lleva el filtro (`n.sport = ANY` en `deliver`); los logs del cron (`sello_tardio`, `live`, `rafagas`, `fotmob_captura`) se escribieron a las 00:35 UTC, es decir, el cron arrancó tras recrear; API 200.
+- **Sin verificar:** una pasada completa de `deliver` (ningún aviso se emite aún: `enqueue` sin llamadores).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261115-183456.yml docker-compose.yml && docker compose up -d --no-deps --no-build worker`.
+
 ### 2026-11-16 00:01 UTC · Avisos push por deporte (F7c) + `db/115` · API (PR #443; `main` `1396eecf`)
 - **Motivo:** el servidor no guardaba preferencias de avisos push por deporte; la app 1.2.0+13 ya envía `push_sports`.
 - Pre-vuelo: `scripts/deploy.sh estado` mostró la API con 3 archivos distintos de `main` (`api/firebase.py`, `comercial/firebase_notificaciones.py` y `comercial/meta_capi.py`, de la auditoría de Meta, ya en `main` y sin desplegar: sale con este despliegue) y el worker con 2 (`firebase.py`, `firebase_notificaciones.py`); compose y contenedores coincidían (API `fc0f9a75`, worker `bab4b6bb`).
