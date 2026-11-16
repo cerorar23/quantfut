@@ -8,7 +8,6 @@ import 'market_hub.dart';
 import 'published_history.dart';
 import 'qf_controls.dart';
 import 'sport_contract.dart';
-import 'qf_theme.dart';
 import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
@@ -297,12 +296,6 @@ class _SportMarketsState extends State<SportMarkets> {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.historyWebSince,
-            key: const ValueKey('sport-range-note'),
-            style: const TextStyle(fontSize: 11, color: QfColors.muted),
           ),
         ],
       ),
