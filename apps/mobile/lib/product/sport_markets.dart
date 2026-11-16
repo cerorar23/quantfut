@@ -304,13 +304,6 @@ class _SportMarketsState extends State<SportMarkets> {
             key: const ValueKey('sport-range-note'),
             style: const TextStyle(fontSize: 11, color: QfColors.muted),
           ),
-          if (widget.sport == kTennis) ...[
-            const SizedBox(height: 6),
-            Text(
-              l10n.imageCredits,
-              style: const TextStyle(color: QfColors.muted, fontSize: 11),
-            ),
-          ],
         ],
       ),
     );

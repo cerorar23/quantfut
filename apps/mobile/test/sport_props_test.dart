@@ -34,6 +34,8 @@ SportMarket _prop({
   double prob = 0.61,
   int? last5,
   bool locked = false,
+  String? outcome,
+  double? price,
 }) => SportMarket(
   id: id,
   label: player,
@@ -50,16 +52,18 @@ SportMarket _prop({
   team: team,
   last5: last5,
   locked: locked,
+  outcome: outcome,
+  price: price,
 );
 
-SportEvent _event(List<SportMarket> markets) => SportEvent(
+SportEvent _event(List<SportMarket> markets, {String status = 'scheduled'}) => SportEvent(
   id: 'NBA-01',
   sport: kNba,
   home: 'Miami Heat',
   away: 'Detroit Pistons',
   league: 'NBA',
   start: DateTime.utc(2026, 11, 14, 20),
-  status: 'scheduled',
+  status: status,
   seal: 'seal-123',
   sealedAt: _sealed,
   markets: markets,
@@ -333,6 +337,25 @@ void main() {
     expect(find.textContaining('últimos 5'), findsNWidgets(1));
   });
 
+  testWidgets('orden: probabilidad antes del partido; acertados por cuota al terminar, con su resultado', (tester) async {
+    final ms = [
+      _prop(id: 'a', market: 'player_points', player: 'Baja Prob', playerId: '1', line: 10.5, prob: .55, outcome: 'win', price: 1.5),
+      _prop(id: 'b', market: 'player_points', player: 'Alta Prob', playerId: '2', line: 10.5, prob: .80, outcome: 'loss', price: 1.2),
+      _prop(id: 'c', market: 'player_points', player: 'Acierto Cuota Alta', playerId: '3', line: 10.5, prob: .60, outcome: 'win', price: 2.4),
+    ];
+    double y(WidgetTester t, String n) => t.getTopLeft(find.text(n)).dy;
+
+    await _pump(tester, SportPropsTab(api: _api, event: _event(ms), quotes: QuotesOverlay.empty));
+    expect(y(tester, 'Alta Prob') < y(tester, 'Acierto Cuota Alta'), isTrue);
+    expect(y(tester, 'Acierto Cuota Alta') < y(tester, 'Baja Prob'), isTrue);
+
+    await _pump(tester, SportPropsTab(api: _api, event: _event(ms, status: 'finished'), quotes: QuotesOverlay.empty));
+    expect(y(tester, 'Acierto Cuota Alta') < y(tester, 'Baja Prob'), isTrue);
+    expect(y(tester, 'Baja Prob') < y(tester, 'Alta Prob'), isTrue);
+    expect(find.text('Acertado'), findsNWidgets(2));
+    expect(find.text('Fallado'), findsOneWidget);
+  });
+
   for (final lang in ['es', 'en', 'pt', 'fr', 'it', 'de']) {
     testWidgets('se pinta en $lang sin desbordes a 320 px', (tester) async {
       final p = _prop(
@@ -354,6 +377,7 @@ void main() {
         size: const Size(320, 1800),
       );
       expect(tester.takeException(), isNull);
-    });
+
+});
   }
 }
