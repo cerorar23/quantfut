@@ -4,7 +4,7 @@ from __future__ import annotations
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from . import apimart, panel, web_config
 from .console import require_console
@@ -141,6 +141,23 @@ def web_config_apimart_probar(
     )
 
 
+@router.get("/configuracion/traducir-lote/plan")
+def web_config_traducir_lote_plan(
+    request: Request,
+    mode: str = "pending",
+    target_lang: str = "",
+    user: str = Depends(require_console),
+):
+    target = target_lang if target_lang in web_config.IDIOMAS_SECUNDARIOS else None
+    force = (mode == "all")
+    tasks = web_config.get_translation_tasks(target_lang=target, force_all=force)
+    return JSONResponse({
+        "ok": True,
+        "total": len(tasks),
+        "items": tasks,
+    })
+
+
 @router.post("/configuracion/traducir-lote")
 def web_config_traducir_lote(
     request: Request,
@@ -155,6 +172,13 @@ def web_config_traducir_lote(
         force_all=(mode == "all"),
         actor=panel._actor(request, user),
     )
+    if "application/json" in request.headers.get("accept", "").lower():
+        return JSONResponse({
+            "ok": not res["errors"],
+            "done": res["done"],
+            "skipped": res["skipped"],
+            "errors": res["errors"],
+        })
     if res["errors"]:
         return _redirect_with(
             "/control/configuracion",
@@ -286,11 +310,27 @@ def web_config_page_translate(
 ):
     panel._check_post(request, user, csrf)
     dest = "/control/configuracion" if return_to == "home" else f"/control/configuracion/pagina/{page_key}"
+    wants_json = (
+        "application/json" in request.headers.get("accept", "").lower()
+        or request.query_params.get("format") == "json"
+    )
     try:
         res = web_config.translate_page_db(page_key, target_lang, panel._actor(request, user))
     except Exception as exc:
+        if wants_json:
+            return JSONResponse({"ok": False, "page_key": page_key, "target_lang": target_lang, "error": str(exc)}, status_code=400)
         extra = {} if return_to == "home" else {"lang": target_lang}
         return _redirect_with(dest, err=str(exc), extra=extra)
+
+    if wants_json:
+        return JSONResponse({
+            "ok": True,
+            "page_key": page_key,
+            "target_lang": target_lang,
+            "model": res.get("translation_model") or "APIMart",
+            "detalle": f"Traducido con {res.get('translation_model') or 'APIMart'}.",
+        })
+
     extra = {"detalle": f"Traducido con {res.get('translation_model') or 'APIMart'}."}
     if return_to != "home":
         extra["lang"] = target_lang

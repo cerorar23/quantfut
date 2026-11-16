@@ -455,6 +455,13 @@ def test_panel_configuracion_render_csrf_y_sin_clave_expuesta(panel_client, monk
     ok_batch = client.post("/control/configuracion/traducir-lote", data={"target_lang": "en", "csrf": csrf}, follow_redirects=False)
     assert ok_batch.status_code == 303 and "msg=web_traduccion_lote" in ok_batch.headers["location"]
 
+    # Plan progresivo de traducción por lote (para evitar error 524 de Cloudflare)
+    monkeypatch.setattr(web_config, "get_translation_tasks", lambda **kw: [{"page_key": "legal:terminos", "label": "Términos", "target_lang": "en", "lang_name": "Inglés (EN)", "reason": "missing"}])
+    plan_resp = client.get("/control/configuracion/traducir-lote/plan?mode=pending")
+    assert plan_resp.status_code == 200
+    plan_json = plan_resp.json()
+    assert plan_json["ok"] is True and plan_json["total"] == 1 and plan_json["items"][0]["page_key"] == "legal:terminos"
+
     # Editor individual de página: GET + guardar + traducir + restaurar
     pg_view = client.get("/control/configuracion/pagina/legal:terminos?lang=en")
     assert pg_view.status_code == 200 and "legal:terminos" in pg_view.text
@@ -466,9 +473,19 @@ def test_panel_configuracion_render_csrf_y_sin_clave_expuesta(panel_client, monk
     }, follow_redirects=False)
     assert pg_save.status_code == 303 and "msg=web_pagina_guardada" in pg_save.headers["location"]
 
-    monkeypatch.setattr(web_config, "translate_page_db", lambda pk, lang, actor: {"page_key": pk, "lang": lang})
+    monkeypatch.setattr(web_config, "translate_page_db", lambda pk, lang, actor: {"page_key": pk, "lang": lang, "translation_model": "test-gpt"})
     pg_tr = client.post("/control/configuracion/pagina/legal:terminos/traducir", data={"target_lang": "pt", "csrf": csrf}, follow_redirects=False)
     assert pg_tr.status_code == 303 and "msg=web_traduccion_ok" in pg_tr.headers["location"]
+
+    # Traducción individual solicitando JSON (usado por el modal progresivo)
+    pg_tr_ajax = client.post(
+        "/control/configuracion/pagina/legal:terminos/traducir",
+        data={"target_lang": "en", "csrf": csrf},
+        headers={"Accept": "application/json"},
+    )
+    assert pg_tr_ajax.status_code == 200
+    ajax_data = pg_tr_ajax.json()
+    assert ajax_data["ok"] is True and ajax_data["page_key"] == "legal:terminos" and ajax_data["model"] == "test-gpt"
 
     monkeypatch.setattr(web_config, "restore_page_default", lambda pk, lang, actor: None)
     pg_rst = client.post("/control/configuracion/pagina/legal:terminos/restaurar", data={"lang": "en", "csrf": csrf}, follow_redirects=False)

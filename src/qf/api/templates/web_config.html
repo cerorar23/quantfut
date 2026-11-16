@@ -226,13 +226,15 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
       <form method="post" action="/control/configuracion/traducir-lote"
-            data-confirm="¿Traducir con APIMart todas las páginas pendientes o desactualizadas en los idiomas seleccionados?">
+            data-confirm="¿Traducir con APIMart todas las páginas pendientes o desactualizadas en los idiomas seleccionados?"
+            data-batch-translate="pending">
         {{ csrf_input(csrf) }}
         <input type="hidden" name="mode" value="pending">
         <button class="btn btn-primary btn-sm" type="submit">Traducir pendientes</button>
       </form>
       <form method="post" action="/control/configuracion/traducir-lote"
-            data-confirm="¿Sobrescribir TODAS las traducciones existentes regenerándolas desde el español con APIMart?">
+            data-confirm="¿Sobrescribir TODAS las traducciones existentes regenerándolas desde el español con APIMart?"
+            data-batch-translate="all">
         {{ csrf_input(csrf) }}
         <input type="hidden" name="mode" value="all">
         <button class="btn btn-outline-warning btn-sm" type="submit">Re-traducir todo</button>
@@ -314,6 +316,44 @@
       {% endfor %}
       </tbody>
     </table>
+  </div>
+</div>
+
+<div class="modal modal-blur fade" id="modal-traduccion-lote" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header">
+        <h5 class="modal-title" id="traduccion-modal-titulo">Traducción con APIMart</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" id="btn-cerrar-modal-x" style="display:none;"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div id="traduccion-status-texto" class="fw-medium text-truncate pe-2">Preparando cola de traducción...</div>
+          <div id="traduccion-contador" class="badge bg-primary-lt fs-5">0 / 0</div>
+        </div>
+        <div class="progress mb-3" style="height: 1.25rem;">
+          <div id="traduccion-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary fw-bold text-white" role="progressbar" style="width: 0%;">0%</div>
+        </div>
+        <div class="card card-sm bg-body-tertiary">
+          <div class="card-header py-2 d-flex justify-content-between align-items-center">
+            <span class="small fw-semibold text-secondary">Registro de avance</span>
+            <span class="badge bg-secondary-lt" id="traduccion-badge-estado">En espera</span>
+          </div>
+          <div class="card-body p-2" style="max-height: 240px; overflow-y: auto;" id="traduccion-log">
+            <!-- Entradas dinámicas -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <div>
+          <span class="text-secondary small" id="traduccion-pie-info">Procesamiento progresivo (evita límites de tiempo de Cloudflare).</span>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-danger" id="btn-cancelar-traduccion">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-finalizar-traduccion" style="display:none;">Listo y recargar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
