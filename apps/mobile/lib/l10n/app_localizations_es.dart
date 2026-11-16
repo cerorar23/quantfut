@@ -1792,12 +1792,24 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get mmOrderSettled => 'Acertados primero, de mayor a menor cuota';
+
+  @override
   String mmProb(int value) {
     return '$value% Prob.';
   }
 
   @override
   String get mmPublishedOdds => 'cuota publicada';
+
+  @override
+  String get mmResultLoss => 'Falló';
+
+  @override
+  String get mmResultPush => 'Devolución';
+
+  @override
+  String get mmResultWin => 'Acertó';
 
   @override
   String get mmScoresTitle => 'Marcadores más probables';
@@ -3277,6 +3289,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sportFamilyOthers => 'Otros';
 
   @override
+  String get sportFeaturedVip => 'Destacado reservado para VIP';
+
+  @override
   String get sportFootball => 'Fútbol';
 
   @override
@@ -3368,7 +3383,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sportTennis => 'Tenis';
 
   @override
+  String get sportVipBadge => 'VIP';
+
+  @override
   String get sportVipCall => 'Conoce los planes para ver más análisis.';
+
+  @override
+  String sportVipMarkets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mercados más con VIP',
+      one: '1 mercado más con VIP',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get startupFailed =>

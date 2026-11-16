@@ -18,6 +18,7 @@ import 'sport_props.dart';
 import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sport_vip_notice.dart';
 import 'sports_quotes.dart';
 
 /// Abre la ficha del partido como hoja inferior (misma forma que la de fútbol).
@@ -479,6 +480,7 @@ class _Predictions extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
+        SportVipNotice(event: event),
         Text(
           l10n.detailModelMarkets,
           style: const TextStyle(
@@ -841,7 +843,8 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
               builder: (context, snap) {
                 final done = snap.connectionState == ConnectionState.done;
                 final detail = snap.data;
-                final event = detail?.event ?? e;
+                // El detalle trae TODOS los mercados: pasan por el mismo acceso que el partido tenía en la cartelera.
+                final event = detail == null ? e : applyAccess(detail.event, e.access);
                 return ListView(
                   key: ValueKey('generic-detail-${e.sport}-${e.id}'),
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -879,6 +882,7 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
       case 'pronostico':
         final featured = featuredMarket(event);
         if (eligible.isEmpty) {
+          if (event.featuredVip || event.vipCount > 0) return [SportVipNotice(event: event)];
           return loading ? const [] : [SportNote(l10n.detailNoPicks), const SizedBox(height: 12)];
         }
         final principals = [
@@ -900,6 +904,7 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
             ),
             const SizedBox(height: 12),
           ],
+          SportVipNotice(event: event),
           for (final m in principals)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

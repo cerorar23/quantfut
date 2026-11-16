@@ -27,6 +27,8 @@ elif ! "$PY" -m py_compile $(find src scripts -name '*.py') 2>&1; then
     fail=1
 fi
 
+# `tests/` importa también el paquete de tenis (igual que CI: PYTHONPATH src:apps/tenis/src). En Windows el separador es `;`.
+SEP=":"; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) SEP=";";; esac
 echo "==> Tests"
 if [ -z "$PY" ]; then
     echo "    (sin Python en el PATH, se omite)"
@@ -34,7 +36,7 @@ elif ! "$PY" -c "import pytest" >/dev/null 2>&1; then
     echo "    ERROR: $PY no tiene pytest. Monta el entorno:"
     echo "           python -m venv .venv && .venv/Scripts/python.exe -m pip install -r requirements-dev.txt"
     fail=1
-elif ! out=$(PYTHONPATH=src "$PY" -m pytest tests -q 2>&1); then
+elif ! out=$(PYTHONPATH="src${SEP}apps/tenis/src" "$PY" -m pytest tests -q 2>&1); then
     echo "$out" | tail -20
     echo "    ERROR: hay tests fallando. Arréglalos antes de seguir."
     fail=1

@@ -1607,6 +1607,10 @@
       }
     }
   },
+  "mmOrderSettled": "Acertados primero, de mayor a menor cuota",
+  "@mmOrderSettled": {
+    "description": "Aviso del orden de los mercados de un partido ya jugado."
+  },
   "mmProb": "{value}% Prob.",
   "@mmProb": {
     "placeholders": {
@@ -1616,6 +1620,18 @@
     }
   },
   "mmPublishedOdds": "cuota publicada",
+  "mmResultLoss": "Falló",
+  "@mmResultLoss": {
+    "description": "Etiqueta de un mercado de un partido ya jugado cuyo pronóstico no se cumplió."
+  },
+  "mmResultPush": "Devolución",
+  "@mmResultPush": {
+    "description": "Etiqueta de un mercado de un partido ya jugado que se devuelve (ni acierto ni fallo)."
+  },
+  "mmResultWin": "Acertó",
+  "@mmResultWin": {
+    "description": "Etiqueta de un mercado de un partido ya jugado cuyo pronóstico se cumplió."
+  },
   "mmScoresTitle": "Marcadores más probables",
   "mmScoresVip": "Los marcadores más probables son para VIP.",
   "mmTitle": "Mercados del partido",
@@ -3065,6 +3081,10 @@
   },
   "sportDetailError": "No se pudo cargar el detalle del partido.",
   "sportFamilyOthers": "Otros",
+  "sportFeaturedVip": "Destacado reservado para VIP",
+  "@sportFeaturedVip": {
+    "description": "Aviso cuando el pronóstico destacado de un partido de NBA, tenis u otro deporte queda para cuentas VIP."
+  },
   "sportFootball": "Fútbol",
   "@sportFootball": {
     "description": "Nombre del deporte fútbol en el selector"
@@ -3145,7 +3165,20 @@
   "@sportTennis": {
     "description": "Nombre del deporte tenis en el selector"
   },
+  "sportVipBadge": "VIP",
+  "@sportVipBadge": {
+    "description": "Etiqueta corta en la fila de un partido cuyo destacado es solo para VIP."
+  },
   "sportVipCall": "Conoce los planes para ver más análisis.",
+  "sportVipMarkets": "{count, plural, one{1 mercado más con VIP} other{{count} mercados más con VIP}}",
+  "@sportVipMarkets": {
+    "description": "Aviso con el número de mercados de un partido que solo ven las cuentas VIP.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "startupFailed": "No pudimos iniciar QuantFut. Inténtalo de nuevo.",
   "startupLoading": "Iniciando QuantFut",
   "statAveragesNote": "Promedios de {homeN} partidos del local y {awayN} del visitante. La cobertura de remates, córners y xG puede ser parcial.",

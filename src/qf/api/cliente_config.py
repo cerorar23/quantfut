@@ -21,7 +21,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, ConfigDict
 
-from ..comercial import acceso_reglas, catalogo, mobile_updates, pantallas
+from ..comercial import acceso_cupos, acceso_reglas, catalogo, mobile_updates, pantallas
 from . import idiomas, mobile, web_config
 
 router = APIRouter(tags=['cliente'])
@@ -38,6 +38,7 @@ PUBLICAS: dict[str, frozenset[str]] = {
     'mobile_features': frozenset({'section', 'enabled', 'message'}),
     'acceso_reglas': frozenset({'prob_min', 'prob_max', 'free_fraction'}),
     'cliente_ajustes': frozenset({'dias_agenda'}),
+    'acceso_cupos': frozenset({'deporte_id', 'cliente', 'destacados_gratis_dia', 'mercados_gratis_partido'}),
     'deportes': frozenset({'deporte_id', 'orden', 'icono', 'color', 'secciones', 'nombre', 'slug', 'estado_web',
                            'estado_app'}),
     'deporte_mercados': frozenset({'deporte_id', 'familia_id', 'orden', 'nombre', 'subtitulo', 'visible_web',
@@ -53,6 +54,7 @@ PRIVADAS: dict[str, frozenset[str]] = {
     'mobile_features': frozenset({'updated_at'}),
     'acceso_reglas': frozenset({'regla_id', 'stream', 'vigente_desde', 'creado_por', 'creado_en', 'nota'}),
     'cliente_ajustes': frozenset({'id', 'updated_by', 'updated_at'}),
+    'acceso_cupos': frozenset({'updated_by', 'updated_at'}),
     'deportes': frozenset({'adaptador', 'updated_by', 'updated_at'}),
     'deporte_mercados': frozenset({'updated_by', 'updated_at'}),
     'pantalla_publicaciones': frozenset({'publicado_por', 'nota'}),
@@ -92,12 +94,19 @@ class Idiomas(_Modelo):
     estados: dict[str, str]
 
 
+class Cupo(_Modelo):
+    """Cupo de gratis de un deporte para este cliente (db/116). Un campo ausente = sin límite (todo gratis)."""
+    destacados_gratis_dia: int | None = None
+    mercados_gratis_partido: int | None = None
+
+
 class Acceso(_Modelo):
     probability_min: float
     probability_max: float
     high_probability_free_fraction: float
     ladder_free_count: int
     dias_agenda: int
+    cupos: dict[str, Cupo] = {}       # aditivo: por id de deporte; un deporte ausente va sin límite
 
 
 class Versiones(_Modelo):
@@ -216,6 +225,7 @@ def _pantallas(cliente: Cliente, lang: str, build: int | None) -> dict[str, dict
 def componer(cliente: Cliente, lang: str, build: int | None = None) -> Respuesta:
     cfg = web_config.get_settings()
     regla = acceso_reglas.vigente()   # la de hoy (UTC)
+    deportes = catalogo.deportes_para(cliente.value)
     resp = Respuesta(
         cliente=cliente, lang=lang,
         general=General(
@@ -227,8 +237,12 @@ def componer(cliente: Cliente, lang: str, build: int | None = None) -> Respuesta
                         estados={c: idiomas.estado(c) for c in web_config.IDIOMAS_VALIDOS}),
         acceso=Acceso(probability_min=regla.prob_min, probability_max=regla.prob_max,
                       high_probability_free_fraction=regla.free_fraction, ladder_free_count=1,
-                      dias_agenda=acceso_reglas.dias_agenda()),
-        deportes=[Deporte(**d) for d in catalogo.deportes_para(cliente.value)],
+                      dias_agenda=acceso_reglas.dias_agenda(),
+                      cupos={d: Cupo(destacados_gratis_dia=c.destacados_gratis_dia,
+                                     mercados_gratis_partido=c.mercados_gratis_partido)
+                             for d, c in acceso_cupos.para_cliente(
+                                 cliente.value, [x['id'] for x in deportes]).items()}),
+        deportes=[Deporte(**d) for d in deportes],
         pantallas=_pantallas(cliente, lang, build))
     if cliente is Cliente.app:
         v = mobile_updates.configuration()

@@ -161,10 +161,33 @@ class SportSpec {
   }
 }
 
+/// Cupo de gratis de un deporte para quien no tiene VIP (`acceso.cupos` de `/cliente/v1/config`, menú
+/// `/control/cupos`). Un número null = sin límite.
+class SportQuota {
+  const SportQuota({this.featuredPerDay, this.marketsPerMatch});
+
+  /// En cuántos partidos del día se ve el destacado (los de mayor probabilidad).
+  final int? featuredPerDay;
+
+  /// Cuántos mercados de cada partido se ven (los de mayor probabilidad; el destacado abierto cuenta como uno).
+  final int? marketsPerMatch;
+
+  bool get unlimited => featuredPerDay == null && marketsPerMatch == null;
+
+  static int? _count(Object? v) => v is int && v >= 0 ? v : null;
+
+  static SportQuota fromJson(Object? raw) => raw is Map
+      ? SportQuota(
+          featuredPerDay: _count(raw['destacados_gratis_dia']),
+          marketsPerMatch: _count(raw['mercados_gratis_partido']),
+        )
+      : const SportQuota();
+}
+
 /// Deportes que ofrece la app, en el orden del servidor. Nunca está vacío: sin catálogo del servidor ni del
 /// disco vale la copia de fábrica (`assets/model/cliente_config_defecto.json`) y, si ni el asset carga, [builtIn].
 class SportCatalog {
-  SportCatalog._(this.sports, [this.screens]) : assert(sports.isNotEmpty);
+  SportCatalog._(this.sports, [this.screens, this.quotas = const {}]) : assert(sports.isNotEmpty);
 
   /// Los tres deportes de fábrica, para el primer fotograma y las pruebas. Debe coincidir con el asset
   /// (`test/sport_catalog_test.dart` lo comprueba).
@@ -197,10 +220,23 @@ class SportCatalog {
         final byOrder = a.$2.order.compareTo(b.$2.order);
         return byOrder != 0 ? byOrder : a.$1.compareTo(b.$1);
       });
-    return SportCatalog._([for (final e in indexed) e.$2], ScreenDefinitions.fromJson(json['pantallas']));
+    final access = json['acceso'];
+    final rawQuotas = access is Map ? access['cupos'] : null;
+    return SportCatalog._(
+      [for (final e in indexed) e.$2],
+      ScreenDefinitions.fromJson(json['pantallas']),
+      {
+        if (rawQuotas is Map)
+          for (final entry in rawQuotas.entries)
+            if (entry.key is String) entry.key as String: SportQuota.fromJson(entry.value),
+      },
+    );
   }
 
   final List<SportSpec> sports;
+
+  /// Cupo de gratis por deporte (`acceso.cupos`, menú `/control/cupos`); un deporte ausente va sin límite.
+  final Map<SportId, SportQuota> quotas;
 
   /// Definición de pantallas del servidor (`pantallas`); `null` mientras no haya ninguna publicada: cada pantalla
   /// conserva entonces su orden en código.
