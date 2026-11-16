@@ -1,5 +1,5 @@
 import { imageMarkup, playerPhoto } from './sport-images.js?v=imagenes-20261028b';
-import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLiquidado, withDetalle, familiasDeEvento } from './sports-data.js?v=generica-20261113';
+import { withNbaMarkets, marketQuote, featuredSportMarket, hayLiquidado, ordenLiquidado, withDetalle, familiasDeEvento } from './sports-data.js?v=cupos-20261116';
 // Ventana única de NBA y tenis: pronóstico y estadísticas del mismo evento, con el diseño de la de fútbol.
 // Solo presenta lo que publican los motores; no calcula probabilidades ni inventa cuotas.
 // La «cuota del modelo» es 1 ÷ probabilidad y se rotula como tal: ninguna casa publica estos mercados.
@@ -79,6 +79,7 @@ export function createSportWindow(ctx) {
   function pickCard(event, feat) {
     const quote = feat ? marketQuote(feat) : null;
     const rule = 'cuota de 1,20 o más y probabilidad de 75 % o más';
+    if (!feat && event.destacado_vip) return `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Destacado reservado para VIP</h2><p class="win-sub">El pronóstico destacado de este partido es para cuentas VIP.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button>`;
     return feat
       ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><div class="win-pick-grid"><div>${feat.player ? imageMarkup(portrait(event, feat), feat.player, esc) : ""}<h2>${esc(feat.selection)}</h2><p class="win-sub">${esc(feat.label)} · ${esc(event.league)} · ${esc(event.home)} vs ${esc(event.away)}</p></div><div class="win-odd"><small>${quote.model ? 'Cuota del modelo' : feat.price_book ? 'Cuota de referencia' : 'Cuota de la casa'}</small><strong>${fmtOdds(quote.price)}</strong><em>${quote.model ? '1 ÷ probabilidad' : esc(quote.source)}</em></div></div><div class="win-prob"><b>${fmtPct(feat.probability)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.probability * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.probability * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${outcomeBadge(feat)}</p>`
       : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Sin pronóstico destacado</h2><p class="win-sub">${event.markets.length && event.markets.every(m => m.revised) ? 'Los mercados de este evento son revisiones posteriores al inicio y no cuentan como pronóstico previo.' : `Ningún mercado publicado de este evento cumple la regla del destacado: ${rule}.`}</p>`;
@@ -89,11 +90,14 @@ export function createSportWindow(ctx) {
       return `<tr${m === feat ? ' class="win-feat"' : ''}><td>${esc(m.label)}</td><td>${m.player ? imageMarkup(portrait(event, m), m.player, esc) : ""}${esc(m.selection)}${m === feat ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}${m.estimate != null && event.sport === 'nba' ? `<small class="win-cell-note">Proyección ${num(m.estimate)}</small>` : ''}${m.conditional ? '<small class="win-cell-note">Si el jugador participa</small>' : ''}</td><td class="n">${fmtPct(m.probability)}${m.push_probability ? `<small class="win-cell-note">Devol. ${fmtPct(m.push_probability)}</small>` : ''}</td><td class="n">${q.price != null ? `${fmtOdds(q.price)}<small class="win-cell-note">${esc(q.source)}</small>` : '—'}</td><td>${outcomeBadge(m)}</td></tr>`;
     };
   }
+  // Mercados que el cupo del deporte deja para VIP (`conAcceso`): solo su nombre, como las filas con candado de fútbol.
+  const vipLine = m => `<tr class="win-lock"><td>${esc(m.label || 'Mercado')}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`;
+  const vipBar = n => (n ? `<div class="win-vipbar"><p><strong>${n} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : '');
   function masMercados(all, criterio) {
     return all.length > ROW_LIMIT ? `<div class="win-vipbar"><p>${state.winAll ? `Se muestran los ${all.length} mercados.` : `Se muestran ${ROW_LIMIT} de ${all.length} mercados, ${criterio}.`}</p><button type="button" class="cyber-btn cyber-btn--sm" data-win-all="1">${state.winAll ? 'Ver menos' : 'Ver todos'}</button></div>` : '';
   }
-  function tablaMercados(shown, line, nba) {
-    return `<div class="win-table ${nba ? 'win-nba-table' : ''}" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>`;
+  function tablaMercados(shown, line, nba, vip = []) {
+    return `<div class="win-table ${nba ? 'win-nba-table' : ''}" tabindex="0" role="region" aria-label="Mercados del evento"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}${vip.map(vipLine).join('')}</tbody></table></div>${vipBar(vip.length)}`;
   }
 
   // ---- pronóstico (izquierda)
@@ -102,6 +106,7 @@ export function createSportWindow(ctx) {
     if (event.markets_status === 'error') return '<p class="win-sub" role="status">No se pudieron cargar los mercados. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p>';
     const feat = featuredSportMarket(event);
     const card = pickCard(event, feat);
+    const vip = event.vip_markets || [];
     const families = [...new Set(event.markets.map(m => family(event, m)))].sort((a, b) => FAMILY_ORDER.indexOf(a) - FAMILY_ORDER.indexOf(b));
     const fam = families.includes(state.winSportFam) ? state.winSportFam : families[0];
     const nba = event.sport === 'nba' && event.v2;
@@ -114,10 +119,10 @@ export function createSportWindow(ctx) {
     const line = marketLine(event, feat);
     const more = masMercados(all, criterio);
     const projections = playerProjections(event);
-    if (event.v2 && !event.markets.length) return projections || (event.markets_status === 'ready' ? '<p class="win-sub">Todavía no hay mercados publicados para este partido.</p>' : '');
+    if (event.v2 && !event.markets.length && !vip.length) return projections || (event.markets_status === 'ready' ? '<p class="win-sub">Todavía no hay mercados publicados para este partido.</p>' : '');
     const controls = nba ? `<div class="win-market-tools"><div class="win-chips" role="group" aria-label="Filtrar por cuota"><button type="button" class="chip ${!state.winAllOdds ? 'selected' : ''}" data-win-odds="min" aria-pressed="${!state.winAllOdds}">Cuotas ≥ 1,20</button><button type="button" class="chip ${state.winAllOdds ? 'selected' : ''}" data-win-odds="all" aria-pressed="${Boolean(state.winAllOdds)}">Todas las cuotas</button></div><p class="win-sub">${liquidado ? 'Acertados primero, de mayor a menor cuota' : 'De mayor a menor probabilidad'}</p></div>` : '';
-    const markets = nba && fam !== 'Partido' ? playerMarkets(event, all, feat, fam)
-      : all.length ? `${tablaMercados(shown, line, nba)}${more}`
+    const markets = nba && fam && fam !== 'Partido' ? `${playerMarkets(event, all, feat, fam)}${vipBar(vip.length)}`
+      : all.length || vip.length ? `${tablaMercados(shown, line, nba, vip)}${more}`
       : '<p class="win-sub" role="status">No hay mercados con la cuota seleccionada en esta categoría.</p>';
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>
       <section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${families.map(f => `<button type="button" class="chip ${fam === f ? 'selected' : ''}" data-win-sport-fam="${esc(f)}" aria-pressed="${fam === f}">${esc(f)}</button>`).join('')}</div></div>
@@ -665,6 +670,7 @@ export function createSportWindow(ctx) {
     if (event.markets_status === 'loading') return `${cabecera}<p class="win-sub" role="status">Cargando mercados del partido…</p></section>`;
     if (event.markets_status === 'error') return `${cabecera}<p class="win-sub" role="status">No se pudieron cargar los mercados. <button type="button" class="text-link" data-action="refresh-public">Reintentar</button></p></section>`;
     const familias = familiasDeEvento(event, info.orden || []);
+    if (!familias.length && event.vip_markets?.length) return `${cabecera}${tablaMercados([], () => '', false, event.vip_markets)}</section>`;
     if (!familias.length) return `${cabecera}<p class="win-sub">Todavía no hay mercados publicados para este partido.</p></section>`;
     const feat = featuredSportMarket(event);
     const actual = familias.find(f => f.id === state.winSportFam) || familias[0];
@@ -673,7 +679,7 @@ export function createSportWindow(ctx) {
     const all = ordenLiquidado(porProbabilidad, { resultado: m => m.outcome, cuota: m => marketQuote(m).price, prob: m => m.probability });
     const shown = state.winAll ? all : all.slice(0, ROW_LIMIT);
     const chips = familias.length > 1 ? `<div class="win-chips" role="group" aria-label="Familia de mercado">${familias.map(f => `<button type="button" class="chip ${actual.id === f.id ? 'selected' : ''}" data-win-sport-fam="${esc(f.id)}" aria-pressed="${actual.id === f.id}">${esc(name(f.id))}</button>`).join('')}</div>` : '';
-    return `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3>${chips}</div>${tablaMercados(shown, marketLine(event, feat), false)}${masMercados(all, liquidado ? 'acertados primero, de mayor a menor cuota' : 'de mayor a menor probabilidad')}</section>`;
+    return `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3>${chips}</div>${tablaMercados(shown, marketLine(event, feat), false, event.vip_markets || [])}${masMercados(all, liquidado ? 'acertados primero, de mayor a menor cuota' : 'de mayor a menor probabilidad')}</section>`;
   }
   function pronosticoGenerico(event) {
     return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${pickCard(event, featuredSportMarket(event))}</article>`;

@@ -1,6 +1,6 @@
 import { publicForecasts, forecastGames, featuredMarket } from './fichas-data.js?v=real-20261029';
 import { createHistorialViews } from './historial-views.js?v=hist-neto-20261115';
-import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=generica-20261113';
+import { featuredSportMarket, bestBySafety, marketQuote, withNbaMarkets, HISTORY_SINCE } from './sports-data.js?v=cupos-20261116';
 
 export function createHubViews(ctx) {
   const {state,esc,ensureHome,addDays,localDay,dayLabel,realDate,realTime,fmtOdds,fmtPct}=ctx;
@@ -53,10 +53,10 @@ export function createHubViews(ctx) {
   function sources(offset=state.dayOffset) {
     const home=ensureHome(offset), nba=ensureSport('nba'),tenis=ensureSport('tenis');
     const generic=Object.fromEntries(genericIds().map(id=>[id,ensureSport(id)]));
-    return {home,nba,tenis,generic,events:[...football(home),...(nba.events||[]).filter(e=>e.markets.length),...(tenis.events||[]),...Object.values(generic).flatMap(g=>(g.events||[]).filter(e=>e.markets.length))]};
+    return {home,nba,tenis,generic,events:[...football(home),...(nba.events||[]).filter(e=>e.markets.length||e.vip_markets?.length),...(tenis.events||[]),...Object.values(generic).flatMap(g=>(g.events||[]).filter(e=>e.markets.length||e.vip_markets?.length))]};
   }
   const eventKey=e=>`${e.sport}:${e.id}`;
-  const featured=e=>e.sport==='nba'&&e.v2?featuredSportMarket(e):e.generico?(featuredSportMarket(e)||e.markets.find(m=>m.principal)||e.markets[0]):e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
+  const featured=e=>e.destacado_vip?null:e.sport==='nba'&&e.v2?featuredSportMarket(e):e.generico?(featuredSportMarket(e)||e.markets.find(m=>m.principal)||e.markets[0]):e.markets.find(m=>m.id==='winner'||m.market==='winner')||e.markets[0];
   const timing=e=>e.status==='finished'?'Finalizado':e.status==='awaiting_result'?'Esperando resultado':new Date(e.start)<=new Date()?'Hora prevista superada':'Próximo';
   const action=e=>e.sport==='futbol'?`data-real-match="${esc(e.id)}"`:`data-sport-event="${esc(eventKey(e))}"`;
 
@@ -137,7 +137,7 @@ export function createHubViews(ctx) {
     const extra=event.locked_count?`<button type="button" class="text-link win-pk-more" data-route="planes">+${event.locked_count} análisis con Plus ↗</button>`:'';
     const head=`<header class="win-pk-top"><span class="win-pk-sport">${iconOf(event.sport)}<b>${sportLabel(event)}</b></span><span class="win-pk-league">${leagueLabel(event)}</span><span class="win-pk-when"><time class="win-pk-time" datetime="${esc(event.start)}">${realDate(event.start)} · ${realTime(event.start)}</time>${resultBadge(m)}</span></header>`;
     if((event.sport==='nba'&&event.v2||event.generico)&&!m) {
-      const note=event.markets_status==='loading'?'Consultando mercados…':event.markets_status==='error'?'No se pudieron cargar los mercados.':event.markets.length?'Sin pronóstico destacado':'Todavía no hay mercados publicados.';
+      const note=event.markets_status==='loading'?'Consultando mercados…':event.markets_status==='error'?'No se pudieron cargar los mercados.':event.destacado_vip?'Destacado reservado para VIP':event.markets.length?'Sin pronóstico destacado':'Todavía no hay mercados publicados.';
       return `<article class="cyber-card win-pk-card is-${event.sport}">${head}${teamsRow(event)}<p class="win-sub" role="status">${note}</p><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--green win-pk-go" ${action(event)}>Ver análisis y mercados ↗</button></footer></article>`;
     }
     if(locked)return `<article class="cyber-card cyber-card--yellow win-pk-card is-locked is-${event.sport}">${head}${teamsRow(event)}<div class="win-pk-pick"><div class="win-pk-sel"><small>Pronóstico</small><strong class="win-pk-masked">${lockIcon}<span>Contenido reservado</span></strong></div><div class="win-pk-odds is-prob"><small>Acceso</small><strong>Plus</strong><em>Selección y cuota privadas</em></div></div><footer class="win-pk-foot">${badgeFor(event)}<button type="button" class="cyber-btn cyber-btn--sm cyber-btn--yellow" data-route="planes">Consultar acceso Plus ↗</button></footer></article>`;
