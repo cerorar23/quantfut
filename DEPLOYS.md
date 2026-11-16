@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 19:00 UTC · Separación de estáticos del rate limit y aumento a 120 req/min · API (PR #466; `main` `28833c3d`)
+- **Motivo:** al navegar o recargar páginas web (p. ej. `/en/`), los ~25 archivos estáticos de la raíz (`app.js`, CSS, etc.) agotaban el cupo global de 60/min por IP devolviendo HTTP 429 («Demasiadas solicitudes, intenta más tarde»).
+- **Cambio:** recursos estáticos del frontend (`.js`, `.css`, imágenes, fuentes, etc.) pasan al scope `escudos` con contador propio (10× el límite base). El límite general por defecto se eleva a 120/min. Se añade soporte de traducción progresiva en `/control/configuracion` para evitar timeouts 524 de Cloudflare.
+- Pre-vuelo: imagen `quantfut-api:28833c3d` construida en VPS desde `origin/main`, ensayada (`modulos con error: ninguno`, `rutas: 316`) y desplegada recreando **solo `api`**. Worker sin tocar (`da7e5f40`).
+- Verificado: salud 200 en `http://127.0.0.1:8000/health`; contenedor corriendo `quantfut-api:28833c3d`; `https://pronosticosdeportivos.pro/en/` responde 200; 10 peticiones seguidas a `/app.js` seguidas de `/en/` responden 200 sin 429.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-195752.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-16 17:49 UTC · Corrección APIMart streaming en /control/configuracion · API (PR #463; `main` `a58b0980`)
 - **Motivo:** el botón «Probar conexión APIMart» devolvía «APIMart devolvió una respuesta que no es JSON». APIMart activa streaming por defecto (`stream: true`) si no se apaga expresamente en el cuerpo; el backend recibía eventos SSE (`data: ...`) y fallaba al parsearlos como JSON único.
 - **Cambio:** `stream: False` explícito en `_chat_completion`, compatibilidad con envoltorio `data` oficial de APIMart, `follow_redirects=True` en `httpx.Client`, reporte claro de código HTTP si la respuesta no es JSON y pruebas de cobertura. Sin cambios de base de datos.
