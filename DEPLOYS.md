@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 17:49 UTC · Corrección APIMart streaming en /control/configuracion · API (PR #463; `main` `a58b0980`)
+- **Motivo:** el botón «Probar conexión APIMart» devolvía «APIMart devolvió una respuesta que no es JSON». APIMart activa streaming por defecto (`stream: true`) si no se apaga expresamente en el cuerpo; el backend recibía eventos SSE (`data: ...`) y fallaba al parsearlos como JSON único.
+- **Cambio:** `stream: False` explícito en `_chat_completion`, compatibilidad con envoltorio `data` oficial de APIMart, `follow_redirects=True` en `httpx.Client`, reporte claro de código HTTP si la respuesta no es JSON y pruebas de cobertura. Sin cambios de base de datos.
+- Pre-vuelo: imagen `quantfut-api:a58b0980` construida en VPS, ensayada (`modulos con error: ninguno`, `rutas: 315`) y desplegada recreando **solo `api`**. Worker sin tocar (`da7e5f40`).
+- Verificado: salud 200 en `http://127.0.0.1:8000/health`; contenedor corriendo `quantfut-api:a58b0980`.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-184859.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-16 10:16 UTC · El destacado de la app es el de la web · API (PR #459; `main` `045e2918`)
 - **Motivo:** en Albacete–Celta II la web destacaba la doble oportunidad (78 %, 1,23) y la app decía que ningún pronóstico entraba en el destacado: la app lo calculaba con sus pronósticos abiertos y la web lo recibía ya elegido por el servidor. Decisión del titular: igualarlos.
 - **Cambio:** `mercados.destacado_app` en la ficha del partido (`pick_de_destacado` sobre la regla web). La app lo pinta y solo usa su regla local si el servidor no lo manda. La lista de mercados y sus candados no cambian. Sin cambios de base de datos.
