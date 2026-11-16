@@ -4056,6 +4056,12 @@ abstract class AppLocalizations {
   /// **'{hits} de {total} pronósticos'**
   String picksTrustDetail(int hits, int total);
 
+  /// No description provided for @picksTrustMonthTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Acierto de este mes'**
+  String get picksTrustMonthTitle;
+
   /// Acierto que prometía la probabilidad media de los pronósticos.
   ///
   /// In es, this message translates to:

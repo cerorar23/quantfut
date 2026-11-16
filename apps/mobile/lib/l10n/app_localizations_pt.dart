@@ -2462,6 +2462,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get picksTrustMonthTitle => 'Acerto deste mês';
+
+  @override
   String picksTrustPromised(String percent) {
     return 'Prometido: $percent';
   }

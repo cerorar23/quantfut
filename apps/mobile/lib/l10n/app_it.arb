@@ -656,6 +656,7 @@
   "picksTomorrow": "Domani",
   "picksTrainingReasons": "Modello in addestramento · {reasons}",
   "picksTrustDetail": "{hits} su {total} pronostici",
+  "picksTrustMonthTitle": "Percentuale di successo del mese",
   "picksTrustPromised": "Promesso: {percent}",
   "picksTrustTitle": "Tasso di successo storico",
   "predictionsSealedAt": "Sigillato {when}",

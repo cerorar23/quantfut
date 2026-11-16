@@ -21,10 +21,12 @@ String marketFamily(SportMarket m) => m.family ?? m.market ?? m.id.split('-').fi
 /// con resultado `win` o `loss`; `push` y sin resultado no cuentan. Toda familia con algún
 /// mercado aparece, aunque no tenga resueltos todavía.
 Map<String, ({int won, int resolved})> hitRateByFamily(
-  List<SportEvent> events,
-) {
+  List<SportEvent> events, {
+  DateTime? since,
+}) {
   final out = <String, ({int won, int resolved})>{};
   for (final e in events) {
+    if (since != null && e.start.toLocal().isBefore(since)) continue;
     for (final m in e.markets) {
       final key = marketFamily(m);
       var (:won, :resolved) = out[key] ?? (won: 0, resolved: 0);

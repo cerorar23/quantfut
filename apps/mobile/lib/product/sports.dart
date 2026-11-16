@@ -176,8 +176,8 @@ class SportCatalog {
       icon: Icons.sports_soccer,
       streams: {'high', 'ladder', 'parley'},
     ),
-    SportSpec(id: kNba, order: 2, accent: kNbaAccent, icon: Icons.sports_basketball, streams: {'high'}),
-    SportSpec(id: kTennis, order: 3, accent: kTennisAccent, icon: Icons.sports_tennis, streams: {'high'}),
+    SportSpec(id: kNba, order: 2, accent: kNbaAccent, icon: Icons.sports_basketball, streams: {'high', 'ladder', 'parley'}),
+    SportSpec(id: kTennis, order: 3, accent: kTennisAccent, icon: Icons.sports_tennis, streams: {'high', 'ladder', 'parley'}),
   ]);
 
   /// Lee la respuesta de `/cliente/v1/config`. `null` si no es utilizable (no es un mapa, sin `deportes` o sin

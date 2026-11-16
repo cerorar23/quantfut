@@ -2317,6 +2317,7 @@
       }
     }
   },
+  "picksTrustMonthTitle": "Acierto de este mes",
   "picksTrustPromised": "Prometido: {percent}",
   "@picksTrustPromised": {
     "description": "Acierto que prometía la probabilidad media de los pronósticos.",

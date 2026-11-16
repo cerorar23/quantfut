@@ -72,7 +72,7 @@ def test_la_semilla_es_valida_y_fiel_a_lo_de_hoy():
     por = {d['deporte_id']: d for d in SEMILLA}
     assert [d['orden'] for d in SEMILLA] == [1, 2, 3]
     assert por['futbol']['secciones'] == ['high', 'ladder', 'parley']
-    assert por['nba']['secciones'] == por['tenis']['secciones'] == ['high']
+    assert por['nba']['secciones'] == por['tenis']['secciones'] == ['high', 'ladder', 'parley']
     assert (por['futbol']['color'], por['nba']['color'], por['tenis']['color']) == ('#22d3ee', '#b58cff', '#d4f53c')
     assert por['futbol']['slug'] == {'es': 'futbol', 'en': 'futbol', 'pt': 'futebol'}
     assert [f['familia_id'] for f in por['nba']['familias']] == [

@@ -656,6 +656,7 @@
   "picksTomorrow": "Tomorrow",
   "picksTrainingReasons": "Model in training · {reasons}",
   "picksTrustDetail": "{hits} of {total} predictions",
+  "picksTrustMonthTitle": "This month's hit rate",
   "picksTrustPromised": "Promised: {percent}",
   "picksTrustTitle": "Hit rate to date",
   "predictionsSealedAt": "Sealed {when}",
