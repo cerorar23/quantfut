@@ -37,6 +37,12 @@ def enabled() -> bool:
     return bool(os.getenv("WHOP_API_KEY") and os.getenv("WHOP_WEBHOOK_SECRET"))
 
 
+def environment() -> str:
+    """'sandbox' si la API apunta al sandbox de Whop (sandbox-api.whop.com); si no, 'production'.
+    El formulario de pago del navegador debe hablar con el mismo entorno que el servidor."""
+    return "sandbox" if "sandbox" in API_BASE else "production"
+
+
 # --- Firma de webhooks (Standard Webhooks: HMAC-SHA256 de "{id}.{timestamp}.{cuerpo}") -------------
 
 def verify_signature(secret: str, headers: dict, body: bytes, now: float | None = None) -> None:

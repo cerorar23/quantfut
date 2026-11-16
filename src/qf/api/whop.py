@@ -19,7 +19,7 @@ def config(request: Request, response: Response):
     régimen de consentimiento (opt-in / opt-out, según el país). Varía por visita: nunca se cachea."""
     response.headers["Cache-Control"] = "private, no-store"
     response.headers["Vary"] = "CF-IPCountry"
-    return {"enabled": whop.enabled(), "pixelId": os.getenv("META_PIXEL_ID") or None,
+    return {"enabled": whop.enabled(), "environment": whop.environment(), "pixelId": os.getenv("META_PIXEL_ID") or None,
             "consentRegime": meta_consent.regimen_from_request(request)}
 
 

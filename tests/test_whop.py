@@ -77,6 +77,25 @@ def test_webhook_cerrado_sin_secreto(monkeypatch):
     assert client.post("/webhooks/whop", content=b"{}").status_code == 503
 
 
+def test_entorno_sandbox_solo_si_la_api_apunta_al_sandbox(monkeypatch):
+    monkeypatch.setattr(whop, "API_BASE", "https://api.whop.com/api/v1")
+    assert whop.environment() == "production"
+    monkeypatch.setattr(whop, "API_BASE", "https://sandbox-api.whop.com/api/v1")
+    assert whop.environment() == "sandbox"
+
+
+def test_config_publica_el_entorno_para_que_el_formulario_hable_con_el_mismo(monkeypatch):
+    monkeypatch.setattr(whop, "enabled", lambda: True)
+    app = FastAPI()
+    app.include_router(api.router)
+    app.dependency_overrides[api.api.require_enabled] = lambda: None
+    for base, esperado in (("https://api.whop.com/api/v1", "production"),
+                           ("https://sandbox-api.whop.com/api/v1", "sandbox")):
+        monkeypatch.setattr(whop, "API_BASE", base)
+        body = TestClient(app).get("/app/v1/whop/config").json()
+        assert body["environment"] == esperado and body["enabled"] is True
+
+
 def test_evento_web_de_meta_lleva_los_parametros_de_emq():
     row = {"event_name": "Purchase", "event_id": "purchase:ch_1", "action_source": "website",
            "event_time": datetime(2026, 10, 18, 12, tzinfo=timezone.utc),
