@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from . import cuentas as api, ratelimit
-from ..comercial import meta_consent, whop
+from ..comercial import meta_consent, pasarelas, whop
 
 router = APIRouter(prefix="/app/v1/whop", tags=["whop"], dependencies=[Depends(api.require_enabled)])
 webhooks = APIRouter(tags=["whop"], include_in_schema=False)
@@ -44,17 +44,30 @@ def checkout(body: CheckoutIn, request: Request, account: dict = Depends(api.cur
         raise HTTPException(status, {"code": error.code, "message": error.message}) from None
 
 
-@webhooks.post("/webhooks/whop")
-async def receive(request: Request):
-    secret = os.getenv("WHOP_WEBHOOK_SECRET", "")
-    if not secret:
+async def _recibir(request: Request, modo: str):
+    try:
+        creds = pasarelas.credenciales(modo)
+    except Exception:  # noqa: BLE001 — clave maestra ausente o dato ilegible: webhook sin configurar
+        creds = None
+    if not creds or not creds["webhook_secret"]:
         raise HTTPException(503, {"code": "pagos_deshabilitados", "message": "Webhook no configurado"})
     body = await request.body()
     try:
-        whop.verify_signature(secret, {k.lower(): v for k, v in request.headers.items()}, body)
+        whop.verify_signature(creds["webhook_secret"], {k.lower(): v for k, v in request.headers.items()}, body)
         event = whop.parse(body)
     except whop.WhopError as error:
         raise HTTPException(400, {"code": error.code, "message": error.message}) from None
     # Un fallo aquí devuelve 500 y Whop reintenta (el webhook-id solo se registra si todo salió bien).
-    result = whop.handle_event(request.headers["webhook-id"], event)
+    result = whop.handle_event(request.headers["webhook-id"], event, modo)
     return {"ok": True, **{k: v for k, v in result.items() if k == "estado"}}
+
+
+@webhooks.post("/webhooks/whop")
+async def receive(request: Request):
+    return await _recibir(request, "live")
+
+
+@webhooks.post("/webhooks/whop-sandbox")
+async def receive_sandbox(request: Request):
+    """Webhook de pruebas: otro secreto (el del sandbox) y solo concede a cuentas de prueba."""
+    return await _recibir(request, "sandbox")

@@ -25,9 +25,9 @@ export function destroy() {
 }
 
 /** Monta el formulario de pago en `target` (selector o elemento). */
-export async function mount(target, { checkoutId, email, returnUrl, onComplete, onReady, onError }) {
+export async function mount(target, { checkoutId, environment, email, returnUrl, onComplete, onReady, onError }) {
   await load();
   destroy();
-  handle = window.WhopElements({ locale: 'es', appearance: APPEARANCE }).checkout.create({ checkoutConfiguration: checkoutId, returnUrl, onComplete });
+  handle = window.WhopElements({ locale: 'es', appearance: APPEARANCE, ...(environment === 'sandbox' ? { environment: 'sandbox' } : {}) }).checkout.create({ checkoutConfiguration: checkoutId, returnUrl, onComplete });
   handle.create('checkout', { buyerEmail: email || '', onReady, onError }).mount(target);
 }

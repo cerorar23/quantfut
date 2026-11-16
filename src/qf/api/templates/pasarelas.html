@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_input %}
+{% block title %}Pasarelas de pago{% endblock %}
+{% block pretitle %}Cobros{% endblock %}
+{% block heading %}Pasarelas de pago · Whop{% endblock %}
+{% block content %}
+{% if aviso %}<div class="alert alert-{{ aviso[0] }}">{{ aviso[1] }}</div>{% endif %}
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+{% if not clave_maestra %}
+<div class="alert alert-warning">Falta <code>QF_SECRETS_KEY</code> en el servidor: no se pueden guardar claves aquí.
+  Mientras tanto producción sigue usando las variables de entorno.</div>
+{% endif %}
+
+<div class="card mb-4"><div class="card-body">
+  <p class="mb-2"><strong>Cómo funciona.</strong> Los clientes <strong>siempre</strong> pagan en producción. El modo de prueba
+     (sandbox) solo lo usan las cuentas que añadas abajo: al pagar, esas cuentas van al sandbox de Whop con tarjetas de prueba y
+     no se cobra dinero real. No hay un interruptor global, porque con la tarjeta de prueba cualquier visitante obtendría acceso
+     Plus gratis.</p>
+  <p class="text-secondary mb-0">Las claves se guardan cifradas y solo se muestran sus últimos 4 caracteres. Déjalas vacías para
+     conservar las actuales.</p>
+</div></div>
+
+<div class="row g-4 mb-4">
+{% for m in modos %}
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h3 class="card-title">{{ 'Producción (cobros reales)' if m.modo == 'live' else 'Sandbox (pruebas)' }}</h3>
+        <div class="card-actions">
+          {% if m.api_key_ok and m.webhook_secret_ok %}<span class="badge bg-green-lt">Configurado</span>
+          {% else %}<span class="badge bg-yellow-lt">Incompleto</span>{% endif %}
+        </div>
+      </div>
+      <form class="card-body" method="post" action="/control/pasarelas/{{ m.modo }}"
+            data-confirm="¿Guardar las claves de {{ 'producción' if m.modo == 'live' else 'sandbox' }}?" autocomplete="off">
+        {{ csrf_input(csrf) }}
+        <div class="mb-3">
+          <label class="form-label">API key {% if m.api_key %}<code>{{ m.api_key }}</code>{% endif %}</label>
+          <input class="form-control" type="password" name="api_key" placeholder="apik_…" autocomplete="new-password">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Secreto del webhook {% if m.webhook_secret %}<code>{{ m.webhook_secret }}</code>{% endif %}</label>
+          <input class="form-control" type="password" name="webhook_secret" placeholder="ws_…" autocomplete="new-password">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Cuenta de Whop (<code>biz_…</code>, opcional)</label>
+          <input class="form-control" name="account_id" value="{{ m.account_id }}" placeholder="biz_…">
+        </div>
+        <div class="mb-3 small text-secondary">URL del webhook en Whop:<br>
+          <code>{{ urls[m.modo] }}</code><br>
+          Eventos: payment.succeeded, refund.created, refund.updated, membership.updated, membership.deactivated.</div>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+        {% if m.actualizado_por %}<span class="small text-secondary ms-2">Última vez: {{ m.actualizado_por }},
+          {{ m.actualizado_en|fecha }}</span>{% endif %}
+      </form>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><h3 class="card-title">Planes del sandbox</h3></div>
+  <div class="card-body">
+    <p class="text-secondary">Los planes de producción no existen en el sandbox: crea cada plan allí y pega su <code>plan_…</code>.</p>
+    {% for p in planes %}
+    <form class="d-flex flex-wrap align-items-center gap-3 mb-2" method="post" action="/control/pasarelas-planes/{{ p.plan_code }}">
+      {{ csrf_input(csrf) }}
+      <span style="min-width:10rem"><code>{{ p.plan_code }}</code> · {{ p.name }}</span>
+      <input class="form-control form-control-sm" style="max-width:22rem" name="plan_id" placeholder="plan_…"
+             value="{{ p.whop_plan_id_sandbox or '' }}" aria-label="Plan de sandbox de {{ p.name }}">
+      <button class="btn btn-sm" type="submit">Guardar</button>
+    </form>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><h3 class="card-title">Cuentas que pagan en el sandbox</h3></div>
+  <div class="card-body">
+    <form class="d-flex gap-2 mb-3" method="post" action="/control/pasarelas-cuentas">
+      {{ csrf_input(csrf) }}
+      <input class="form-control" style="max-width:24rem" type="email" name="email" required placeholder="correo de la cuenta de prueba">
+      <button class="btn" type="submit">Añadir</button>
+    </form>
+    {% if cuentas %}
+    <table class="table table-vcenter card-table"><tbody>
+      {% for a in cuentas %}
+      <tr><td>{{ a.email }}</td><td class="text-secondary small">{{ a.agregada_por }} · {{ a.creada_en|fecha }}</td>
+        <td class="text-end">
+          <form method="post" action="/control/pasarelas-cuentas/{{ a.account_id }}/quitar" data-confirm="¿Quitar esta cuenta del sandbox?">
+            {{ csrf_input(csrf) }}<button class="btn btn-sm btn-outline-danger" type="submit">Quitar</button>
+          </form></td></tr>
+      {% endfor %}
+    </tbody></table>
+    {% else %}<p class="text-secondary mb-0">Ninguna: todos pagan en producción.</p>{% endif %}
+    <p class="small text-secondary mt-3 mb-0">Los pagos del sandbox dan acceso real a la cuenta de prueba pero con importe 0, sin
+      contar como ingreso y sin avisar a Meta. Quita la cuenta cuando termines para que vuelva a pagar en producción.</p>
+  </div>
+</div>
+{% endblock %}
