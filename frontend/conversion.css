@@ -702,7 +702,8 @@
 .co-pay-button { min-height: 52px; margin-top: 14px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .co-pay-button:disabled { opacity: .7; cursor: wait; }
 
-.co-frame { border: 1px solid var(--border); border-radius: 12px; background: var(--bg); padding: clamp(10px, 2vw, 18px); }
+/* #111113 es el fondo del formulario oscuro de Whop: el marco lo continúa para que no se vea una caja dentro de otra. */
+.co-frame { border: 1px solid var(--border); border-radius: 12px; background: #111113; padding: clamp(10px, 2vw, 18px); overflow: hidden; }
 .co-frame .whop-mount { margin: 0; position: relative; }
 .co-frame .whop-mount:empty::before {
   content: "Cargando el formulario seguro…"; position: absolute; inset: 0; display: grid; place-items: center;
