@@ -471,6 +471,7 @@ void main() {
         String? team,
         String? player,
         int? playerId,
+        Object? photoId,
         double? price = 1.9,
         String? book = 'fanduel',
         String? outcome,
@@ -484,12 +485,29 @@ void main() {
         'probability': p,
         'player': player,
         'player_id': playerId,
+        'photo_id': photoId,
         'sealed_at': sealed,
         'price': price,
         'book': book,
         'odds_at': '2026-11-04T21:07:32+00:00',
         'outcome': outcome,
       };
+
+      test('el retrato sale de photo_id (id oficial de la NBA), nunca del player_id interno', () {
+        SportMarket first(Object? photoId) => nbaGameMarkets({
+          'partido_id': 11330,
+          'markets': [
+            row('p-o', 'player_threes', 'over', .72, line: 1.5, player: 'Daniss Jenkins', playerId: 212, photoId: photoId),
+          ],
+        }, game()).firstWhere((m) => m.player != null);
+        final ok = first(1642883);
+        expect(ok.playerId, '212');
+        expect(ok.photoId, '1642883');
+        expect(first(null).photoId, isNull);
+        expect(first('1642883').photoId, isNull);
+        expect(first(-5).photoId, isNull);
+        expect(first(0).photoId, isNull);
+      });
 
       test('queda el lado de mayor probabilidad por línea, dentro de la banda, con cuota y casa', () {
         final rows = nbaGameMarkets({

@@ -6,6 +6,12 @@ import 'sports.dart';
 /// Adaptadores de los feeds públicos de NBA y tenis. No calculan ni completan
 /// pronósticos: solo leen lo ya sellado y publicado (port de `frontend/sports-data.js`).
 
+/// `photo_id` del servidor: solo un entero positivo; cualquier otra cosa no es un id de retrato.
+String? _photoId(Object? raw) {
+  final id = raw is int && !raw.isNegative ? '$raw' : null;
+  return id == null || id == '0' ? null : id;
+}
+
 class SportMarket {
   const SportMarket({
     required this.id,
@@ -17,6 +23,7 @@ class SportMarket {
     this.market,
     this.player,
     this.playerId,
+    this.photoId,
     this.rowPlayerId,
     this.line,
     this.outcome,
@@ -35,6 +42,10 @@ class SportMarket {
   final String id, label, selection;
   final double probability;
   final String? market, player, playerId;
+
+  /// Id OFICIAL de la NBA (`photo_id` del servidor) para el retrato. `playerId` es un id interno de la base: en el
+  /// CDN de la NBA da una silueta gris genérica. Sin `photo_id` el avatar cae a iniciales.
+  final String? photoId;
 
   /// `player_id` CRUDO de la fila de la cohorte (en `team_points` es el id del EQUIPO). Solo sirve para
   /// unir la cuota de referencia (`sports_quotes.dart`); no se muestra ni cambia `playerId`.
@@ -238,6 +249,7 @@ List<SportEvent> nbaEvents(JsonMap data) {
             playerId: isPlayer && row['player_id'] != null
                 ? '${row['player_id']}'
                 : null,
+            photoId: isPlayer ? _photoId(row['photo_id']) : null,
             rowPlayerId: row['player_id'] != null
                 ? '${row['player_id']}'
                 : null,
@@ -452,6 +464,7 @@ List<SportMarket> nbaGameMarkets(JsonMap data, SportEvent event) {
       market: market,
       player: isPlayer ? row['player'] as String : null,
       playerId: isPlayer ? '${row['player_id']}' : null,
+      photoId: isPlayer ? _photoId(row['photo_id']) : null,
       rowPlayerId: row['player_id'] != null ? '${row['player_id']}' : null,
       line: line,
       side: side,

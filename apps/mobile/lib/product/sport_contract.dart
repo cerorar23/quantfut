@@ -55,6 +55,7 @@ SportMarket? contractMarket(Object? raw, {required DateTime eventSealedAt}) {
     market: _str(raw['market']),
     player: _str(raw['player']),
     playerId: _str(raw['player_id']),
+    photoId: raw['photo_id'] is int && (raw['photo_id'] as int) > 0 ? '${raw['photo_id']}' : null,
     line: _finite(raw['line']),
     price: quoted ? price : null,
     book: quoted ? reference : null,
