@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 13:43 UTC · Corrección de caché: el checkout nuevo no llegaba al navegador · API (PR #455; `main` `6b00d57c`)
+- **Motivo:** tras el despliegue de las 03:44 el titular seguía viendo el checkout anterior. El PR #452 cambió el `import` de `membership.js` dentro de `app.js` sin subir `app.js?v=` en `index.html`; Cloudflare y el navegador guardan cada URL versionada 4 h (`max-age=14400`), así que se servía el `app.js` viejo y con él toda la cadena anterior. **Regla:** si cambia la versión de un módulo importado, sube también la de los que lo importan hasta `index.html`.
+- Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main`; el diff `5e400f1c..6b00d57c` solo toca `index.html`, `conversion.css`, una prueba y documentación.
+- Método: imagen `quantfut-api:6b00d57c` construida desde `main`, ensayada (`modulos con error: ninguno`, `rutas: 313`) y desplegada recreando **solo `api`**. Worker sin tocar.
+- Respaldo previo: `~/quantfut/releases/compose-antes-20261116-074226.yml`; imagen anterior `quantfut-api:5e400f1c` conservada en el host.
+- Verificado: salud 200; el dominio sirve `app.js?v=checkout-20261116` y `conversion.css?v=checkout-20261116`, y esa `app.js` importa `membership.js?v=checkout-20261115`. En local, con un `checkout_id` real, el formulario de Whop sale en tema oscuro.
+- **Sin verificar:** el checkout con sesión iniciada en el dominio real (la extensión de Chrome no estaba conectada); lo revisa el titular.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-074226.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-16 03:44 UTC · Checkout web más claro, con tema oscuro de Whop y señales de confianza · API (PR #452; `main` `5e400f1c`)
 - **Motivo:** petición del titular: un checkout más amigable y que inspire confianza. El formulario de Whop salía en tema claro sobre la web oscura (plan y precio en texto oscuro sobre fondo oscuro). Solo frontend; sin cambios de `src/` ni de base de datos.
 - Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main`; compose y contenedores coincidían (API `d6f06e7c`). `app.js`, `index.html`, `membership.js`, `whop-checkout.js` y `conversion.css` del contenedor eran idénticos por hash a `main` antes del PR; el `git diff d6f06e7c..5e400f1c` solo trae esos cinco archivos más documentación.
