@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 15:45 UTC · Cupos de gratis/VIP por deporte (`/control/cupos`) y vista «Ayer» · API (PR #458; `main` `66c00f55`)
+- **Motivo:** petición del titular: controlar desde `/control` cuántos pronósticos gratis y VIP ve cada deporte en web y app (destacados al día y mercados por partido), y ver en la app los pronósticos del día anterior.
+- **Base de datos:** `db/116_acceso_cupos.sql` aplicada antes que el código (tabla nueva, 6 filas con los valores de siempre: fútbol web 3, fútbol app 0, NBA y tenis sin límite). Nada que respaldar.
+- Pre-vuelo: `scripts/deploy.sh estado` con API y worker coincidiendo con `6b00d57c`; lo distinto a `main` era este cambio, cambios solo de app y la semilla de secciones de tenis.
+- Método: imagen `quantfut-api:66c00f55` construida desde `main`, ensayada (`modulos con error: ninguno`, `rutas: 315`) y desplegada recreando **solo `api`**. Worker sin tocar.
+- Verificado en el dominio: salud 200; `/cliente/v1/config?cliente=app` trae `acceso.cupos`; `/control/cupos` redirige sin sesión; `index.html` sirve `app.js?v=cupos-20261116`.
+- **Sin verificar:** la pantalla `/control/cupos` con sesión y la app en un dispositivo (la app necesita un build nuevo para la vista «Ayer»).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-094529.yml docker-compose.yml && docker compose up -d --no-deps --no-build api` (la tabla `acceso_cupos` puede quedarse: el código anterior la ignora).
+
 ### 2026-11-16 13:43 UTC · Corrección de caché: el checkout nuevo no llegaba al navegador · API (PR #455; `main` `6b00d57c`)
 - **Motivo:** tras el despliegue de las 03:44 el titular seguía viendo el checkout anterior. El PR #452 cambió el `import` de `membership.js` dentro de `app.js` sin subir `app.js?v=` en `index.html`; Cloudflare y el navegador guardan cada URL versionada 4 h (`max-age=14400`), así que se servía el `app.js` viejo y con él toda la cadena anterior. **Regla:** si cambia la versión de un módulo importado, sube también la de los que lo importan hasta `index.html`.
 - Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main`; el diff `5e400f1c..6b00d57c` solo toca `index.html`, `conversion.css`, una prueba y documentación.

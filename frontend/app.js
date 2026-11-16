@@ -3,9 +3,9 @@ import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, f
 import { createMembershipUI } from './membership.js?v=checkout-20261115';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
-import { createRealViews } from './real-views.js?v=portada-20261115';
-import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
-import { createSportWindow } from './sports-window.js?v=generica-20261113';
+import { createRealViews } from './real-views.js?v=cupos-20261116';
+import { conCupos, loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=cupos-20261116';
+import { createSportWindow } from './sports-window.js?v=cupos-20261116';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
 import { createConversionViews } from './conversion-views.js?v=portada-20261115';
@@ -252,6 +252,7 @@ function loadDeportesCatalogo() {
   fetch(urlCatalogo(pageLang()), { headers: { Accept: 'application/json' } })
     .then(r => (r.ok ? r.json() : null))
     .then(data => {
+      webCupos = data?.acceso?.cupos && typeof data.acceso.cupos === 'object' ? data.acceso.cupos : null;
       webPantallas = normalizarPantallas(data);   // ausente, inválida o sin secciones visibles: null (el orden de hoy)
       const lista = normalizarDeportes(data);
       if (!lista) { if (webPantallas) rerenderIfIdle(); return; }   // fallo, sin `deportes` o inválido: se conserva lo que hay
@@ -378,7 +379,21 @@ const sportsCache = new Map();
 let resultsCache = null;
 let imagesCache = null;
 let realGeneration = 0;
+// Cupos de gratis por deporte (`acceso.cupos` de /cliente/v1/config, menú /control/cupos). null = aún sin cargar: todo como llega.
+let webCupos = null;
+const cuposMemo = new WeakMap();
+// Lo que ven las vistas: los eventos del deporte con el cupo aplicado (`conCupos` retira lo que es VIP para quien no tiene plan).
 function ensureSport(sport) {
+  const entry = ensureSportRaw(sport);
+  if (entry.status !== 'ready') return entry;
+  const plus = Boolean(state.session?.plus), cupo = webCupos?.[sport] || null;
+  const hit = cuposMemo.get(entry);
+  if (hit && hit.cupo === cupo && hit.plus === plus) return hit.value;
+  const value = { ...entry, events: conCupos(entry.events, cupo, plus) };
+  cuposMemo.set(entry, { cupo, plus, value });
+  return value;
+}
+function ensureSportRaw(sport) {
   if(sportsCache.has(sport))return sportsCache.get(sport);
   const entry={status:'loading',events:[]},generation=realGeneration;
   sportsCache.set(sport,entry);
@@ -1276,7 +1291,9 @@ function winForecast(game, entry) {
   const sealed = feat?.pick_key ? picks.find(p => p.pick_key === feat.pick_key && p.chain_sha256) : null;
   const card = feat
     ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : feat.cuota_tipo === 'casa' ? 'Cuota de la casa' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || feat.casa || 'Casa registrada') : feat.cuota_tipo === 'casa' ? esc(feat.casa || 'Casa') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${marketState(feat.resultado)}</p>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : ''}`
-    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Hoy no hay un pronóstico con probabilidad alta en este partido</h2>`;
+    : ficha.mercados?.destacado?.locked === true
+      ? `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Destacado reservado para VIP</h2><p class="win-sub">El pronóstico destacado de este partido es para cuentas VIP.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button>`
+      : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Hoy no hay un pronóstico con probabilidad alta en este partido</h2>`;
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
   const fam = groups.includes(state.winFam) ? state.winFam : 'Todos';

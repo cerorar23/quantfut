@@ -159,6 +159,11 @@ class _ProductShellState extends State<ProductShell>
     _ensureFeed(value);
   }
 
+  /// El feed tal como lo ven las pantallas: con el cupo de gratis del deporte aplicado para quien no tiene VIP.
+  SportFeed _gated(SportId kind, SportFeed feed) => feed.ready
+      ? SportFeed(ready: true, events: applyQuota(feed.events, sportCatalog.quotas[kind], plus: api.plus))
+      : feed;
+
   void _ensureFeed(SportId kind) {
     if (!feeds.containsKey(kind)) unawaited(loadFeed(kind));
   }
@@ -175,7 +180,7 @@ class _ProductShellState extends State<ProductShell>
       if (!mounted) return;
       setState(() {
         // Un refresco fallido no borra un feed bueno: se conserva el anterior.
-        if (feed.ready || feeds[kind]?.ready != true) feeds[kind] = feed;
+        if (feed.ready || feeds[kind]?.ready != true) feeds[kind] = _gated(kind, feed);
         // Igual con las cuotas: un overlay vacío (fallo) no pisa uno bueno.
         quotes[kind] = mergeQuotes(quotes[kind], overlay);
         _feedsNotifier.value = Map.of(feeds);
@@ -193,7 +198,7 @@ class _ProductShellState extends State<ProductShell>
             onUpdate: (enriched) {
               if (!mounted) return;
               setState(() {
-                feeds[kind] = enriched;
+                feeds[kind] = _gated(kind, enriched);
                 _feedsNotifier.value = Map.of(feeds);
               });
             },

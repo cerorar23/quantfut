@@ -18,6 +18,7 @@ import time
 from datetime import date, datetime, timedelta, timezone
 
 from . import destacado_valor
+from ..comercial import acceso_cupos
 from ..db import query, query_one
 from ..eval.clv import _settle_outcome
 from ..model import estadisticas_mercado as em
@@ -391,8 +392,10 @@ def _fila_de_pick(pick: dict) -> dict | None:
 
 
 def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
-                   plus: bool) -> tuple[list[dict], list[dict] | None]:
+                   plus: bool, gratis: frozenset[str] | set[str] = frozenset()) -> tuple[list[dict], list[dict] | None]:
     """
+    `gratis` = ids de fila que el cupo del deporte abre sin VIP (`acceso_cupos`, menú /control/cupos): salen
+    abiertas como con VIP, pero no regalan los marcadores.
     `abiertas` = picks que el usuario ya puede ver, por clave. Con VIP se ve todo. Un partido
     con un pronóstico abierto (gratis o desbloqueado) enseña además sus marcadores más
     probables (decisión del titular, 2026-10-13): todo lo del pronóstico va abierto; los demás
@@ -411,7 +414,7 @@ def aplicar_acceso(filas: list[dict], marcadores: list[dict], abiertas: dict[str
     usadas: set[str] = set()
     for f in filas:
         pick = abiertas.get(f['id'])
-        if plus or pick is not None:
+        if plus or pick is not None or f['id'] in gratis:
             f = _con_pick(dict(f), pick)
             if pick is not None:
                 usadas.add(f['id'])
@@ -449,9 +452,19 @@ def precio_referencia(fila: dict) -> float | None:
 GRATIS_WEB = 3                   # mercados abiertos para quien no tiene VIP
 
 
-def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict],
-                       plus: bool) -> tuple[list[dict], list[dict] | None, dict | None]:
+def gratis_app(filas: list[dict], limite: int | None) -> set[str]:
+    """Ids que el cupo de la app abre sin VIP: los `limite` de mayor probabilidad (None = todos)."""
+    orden = sorted(filas, key=lambda f: (-f['prob'], f['id']))
+    return {f['id'] for f in (orden if limite is None else orden[:limite])}
+
+
+def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict[str, dict], plus: bool,
+                       gratis: int | None = GRATIS_WEB,
+                       destacado_abierto: bool = True) -> tuple[list[dict], list[dict] | None, dict | None]:
     """
+    `gratis` y `destacado_abierto` vienen del cupo del deporte (`acceso_cupos`, menú /control/cupos): cuántos mercados
+    se abren sin VIP (None = todos) y si el destacado de este partido es de los gratis del día. Un destacado con candado
+    no cuenta entre los gratis: se abren los `gratis` siguientes.
     Regla de la web (decisión del titular, 2026-10-28), distinta de la de la app:
     - Destacado: de TODOS los mercados del partido, también los que sin VIP salen con candado, el de mayor
       probabilidad (`destacado_valor`) entre los de cuota >= 1,20 y probabilidad >= 75 %. Abierto y gratis.
@@ -468,11 +481,13 @@ def aplicar_acceso_web(filas: list[dict], marcadores: list[dict], abiertas: dict
     ganador = destacado_valor.elegir_destacado(candidatas, prob='prob', precio=precio_referencia)
     validas = sorted((f for f in candidatas if destacado_valor.cumple_filtro(f.get('prob'), precio_referencia(f))),
                      key=lambda f: -f['prob'])
-    elegidas = ([ganador['id']] if ganador else []) + [f['id'] for f in validas if not ganador or f['id'] != ganador['id']]
-    elegidas = elegidas[:GRATIS_WEB]
-    if len(elegidas) < GRATIS_WEB:
-        resto = sorted((f for f in efectivas.values() if f['id'] not in elegidas), key=lambda f: -f['prob'])
-        elegidas += [f['id'] for f in resto[:GRATIS_WEB - len(elegidas)]]
+    vetada = ganador['id'] if ganador and not destacado_abierto else None
+    elegidas = ([ganador['id']] if ganador and destacado_abierto else []) + [f['id'] for f in validas if not ganador or f['id'] != ganador['id']]
+    tope = len(efectivas) if gratis is None else gratis
+    elegidas = elegidas[:tope]
+    if len(elegidas) < tope:
+        resto = sorted((f for f in efectivas.values() if f['id'] not in elegidas and f['id'] != vetada), key=lambda f: -f['prob'])
+        elegidas += [f['id'] for f in resto[:tope - len(elegidas)]]
     gratis = {key: abiertas.get(key) or {} for key in elegidas}
     filas_out, marcadores_out = aplicar_acceso(filas, marcadores, {**abiertas, **{k: v for k, v in gratis.items() if k not in abiertas}}, plus)
     destacado = None
@@ -616,11 +631,49 @@ def lambdas_estadisticas(match_id: str) -> tuple[tuple[float, float] | None, tup
     return out[0], out[1]
 
 
+_gratis_dia: dict[tuple, tuple[float, set[str]]] = {}
+
+
+def destacados_gratis_del_dia(kickoff: datetime, limite: int) -> set[str]:
+    """Partidos del día (de México) de `kickoff` cuyo destacado sellado va abierto sin VIP: los `limite` de mayor
+    probabilidad. Solo cuentan destacados ya congelados antes del inicio (`publish.destacado_web`)."""
+    from ..publish.ventana import MEXICO
+    dia = kickoff.astimezone(MEXICO).date()
+    ahora = time.monotonic()
+    hit = _gratis_dia.get((dia, limite))
+    if hit and ahora - hit[0] < 60.0:
+        return hit[1]
+    inicio = datetime(dia.year, dia.month, dia.day, tzinfo=MEXICO)
+    filas = query("""SELECT DISTINCT ON (p.match_id) p.match_id,
+               p.data_completeness->'web_destacado'->'fila'->>'prob' AS prob
+        FROM predictions p JOIN matches m USING(match_id)
+        WHERE m.kickoff_utc >= %s AND m.kickoff_utc < %s AND p.generated_at < m.kickoff_utc
+          AND jsonb_typeof(p.data_completeness->'web_destacado'->'fila')='object'
+        ORDER BY p.match_id, p.generated_at, p.prediction_id""", (inicio, inicio + timedelta(days=1)))
+    candidatos = []
+    for f in filas:
+        try:
+            candidatos.append((f['match_id'], float(f['prob'])))
+        except (TypeError, ValueError):
+            continue
+    abiertos = acceso_cupos.abiertos_del_dia(candidatos, limite) or set()
+    _gratis_dia[(dia, limite)] = (ahora, abiertos)
+    return abiertos
+
+
+def _candado_destacado(filas: list[dict], destacado: dict) -> tuple[list[dict], dict]:
+    """El destacado de un partido que no entra en el cupo del día: solo categoría, también en la lista."""
+    candado = {'id': destacado['id'], 'grupo': destacado.get('grupo'), 'locked': True, 'destacado': True}
+    return [dict(candado) if f['id'] == destacado['id'] else f for f in filas], candado
+
+
 def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dict],
-              plus: bool, web: bool = False) -> dict | None:
+              plus: bool, web: bool = False, kickoff: datetime | None = None) -> dict | None:
     """Lista completa del partido con el acceso ya aplicado; None si no hay modelo de goles.
 
-    `web=True` aplica la regla de la web (`aplicar_acceso_web`); la app sigue con `aplicar_acceso`."""
+    `web=True` aplica la regla de la web (`aplicar_acceso_web`); la app sigue con `aplicar_acceso`. Cuántos mercados
+    y destacados van gratis lo dice el cupo de fútbol de cada cliente (`acceso_cupos`, menú /control/cupos)."""
+    cupo = acceso_cupos.cupo('futbol', 'web' if web else 'app')
     lam = lambdas_goles(match_id)
     if lam is None:
         return None
@@ -631,7 +684,10 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
     if web:
         filas += filas_complementarias(*lam, local, visitante, {f['id'] for f in filas})
         filas = con_cuotas_casas(filas, cuotas_casas(match_id))
-        filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus)
+        dest_abierto = (plus or cupo.destacados_gratis_dia is None or not isinstance(kickoff, datetime)
+                        or match_id in destacados_gratis_del_dia(kickoff, cupo.destacados_gratis_dia))
+        filas, marcadores, destacado = aplicar_acceso_web(filas, marcadores, abiertas, plus,
+                                                          cupo.mercados_gratis_partido, dest_abierto)
         partido = datos_partido(match_id)
         from ..publish.destacado_web import obtener
         registro = obtener(match_id, consulta=query_one)
@@ -645,13 +701,16 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
                 fila = dict(fila)
                 fila.pop('destacado', None)
                 filas[i] = dict(destacado) if fila['id'] == destacado['id'] else fila
+        if destacado and not dest_abierto and destacado['id'] not in abiertas:
+            filas, destacado = _candado_destacado(filas, destacado)
         filas = con_resultados(filas, partido)
-        if destacado:
+        if destacado and not destacado.get('locked'):
             destacado = con_resultados([destacado], partido)[0]
         return {'filas': filas, 'marcadores': marcadores, 'destacado': destacado,
                 'rango': list(RANGO_DESTACADO), 'abiertas': sum(not f['locked'] for f in filas),
                 'total': len(filas)}
-    filas, marcadores = aplicar_acceso(filas, marcadores, abiertas, plus)
+    filas, marcadores = aplicar_acceso(filas, marcadores, abiertas, plus,
+                                       gratis_app(filas, cupo.mercados_gratis_partido))
     filas = con_resultados(filas, datos_partido(match_id))
     return {'filas': filas, 'marcadores': marcadores,
             'abiertas': sum(not f['locked'] for f in filas), 'total': len(filas)}

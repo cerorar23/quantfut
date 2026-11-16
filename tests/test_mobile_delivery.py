@@ -374,3 +374,15 @@ def test_detail_de_un_dia_ya_cerrado_va_abierto_sin_vip(delivery, monkeypatch):
     partido['kickoff_utc'] = manana
     out = mobile.detail('m1', Response(), plus=False, account=None)
     assert visto == {'alta': False, 'ladder': False, 'mercados': False} and out['locked'] is True
+
+
+def test_inicio_conserva_los_terminados_de_un_dia_ya_cerrado():
+    """Vista «Ayer» de la app (titular, 2026-11-16): solo se salvan los terminados anteriores al día de hoy."""
+    from datetime import timedelta
+    hoy = datetime(2026, 11, 16, 6, tzinfo=timezone.utc)
+    agenda = [{'match_id': 'ayer', 'estado': 'finished', 'kickoff_utc': hoy - timedelta(hours=10)},
+              {'match_id': 'hoy', 'estado': 'finished', 'kickoff_utc': hoy + timedelta(hours=2)},
+              {'match_id': 'sin_hora', 'estado': 'finished'},
+              {'match_id': 'abierto', 'estado': 'scheduled', 'kickoff_utc': hoy + timedelta(hours=5)}]
+    assert [m['match_id'] for m in mobile.visible_agenda(agenda, hoy)] == ['ayer', 'abierto']
+    assert [m['match_id'] for m in mobile.visible_agenda(agenda)] == ['abierto']

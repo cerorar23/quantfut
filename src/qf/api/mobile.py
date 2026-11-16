@@ -219,10 +219,14 @@ _HIGH_COLS = """a.match_id, m.league_id, m.kickoff_utc,
         b.batch_date,b.chain_sha256"""
 
 
-def visible_agenda(rows: list[dict]) -> list[dict]:
+def visible_agenda(rows: list[dict], hasta: datetime | None = None) -> list[dict]:
     """Inicio solo enseña lo que está por jugarse o en juego: un partido terminado sale de la
-    agenda (decisión del titular, 2026-10-12) y queda en los registros históricos."""
-    return [m for m in rows if m.get('estado') != 'finished']
+    agenda (decisión del titular, 2026-10-12) y queda en los registros históricos.
+
+    Excepción (titular, 2026-11-16): los terminados de un día YA cerrado (`kickoff_utc < hasta`, el inicio del día
+    de hoy del visitante) se conservan: es la vista «Ayer» de la app, con todos sus mercados y su resultado."""
+    return [m for m in rows if m.get('estado') != 'finished'
+            or (hasta is not None and isinstance(m.get('kickoff_utc'), datetime) and m['kickoff_utc'] < hasta)]
 
 
 def high_rows() -> list[dict]:
@@ -376,7 +380,8 @@ def home(response: Response, fecha: str | None = Query(None, pattern=r'^\d{4}-\d
         start, end = fichas.ventana(fecha, tz, acceso_reglas.dias_agenda())
     except ValueError:
         raise HTTPException(422, 'Fecha inválida') from None
-    agenda = visible_agenda(fichas._agenda(start, end, None)) if flags['agenda']['enabled'] else []
+    hoy_inicio = fichas.ventana(None, tz, 1)[0]
+    agenda = visible_agenda(fichas._agenda(start, end, None), hoy_inicio) if flags['agenda']['enabled'] else []
     if agenda and flags['estadisticas']['enabled']:
         probabilities = {r['match_id']: uno_x_dos(r)[0] for r in query(
             "SELECT DISTINCT ON (match_id) match_id, markets->'1x2' AS probabilities, market_consensus, "
@@ -460,14 +465,15 @@ def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool, 
                 for p in picks if p.get('market')}
     local, visitante = jsonable_name(ficha, 'local', 'Local'), jsonable_name(ficha, 'visitante', 'Visitante')
     try:
-        mercados = partido_mercados.construir(match_id, local, visitante, abiertas, plus, web)
+        kickoff = (ficha.get('partido') or {}).get('kickoff_utc')
+        mercados = partido_mercados.construir(match_id, local, visitante, abiertas, plus, web, kickoff)
     except Exception:  # noqa: BLE001 - la lista es un extra: si falla, el detalle sigue
         logging.getLogger(__name__).exception('mercados del partido %s', match_id)
         return None
     if mercados is not None and not web:
         # La app conserva su lista y sus candados, pero el destacado es el de la web (decisión del titular, 2026-11-16).
         try:
-            de_la_web = partido_mercados.construir(match_id, local, visitante, abiertas, plus, True)
+            de_la_web = partido_mercados.construir(match_id, local, visitante, abiertas, plus, True, kickoff)
             mercados['destacado_app'] = partido_mercados.pick_de_destacado(de_la_web and de_la_web['destacado'])
         except Exception:  # noqa: BLE001 - sin destacado la app sigue con su regla local
             logging.getLogger(__name__).exception('destacado del partido %s', match_id)

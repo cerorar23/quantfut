@@ -1802,12 +1802,25 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get mmOrderSettled =>
+      'Prima i centrati, dalla quota più alta alla più bassa';
+
+  @override
   String mmProb(int value) {
     return '$value% prob.';
   }
 
   @override
   String get mmPublishedOdds => 'quota pubblicata';
+
+  @override
+  String get mmResultLoss => 'Sbagliato';
+
+  @override
+  String get mmResultPush => 'Rimborso';
+
+  @override
+  String get mmResultWin => 'Centrato';
 
   @override
   String get mmScoresTitle => 'Risultati più probabili';
@@ -3289,6 +3302,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sportFamilyOthers => 'Altri';
 
   @override
+  String get sportFeaturedVip => 'Pronostico in evidenza riservato ai VIP';
+
+  @override
   String get sportFootball => 'Calcio';
 
   @override
@@ -3380,7 +3396,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sportTennis => 'Tennis';
 
   @override
+  String get sportVipBadge => 'VIP';
+
+  @override
   String get sportVipCall => 'Scopri i piani per vedere più analisi.';
+
+  @override
+  String sportVipMarkets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Altri $count mercati con VIP',
+      one: '1 altro mercato con VIP',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get startupFailed => 'Impossibile avviare QuantFut. Riprova.';

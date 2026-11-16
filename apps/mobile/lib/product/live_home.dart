@@ -161,12 +161,30 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// La tira arranca en AYER cuando el día elegido es hoy: es la vista de los pronósticos del día anterior.
+  DateTime get _stripStart {
+    final s = widget.selected, n = DateTime.now();
+    final today = DateTime(n.year, n.month, n.day);
+    return DateTime(s.year, s.month, s.day) == today ? DateTime(n.year, n.month, n.day - 1) : s;
+  }
+
+  /// Un día anterior al que se está viendo pide su agenda al servidor; los demás saltan dentro de la lista.
+  void _onDay(DateTime date, Map<String, int> counts, double viewport) {
+    final s = widget.selected;
+    if (DateTime(date.year, date.month, date.day).isBefore(DateTime(s.year, s.month, s.day))) {
+      widget.onPickDate(date);
+      return;
+    }
+    _jump(date, counts, viewport);
+  }
+
   Future<void> _pick() async {
     final today = DateTime.now();
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
     final date = await showDatePicker(
       context: context,
-      initialDate: widget.selected.isBefore(today) ? today : widget.selected,
-      firstDate: DateTime(today.year, today.month, today.day),
+      initialDate: widget.selected.isBefore(yesterday) ? yesterday : widget.selected,
+      firstDate: yesterday,
       lastDate: today.add(const Duration(days: 365)),
     );
     if (date != null && mounted) widget.onPickDate(date);
@@ -308,10 +326,10 @@ class _HomeTabState extends State<HomeTab> {
                     delegate: _Pinned(
                       height: _stripHeight,
                       child: DayStrip(
-                        start: widget.selected,
+                        start: _stripStart,
                         active: _current,
                         counts: counts,
-                        onDay: (date) => _jump(date, counts, box.maxHeight),
+                        onDay: (date) => _onDay(date, counts, box.maxHeight),
                         onPick: _pick,
                         searching: _searching,
                         onSearch: _toggleSearch,

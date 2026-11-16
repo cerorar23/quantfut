@@ -3042,6 +3042,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} abierto} other{{count} abiertos}}'**
   String mmOpen(int count);
 
+  /// Aviso del orden de los mercados de un partido ya jugado.
+  ///
+  /// In es, this message translates to:
+  /// **'Acertados primero, de mayor a menor cuota'**
+  String get mmOrderSettled;
+
   /// No description provided for @mmProb.
   ///
   /// In es, this message translates to:
@@ -3053,6 +3059,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'cuota publicada'**
   String get mmPublishedOdds;
+
+  /// Etiqueta de un mercado de un partido ya jugado cuyo pronóstico no se cumplió.
+  ///
+  /// In es, this message translates to:
+  /// **'Falló'**
+  String get mmResultLoss;
+
+  /// Etiqueta de un mercado de un partido ya jugado que se devuelve (ni acierto ni fallo).
+  ///
+  /// In es, this message translates to:
+  /// **'Devolución'**
+  String get mmResultPush;
+
+  /// Etiqueta de un mercado de un partido ya jugado cuyo pronóstico se cumplió.
+  ///
+  /// In es, this message translates to:
+  /// **'Acertó'**
+  String get mmResultWin;
 
   /// No description provided for @mmScoresTitle.
   ///
@@ -5328,6 +5352,12 @@ abstract class AppLocalizations {
   /// **'Otros'**
   String get sportFamilyOthers;
 
+  /// Aviso cuando el pronóstico destacado de un partido de NBA, tenis u otro deporte queda para cuentas VIP.
+  ///
+  /// In es, this message translates to:
+  /// **'Destacado reservado para VIP'**
+  String get sportFeaturedVip;
+
   /// Nombre del deporte fútbol en el selector
   ///
   /// In es, this message translates to:
@@ -5496,11 +5526,23 @@ abstract class AppLocalizations {
   /// **'Tenis'**
   String get sportTennis;
 
+  /// Etiqueta corta en la fila de un partido cuyo destacado es solo para VIP.
+  ///
+  /// In es, this message translates to:
+  /// **'VIP'**
+  String get sportVipBadge;
+
   /// No description provided for @sportVipCall.
   ///
   /// In es, this message translates to:
   /// **'Conoce los planes para ver más análisis.'**
   String get sportVipCall;
+
+  /// Aviso con el número de mercados de un partido que solo ven las cuentas VIP.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 mercado más con VIP} other{{count} mercados más con VIP}}'**
+  String sportVipMarkets(int count);
 
   /// No description provided for @startupFailed.
   ///
