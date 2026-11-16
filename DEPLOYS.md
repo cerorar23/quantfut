@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-15 20:57 UTC · Portada orientada a conversión y pie en columnas · API (PR #448; `main` `d6f06e7c`)
+- **Motivo:** rediseño de la portada pedido por el titular (héroe con pronóstico real, cifras, Gratis frente a Plus con precio real, resultados, preguntas) y pie en columnas. Solo frontend; sin cambios de `src/` ni de base de datos.
+- Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main`; compose y contenedores coincidían (API `1396eecf`). Los 23 archivos web del contenedor (`*.js`, `*.css`, `index.html`) eran idénticos por hash a `main` antes del PR (`4c12a8c1`), así que el despliegue solo cambia lo del PR.
+- Método: imagen `quantfut-api:d6f06e7c` construida en el servidor desde `git archive origin/main`, ensayada (`modulos con error: ninguno`, `rutas: 313`; lleva `portada-20261115` y `qf-pie-cols`) y desplegada recreando **solo `api`** (`CONFIRMO=si scripts/deploy.sh desplegar api quantfut-api:d6f06e7c`). Worker sin tocar.
+- Respaldo previo: `~/quantfut/releases/compose-antes-20261115-205655.yml`; imagen anterior `quantfut-api:1396eecf` conservada en el host.
+- Verificado: salud API 200; `https://pronosticosdeportivos.pro/` 200 con `app.js?v=portada-20261115` y `conversion.css?v=portada-20261115`; las URL versionadas sirven el código nuevo (`qf-pie-cols`, `heroPick`); la portada real muestra héroe, cifras, Gratis/Plus con «Desde $9.00 USD / mes equivalente» y pie en columnas, sin errores de consola propios.
+- **Sin verificar:** la tarjeta del héroe con un pronóstico abierto (a esa hora ya no quedaban partidos por empezar, así que se vio el contador de respaldo); la vista en móvil real en producción (probada a 375 px en local).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261115-205655.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-16 00:35 UTC · Worker al día con `main`: filtro de avisos por deporte en `deliver` · worker `quantfut-worker:da7e5f40` (PR #443/#445; `main` `da7e5f40`)
 - **Motivo:** el worker llevaba `comercial/firebase_notificaciones.py` sin el filtro por deporte (`push_sports`) que ya corre en la API; sin él, `deliver()` no volvería a comprobar el deporte de un aviso en cola.
 - Pre-vuelo: `scripts/deploy.sh estado` mostró el worker con solo 2 archivos distintos de `main` (`api/firebase.py`, `comercial/firebase_notificaciones.py`, los del cambio); API con 0 diferencias; compose y contenedores coincidían (`quantfut-worker:bab4b6bb`). El servidor ya no entrena (`train` retirado el 26-oct), así que no se pisó ningún reentrenamiento.
