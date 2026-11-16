@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 03:44 UTC · Checkout web más claro, con tema oscuro de Whop y señales de confianza · API (PR #452; `main` `5e400f1c`)
+- **Motivo:** petición del titular: un checkout más amigable y que inspire confianza. El formulario de Whop salía en tema claro sobre la web oscura (plan y precio en texto oscuro sobre fondo oscuro). Solo frontend; sin cambios de `src/` ni de base de datos.
+- Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main`; compose y contenedores coincidían (API `d6f06e7c`). `app.js`, `index.html`, `membership.js`, `whop-checkout.js` y `conversion.css` del contenedor eran idénticos por hash a `main` antes del PR; el `git diff d6f06e7c..5e400f1c` solo trae esos cinco archivos más documentación.
+- Método: imagen `quantfut-api:5e400f1c` construida en el servidor desde `git archive origin/main`, ensayada (`modulos con error: ninguno`, `rutas: 313`; lleva `co-trust` y el tema `jade`) y desplegada recreando **solo `api`** (`CONFIRMO=si scripts/deploy.sh desplegar api quantfut-api:5e400f1c`). Worker sin tocar.
+- Respaldo previo: `~/quantfut/releases/compose-antes-20261115-214339.yml`; imagen anterior `quantfut-api:d6f06e7c` conservada en el host.
+- Verificado: salud API 200; `https://pronosticosdeportivos.pro/` sirve `membership.js?v=checkout-20261115`, `whop-checkout.js?v=oscuro-20261115` y `conversion.css?v=checkout-20261115`, y esas URL llevan el código nuevo. La vista se revisó en local con `/app/v1` simulado (escritorio y 375 px).
+- **Sin verificar:** el checkout con sesión iniciada en producción y, sobre todo, el formulario real de Whop en tema oscuro (la extensión de Chrome no estaba conectada; sin sesión el dominio muestra el acceso, sin errores de consola y con los estilos `.co-*` cargados). Lo revisa el titular; móvil real tampoco.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261115-214339.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-15 20:57 UTC · Portada orientada a conversión y pie en columnas · API (PR #448; `main` `d6f06e7c`)
 - **Motivo:** rediseño de la portada pedido por el titular (héroe con pronóstico real, cifras, Gratis frente a Plus con precio real, resultados, preguntas) y pie en columnas. Solo frontend; sin cambios de `src/` ni de base de datos.
 - Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main`; compose y contenedores coincidían (API `1396eecf`). Los 23 archivos web del contenedor (`*.js`, `*.css`, `index.html`) eran idénticos por hash a `main` antes del PR (`4c12a8c1`), así que el despliegue solo cambia lo del PR.
