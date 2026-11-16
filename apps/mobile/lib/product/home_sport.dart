@@ -713,7 +713,7 @@ class _PlayerCard extends StatelessWidget {
         child: Column(
           children: [
             QfAvatar(
-              url: serverImageUrl(api, nbaPlayerPhoto(market.playerId ?? '')),
+              url: serverImageUrl(api, nbaPlayerPhoto(market.photoId ?? '')),
               name: name,
               size: 56,
               shape: AvatarShape.circle,

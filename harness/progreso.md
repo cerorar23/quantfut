@@ -2,6 +2,11 @@
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
 
+
+## 15-nov-2026 · App 1.2.1+14: las fotos de jugadores NBA salían como silueta gris (`app/nba-fotos-jugadores`)
+- **Causa:** la app pedía el retrato con `player_id`, que es el id interno de `nba.entidad` (p. ej. 1144 = Obi Toppin), no el de la NBA. `/web/imagenes/jugadores/nba/<id>.png` reenvía `cdn.nba.com/headshots`, y ese CDN responde 200 con una silueta gris genérica para cualquier id desconocido, así que ni siquiera caía a iniciales.
+- **Decisión:** el servidor ya publicaba `photo_id` (alias `nba_oficial`, solo si es único) en cada fila de `/nba/v1/partido/{id}/mercados`; la app lo lee en `SportMarket.photoId` y solo ese va a `nbaPlayerPhoto`. `playerId` sigue sirviendo para agrupar y unir cuotas. Sin `photo_id`, iniciales: nunca una imagen de otro.
+- Sin cambios de servidor ni despliegue: 128 de 128 filas de jugador del partido 18649 ya traían `photo_id`.
 ## 15-nov-2026 · Avisos push por deporte (F7c): el servidor guarda `push_sports` y la app lo usa (`api/avisos-por-deporte`)
 - **Decisión:** `NULL` = todos los deportes (cuentas y apps antiguas no cambian), lista vacía = ninguno; el aviso sin `sport` es general y no se filtra. El filtro vive en SQL en `enqueue` y se vuelve a comprobar en `deliver` (si el usuario apaga un deporte con avisos ya en cola, no salen).
 - Un aviso de un deporte apagado **sigue en la bandeja** (solo se evita el push): la bandeja es consulta, no interrupción.

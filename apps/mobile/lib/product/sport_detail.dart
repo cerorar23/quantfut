@@ -687,7 +687,7 @@ class _MarketRow extends StatelessWidget {
       children: [
         if (m.player != null && id != null) ...[
           QfAvatar(
-            url: serverImageUrl(api, nbaPlayerPhoto(id)),
+            url: serverImageUrl(api, nbaPlayerPhoto(m.photoId ?? '')),
             name: m.player!,
             size: 36,
             shape: AvatarShape.circle,

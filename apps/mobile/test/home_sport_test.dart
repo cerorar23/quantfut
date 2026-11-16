@@ -80,6 +80,7 @@ SportMarket market(
   String selection = 'Home',
   String? player,
   String? playerId,
+  String? photoId,
   double? line,
 }) => SportMarket(
   id: id,
@@ -91,6 +92,7 @@ SportMarket market(
   market: market,
   player: player,
   playerId: playerId,
+  photoId: photoId,
   line: line,
 );
 
@@ -203,7 +205,8 @@ void main() {
           market: 'player_points',
           selection: 'Jalen Brunson',
           player: 'Jalen Brunson',
-          playerId: '1628973',
+          playerId: '1',
+          photoId: '1628973',
           line: 24.5,
         ),
       ]);
@@ -223,6 +226,8 @@ void main() {
       expect(urls, contains('https://x.test/web/imagenes/nba/NYK.png'));
       expect(urls, contains('https://x.test/web/imagenes/nba/ATL.png'));
       expect(urls, contains('https://x.test/web/imagenes/jugadores/nba/1628973.png'));
+      // El id interno (`playerId`) nunca va al CDN de la NBA: daría una silueta gris.
+      expect(urls, isNot(contains('https://x.test/web/imagenes/jugadores/nba/1.png')));
       expect(find.text('JUGADORES CON PRONÓSTICO'), findsOneWidget);
       expect(find.text('Más de 24,5'), findsWidgets);
       // Sin logo en el catálogo: iniciales, nunca otra imagen.

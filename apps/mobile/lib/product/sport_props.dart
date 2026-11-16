@@ -260,7 +260,7 @@ class SportPropCard extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   QfAvatar(
-                    url: serverImageUrl(api, nbaPlayerPhoto(m.playerId ?? '')),
+                    url: serverImageUrl(api, nbaPlayerPhoto(m.photoId ?? '')),
                     name: playerName,
                     size: 52,
                     shape: AvatarShape.circle,
