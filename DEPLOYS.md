@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 10:16 UTC · El destacado de la app es el de la web · API (PR #459; `main` `045e2918`)
+- **Motivo:** en Albacete–Celta II la web destacaba la doble oportunidad (78 %, 1,23) y la app decía que ningún pronóstico entraba en el destacado: la app lo calculaba con sus pronósticos abiertos y la web lo recibía ya elegido por el servidor. Decisión del titular: igualarlos.
+- **Cambio:** `mercados.destacado_app` en la ficha del partido (`pick_de_destacado` sobre la regla web). La app lo pinta y solo usa su regla local si el servidor no lo manda. La lista de mercados y sus candados no cambian. Sin cambios de base de datos.
+- Pre-vuelo: `scripts/deploy.sh estado` con la API en `66c00f55`; entre ese commit y `main` solo había documentación (`git diff --stat` de `src/`, `frontend/`, `db/`, `apps/tenis/` vacío). Worker sin tocar (`da7e5f40`).
+- Método: imagen `quantfut-api:045e2918` construida desde `main` (`deploy.sh construir api`), ensayada (`modulos con error: ninguno`, `rutas: 315`) y desplegada recreando **solo `api`** (`CONFIRMO=si scripts/deploy.sh desplegar api quantfut-api:045e2918`).
+- Verificado: salud 200; el contenedor corre `quantfut-api:045e2918` y su `mobile.py` contiene `destacado_app`; `/mobile/v1/matches/es.laliga2:2627:albacete-celtadevig:20261116` devuelve `destacado_app` con `double_chance` «Albacete o Celta de Vigo II (sin empate)», 1,23 de Bovada, `free: true`.
+- **Sin verificar:** la app en un dispositivo. Esta entrega solo cambia el servidor; la app Flutter (`apps/mobile`) necesita un build nuevo con subida de versión para que llegue a los usuarios (pendiente, no subido a Play).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-101634.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`. La app antigua ignora `destacado_app` y sigue con su regla local.
+
 ### 2026-11-16 15:45 UTC · Cupos de gratis/VIP por deporte (`/control/cupos`) y vista «Ayer» · API (PR #458; `main` `66c00f55`)
 - **Motivo:** petición del titular: controlar desde `/control` cuántos pronósticos gratis y VIP ve cada deporte en web y app (destacados al día y mercados por partido), y ver en la app los pronósticos del día anterior.
 - **Base de datos:** `db/116_acceso_cupos.sql` aplicada antes que el código (tabla nueva, 6 filas con los valores de siempre: fútbol web 3, fútbol app 0, NBA y tenis sin límite). Nada que respaldar.
