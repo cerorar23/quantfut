@@ -525,5 +525,5 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     });
   }
 
-  return { altaView, parleyView, escaleraView, applyMeters };
+  return { altaView, parleyView, escaleraView, applyMeters, bloques: { sealBlock, faq } };
 }

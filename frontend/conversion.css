@@ -573,7 +573,23 @@
 /* Banner de mantenimiento/aviso y canales oficiales + selector de idioma desde /web/config. */
 .qf-banner { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; padding: 10px 18px; background: color-mix(in srgb, var(--accent, #22c55e) 12%, transparent); border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.45; text-align: center; }
 .qf-banner strong { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
-.qf-pie-extra { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.qf-pie-extra { margin-top: 12px; display: flex; flex-flow: row wrap; justify-content: space-between; gap: 6px 24px; }
+/* Pie en columnas (acomodo): marca + tres grupos de enlaces; el aviso +18 queda debajo, separado por una línea. */
+.qf-pie-cols { display: grid; grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 24px 32px; padding-bottom: 22px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+.qf-pie-cols nav { flex-direction: column; align-items: flex-start; gap: 0; }
+.qf-pie-titulo { margin-bottom: 6px; font-family: var(--font-display); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--text); }
+.qf-pie-cols a, .qf-pie-cols .qf-pie-prefs { text-decoration: none; }
+.qf-pie-cols a:hover, .qf-pie-cols a:focus-visible, .qf-pie-cols .qf-pie-prefs:hover, .qf-pie-cols .qf-pie-prefs:focus-visible { color: var(--text); text-decoration: underline; }
+.qf-pie-marca { display: grid; grid-template-columns: auto 1fr; align-items: center; align-content: start; gap: 10px 12px; }
+.qf-pie-marca strong { font-size: 18px; color: var(--text); }
+.qf-pie-marca > span:last-child { grid-column: 1 / -1; max-width: 30ch; }
+.qf-pie-aviso { display: flex; align-items: center; gap: 12px; }
+.qf-pie-aviso .qf-pie-18 { flex: none; margin-right: 0; }
+@media (max-width: 760px) {
+  .qf-pie-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qf-pie-marca { grid-column: 1 / -1; }
+  .qf-pie-aviso { align-items: flex-start; }
+}
 .qf-redes, .qf-lang-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
 .qf-redes-label { font-size: 12px; font-weight: 600; opacity: .78; }
 .qf-lang-bar a[aria-current="page"] { font-weight: 700; text-decoration: none; }

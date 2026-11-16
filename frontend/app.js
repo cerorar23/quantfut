@@ -1,14 +1,14 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createMembershipUI } from './membership.js?v=preferencias-20261108';
+import { createMembershipUI } from './membership.js?v=portada-20261115';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
-import { createRealViews } from './real-views.js?v=generica-20261113c';
+import { createRealViews } from './real-views.js?v=portada-20261115';
 import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
 import { createSportWindow } from './sports-window.js?v=generica-20261113';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=20261115v18';
+import { createConversionViews } from './conversion-views.js?v=portada-20261115';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
@@ -187,8 +187,8 @@ function applyWebConfigToDom() {
     }
   }
   const navs = pie.querySelectorAll('nav');
-  if (navs[0] && ui.footer_sports) navs[0].setAttribute('aria-label', ui.footer_sports);
-  if (navs[1] && ui.footer_info) navs[1].setAttribute('aria-label', ui.footer_info);
+  if (navs[0] && ui.footer_sports) { navs[0].setAttribute('aria-label', ui.footer_sports); const t = navs[0].querySelector('.qf-pie-titulo'); if (t) t.textContent = ui.footer_sports; }
+  if (navs[1] && ui.footer_info) { navs[1].setAttribute('aria-label', ui.footer_info); const t = navs[1].querySelector('.qf-pie-titulo'); if (t) t.textContent = ui.footer_info; }
   const prefsBtn = pie.querySelector('.qf-pie-prefs');
   if (prefsBtn && ui.footer_prefs) prefsBtn.textContent = ui.footer_prefs;
   if (lang === 'en' || lang === 'pt') {
@@ -1345,7 +1345,7 @@ const membershipUI = createMembershipUI({
 
 const realViews = createRealViews({ state, esc, sportList, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
-  ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
+  ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview(), planDesde:()=>membershipUI.priceFrom(), cv:conversionViews.bloques });
 
 const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaAvailability, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode,
   ensureDetalle, generico: datosDeporteGenerico, aviso: bloque => datosAviso(bloque, pageLang()) });
@@ -1449,7 +1449,10 @@ function applyCybercoreTheme(root) {
 // Pie global: enlaces REALES (<a href>) a las páginas de confianza y a lo legal. Las páginas las sirve el servidor
 // (paginas.py), no la SPA, así que el clic navega de verdad; el manejador de clics solo intercepta botones y a[data-sport].
 function siteFooter() {
-  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Pronósticos por deporte"><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav>${webFooterExtraMarkup()}</footer>`;
+  // Pie en columnas: marca, pronósticos por deporte, información y legal; debajo, el aviso +18 y los canales/idiomas.
+  // El primer <p> es el aviso y los dos primeros <nav> son deportes e información: applyWebConfig los localiza por ese orden.
+  const lema = { en: 'Forecasts with probabilities and a verifiable record.', pt: 'Prognósticos com probabilidade e registro verificável.' }[pageLang()] || 'Pronósticos con probabilidad y registro verificable.';
+  return `<footer class="qf-pie" aria-label="Información del sitio"><div class="qf-pie-cols"><div class="qf-pie-marca"><span class="brand-mark" aria-hidden="true">Q<span>.</span></span><strong>QuantFut</strong><span>${lema}</span></div><nav aria-label="Pronósticos por deporte"><strong class="qf-pie-titulo">Pronósticos</strong><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><strong class="qf-pie-titulo">Información</strong><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a></nav><nav aria-label="Legal"><strong class="qf-pie-titulo">Legal</strong><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav></div><p class="qf-pie-aviso"><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p>${webFooterExtraMarkup()}</footer>`;
 }
 
 function render() {

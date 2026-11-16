@@ -3,6 +3,12 @@
 
 
 
+## 15-nov-2026 · Portada web orientada a conversión y pie en columnas (`web/portada-conversion`)
+- **Decisión (pedido del titular, referencia sportproia.com):** la portada pasa a héroe + cifras + pronósticos de hoy + banda de reservados + 3 pasos del sello + Gratis frente a Plus (con «desde X / mes» real de `/planes`) + 5 resultados + 4 preguntas + cierre. Se fueron la franja «Datos reales de los motores», la fila de accesos y `plansPreview` de la portada (sigue existiendo en `membership.js`).
+- **Sin hoja nueva:** todo reutiliza `forecast-hero`, `win-pk-*`, `cv-*` y `cyber-card`; el único CSS añadido es el acomodo en columnas del pie (`.qf-pie-cols`) dentro de `conversion.css`. `sealBlock` y `faq` se exponen como `conversionViews.bloques` en vez de copiarlos.
+- **Nada inventado:** la tarjeta del héroe es el pronóstico abierto más probable del día entre los tres deportes (no un ejemplo con equipos ficticios como la referencia); sin ninguno, cae al destacado de fútbol y luego al contador. La persuasión se apoya en historial y en lo reservado, no en promesas de ganancia: la FAQ dice expresamente que no se garantizan.
+- El `<h1>` lo sigue sobrescribiendo `/web/config` (SEO); el primer `<p>` del pie y los dos primeros `<nav>` conservan su orden porque `applyWebConfig` los localiza así.
+- **Arnés:** en la carpeta principal `pytest` fallaba al recolectar por `No module named 'tenis'` (instalación editable apuntando a un worktree borrado el 10-nov). Corre con `PYTHONPATH=src;apps/tenis/src`. Sin desplegar: falta el visto bueno del titular.
 ## 15-nov-2026 · App 1.2.1+14: las fotos de jugadores NBA salían como silueta gris (`app/nba-fotos-jugadores`)
 - **Causa:** la app pedía el retrato con `player_id`, que es el id interno de `nba.entidad` (p. ej. 1144 = Obi Toppin), no el de la NBA. `/web/imagenes/jugadores/nba/<id>.png` reenvía `cdn.nba.com/headshots`, y ese CDN responde 200 con una silueta gris genérica para cualquier id desconocido, así que ni siquiera caía a iniciales.
 - **Decisión:** el servidor ya publicaba `photo_id` (alias `nba_oficial`, solo si es único) en cada fila de `/nba/v1/partido/{id}/mercados`; la app lo lee en `SportMarket.photoId` y solo ese va a `nbaPlayerPhoto`. `playerId` sigue sirviendo para agrupar y unir cuotas. Sin `photo_id`, iniciales: nunca una imagen de otro.
