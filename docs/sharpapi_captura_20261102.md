@@ -40,3 +40,40 @@ queda claro si el plan gratuito cuenta; dudas a legal@sharpapi.io.
 - En seco (2 peticiones): `cd ~ && python3 sharpapi/sharpapi_captura.py --env sharpapi/.env --out sharpapi_data --seco`.
 - Parar: quitar la línea `# sharpapi-captura` del crontab. Copia del crontab anterior: `~/backups/crontab-antes-sharpapi-20261102.txt`.
 - Si la clave deja de valer el script sale con «clave rechazada (HTTP 401/403)» en el registro.
+
+## Captura y respaldo de fútbol, NBA y tenis
+
+El capturador del repositorio incluye los tres deportes por defecto. Consulta los eventos prepartido
+por fecha y pagina todos los mercados publicados por DraftKings y FanDuel. El cron usa el mismo
+bloqueo y la misma clave. Se puede limitar una pasada con `--deporte futbol|nba|tenis` y restringir
+fútbol a las nueve ligas originales con `--ligas-nucleo`. Un ejemplo para el cron, una vez instalado
+el script actualizado:
+
+```sh
+flock -n ~/sharpapi/captura.lock python3 ~/sharpapi/sharpapi_captura.py --env ~/sharpapi/.env --out ~/sharpapi_data
+```
+
+El recolector mantiene el tope por pasada y respeta la cadencia del plan. Guarda una captura solo si
+termina de leer todas las páginas antes de empezar el partido. Una captura fallida queda pendiente
+para una pasada posterior.
+
+## Respaldo interno desde el archivo
+
+Configura `CUOTAS_SHARPAPI_ARCHIVO` en el ejecutor de la cascada con la ruta del archivo existente.
+En el contenedor del cron del VPS, monta `/home/qf/sharpapi_data` de solo lectura, por ejemplo
+`--mount type=bind,src=/home/qf/sharpapi_data,dst=/capturas/sharpapi,readonly`, y pon
+`CUOTAS_SHARPAPI_ARCHIVO=/capturas/sharpapi`. El lector se ejecuta en la pasada automática existente.
+Para verificar el respaldo por separado, ejecuta
+`python -m qf.ingest.cuotas_respaldo --solo-sharpapi --ejecutar` dentro del mismo contenedor.
+El comando desactiva las otras fuentes de cuotas y solo lee el archivo local de SharpAPI.
+
+El lector reconoce los archivos antiguos de fútbol y los archivos nuevos de los tres deportes. La
+cascada usa las cuotas de SharpAPI para huecos con equivalencia de evento, periodo, jugador o equipo,
+selección y línea. Eso incluye, entre otros, primera mitad y córners por equipo en fútbol, totales de
+equipo y props combinados en NBA, y sets y desempates en tenis. Los mercados adicionales que las
+fichas todavía no publican quedan disponibles para análisis en los originales.
+
+Las entradas conservan la casa, el ID del evento y la hora de la captura, con una vigencia máxima de seis
+horas. Las consultas y overlays internos las incorporan con `incluir_sharpapi=True`. Las rutas públicas
+usan el valor predeterminado y no muestran cuotas de SharpAPI. Si se habilita la visualización pública en
+el futuro, desde el 1-dic se necesita el crédito en cada página o pantalla donde se muestran esos datos.

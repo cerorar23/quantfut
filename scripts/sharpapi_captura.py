@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Captura programada de cuotas de fútbol de SharpAPI (plan Free: solo DraftKings y FanDuel, 12 peticiones por minuto, retraso de 60 s,
+"""Captura prepartido de fútbol, NBA y tenis de SharpAPI (plan Free: DraftKings y FanDuel, 12 peticiones por minuto, retraso de 60 s,
 sin histórico). Autorizada por el titular el 2-nov-2026 para los mercados que PropLine no trae: descanso/final, marcador exacto,
 primer equipo en marcar, goleadores, tiros y tiros a puerta de jugador, córners por mitad, tarjetas, faltas y pases de jugador.
 
 Cada pasada (cron cada 10 minutos):
-  1. lista los partidos próximos de las 9 ligas del núcleo (`/events`, 2 peticiones);
+  1. lista los partidos de fútbol, NBA y tenis próximos (`/events`);
   2. para cada partido que empieza en las próximas 26 h con DraftKings o FanDuel, mira qué momentos de captura le tocan:
      24 h, 6 h, 2 h, 60 min y 15 min antes del saque (el primero que ya pasó se captura una sola vez; los anteriores a que lo
      viéramos por primera vez se dan por hechos);
@@ -33,14 +33,16 @@ from pathlib import Path
 BASE = 'https://api.sharpapi.io/api/v1'
 LIGAS = ['england_-_premier_league', 'spain_-_la_liga', 'italy_-_serie_a', 'germany_-_bundesliga', 'france_-_ligue_1',
          'netherlands_-_eredivisie', 'portugal_-_primeira_liga', 'brazil_-_serie_a', 'mexico_-_liga_mx']
+DEPORTES = {'futbol': 'soccer', 'nba': 'basketball', 'tenis': 'tennis'}
 CASAS = ('draftkings', 'fanduel')
 MOMENTOS_MIN = (1440, 360, 120, 60, 15)     # minutos antes del saque
 HORIZONTE_H = 26                            # no se mira más allá de este tiempo
 PAUSA_S = 5.5                               # 12 peticiones por minuto
 MAX_PETICIONES = 150                        # por pasada
-MAX_PAGINAS = 30                            # por captura de un partido
+MAX_PAGINAS = 60                            # por captura de un partido
 CAMPOS = ('sportsbook', 'market_type', 'market_segment', 'selection', 'selection_type', 'team_side', 'line', 'odds_decimal',
-          'timestamp', 'is_main_line', 'is_alternate_line', 'player_name', 'stat_category', 'is_stale_pregame_price')
+          'timestamp', 'is_main_line', 'is_alternate_line', 'player_name', 'stat_category', 'is_stale_pregame_price',
+          'is_active', 'is_live')
 
 
 def log(msg):
@@ -59,10 +61,10 @@ class Api:
         self.clave, self.pausa, self.tope, self.n, self._ultima = clave, pausa, tope, 0, 0.0
 
     def get(self, ruta, **q):
-        if self.n >= self.tope:
-            raise TopePeticiones()
         url = BASE + ruta + ('?' + urllib.parse.urlencode(q) if q else '')
         for intento in range(4):
+            if self.n >= self.tope:
+                raise TopePeticiones()
             espera = self._ultima + self.pausa - time.monotonic()
             if espera > 0:
                 time.sleep(espera)
@@ -100,7 +102,9 @@ def elegir_eventos(eventos, ahora, horizonte_h=HORIZONTE_H):
             continue
         try:
             inicio = datetime.fromisoformat(e['start_time'].replace('Z', '+00:00'))
-        except ValueError:
+        except (AttributeError, TypeError, ValueError):
+            continue
+        if inicio.tzinfo is None:
             continue
         if ahora <= inicio <= ahora + timedelta(hours=horizonte_h):
             salida.append((e, inicio))
@@ -123,12 +127,15 @@ def compactar(fila):
 
 
 def escribir_captura(carpeta, evento, inicio, ahora, momentos, filas, paginas):
-    dia = inicio.strftime('%Y-%m-%d')
-    destino = Path(carpeta) / dia / ''.join(c if c.isalnum() or c in '._-' else '_' for c in evento['id'])
+    dia = inicio.astimezone(timezone.utc).date().isoformat()
+    identificador = ''.join(c if c.isalnum() or c in '._-' else '_' for c in evento['id'])
+    destino = Path(carpeta) / dia / (identificador if identificador not in ('', '.', '..') else '_' + identificador)
     destino.mkdir(parents=True, exist_ok=True)
     cabecera = {'evento': evento['id'], 'liga': evento.get('league'), 'local': evento.get('home_team'), 'visita': evento.get('away_team'),
                 'inicio': inicio.isoformat(), 'capturado': ahora.isoformat(), 'mins_al_saque': round((inicio - ahora).total_seconds() / 60, 1),
                 'momentos': momentos, 'paginas': paginas, 'filas': len(filas), 'casas': list(CASAS), 'retraso_fuente_s': 60}
+    if evento.get('sport'):
+        cabecera['sport'] = evento['sport']
     final = destino / (ahora.strftime('%Y%m%dT%H%M%SZ') + '.jsonl.gz')
     tmp = final.with_suffix('.tmp')
     with gzip.open(tmp, 'wt', encoding='utf-8') as f:
@@ -139,25 +146,42 @@ def escribir_captura(carpeta, evento, inicio, ahora, momentos, filas, paginas):
     return final
 
 
-def listar_eventos(api):
-    eventos, offset = [], 0
-    while True:
-        j = api.get('/events', sport='soccer', league=','.join(LIGAS), status='upcoming', limit=200, offset=offset)
-        if not j:
-            break
-        eventos += j.get('data') or []
-        pag = j.get('pagination') or {}
-        if not pag.get('has_more') or pag.get('next_offset') is None or offset > 2000:
-            break
-        offset = pag['next_offset']
-    return eventos
+def listar_eventos(api, deportes, ahora, *, ligas_nucleo=False):
+    eventos = {}
+    primero = ahora.date()
+    ultimo = (ahora + timedelta(hours=HORIZONTE_H)).date()
+    for dia in range((ultimo - primero).days + 1):
+        fecha = (primero + timedelta(days=dia)).isoformat()
+        for deporte in deportes:
+            sport = DEPORTES[deporte]
+            q = dict(sport=sport, date=fecha, status='upcoming', limit=200)
+            if deporte == 'nba':
+                q['league'] = 'nba'
+            elif deporte == 'futbol' and ligas_nucleo:
+                q['league'] = ','.join(LIGAS)
+            offset = 0
+            while True:
+                j = api.get('/events', **q, offset=offset)
+                if not j:
+                    break
+                for e in j.get('data') or []:
+                    if isinstance(e, dict) and isinstance(e.get('id'), str) and e['id']:
+                        eventos[(sport, e['id'])] = dict(e, sport=sport)
+                pag = j.get('pagination') or {}
+                siguiente = pag.get('next_offset')
+                if not pag.get('has_more') or not isinstance(siguiente, int) or siguiente <= offset:
+                    break
+                offset = siguiente
+    return list(eventos.values())
 
 
 def capturar_evento(api, evento):
     """Todas las cuotas prepartido de DraftKings y FanDuel del partido; None si alguna página falla (se reintenta en la pasada siguiente)."""
-    filas, cursor, paginas = [], None, 0
+    filas, cursor, paginas, vistos = [], None, 0, set()
     while paginas < MAX_PAGINAS:
         q = dict(event_id=evento['id'], sportsbook=','.join(CASAS), is_live='false', limit=200)
+        if evento.get('sport'):
+            q['sport'] = evento['sport']
         if cursor:
             q['cursor'] = cursor
         j = api.get('/odds', **q)
@@ -167,9 +191,12 @@ def capturar_evento(api, evento):
         filas += [compactar(f) for f in j.get('data') or []]
         pag = j.get('pagination') or {}
         cursor = pag.get('next_cursor')
-        if not pag.get('has_more') or not cursor:
+        if not pag.get('has_more'):
             return filas, paginas
-    return filas, paginas
+        if not cursor or cursor in vistos:
+            return None
+        vistos.add(cursor)
+    return None
 
 
 def cargar_estado(ruta):
@@ -191,8 +218,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--env', required=True)
     ap.add_argument('--out', default='sharpapi_data')
-    ap.add_argument('--seco', action='store_true', help='solo lista los partidos y los momentos pendientes (2 peticiones)')
+    ap.add_argument('--seco', action='store_true', help='solo consulta el calendario, sin capturar cuotas')
     ap.add_argument('--evento', help='capturar solo este id de evento')
+    ap.add_argument('--deporte', choices=(*DEPORTES, 'todos'), default='todos')
+    ap.add_argument('--ligas-nucleo', action='store_true', help='limita el fútbol a las nueve ligas del núcleo')
     a = ap.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -201,7 +230,8 @@ def main(argv=None):
     api = Api(leer_clave(a.env))
     ahora = datetime.now(timezone.utc)
     try:
-        elegidos = elegir_eventos(listar_eventos(api), ahora)
+        deportes = DEPORTES if a.deporte == 'todos' else (a.deporte,)
+        elegidos = elegir_eventos(listar_eventos(api, deportes, ahora, ligas_nucleo=a.ligas_nucleo), ahora)
     except TopePeticiones:
         log('tope de peticiones antes de listar'); return 1
     if a.evento:
@@ -210,12 +240,15 @@ def main(argv=None):
     hechas = 0
     try:
         for e, inicio in elegidos:
-            hechos = estado['eventos'].get(e['id'], {}).get('hechos', [])
+            anterior = estado['eventos'].get(e['id'], {})
+            hechos = anterior.get('hechos', []) if anterior.get('inicio') == inicio.isoformat() else []
             pendientes = momentos_pendientes(inicio, ahora, hechos)
             if not pendientes:
                 continue
             if a.seco:
                 log(f"  [seco] {e['id']} inicio {inicio:%m-%d %H:%MZ} pendientes {pendientes}"); continue
+            if inicio <= datetime.now(timezone.utc):
+                continue
             r = capturar_evento(api, e)
             if r is None:
                 log(f"  ERROR {e['id']}: página sin respuesta; se reintenta en la pasada siguiente"); continue
@@ -223,16 +256,18 @@ def main(argv=None):
             if not filas:
                 log(f"  {e['id']}: sin cuotas todavía; se reintenta"); continue
             ahora_c = datetime.now(timezone.utc)
+            if ahora_c >= inicio:
+                continue
             archivo = escribir_captura(out, e, inicio, ahora_c, pendientes, filas, paginas)
-            ev = estado['eventos'].setdefault(e['id'], {'inicio': inicio.isoformat(), 'hechos': []})
-            ev['hechos'] = marcar_hechos(ev['hechos'], pendientes)
-            ev['ultima'] = ahora_c.isoformat()
+            estado['eventos'][e['id']] = dict(inicio=inicio.isoformat(), hechos=marcar_hechos(hechos, pendientes),
+                                             ultima=ahora_c.isoformat())
             guardar_estado(ruta_estado, estado, ahora_c)
             hechas += 1
             log(f"  {e['id']} momentos {pendientes}: {len(filas)} filas en {paginas} páginas -> {archivo.name}")
     except TopePeticiones:
         log('tope de peticiones de la pasada; el resto queda para la siguiente')
-    guardar_estado(ruta_estado, estado, datetime.now(timezone.utc))
+    if not a.seco:
+        guardar_estado(ruta_estado, estado, datetime.now(timezone.utc))
     log(f'fin: {hechas} capturas, {api.n} peticiones')
     return 0
 
