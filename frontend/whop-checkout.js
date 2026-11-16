@@ -1,6 +1,8 @@
 // Checkout embebido de Whop (@whop/elements, cargado desde su CDN). La configuración (ch_) la crea el servidor:
 // aquí solo se monta. El acceso lo concede el webhook, no `onComplete`.
 const SRC = 'https://cdn.whop.com/elements/amber/elements.js';
+// Tema oscuro y acento verde: el formulario claro por defecto dejaba texto oscuro sobre el fondo de la web.
+const APPEARANCE = { theme: { appearance: 'dark', accentColor: 'jade', grayColor: 'slate' } };
 let loading = null;
 let handle = null;
 
@@ -26,6 +28,6 @@ export function destroy() {
 export async function mount(target, { checkoutId, email, returnUrl, onComplete, onReady, onError }) {
   await load();
   destroy();
-  handle = window.WhopElements({ locale: 'es' }).checkout.create({ checkoutConfiguration: checkoutId, returnUrl, onComplete });
+  handle = window.WhopElements({ locale: 'es', appearance: APPEARANCE }).checkout.create({ checkoutConfiguration: checkoutId, returnUrl, onComplete });
   handle.create('checkout', { buyerEmail: email || '', onReady, onError }).mount(target);
 }

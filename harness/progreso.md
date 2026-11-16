@@ -3,6 +3,11 @@
 
 
 
+## 15-nov-2026 · Checkout web más claro y con señales de confianza (`web/checkout-confianza`)
+- **Causa de lo que se veía mal:** el formulario de Whop salía en tema claro sobre la web oscura; su cabecera (plan y precio) es transparente y quedaba texto oscuro sobre fondo oscuro, y debajo una caja blanca. Se pasa `appearance.theme` (`dark`, acento `jade`) a `WhopElements`: es lo único que admite la API, no se puede restilar el interior del marco.
+- **Decisión:** los pasos decían «Resumen del pedido» como etapa actual; ahora son Cuenta → Pago → Acceso activo y avanzan con el pago. Las garantías que se muestran son solo las que el flujo cumple (Whop cobra, el webhook activa, la renovación se cancela en Whop); nada de sellos ni devoluciones que no existen.
+- En el checkout se quita el cupón (siempre respondía «no hay cupones activos») y se lista lo que incluye el plan; en `#planes` el resumen no cambia. CSS solo como acomodo `.co-*` dentro de `conversion.css`; `membership.css` intacta.
+- **Sin verificar:** el tema oscuro del formulario real de Whop; en local solo se puede montar con un id de prueba, que Whop rechaza. Hay que mirarlo en producción tras desplegar. Sin desplegar.
 ## 15-nov-2026 · Portada web orientada a conversión y pie en columnas (`web/portada-conversion`)
 - **Decisión (pedido del titular, referencia sportproia.com):** la portada pasa a héroe + cifras + pronósticos de hoy + banda de reservados + 3 pasos del sello + Gratis frente a Plus (con «desde X / mes» real de `/planes`) + 5 resultados + 4 preguntas + cierre. Se fueron la franja «Datos reales de los motores», la fila de accesos y `plansPreview` de la portada (sigue existiendo en `membership.js`).
 - **Sin hoja nueva:** todo reutiliza `forecast-hero`, `win-pk-*`, `cv-*` y `cyber-card`; el único CSS añadido es el acomodo en columnas del pie (`.qf-pie-cols`) dentro de `conversion.css`. `sealBlock` y `faq` se exponen como `conversionViews.bloques` en vez de copiarlos.
