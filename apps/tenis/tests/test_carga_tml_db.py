@@ -79,7 +79,7 @@ def _archivos_base() -> dict:
     return {"2025.csv": _csv(filas_2025()), "2023.csv": _csv(dos_mil_veintitres)}
 
 
-def _manifiesto(tmp_path, archivos: dict, sha_falso=frozenset()):
+def _manifiesto(tmp_path, archivos: dict, sha_falso=frozenset(), recibido="2026-11-02T10:00:00+00:00"):
     original = tmp_path / "tml" / "originals"
     original.mkdir(parents=True)
     entradas = []
@@ -87,15 +87,15 @@ def _manifiesto(tmp_path, archivos: dict, sha_falso=frozenset()):
         (original / nombre).write_bytes(cuerpo)
         sha = "0" * 64 if nombre in sha_falso else hashlib.sha256(cuerpo).hexdigest()
         entradas.append({"source": "tml", "name": nombre, "bytes": len(cuerpo), "sha256": sha,
-                         "received_at": "2026-11-02T10:00:00+00:00"})
+                         "received_at": recibido})
     manifiesto = tmp_path / "download_manifest.json"
     manifiesto.write_text(json.dumps({"snapshot_created_at": "2026-11-02T10:00:06+00:00", "files": entradas}),
                           encoding="utf-8")
     return original, manifiesto
 
 
-def _ejecutar(tmp_path, esquema, archivos, sha_falso=frozenset()):
-    original, manifiesto = _manifiesto(tmp_path, archivos, sha_falso)
+def _ejecutar(tmp_path, esquema, archivos, sha_falso=frozenset(), recibido="2026-11-02T10:00:00+00:00"):
+    original, manifiesto = _manifiesto(tmp_path, archivos, sha_falso, recibido)
     return ejecutar(original, esquema.dsn, esquema.nombre, manifiesto, tmp_path / "almacen",
                     tmp_path / "rechazos.csv", equivalencias=tmp_path / "no_existe.csv")
 
@@ -211,6 +211,46 @@ def test_carga_tml_idempotencia(tmp_path, esquema):
     despues = {t: db.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in tablas}
     assert antes == despues
     assert res2["contadores"] == res1["contadores"]
+
+
+TABLAS_EVIDENCIA = ("jugador", "jugador_alias", "jugador_asercion", "torneo", "edicion", "partido", "resultado",
+                    "estadistica", "ranking")
+
+
+def _conteos(db) -> dict:
+    return {t: db.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in TABLAS_EVIDENCIA}
+
+
+def test_carga_tml_recarga_semanal_con_otra_fecha_de_recepcion_no_duplica(tmp_path, esquema):
+    """Cada descarga semanal trae un `received_at` nuevo y recibido_en forma parte de las claves únicas: antes, cada
+    recarga duplicaba resultado, estadística, ranking y aserciones de jugador (el 16-nov-2026 en producción)."""
+    _ejecutar(tmp_path / "uno", esquema, _archivos_base())
+    db = esquema.conectar()
+    antes = _conteos(db)
+    assert antes["resultado"] > 0 and antes["estadistica"] > 0 and antes["ranking"] > 0
+    _ejecutar(tmp_path / "dos", esquema, _archivos_base(), recibido="2026-11-09T10:00:00+00:00")
+    _ejecutar(tmp_path / "tres", esquema, _archivos_base(), recibido="2026-11-16T10:00:00+00:00")
+    assert _conteos(db) == antes
+
+
+def test_carga_tml_correccion_del_proveedor_anade_solo_una_version(tmp_path, esquema):
+    _ejecutar(tmp_path / "uno", esquema, _archivos_base())
+    db = esquema.conectar()
+    antes = _conteos(db)
+    corregido = filas_2025()
+    corregido[0]["minutes"] = "97"
+    archivos = {**_archivos_base(), "2025.csv": _csv(corregido)}
+    _ejecutar(tmp_path / "dos", esquema, archivos, recibido="2026-11-09T10:00:00+00:00")
+    despues = _conteos(db)
+    assert despues["resultado"] == antes["resultado"] + 1
+    assert {t: n for t, n in despues.items() if t != "resultado"} == {t: n for t, n in antes.items() if t != "resultado"}
+    versiones = db.execute("SELECT r.duracion_min FROM resultado r JOIN partido p USING (partido_id) "
+                           "JOIN edicion e ON e.edicion_id = p.edicion_id JOIN torneo t ON t.torneo_id = e.torneo_id "
+                           "WHERE t.clave = '9900' AND p.ronda = 'R32' AND r.duracion_min = 97").fetchall()
+    assert len(versiones) == 1
+    # Volver a cargar la misma versión corregida en otra semana ya no añade nada.
+    _ejecutar(tmp_path / "tres", esquema, archivos, recibido="2026-11-16T10:00:00+00:00")
+    assert _conteos(db) == despues
 
 
 def test_carga_tml_sha_que_no_coincide_rechaza_el_fichero_entero(tmp_path, esquema):

@@ -2,6 +2,15 @@
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
 
+## 16-nov-2026 · La carga TML de tenis ya no duplica al recargar (`fix/tml-carga-idempotente`)
+- **Qué pasó:** al cargar a mano la descarga semanal del 16-nov, `tenis-db` pasó de 495.039 a 668.406 resultados (172.692 partidos con varias filas), 785.722 estadísticas, 631.387 rankings y 61.150 aserciones. `recibido_en` forma parte de las claves únicas (`ON CONFLICT ... recibido_en DO NOTHING`) y cada descarga semanal trae una fecha nueva, así que cada recarga insertaba otra copia de todo. Las tres cargas anteriores no lo mostraron porque cargaron archivos distintos cada vez. Se restauró el respaldo previo (la base duplicada quedó como `tenis_duplicada`, sin borrar).
+- **Decisión:** el escritor (`tml_escritor.py`) compara antes de insertar. Resultado y estadística solo añaden una NUEVA VERSIÓN si el contenido cambió (las correcciones del proveedor se conservan, 210 partidos en esa descarga); ranking omite lo ya publicado; las aserciones de jugador omiten un valor ya registrado (se compara como texto). No se toca ninguna restricción ni trigger de la base.
+- **Coste aceptado:** una aserción que vuelve a un valor antiguo (A→B→A) no se registra de nuevo; el último por `recibido_en` puede ser entonces B. No se observó en datos reales.
+- **Prueba:** `test_carga_tml_recarga_semanal_con_otra_fecha_de_recepcion_no_duplica` y `test_carga_tml_correccion_del_proveedor_anade_solo_una_version`; la antigua de idempotencia usaba la misma fecha de recepción y por eso no lo veía.
+- **Ensayo con datos reales (16-nov):** respaldo previo restaurado en `tenis_ensayo` y descarga `20261116` cargada dos veces con el código corregido: 495.714 partidos (+675), 495.924 resultados (+675 y 210 versiones corregidas), 519.332 estadísticas, 463.870 rankings, 47.810 aserciones; la segunda pasada no añadió filas.
+- **Pendiente:** desplegar en el VPS (`cargar_tml.sh` corre en la imagen `tenis-motor`) y añadirlo al cron de los lunes después de la descarga. La fatiga sigue necesitando una fuente diaria.
+
+
 
 ## 16-nov-2026 · El destacado de la app es el de la web (`app/destacado-servidor`)
 - **Causa de la diferencia:** la web recibe el destacado ya elegido por el servidor (`aplicar_acceso_web`: de TODOS los mercados, también los VIP y los complementarios, con cuota de casa); la app lo calculaba sola con los pronósticos abiertos que le llegan. En Albacete–Celta II la web destacaba la doble oportunidad (78 %, 1,23) y la app solo tenía abierto «Más de 0,5» (87 %, 1,11 < 1,20), así que mostraba «ningún pronóstico entra en el destacado».

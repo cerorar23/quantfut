@@ -120,8 +120,8 @@ def _aserciones(cur, ok, jug, ult, rid, rec_dt) -> None:
             j = jug[(a.circuito, a.ids[s])]
             for campo, v in (("nombre", a.nombres[s]), ("mano", a.manos[s]),
                              ("altura_cm", a.alturas[s]), ("pais", a.paises[s])):
-                if v and ult.get((j, campo)) != v:
-                    ult[(j, campo)] = v
+                if v and (j, campo, str(v)) not in ult:  # la base guarda texto: se compara como texto
+                    ult.add((j, campo, str(v)))
                     nuevas.append((j, campo, v))
     w.asercion(cur, nuevas, rid, rec_dt)
 
@@ -171,7 +171,7 @@ def cargar(conn, ficheros: list[Fichero], almacen, lote: str, rechazos: Rechazos
     agg = _pasada_agregados(ficheros, rechazos)
     cur = conn.cursor()
     jug, tor, edi = w.jugadores_existentes(cur), w.torneos_existentes(cur), w.ediciones_existentes(cur)
-    visto, rk, ult = set(), {}, {}
+    visto, rk, ult = set(), {}, w.aserciones_conocidas(cur)
     for f in ficheros:
         if f.motivo is not None:
             for _ in filas(f.raw):
