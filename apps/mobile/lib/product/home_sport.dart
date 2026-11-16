@@ -356,16 +356,6 @@ class _HomeSportState extends State<HomeSport> {
         SliverToBoxAdapter(child: _top(context, shown)),
         strip(),
         ...list(),
-        if (widget.sport == kTennis)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Text(
-                context.l10n.imageCredits,
-                style: const TextStyle(color: QfColors.muted, fontSize: 11),
-              ),
-            ),
-          ),
         tail,
       ];
     }

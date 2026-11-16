@@ -61,6 +61,25 @@ class _SportPropsTabState extends State<SportPropsTab> {
       };
     }).toList();
 
+    // Antes del partido: mayor probabilidad primero. Al terminar: acertados primero (cuota alta → baja), luego el resto.
+    final finished = widget.event.status == 'finished';
+    double price(SportMarket m) =>
+        quoteFor(widget.event, m, widget.quotes)?.price ?? m.price ?? 0;
+    if (finished) {
+      int rank(SportMarket m) => switch (m.outcome) {
+            'win' => 0,
+            'push' => 2,
+            'loss' => 3,
+            _ => 4,
+          };
+      filtered.sort((a, b) {
+        final r = rank(a).compareTo(rank(b));
+        return r != 0 ? r : price(b).compareTo(price(a));
+      });
+    } else {
+      filtered.sort((a, b) => b.probability.compareTo(a.probability));
+    }
+
     final filters = [
       ('all', l10n.commonAll.toUpperCase()),
       ('points', l10n.propsFilterPoints),
@@ -403,6 +422,27 @@ class SportPropCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   QuoteLabel(quote: quote),
+                  if (m.outcome != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      switch (m.outcome) {
+                        'win' => l10n.outcomeWin,
+                        'loss' => l10n.outcomeLoss,
+                        _ => l10n.outcomePush,
+                      },
+                      key: const ValueKey('prop-outcome'),
+                      style: TextStyle(
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        color: switch (m.outcome) {
+                          'win' => QfColors.primary,
+                          'loss' => QfColors.danger,
+                          _ => QfColors.text2,
+                        },
+                      ),
+                    ),
+                  ],
                 ],
               ),
           ],

@@ -86,14 +86,6 @@ class SportPredictions extends StatelessWidget {
             onOpen: () => onOpen(e),
           ),
       ],
-      if (sport == kTennis)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            context.l10n.imageCredits,
-            style: const TextStyle(color: QfColors.muted, fontSize: 11),
-          ),
-        ),
     ];
     return RefreshIndicator(
       onRefresh: retry,

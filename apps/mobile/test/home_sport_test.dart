@@ -238,7 +238,7 @@ void main() {
     }, createHttpClient: (c) => _Client404());
   });
 
-  testWidgets('tenis muestra foto y bandera, y el crédito al pie', (tester) async {
+  testWidgets('tenis muestra foto y bandera, y sin leyenda de créditos', (tester) async {
     await HttpOverrides.runZoned(() async {
       final events = tennisEvents(fixture('tennis_feed.json'));
       final images = ImageCatalog.fromManifest({
@@ -262,12 +262,9 @@ void main() {
       expect(find.text('HW'), findsWidgets);
       // El feed de tenis no trae país: no se inventa bandera.
       expect(find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key as ValueKey).value}'.startsWith('qf-flag-')), findsNothing);
-      // Encabezado del torneo y crédito CC BY-SA al pie.
+      // Encabezado del torneo 
       expect(find.text(events.first.league), findsOneWidget);
-      expect(
-        find.text('Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Wikimedia'), findsNothing);
     }, createHttpClient: (c) => _Client404());
   });
 
