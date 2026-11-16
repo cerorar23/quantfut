@@ -3,6 +3,12 @@
 
 
 
+## 16-nov-2026 · El destacado de la app es el de la web (`app/destacado-servidor`)
+- **Causa de la diferencia:** la web recibe el destacado ya elegido por el servidor (`aplicar_acceso_web`: de TODOS los mercados, también los VIP y los complementarios, con cuota de casa); la app lo calculaba sola con los pronósticos abiertos que le llegan. En Albacete–Celta II la web destacaba la doble oportunidad (78 %, 1,23) y la app solo tenía abierto «Más de 0,5» (87 %, 1,11 < 1,20), así que mostraba «ningún pronóstico entra en el destacado».
+- **Decisión del titular:** igualarlos. `mobile.mercados_partido` añade `mercados.destacado_app` (forma de pick, abierto y gratis) calculado con la regla web; la app lo pinta y solo cae a su regla local si el servidor no lo manda (versión antigua). La lista de mercados y sus candados de la app NO cambian; solo el destacado puede salir de un mercado que en la app sigue con candado.
+- Costo: la ficha de la app calcula la lista web una vez más por partido (solo para el destacado).
+
+
 ## 16-nov-2026 · Cupos de gratis por deporte y vista «Ayer» en la app (`control/cupos-gratis-vip`)
 - **Decisión (pedido del titular):** el menú `/control/cupos` (db/116, `comercial/acceso_cupos.py`) fija, por deporte (fútbol, NBA, tenis) y por cliente (web / app), cuántos destacados gratis hay al día (los de mayor probabilidad) y cuántos mercados gratis por partido; todo lo demás es VIP con candado. Casilla vacía = sin límite. Los valores de la migración reproducen el comportamiento anterior (fútbol web 3 mercados, fútbol app 0 fuera de sus gratis, NBA y tenis todo abierto), así que desplegar no cambia nada hasta que el titular edite.
 - **Por qué los cupos viajan en `/cliente/v1/config` (`acceso.cupos`, aditivo):** NBA y tenis no tienen candado en el servidor; su web y su app los aplican retirando de `markets` lo que es VIP (`conAcceso` en `sports-data.js`, `applyQuota` en `sports_feed.dart`) y dejando solo el recuento. Es presentación sobre datos públicos, no protege contenido; fútbol sí lo aplica en el servidor (`partido_mercados`), sin enviar selección ni cuota de lo bloqueado.

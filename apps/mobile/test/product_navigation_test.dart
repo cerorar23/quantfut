@@ -830,6 +830,36 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
+  testWidgets('el destacado que manda el servidor (el de la web) se muestra aunque los abiertos no cumplan la regla', (tester) async {
+    final api = FixtureApi()
+      ..richDetail = true
+      ..detailPicks = [
+        {'market': 'totals', 'texto': 'Más de 0,5 goles', 'prob': .87, 'ref_price': 1.11},
+      ]
+      ..mercados = {
+        'filas': <JsonMap>[],
+        'destacado_app': {'texto': 'Albacete o Celta de Vigo II (sin empate)', 'prob': .78, 'price': 1.23, 'ref_price': 1.23, 'ref_book': 'Bovada', 'free': true},
+      };
+    await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
+    expect(find.byType(ForecastPanel), findsOneWidget);
+    expect(find.text('Albacete o Celta de Vigo II (sin empate)'), findsWidgets);
+    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
+  testWidgets('si el servidor dice que no hay destacado, la app no inventa uno con sus abiertos', (tester) async {
+    final api = FixtureApi()
+      ..richDetail = true
+      ..detailPicks = [
+        {'market': 'totals', 'texto': 'Más de 1,5 goles', 'prob': .90, 'ref_price': 1.25},
+      ]
+      ..mercados = {'filas': <JsonMap>[], 'destacado_app': null};
+    await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
+    expect(find.byType(ForecastPanel), findsNothing);
+    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    api.dispose();
+  });
   testWidgets('forecast tab shows featured pick with real indicators only', (
     tester,
   ) async {

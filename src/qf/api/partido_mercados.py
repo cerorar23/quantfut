@@ -716,6 +716,21 @@ def construir(match_id: str, local: str, visitante: str, abiertas: dict[str, dic
             'abiertas': sum(not f['locked'] for f in filas), 'total': len(filas)}
 
 
+def pick_de_destacado(fila: dict | None) -> dict | None:
+    """El destacado de la web con la forma de un pick, para que la app lo pinte con su panel de siempre.
+
+    Decisión del titular (2026-11-16): web y app muestran el MISMO destacado del partido. Es abierto y gratis
+    (como en la web); la cuota solo se marca de casa cuando lo es, y si es la justa del modelo viaja como `price`."""
+    if not fila:
+        return None
+    real = fila.get('cuota_tipo') in CUOTA_REAL
+    resultado = fila.get('resultado') if fila.get('resultado') in ('win', 'loss') else None
+    return {'market': fila['market'], 'selection': fila['selection'], 'line': fila.get('line'),
+            'texto': fila['seleccion'], 'prob': round(float(fila['prob']), 4), 'price': fila.get('cuota'),
+            'ref_price': fila['cuota'] if real else None, 'ref_book': fila.get('casa') if real else None,
+            'free': True, 'started': resultado is not None, 'outcome': resultado}
+
+
 # --- historial: el destacado de cada partido terminado ----------------------------------------
 
 _TTL_DESTACADOS = 600.0
