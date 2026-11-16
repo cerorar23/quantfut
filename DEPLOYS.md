@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 00:01 UTC · Avisos push por deporte (F7c) + `db/115` · API (PR #443; `main` `1396eecf`)
+- **Motivo:** el servidor no guardaba preferencias de avisos push por deporte; la app 1.2.0+13 ya envía `push_sports`.
+- Pre-vuelo: `scripts/deploy.sh estado` mostró la API con 3 archivos distintos de `main` (`api/firebase.py`, `comercial/firebase_notificaciones.py` y `comercial/meta_capi.py`, de la auditoría de Meta, ya en `main` y sin desplegar: sale con este despliegue) y el worker con 2 (`firebase.py`, `firebase_notificaciones.py`); compose y contenedores coincidían (API `fc0f9a75`, worker `bab4b6bb`).
+- Base de datos (`quantfut-db-1`), ANTES que la API: `db/115_push_por_deporte.sql` (sha256 `a2358d5c…`, idéntica al repo) copiada a `~/quantfut/db/` y aplicada con `ON_ERROR_STOP=1 --single-transaction` a las 00:00 UTC: columnas `firebase_preferences.push_sports` (NULL = todos; las 10 cuentas existentes quedan en NULL) y `account_notifications.sport` (tabla vacía) con sus CHECK. Aditiva e idempotente; sin respaldo de datos porque no modifica filas.
+- Método: imagen `quantfut-api:1396eecf` construida en el servidor desde `git archive origin/main`, ensayada (`modulos con error: ninguno`, `rutas: 313`) y desplegada recreando **solo `api`** (`CONFIRMO=si scripts/deploy.sh desplegar api quantfut-api:1396eecf`). Worker sin tocar.
+- Respaldo previo: `~/quantfut/releases/compose-antes-20261115-180059.yml`; imagen anterior `quantfut-api:fc0f9a75` conservada en el host.
+- Verificado: salud API 200; `https://pronosticosdeportivos.pro/` 200; contenedor `quantfut-api:1396eecf` Up; columnas nuevas presentes; `/app/v1/firebase/preferences` sin sesión responde 401 (la ruta carga).
+- **Sin verificar:** guardar/leer `push_sports` con una cuenta real y la app en un dispositivo (solo pruebas unitarias). Ningún aviso se emite aún (`enqueue` sin llamadores) y el worker aún no lleva el filtro de `deliver`.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261115-180059.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`. Las columnas de `db/115` pueden quedarse (no estorban a la versión anterior).
+
 ### 2026-11-15 17:20 UTC · F7 del rediseño: bajas con foto/posición/regreso y fotos de tenistas SofaScore · API (PR #440; `main` `fc0f9a75`)
 - **Motivo:** la app CyberCore 1.2.0+13 ya lee `regreso_fecha`, `jugador_id`, `foto` y `posicion` de las bajas y prefiere el bloque `tenis_sofascore` del manifiesto; el servidor no los enviaba.
 - Pre-vuelo: `scripts/deploy.sh estado` mostró worker y API con solo 2 archivos distintos de `main` (`api/fichas.py`, `api/web.py`, los del cambio); compose y contenedores coincidían (`quantfut-api:15d16a47`, worker `d156e7ae`).
