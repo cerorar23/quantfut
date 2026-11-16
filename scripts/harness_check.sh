@@ -10,7 +10,9 @@ fail=0
 # stub de la Microsoft Store, que arranca, responde a --version y no tiene
 # ninguna dependencia instalada: el arnés daba "OK" saltándose todos los tests.
 PY=""
-for cand in .venv/Scripts/python.exe .venv/bin/python python3 python py; do
+# En un `git worktree` no hay `.venv`: se usa el de la copia principal.
+PRINCIPAL="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")"
+for cand in .venv/Scripts/python.exe .venv/bin/python "$PRINCIPAL/.venv/Scripts/python.exe" "$PRINCIPAL/.venv/bin/python" python3 python py; do
     if [ -x "$cand" ] || command -v "$cand" >/dev/null 2>&1; then
         if "$cand" -c "import sys" >/dev/null 2>&1; then
             PY="$cand"
@@ -34,7 +36,8 @@ elif ! "$PY" -c "import pytest" >/dev/null 2>&1; then
     echo "    ERROR: $PY no tiene pytest. Monta el entorno:"
     echo "           python -m venv .venv && .venv/Scripts/python.exe -m pip install -r requirements-dev.txt"
     fail=1
-elif ! out=$(PYTHONPATH=src "$PY" -m pytest tests -q 2>&1); then
+# La API importa `tenis` (apps/tenis/src) desde el PR #343; mismo PYTHONPATH que CI, con el separador del sistema.
+elif ! out=$(PYTHONPATH="src$("$PY" -c 'import os;print(os.pathsep)')apps/tenis/src" "$PY" -m pytest tests -q 2>&1); then
     echo "$out" | tail -20
     echo "    ERROR: hay tests fallando. Arréglalos antes de seguir."
     fail=1
