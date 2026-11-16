@@ -285,7 +285,7 @@ class Settings:
     devig_method: str = os.getenv("DEVIG_METHOD", "shin")
 
     # --- Rate limiting (Redis, ventana fija por IP) ---
-    rate_limit_default_per_minute: int = _i("RATE_LIMIT_DEFAULT_PER_MINUTE", 60)
+    rate_limit_default_per_minute: int = _i("RATE_LIMIT_DEFAULT_PER_MINUTE", 120)
 
     # "development" habilita el origen CORS de Vite en localhost; cualquier
     # otro valor (el default, para producción) lo deja fuera.
