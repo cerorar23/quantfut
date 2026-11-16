@@ -142,8 +142,9 @@ def test_apimart_translate_page_y_fallback_response_format(monkeypatch):
             return self._payload
 
     class FakeClient:
-        def __init__(self, timeout=45.0):
+        def __init__(self, timeout=45.0, **kwargs):
             self.timeout = timeout
+            self.kwargs = kwargs
 
         def __enter__(self):
             return self
@@ -200,24 +201,28 @@ def test_apimart_translate_page_y_fallback_response_format(monkeypatch):
     )
     assert len(calls) == 2
     assert calls[0]["headers"]["Authorization"] == f"Bearer {FAKE_API_KEY}"
+    assert calls[0]["json"]["stream"] is False
     assert "response_format" in calls[0]["json"]
     assert "response_format" not in calls[1]["json"]
+    assert calls[1]["json"]["stream"] is False
     assert res["title"] == "Methodology | QuantFut"
     assert res["body_html"] == "<p>Statistical baseline.</p>"
 
 
 def test_apimart_ui_dictionary_y_errores_sin_fuga(monkeypatch):
     class FakeResp:
-        def __init__(self, status_code: int, payload: dict):
+        def __init__(self, status_code: int, payload: dict, text: str = ""):
             self.status_code = status_code
             self._payload = payload
-            self.text = json.dumps(payload)
+            self.text = text or json.dumps(payload)
 
         def json(self):
+            if self.text and not self._payload:
+                return json.loads(self.text)
             return self._payload
 
     class FakeClient:
-        def __init__(self, timeout=45.0):
+        def __init__(self, timeout=45.0, **kwargs):
             pass
 
         def __enter__(self):
@@ -264,6 +269,35 @@ def test_apimart_ui_dictionary_y_errores_sin_fuga(monkeypatch):
     with pytest.raises(apimart.ApimartError) as exc:
         apimart.test_connection(api_key=FAKE_API_KEY, base_url="https://api.apimart.ai/v1", model="gpt-4o-mini")
     assert FAKE_API_KEY not in str(exc.value)
+
+    # Respuesta con envoltorio oficial de APIMart: {"code": 200, "data": {"choices": [...]}}
+    class WrappedClient(FakeClient):
+        def post(self, url, headers=None, json=None):
+            return FakeResp(200, {
+                "code": 200,
+                "data": {
+                    "model": "gpt-4o-mini",
+                    "choices": [{"message": {"content": "OK"}}],
+                    "usage": {"total_tokens": 10},
+                },
+            })
+
+    monkeypatch.setattr(httpx, "Client", WrappedClient)
+    probe = apimart.test_connection(api_key=FAKE_API_KEY, base_url="https://api.apimart.ai/v1", model="gpt-4o-mini")
+    assert probe["ok"] is True
+    assert probe["preview"] == "OK"
+    assert probe["model"] == "gpt-4o-mini"
+
+    # Respuesta que no es JSON (p. ej. HTML o stream no parseable) reporta HTTP status
+    class NonJsonClient(FakeClient):
+        def post(self, url, headers=None, json=None):
+            return FakeResp(200, {}, text="<html>Cloudflare Challenge</html>")
+
+    monkeypatch.setattr(httpx, "Client", NonJsonClient)
+    with pytest.raises(apimart.ApimartError) as exc2:
+        apimart.test_connection(api_key=FAKE_API_KEY, base_url="https://api.apimart.ai/v1", model="gpt-4o-mini")
+    assert "no es JSON" in str(exc2.value)
+    assert "HTTP 200" in str(exc2.value)
 
 
 # --- integración SSR / SEO / Legal / IndexNow / Panel (sin requerir PG externo) -----------------

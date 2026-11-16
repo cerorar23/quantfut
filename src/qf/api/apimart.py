@@ -133,6 +133,7 @@ def _chat_completion(
         "model": (model or DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         "messages": messages,
         "temperature": 0.2,
+        "stream": False,
     }
     if max_tokens is not None:
         payload["max_tokens"] = max_tokens
@@ -140,7 +141,7 @@ def _chat_completion(
         payload["response_format"] = {"type": "json_object"}
 
     try:
-        with httpx.Client(timeout=timeout) as client:
+        with httpx.Client(timeout=timeout, follow_redirects=True) as client:
             resp = client.post(endpoint, headers=headers, json=payload)
             if resp.status_code == 400 and expect_json and "response_format" in (resp.text or "").lower():
                 payload.pop("response_format", None)
@@ -165,9 +166,21 @@ def _chat_completion(
     try:
         data = resp.json()
     except Exception:
-        raise ApimartError("APIMart devolvió una respuesta que no es JSON.") from None
+        raw_snippet = redact_secrets((resp.text or "").strip()[:140], api_key)
+        raise ApimartError(
+            f"APIMart devolvió una respuesta que no es JSON (HTTP {resp.status_code}): {raw_snippet or 'cuerpo vacío'}"
+        ) from None
 
-    choices = data.get("choices") or []
+    if isinstance(data, dict):
+        if "error" in data and isinstance(data["error"], dict):
+            err_msg = data["error"].get("message") or str(data["error"])
+            raise ApimartError(f"APIMart reportó error: {redact_secrets(str(err_msg), api_key)}")
+        if isinstance(data.get("code"), int) and data["code"] not in (200, 0):
+            err_msg = data.get("message") or data.get("msg") or str(data)
+            raise ApimartError(f"APIMart error {data['code']}: {redact_secrets(str(err_msg), api_key)}")
+
+    inner = data.get("data") if isinstance(data.get("data"), dict) else data
+    choices = inner.get("choices") or data.get("choices") or []
     if not choices or not isinstance(choices[0], dict):
         raise ApimartError("APIMart no devolvió choices en la respuesta.")
     msg = choices[0].get("message") or {}
@@ -176,8 +189,8 @@ def _chat_completion(
         raise ApimartError("APIMart devolvió contenido vacío.")
     return {
         "content": content,
-        "model": str(data.get("model") or payload["model"]),
-        "usage": data.get("usage") or {},
+        "model": str(inner.get("model") or data.get("model") or payload["model"]),
+        "usage": inner.get("usage") or data.get("usage") or {},
     }
 
 
