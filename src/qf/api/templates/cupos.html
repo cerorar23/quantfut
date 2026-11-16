@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Pronósticos gratis y VIP por deporte{% endblock %}
+{% block heading %}Pronósticos gratis y VIP por deporte{% endblock %}
+{% block content %}
+{% if err %}<div class="alert alert-danger">{{ err }}</div>{% endif %}
+<div class="card mb-4"><div class="card-body">
+  <p class="mb-2">Aquí decides cuántos pronósticos ve <strong>quien no tiene VIP</strong>, por deporte y por separado en la web y en la app.
+     Todo lo demás que se publica queda <strong>VIP</strong> (con candado). Quien tiene VIP lo ve todo.</p>
+  <ul class="mb-2">
+    <li><strong>Destacados gratis al día</strong>: en cuántos partidos del día se ve abierto el pronóstico destacado. Se abren los de mayor probabilidad; en los demás partidos el destacado sale con candado.</li>
+    <li><strong>Mercados gratis por partido</strong>: cuántos mercados se ven abiertos al entrar en un partido (los de mayor probabilidad). El resto son VIP.</li>
+  </ul>
+  <p class="text-secondary mb-0">Casilla vacía = sin límite (todo gratis). 0 = ninguno gratis. El cambio se aplica en menos de un minuto.
+     Los partidos de días anteriores se ven siempre completos. La lista de «alta probabilidad» de fútbol se sigue repartiendo con su
+     propia regla en <a href="/control/acceso">Acceso gratis y VIP</a>.</p>
+</div></div>
+
+{% for d in deportes %}
+<div class="card mb-4">
+  <div class="card-header"><h3 class="card-title">{{ d.nombre }}</h3></div>
+  <div class="card-body"><div class="row g-4">
+    {% for c in d.clientes %}
+    <form class="col-md-6" method="post" action="/control/cupos/{{ d.id }}/{{ c.id }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <h4 class="mb-3">{{ c.nombre }}</h4>
+      <div class="mb-3">
+        <label class="form-label" for="dest-{{ d.id }}-{{ c.id }}">Destacados gratis al día</label>
+        {% if c.sin_destacado %}
+        <input class="form-control" id="dest-{{ d.id }}-{{ c.id }}" value="No aplica" disabled>
+        <div class="form-hint">La app de fútbol no muestra un destacado por partido.</div>
+        {% else %}
+        <input class="form-control" id="dest-{{ d.id }}-{{ c.id }}" name="destacados" type="number" min="0" max="{{ maximo }}" step="1"
+               placeholder="Sin límite" value="{{ c.cupo.destacados_gratis_dia if c.cupo.destacados_gratis_dia is not none else '' }}">
+        {% endif %}
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="merc-{{ d.id }}-{{ c.id }}">Mercados gratis por partido</label>
+        <input class="form-control" id="merc-{{ d.id }}-{{ c.id }}" name="mercados" type="number" min="0" max="{{ maximo }}" step="1"
+               placeholder="Sin límite" value="{{ c.cupo.mercados_gratis_partido if c.cupo.mercados_gratis_partido is not none else '' }}">
+        <div class="form-hint">VIP: todos los demás mercados del partido.</div>
+      </div>
+      <button class="btn btn-primary" type="submit">Guardar {{ d.nombre }} · {{ c.nombre }}</button>
+    </form>
+    {% endfor %}
+  </div></div>
+</div>
+{% endfor %}
+{% endblock %}

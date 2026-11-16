@@ -107,6 +107,7 @@ _MENSAJES = {
     "correo_no_configurado": ("warning", "El envío de correo no está configurado (SMTP_HOST / SMTP_FROM)."),
     "acceso_guardado": ("success", "Regla programada. Rige desde el día indicado, nunca sobre lotes ya repartidos."),
     "acceso_agenda_guardada": ("success", "Días de agenda guardados."),
+    "cupos_guardados": ("success", "Cupos guardados. Se aplican en menos de un minuto."),
     "acceso_error": ("danger", "No se pudo guardar; revisa el mensaje."),
     "catalogo_guardado": ("success", "Guardado. La web lo ve en hasta 5 minutos; la app, al revalidar."),
     "catalogo_traducido": ("success", "Nombre traducido con APIMart (fr, it, de). Revísalo."),

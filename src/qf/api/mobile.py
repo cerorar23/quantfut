@@ -460,7 +460,8 @@ def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool, 
                 for p in picks if p.get('market')}
     try:
         return partido_mercados.construir(match_id, jsonable_name(ficha, 'local', 'Local'),
-                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus, web)
+                                          jsonable_name(ficha, 'visitante', 'Visitante'), abiertas, plus, web,
+                                          (ficha.get('partido') or {}).get('kickoff_utc'))
     except Exception:  # noqa: BLE001 - la lista es un extra: si falla, el detalle sigue
         logging.getLogger(__name__).exception('mercados del partido %s', match_id)
         return None

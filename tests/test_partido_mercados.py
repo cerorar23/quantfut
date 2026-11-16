@@ -273,7 +273,7 @@ def test_la_app_conserva_su_regla_sin_destacado_ni_gratis_extra(lista):
 def test_mercados_partido_pasa_la_regla_web_solo_cuando_se_pide(monkeypatch):
     from qf.api import mobile
     visto = []
-    monkeypatch.setattr(pm, 'construir', lambda *a, **k: visto.append(a[-1] if len(a) > 5 else None) or {'ok': True})
+    monkeypatch.setattr(pm, 'construir', lambda *a, **k: visto.append(a[5] if len(a) > 5 else None) or {'ok': True})
     ficha = {'local': {'nombre': 'A'}, 'visitante': {'nombre': 'B'}}
     mobile.mercados_partido('m', ficha, [], False)
     mobile.mercados_partido('m', ficha, [], False, True)

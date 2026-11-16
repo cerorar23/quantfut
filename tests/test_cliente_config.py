@@ -60,7 +60,9 @@ def test_forma_app(cliente):
     assert set(b['app']['secciones']) == set(mobile.SECTIONS)
     assert b['app']['secciones']['agenda'] == {'enabled': True, 'message': 'msg agenda'}
     assert b['acceso'] == {'probability_min': .73, 'probability_max': .95, 'high_probability_free_fraction': .10,
-                           'ladder_free_count': 1, 'dias_agenda': 7}
+                           'ladder_free_count': 1, 'dias_agenda': 7,
+                           # db/116: un campo ausente = sin límite; la app de fútbol no abre mercados fuera de sus gratis
+                           'cupos': {'futbol': {'mercados_gratis_partido': 0}, 'nba': {}, 'tenis': {}}}
     assert set(b['general']) == {'brand_name', 'legal_name', 'hero_badge', 'support_email', 'disclaimer_text',
                                  'maintenance_banner', 'social'}
     assert set(b['idiomas']) == {'selector', 'estados'} and b['idiomas']['estados']['es'] == 'on'
@@ -230,7 +232,7 @@ def test_toda_columna_real_esta_clasificada():
 def test_las_listas_cubren_las_nueve_tablas():
     assert set(cc.PUBLICAS) == set(cc.PRIVADAS) == {
         'web_site_settings', 'mobile_update_settings', 'mobile_features', 'acceso_reglas', 'cliente_ajustes',
-        'deportes', 'deporte_mercados', 'pantalla_publicaciones', 'pantalla_borradores'}
+        'acceso_cupos', 'deportes', 'deporte_mercados', 'pantalla_publicaciones', 'pantalla_borradores'}
 
 
 # --- contrato 1: deportes del catálogo -----------------------------------------------------------------

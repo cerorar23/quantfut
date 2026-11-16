@@ -77,7 +77,7 @@ from .anuncios import router as anuncios_router
 from .firebase import router as firebase_router
 from .whop import router as whop_router, webhooks as whop_webhooks
 from .legal import router as legal_router
-from . import (acceso_panel, catalogo_panel, cliente_config, deportes_v1, pantallas_panel, web_config,
+from . import (acceso_panel, catalogo_panel, cliente_config, cupos_panel, deportes_v1, pantallas_panel, web_config,
                web_config_panel)
 from . import deportes_demo  # noqa: F401  (se registra en deportes_v1.ADAPTADORES['prueba'])
 from . import deportes_futbol  # noqa: F401  (se registra en deportes_v1.ADAPTADORES['futbol'])
@@ -816,6 +816,7 @@ app.include_router(admin)
 app.include_router(panel_router)
 app.include_router(web_config_panel.router)
 app.include_router(acceso_panel.router)
+app.include_router(cupos_panel.router)
 app.include_router(catalogo_panel.router)
 app.include_router(pantallas_panel.router)
 app.include_router(cuentas_router)
