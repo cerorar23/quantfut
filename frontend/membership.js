@@ -107,6 +107,12 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     return `<section class="live-panel" id="planes"><div class="live-head"><div><p class="eyebrow">SUSCRIPCIONES / QUANTFUT PLUS</p><h2>Elige tu plan</h2></div><button type="button" class="text-link" data-route="paquetes">Ver qué incluye ↗</button></div><p class="body-copy">Amplía tu acceso a los pronósticos reservados de fútbol. Los análisis públicos de NBA y tenis se pueden consultar sin contratar.</p>${items.length ? `<div class="win-plans"><div class="win-plans-grid">${items.map(planCard).join('')}</div></div><div class="hero-actions"><button type="button" class="text-link" data-route="planes">Ver planes y condiciones ↗</button></div><p class="membership-note">${q ? `${money(q)} ${esc(q.currency)} por ${q.period.toLowerCase()}. ` : ''}Consulta el alcance y la renovación antes de confirmar.</p>` : plansStatus()}${demoNote()}<p class="membership-note">La suscripción amplía el acceso al contenido disponible; no garantiza resultados ni un número fijo de pronósticos.</p></section>`;
   }
 
+  // «Desde X / mes» para la portada: el plan con menor precio mensual equivalente. Nulo hasta que cargan los precios.
+  function priceFrom() {
+    const q = plans().filter(plan => plan.duration_days != null).map(plan => membershipQuote(plans(), plan.plan_code)).sort((a, b) => a.monthlyCents - b.monthlyCents)[0];
+    return q ? { amount: membershipMoney(q.monthlyCents, q.currency), unit: `${q.currency} / mes equivalente` } : null;
+  }
+
   function packagesView() {
     const monthly = plans().filter(plan => plan.duration_days != null).map(plan => membershipQuote(plans(), plan.plan_code))
       .sort((a, b) => a.monthlyCents - b.monthlyCents)[0];
@@ -438,5 +444,5 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (session) { state.session = session; identify(session); render(); }
   }
 
-  return { plansView, plansPreview, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans, loadPaymentConfig, afterRender, handleReturn };
+  return { plansView, plansPreview, priceFrom, packagesView, authView, checkoutView, accountView, handleClick, handleSubmit, restoreSession, loadPlans, loadPaymentConfig, afterRender, handleReturn };
 }
