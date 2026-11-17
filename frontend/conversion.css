@@ -416,6 +416,122 @@
   margin-inline: auto;
 }
 
+.qf-section-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 14px;
+  align-items: start;
+}
+
+.content:has(> .qf-section-layout) { padding-top: 14px; }
+.qf-section-layout > * { min-width: 0; }
+.qf-section-layout .qf-section-aside { display: grid; gap: 12px; }
+.qf-section-layout .qf-section-aside > * { min-width: 0; margin: 0; }
+.qf-section-layout :is(.cv-hero, .cv-section, .cv-cta, .cv-legal, .cv-hist-kpis) {
+  max-width: none;
+}
+.qf-section-layout :is(.cv-hero, .win-plans-hero) {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(110deg, color-mix(in srgb, var(--cyan) 9%, var(--panel)), var(--panel) 60%);
+  padding: 16px 18px;
+}
+.qf-section-layout .cv-hero { grid-template-columns: minmax(0, 1fr) minmax(125px, 28%); gap: 18px; }
+.qf-section-layout .cv-hero-copy { display: block; min-width: 0; }
+.qf-section-layout .cv-hero h1,
+.qf-section-layout .win-plans-hero h1 {
+  font: 800 clamp(22px, 2.2vw, 28px)/1.08 var(--font-display);
+  margin: 6px 0 8px;
+  text-transform: uppercase;
+}
+.qf-section-layout .cv-hero-proof {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: end;
+}
+.qf-section-layout .cv-hist-ringbox { align-self: end; width: min(100%, 116px); }
+.qf-section-layout .cv-big { font: 800 clamp(26px, 3vw, 40px)/1 var(--font-mono); }
+.qf-section-layout .cv-hist-kpis { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.qf-section-layout .cv-card-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 315px), 1fr)); align-items: start; }
+.qf-section-layout .cv-card-grid > * { min-width: 0; overflow-wrap: anywhere; }
+.qf-section-layout .cv-card-grid .cv-lock { grid-template-columns: auto minmax(0, 1fr); }
+.qf-section-layout .cv-card-grid .cv-lock-side { grid-column: 2; text-align: start; justify-items: start; }
+.qf-section-aside :is(.cv-section, .win-plans-section, .account-section, .cv-summary-chart) {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.qf-section-layout :is(.cv-section-head h2, .win-plans-h2) { font-size: 18px; text-align: start; }
+.qf-section-aside :is(.cv-steps, .cv-hist-charts) { grid-template-columns: minmax(0, 1fr); }
+.qf-section-aside .cv-bigfacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.qf-section-aside .cv-row { grid-template-columns: minmax(0, 1fr) auto; }
+.qf-section-aside .cv-row .cyber-progress { grid-column: 1 / -1; grid-row: 2; }
+.qf-section-aside .cv-row small { grid-column: 1 / -1; }
+.qf-section-aside .cv-hist-card { padding: 12px; }
+.qf-section-aside .cv-hist-sports li { grid-template-columns: minmax(68px, auto) minmax(0, 1fr) auto; }
+.qf-section-aside .cv-hist-sports i { display: none; }
+
+.win-plans.qf-section-layout { max-width: none; gap: 14px; }
+.qf-section-layout .win-plans-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  text-align: start;
+  margin-top: 0;
+}
+.qf-section-layout .win-plans-trust { justify-content: start; }
+.qf-section-layout .win-plans-hero > div > p { margin-inline: 0; }
+.qf-section-main .win-plans-section { margin-block: 12px; }
+.qf-section-layout .win-plans-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  max-width: none;
+  gap: 10px;
+}
+.qf-section-layout .win-plans-card { min-width: 0; }
+.qf-section-layout .win-plans-final { flex-direction: column; align-items: flex-start; }
+.qf-plan-monthly { display: grid; gap: 4px; justify-items: end; flex: none; }
+.qf-plan-monthly strong { font: 800 clamp(26px, 3vw, 40px)/1 var(--font-mono); color: var(--green); }
+.qf-plan-monthly small { color: var(--muted); }
+
+.qf-account .account-profile-header {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.qf-account .account-profile-header h1 { font: 800 22px var(--font-display); }
+.qf-account .account-profile-avatar { border-radius: 14px; color: var(--green); font: 800 24px var(--font-display); }
+.qf-account .member-account-layout { gap: 14px; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); }
+.qf-account .account-metrics { grid-template-columns: repeat(auto-fit, minmax(min(100%, 125px), 1fr)); }
+.qf-account .qf-section-aside h2 { margin: 0; font: 800 18px var(--font-display); }
+.qf-account .qf-section-aside p { margin: 8px 0 0; }
+.qf-account .qf-section-aside button { min-height: 44px; }
+
+@media (max-width: 980px) {
+  .qf-section-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .qf-account .member-account-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .top-layout:has(.qf-section-layout) .header-main { height: auto; }
+}
+
+@media (max-width: 650px) {
+  .qf-section-layout .cv-hero { grid-template-columns: minmax(0, 1fr); }
+  .qf-section-layout .cv-hero-proof { text-align: start; }
+  .qf-section-layout .cv-hist-ringbox { align-self: start; }
+  .qf-section-layout .win-plans-hero { flex-direction: column; align-items: flex-start; }
+  .qf-plan-monthly { justify-items: start; }
+}
+
 /* ------------------------------------------------------------------------
  * #historial (historial-views.js). Gráficas SVG con color por clase: la CSP no
  * admite `style=""`. El color nunca es la única señal (glifo ✓/✗ y texto).

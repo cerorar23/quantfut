@@ -277,7 +277,7 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
       return `${cabecera}${estado(cargando ? 'Consultando resultados…' : 'Sin resultados disponibles', cargando ? 'Un momento: cargamos el historial.' : 'El historial aparece cuando los resultados están confirmados.', !cargando)}`;
     }
     const r = resumir(lista_);
-    return `${hero(r)}${kpis(r, lista_)}${graficas(r, lista_)}${lista(lista_)}${sello()}${cierre(r)}`;
+    return `<div class="qf-section-layout"><div class="qf-section-main">${hero(r)}${kpis(r, lista_)}${lista(lista_)}${cierre(r)}</div><aside class="qf-section-aside">${graficas(r, lista_)}${sello()}</aside></div>`;
   }
 
   return { historyView, PAGINA };
