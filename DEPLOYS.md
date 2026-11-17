@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 03:10 UTC · Destacado de tenis por receta y resumen redactado con IA · API (PR #476; `main` `527ad314`)
+- **Motivo:** pedido del titular, mismo criterio que el destacado de fútbol: casillas según el mercado y «Resumen del pronóstico». Solo tenis y solo la app; la app instalada no llama al endpoint nuevo hasta compilar una versión con el cambio.
+- **Qué lleva:** `src/qf/api/analisis_tenis.py` (datos de `tenis-db`/TML: Hold %, Break %, ranking, forma, cara a cara, victorias en la superficie, partidos a tres sets), `GET /web/deportes/tenis/analisis/{id}` en `web.py` y `analisis_futbol.py` generalizado por deporte. Sin migración: usa `analisis_resumen` (db/118). La API lee `tenis-db` solo en lectura con `TENIS_PG_DSN`.
+- **Método:** `scripts/deploy.sh construir api`, `ensayo` (`modulos con error: ninguno`, `rutas: 323`) y `desplegar api` con `quantfut-api:527ad314`. Pre-vuelo `estado`: API con 2 archivos distintos y 1 ausente frente a `main` (los tres de este cambio) y compose coincidiendo con lo que corría (`05b89518`). Redes intactas (`nba-api-red`, `quantfut_default`, `tenis-db_tenis-interna`).
+- **Verificado en el dominio:** salud 200; `GET /web/deportes/tenis/analisis/9017489489` (Michelsen–Cerúndolo) → casillas saque, ranking y cara a cara; 1.ª llamada sin resumen, 2.ª con los 6 idiomas guardados, 3.ª desde la caché; evento inexistente → 404.
+- **No hecho / límites:** la app no se ha compilado ni visto la tarjeta; TML llega semanal (forma y ranking pueden ir una semana por detrás y no incluyen el torneo en curso) y la fatiga sigue sin fuente diaria; el modelo pequeño redacta de forma algo laxa los hándicaps («gane con un hándicap de 1,5 juegos»). El resumen se genera al abrir el partido y se encarga a APIMart una vez por mercado y huella de datos.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-201048.yml docker-compose.yml && docker compose up -d --no-deps api` (vuelve a `05b89518`). Nada del código anterior usa lo nuevo; las filas de `analisis_resumen` pueden quedarse.
+
 ### 2026-11-17 02:30 UTC · Destacado de fútbol por receta y resumen redactado con IA · API (PR #473 y #474; `main` `05b89518`)
 - **Motivo:** pedido del titular: la tarjeta del destacado muestra los datos que ayudan a cada mercado y un «Resumen del pronóstico» redactado con APIMart. Solo fútbol y solo la app; la app instalada ignora el bloque nuevo hasta compilar una versión con el cambio.
 - **Qué lleva:** `src/qf/api/analisis_futbol.py`, ficha con victorias/empates/partidos con gol y media de empates de la liga, `mercados.destacado_app.analisis` y `db/118_analisis_resumen.sql` (tabla nueva, aplicada a mano en `quantfut-db-1` antes del despliegue; `CREATE TABLE IF NOT EXISTS`).
