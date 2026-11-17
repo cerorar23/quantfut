@@ -9,6 +9,7 @@ import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'quote_label.dart';
 import 'sport_images.dart';
+import 'sport_markets.dart' show orderSettledMarkets;
 import 'sports_feed.dart';
 import 'sports_quotes.dart';
 
@@ -66,16 +67,10 @@ class _SportPropsTabState extends State<SportPropsTab> {
     double price(SportMarket m) =>
         quoteFor(widget.event, m, widget.quotes)?.price ?? m.price ?? 0;
     if (finished) {
-      int rank(SportMarket m) => switch (m.outcome) {
-            'win' => 0,
-            'push' => 2,
-            'loss' => 3,
-            _ => 4,
-          };
-      filtered.sort((a, b) {
-        final r = rank(a).compareTo(rank(b));
-        return r != 0 ? r : price(b).compareTo(price(a));
-      });
+      final ordered = orderSettledMarkets(List.of(filtered), price: price);
+      filtered
+        ..clear()
+        ..addAll(ordered);
     } else {
       filtered.sort((a, b) => b.probability.compareTo(a.probability));
     }

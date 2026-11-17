@@ -15,6 +15,7 @@ import 'sport_contract.dart';
 import 'sport_detail_tabs.dart';
 import 'sport_forecast.dart';
 import 'sport_images.dart';
+import 'sport_markets.dart' show orderSettledMarkets;
 import 'sport_props.dart';
 import 'sport_screen_blocks.dart';
 import 'sports.dart';
@@ -486,11 +487,14 @@ class _Predictions extends StatelessWidget {
         : (m.market == 'winner' || (m.market == null && m.id == 'winner'))
         ? 0
         : 1;
-    final ordered = [...all]
-      ..sort((a, b) {
-        final r = rank(a).compareTo(rank(b));
-        return r != 0 ? r : b.probability.compareTo(a.probability);
-      });
+    final ordered = orderSettledMarkets(
+      [...all]
+        ..sort((a, b) {
+          final r = rank(a).compareTo(rank(b));
+          return r != 0 ? r : b.probability.compareTo(a.probability);
+        }),
+      price: (m) => quoteFor(event, m, quotes)?.price ?? m.price,
+    );
     final featured = featuredMarket(event);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -964,10 +968,13 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
           if (event.featuredVip || event.vipCount > 0) return [SportVipNotice(event: event)];
           return loading ? const [] : [SportNote(l10n.detailNoPicks), const SizedBox(height: 12)];
         }
-        final principals = [
-          for (final m in eligible)
-            if (m.principal && !identical(m, featured)) m,
-        ];
+        final principals = orderSettledMarkets(
+          [
+            for (final m in eligible)
+              if (m.principal && !identical(m, featured)) m,
+          ],
+          price: (m) => quoteFor(event, m, QuotesOverlay.empty)?.price ?? m.price,
+        );
         return [
           if (featured != null) ...[
             QfCard(

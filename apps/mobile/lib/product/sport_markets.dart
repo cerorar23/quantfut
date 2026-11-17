@@ -17,6 +17,25 @@ import 'sports_quotes.dart';
 /// anterior al «-» (`games_total-3` → `games_total`).
 String marketFamily(SportMarket m) => m.family ?? m.market ?? m.id.split('-').first;
 
+/// Orden de los mercados de un partido ya calificado, igual en todos los deportes y que en fútbol (`orderSettledRows`):
+/// acertados primero, de mayor a menor cuota; luego los pendientes o devueltos; al final los fallados. Sin ningún
+/// resultado `win` o `loss` devuelve la lista como llegó (el orden por probabilidad de cada pantalla).
+List<SportMarket> orderSettledMarkets(
+  List<SportMarket> markets, {
+  required double? Function(SportMarket) price,
+}) {
+  if (!markets.any((m) => m.outcome == 'win' || m.outcome == 'loss')) return markets;
+  int rank(SportMarket m) => switch (m.outcome) { 'win' => 0, 'loss' => 2, _ => 1 };
+  double odds(SportMarket m) => price(m) ?? double.negativeInfinity;
+  return [...markets]
+    ..sort((a, b) {
+      final byRank = rank(a).compareTo(rank(b));
+      if (byRank != 0) return byRank;
+      final byOdds = odds(b).compareTo(odds(a));
+      return byOdds != 0 ? byOdds : b.probability.compareTo(a.probability);
+    });
+}
+
 /// Aciertos y resueltos por familia. Solo cuentan los `eligible` (sellados antes del inicio)
 /// con resultado `win` o `loss`; `push` y sin resultado no cuentan. Toda familia con algún
 /// mercado aparece, aunque no tenga resueltos todavía.
