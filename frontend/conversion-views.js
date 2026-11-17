@@ -250,8 +250,20 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       ? `Probabilidad conjunta ${realNumber(t.prob_total * 100, 1)}%${t.incertidumbre ? ` (entre ${realNumber(t.incertidumbre[0] * 100, 1)}% y ${realNumber(t.incertidumbre[1] * 100, 1)}%)` : ''}`
       : 'Un solo partido: sin probabilidad conjunta validada, no se multiplican probabilidades sueltas';
     const targetLabel = t.target ? `Objetivo ${realNumber(t.target, 2)}` : `Escalón ${realNumber(t.escalon)}`;
-    return `<article class="cv-ticket cyber-card ${t.gratis ? 'cyber-card--green' : ''} ${cls}"><div class="cv-ticket-head"><div><span class="cv-kicker">${t.gratis ? badge('Gratis', 'good') : ''} ${badge(estadoTxt, tono)} ${targetLabel} · ${realNumber(t.n_patas)} patas${t.tipo === 'same_game' ? ' · un partido' : ''}</span><h3>${esc(res)}</h3></div><div class="cv-ticket-odds"><span>Cuota total</span><strong>${realNumber(t.cuota_total, 2)}</strong></div></div>
-      <p class="cv-ticket-meta">${prob}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><ul class="cv-legs">${(t.patas ?? []).map(pata).join('')}</ul></article>`;
+    const patas = t.patas ?? [];
+    const abierto = !t.outcome || t.gratis;
+    return `<article class="cv-ticket cyber-card ${t.gratis ? 'cyber-card--green' : ''} ${cls}"><details class="cv-tk-d"${abierto ? ' open' : ''}><summary><div class="cv-ticket-head"><div><span class="cv-kicker">${t.gratis ? badge('Gratis', 'good') : ''} ${badge(estadoTxt, tono)} ${targetLabel} · ${realNumber(t.n_patas)} patas${t.tipo === 'same_game' ? ' · un partido' : ''}</span><h3>${esc(res)}</h3></div><div class="cv-ticket-odds"><span>Cuota total</span><strong>${realNumber(t.cuota_total, 2)}</strong></div></div>
+      <p class="cv-ticket-meta">${prob}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</p><span class="cv-tk-toggle"><span class="cv-tk-ver">Ver las ${realNumber(patas.length)} patas ▾</span><span class="cv-tk-ocultar">Ocultar patas ▴</span></span></summary><ul class="cv-legs">${patas.map(pata).join('')}</ul></details></article>`;
+  }
+
+  // Parley del historial en fila desplegable: objetivo, estado y cuota a la vista; las patas al abrir.
+  function ticketFila(t) {
+    const cls = t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open';
+    const marca = t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : t.outcome ? '↺' : '●';
+    const res = t.outcome ? PARLEY_ESTADO[t.outcome] ?? t.outcome : 'En juego';
+    const etiqueta = t.target ? `Objetivo ${realNumber(t.target, 2)}` : `Escalón ${realNumber(t.escalon)}`;
+    const prob = t.prob_total != null ? ` · prob. ${realNumber(t.prob_total * 100, 1)}%` : '';
+    return `<details class="cv-paso cv-tk ${cls}"><summary><span class="cv-paso-ic" aria-hidden="true">${marca}</span><span class="cv-paso-main"><strong>${etiqueta} · ${realNumber(t.n_patas)} patas${t.tipo === 'same_game' ? ' · un partido' : ''}</strong><small>${esc(res)}${prob}${t.factor_pago != null ? ` · pagó ×${realNumber(t.factor_pago, 2)}` : ''}</small></span><span class="cv-paso-cuota"><strong>${realNumber(t.cuota_total, 2)}</strong><small>cuota</small></span></summary><ul class="cv-legs">${(t.patas ?? []).map(pata).join('')}</ul></details>`;
   }
 
   function parleyV2View(data) {
@@ -330,8 +342,8 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       : `<div class="cv-empty cyber-card"><h3>${v2?.activo ? 'Hoy no hay combinaciones que cumplan la regla' : 'El parley del día todavía no está activo'}</h3><p>Sin combinaciones válidas, no se fuerza ninguna.</p></div>`;
 
     const agrupados = agruparHistorialPorDia(anteriores);
-    const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${(d.tickets ?? []).filter(t => !t.locked).map(ticketV2).join('')}</div></details>`;
-    const historial = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
+    const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-pasos">${(d.tickets ?? []).filter(t => !t.locked).map(ticketFila).join('')}</div></details>`;
+    const historial = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.slice(0, 3).map(dia).join('') + (agrupados.length > 3 ? `<details class="cv-pasos-mas"><summary>Ver ${realNumber(agrupados.length - 3)} días anteriores</summary>${agrupados.slice(3).map(dia).join('')}</details>` : '') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
     return sectionLayout(`${heroCard}
       <section class="cv-section" aria-label="Parley de hoy"><div class="cv-section-head"><p class="eyebrow">PARLEY DEL DÍA · FÚTBOL, TENIS Y NBA</p><h2>Cuatro objetivos de cuota, menos patas</h2></div>${hoy}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
@@ -386,7 +398,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
 
     const agrupados = agruparHistorialPorDia(anteriores);
     const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${(d.tickets ?? []).filter(t => !t.locked).map(ticket).join('')}</div></details>`;
-    const historial = `<section class="cv-section" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
+    const historial = `<section class="cv-section" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.slice(0, 3).map(dia).join('') + (agrupados.length > 3 ? `<details class="cv-pasos-mas"><summary>Ver ${realNumber(agrupados.length - 3)} días anteriores</summary>${agrupados.slice(3).map(dia).join('')}</details>` : '') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
     return sectionLayout(`${heroCard}
       <section class="cv-section" aria-label="Parley de hoy"><div class="cv-section-head"><p class="eyebrow">LOS 5 ESCALONES DE HOY</p><h2>Elige hasta dónde subir</h2></div>${hoy}<button type="button" class="text-link" data-action="refresh-public">Actualizar ↻</button></section>
@@ -413,11 +425,25 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
   }
 
   // ------------------------------------------------------------ escalera
+  // Escalón en fila compacta: pronóstico, partido y cuota a la vista; el pendiente va abierto y el
+  // liquidado plegado (probabilidad, casa y sello al desplegar). Sin esconder ningún dato.
   function escaleraPaso(p, numero = p.paso) {
-    const est = p.outcome === 'win' ? ['win', 'Ganado'] : p.outcome === 'loss' ? ['loss', 'Perdido'] : p.outcome === 'push' ? ['push', 'Devuelto (no cuenta)'] : p.outcome === 'void' ? ['push', 'Nulo (aplazado)'] : ['open', 'Pendiente'];
+    const est = p.outcome === 'win' ? ['win', 'Ganado', '✓'] : p.outcome === 'loss' ? ['loss', 'Perdido', '✗'] : p.outcome === 'push' ? ['push', 'Devuelto (no cuenta)', '↺'] : p.outcome === 'void' ? ['push', 'Nulo (aplazado)', '↺'] : ['open', 'Pendiente', '●'];
     const prob = probabilityLabel(p.prob);
-    return `<article class="cv-pick cyber-card ${est[0]}"><div class="cv-pick-main"><span class="cv-kicker">${p.free ? badge('Gratis', 'good') : ''} Escalón ${realNumber(numero)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}</span><h3>${esc(p.texto ?? 'Pronóstico')}</h3><p>${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}${p.marcador ? ` · ${esc(p.marcador)}` : ''}${p.valor != null ? ` · ${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''}</p><small class="cv-prob">${prob ? `Probabilidad real ${esc(prob.pct)} · sale ${esc(prob.frequency)}` : 'Sin probabilidad'}</small></div>
-      <div class="cv-pick-side"><span>Cuota</span><strong>${realNumber(p.price, 2)}</strong><small>${esc(p.book ?? 'Casa')}</small><small class="cv-res ${est[0]}">${est[1]}</small><small>Sello ${hash(p.chain_sha256)}</small></div></article>`;
+    const detalle = [p.marcador ? esc(p.marcador) : '', p.valor != null ? `${realNumber(p.valor)} ${String(p.market).startsWith('corners') ? 'córners' : 'tarjetas'}` : ''].filter(Boolean).map(x => ` · ${x}`).join('');
+    return `<details class="cv-paso ${est[0]}"${est[0] === 'open' ? ' open' : ''}><summary><span class="cv-paso-ic" aria-hidden="true">${est[2]}</span><span class="cv-paso-main"><strong>${esc(p.texto ?? 'Pronóstico')}</strong><small>${esc(p.local ?? 'Local')} <i>vs</i> ${esc(p.visitante ?? 'Visitante')}${detalle}</small></span><span class="cv-paso-cuota"><strong>${realNumber(p.price, 2)}</strong><small class="cv-res ${est[0]}">${est[1]}</small></span></summary>
+      <p class="cv-paso-meta">${p.free ? `${badge('Gratis', 'good')} ` : ''}Escalón ${realNumber(numero)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)} · ${esc(p.book ?? 'Casa')}</p>
+      <p class="cv-paso-meta cv-prob">${prob ? `Probabilidad real ${esc(prob.pct)} · sale ${esc(prob.frequency)}` : 'Sin probabilidad'} · Sello ${hash(p.chain_sha256)}</p></details>`;
+  }
+
+  const reglaFreeroll = r => r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : r.prob_objetivo ? `reto al ${realNumber(r.prob_objetivo * 100, 0)}% como mínimo` : 'reto sin freeroll';
+  const barraEscalones = (r, enJuego = false) => `<div class="cyber-progress cyber-progress--green cyber-progress--segmented cv-stair" role="img" aria-label="${realNumber(r.ganados ?? 0)} de ${realNumber(r.pasos_objetivo)} escalones ganados">${Array.from({ length: r.pasos_objetivo }, (_, i) => `<span class="cyber-progress__segment ${i < (r.ganados ?? 0) ? 'cyber-progress__segment--active' : ''} ${i === (r.ganados ?? 0) && enJuego ? 'cv-seg-live' : ''}"></span>`).join('')}</div>`;
+
+  // Retos todavía sin escalón: una sola tarjeta en vez de una tarjeta vacía por reto.
+  function retosEnEspera(lista) {
+    if (!lista.length) return '';
+    const items = lista.map(r => `<li><div class="cv-espera-fila"><strong>#${realNumber(r.reto_id)}</strong><span>${r.target_cuota ? `Objetivo ×${realNumber(r.target_cuota, 1)} · ` : ''}${realNumber(r.pasos_objetivo)} escalones</span><b>${unidades(r.saldo ?? r.stake_inicial).replace('+', '')}</b></div>${barraEscalones(r)}<small>empezó con ${realNumber(r.stake_inicial, 2)} u · ${Number(r.retirado) > 0 ? `retirado ${realNumber(r.retirado, 2)} u: lo que queda va sin riesgo propio` : reglaFreeroll(r)}</small></li>`).join('');
+    return `<article class="cv-reto cv-reto-espera cyber-card"><div class="cv-reto-head"><div><span class="cv-kicker">${realNumber(lista.length)} ${lista.length === 1 ? 'reto abierto' : 'retos abiertos'}</span><h3>Buscando escalón</h3></div></div><p class="cv-ticket-meta">Esperando su primer escalón sellado.</p><ul class="cv-espera" role="list">${items}</ul></article>`;
   }
 
   function reto(r) {
@@ -426,17 +452,18 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const esCerrado = ['completado', 'fallido', 'expirado'].includes(r.estado);
     const pasos = esCerrado ? (r.pasos ?? []) : (r.pasos ?? []).filter(p => p.outcome !== 'void');
     const enJuego = r.estado === 'esperando';
-    const segmentos = Array.from({ length: objetivo }, (_, i) => `<span class="cyber-progress__segment ${i < ganados ? 'cyber-progress__segment--active' : ''} ${i === ganados && enJuego ? 'cv-seg-live' : ''}"></span>`).join('');
     const ultimo = pasos.at(-1);
     const potencial = enJuego && ultimo ? Number(r.en_juego) * Number(ultimo.price) : null;
     const targetKicker = r.target_cuota ? ` · Objetivo ×${realNumber(r.target_cuota, 1)}` : '';
-    const freeroll = r.freeroll_x ? `se retira la inversión al llegar a ×${realNumber(r.freeroll_x, 1)}` : r.prob_objetivo ? `reto al ${realNumber(r.prob_objetivo * 100, 0)}% como mínimo` : 'reto sin freeroll';
+    const freeroll = reglaFreeroll(r);
     const cerrados = (r.vip ?? []).map(p => lockedCard({ kicker: `Escalón ${realNumber(ganados + 1)} · ${esc(p.league_id ?? 'Liga')} · ${fecha(p.kickoff_utc)}`, title: esc(nombreMercado(p.market)), sub: `${esc(p.local ?? 'Local')} <small>vs</small> ${esc(p.visitante ?? 'Visitante')}`, cuotaLabel: 'Cuota · VIP', cuota: CUOTA_OCULTA }));
-    const visibles = pasos.map((p, i) => escaleraPaso(p, esCerrado ? p.paso : i + 1)).reverse().join('');
+    const filas = pasos.map((p, i) => escaleraPaso(p, esCerrado ? p.paso : i + 1)).reverse();
+    const MAX_VISIBLES = 3;
+    const visibles = filas.slice(0, MAX_VISIBLES).join('') + (filas.length > MAX_VISIBLES ? `<details class="cv-pasos-mas"><summary>Ver ${realNumber(filas.length - MAX_VISIBLES)} ${filas.length - MAX_VISIBLES === 1 ? 'escalón anterior' : 'escalones anteriores'}</summary><div class="cv-pasos">${filas.slice(MAX_VISIBLES).join('')}</div></details>` : '');
     return `<article class="cv-reto cyber-card"><div class="cv-reto-head"><div><span class="cv-kicker">Reto #${realNumber(r.reto_id)}${targetKicker} · ${realNumber(objetivo)} escalones</span><h3>${esc(ESCALERA_ESTADO[r.estado] ?? r.estado)}</h3></div><div class="cv-ticket-odds"><span>Saldo</span><strong>${unidades(r.saldo).replace('+', '')}</strong></div></div>
-      <div class="cyber-progress cyber-progress--green cyber-progress--segmented cv-stair" role="img" aria-label="${realNumber(ganados)} de ${realNumber(objetivo)} escalones ganados">${segmentos}</div>
+      ${barraEscalones(r, enJuego)}
       <p class="cv-ticket-meta">${enJuego ? `En juego ${realNumber(r.en_juego, 2)} u${potencial ? ` · si se acierta: ${realNumber(potencial, 2)} u` : ''}` : `${realNumber(ganados)} de ${realNumber(objetivo)} escalones`} · empezó con ${realNumber(r.stake_inicial, 2)} u · ${Number(r.retirado) > 0 ? `retirado ${realNumber(r.retirado, 2)} u: lo que queda va sin riesgo propio` : freeroll}</p>
-      <div class="cv-list">${visibles}${cerrados.join('')}</div>${!pasos.length && !cerrados.length ? '<p class="cv-ticket-meta">Esperando su primer escalón sellado.</p>' : ''}</article>`;
+      <div class="cv-pasos">${visibles}${cerrados.join('')}</div></article>`;
   }
 
   function curva(serie, { unidadLabel = 'retos', nota = 'La curva incluye los retos fallidos: cada bajada es un reto perdido.', titulo = 'Ganancia acumulada', valor = unidades } = {}) {
@@ -481,7 +508,9 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       ? curva(peldanos.serie, { unidadLabel: 'escalones', titulo: 'Escalones: aciertos menos fallos', valor: conSigno, nota: 'Cada escalón acertado suma 1 y cada fallado resta 1. Cuenta escalones, no dinero: un reto se pierde con un solo escalón fallado.' })
       : curva(serie);
 
-    const abiertos = actuales.length ? `<div class="cv-list cv-card-grid">${actuales.map(reto).join('')}</div>` : `<div class="cv-empty cyber-card"><h3>${activo ? 'No hay retos abiertos' : 'El reto escalera todavía no está activo'}</h3><p>${activo ? 'El próximo empieza en cuanto un partido cumpla la regla.' : 'Cuando se active, aparecerá aquí.'}</p></div>`;
+    const sinEscalon = r => !(r.pasos ?? []).some(p => p.outcome !== 'void') && !(r.vip ?? []).length && !['completado', 'fallido', 'expirado'].includes(r.estado);
+    const conEscalon = actuales.filter(a => !sinEscalon(a));
+    const abiertos = actuales.length ? `<div class="cv-list cv-card-grid">${conEscalon.map(reto).join('')}${retosEnEspera(actuales.filter(sinEscalon))}</div>` : `<div class="cv-empty cyber-card"><h3>${activo ? 'No hay retos abiertos' : 'El reto escalera todavía no está activo'}</h3><p>${activo ? 'El próximo empieza en cuanto un partido cumpla la regla.' : 'Cuando se active, aparecerá aquí.'}</p></div>`;
 
     const longitudes = (reglas.longitudes ?? []).map(n => [n, porLongitud[String(n)] ?? {}]);
     const filas = longitudes.map(([n, l]) => `<div class="cv-row" role="listitem"><span class="cv-row-name">${typeof n === 'number' && (reglas.targets?.length) ? `Objetivo ×${realNumber(n, n % 1 ? 1 : 0)}` : `${realNumber(n)} escalones`}</span>${meter(l.cerrados ? l.tasa_completados : 0, 'cyber-progress--green')}<strong>${l.cerrados ? `${realNumber(l.completados)} de ${realNumber(l.cerrados)}` : '—'}</strong><small>${l.cerrados ? `${realNumber(l.tasa_completados, 0)}% completados · <span class="${Number(l.ganancia) >= 0 ? 'cv-pos' : 'cv-neg'}">${unidades(l.ganancia)}</span> · ${realPercent(l.roi, 1)}` : 'sin retos cerrados'}</small></div>`).join('');

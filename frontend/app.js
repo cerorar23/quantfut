@@ -8,7 +8,7 @@ import { conCupos, loadSportWeb, loadResults, loadFootballFeatured, loadImages, 
 import { createSportWindow } from './sports-window.js?v=pronosticos-ventana-20261117';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=secciones-20261117';
+import { createConversionViews } from './conversion-views.js?v=escalera-parley-20261117';
 
 import { windowLocale, windowSelection, windowText } from './window-i18n.js?v=20261117';
 

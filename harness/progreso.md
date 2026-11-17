@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 17-nov-2026 · Reto escalera compacto (solo vista, sin tocar datos)
+
+- Petición del titular: menos scroll en `/reto-escalera/` sin perder información. Cada escalón es ahora una fila desplegable (`<details>`): pronóstico, partido y cuota siempre visibles; probabilidad, casa y sello al abrir. El pendiente va abierto y el liquidado plegado; de cada reto se ven los 3 escalones más recientes y el resto bajo «Ver N escalones anteriores». Los retos sin escalón se agrupan en una sola tarjeta (con su barra y su regla).
+- Por qué así: con 6 retos de objetivo distinto la lista medía ~4.100 px (escritorio) y ~3.950 px (móvil); ahora ~1.420 y ~1.750. Solo se tocan `conversion-views.js` y clases nuevas en `conversion.css` (hoja ya existente de estas vistas); las hojas protegidas del 27-oct no cambian. Textos y datos idénticos, las 315 pruebas del frontend pasan. Se despliega solo esos dos archivos (regla de DEPLOYS.md).
+- Parley del día (misma petición): cada combinada del día es un `<details>` (abierta la que está en juego y la gratis; las liquidadas plegadas con estado, cuota y probabilidad a la vista); en «Día por día» cada parley es una fila desplegable, se ven los 3 días más recientes y el resto bajo «Ver N días anteriores»; patas y tarjetas bloqueadas más compactas. Mismo alcance de archivos y sin cambiar textos ni datos.
+
 ## 16-nov-2026 · SharpAPI como respaldo interno de cuotas
 
 - El quinto nivel consume las capturas locales. El titular autorizó las consultas necesarias a SharpAPI para ampliar el capturador de fútbol a NBA y tenis. El catálogo y las respuestas prepartido de ambos deportes se comprobaron con la clave del VPS. La disponibilidad depende de las casas incluidas en el plan.

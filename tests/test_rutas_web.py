@@ -328,7 +328,8 @@ def test_app_y_membership_cargan_el_pixel_con_versiones_nuevas_para_saltar_la_ca
     index = (FRONTEND / "index.html").read_text(encoding="utf-8")
     assert re.search(r"meta-pixel\.js\?v=preferencias-20261108", membership)
     assert "membership.js?v=secciones-20261117" in app
-    assert "app.js?v=secciones-20261117" in index and "conversion.css?v=secciones-20261117" in index
+    assert "app.js?v=escalera-parley-20261117" in index and "conversion.css?v=escalera-parley-20261117" in index
+    assert "conversion-views.js?v=escalera-parley-20261117" in app
     assert "sports-window.js?v=pronosticos-ventana-20261117" in app    # la ventana ya no pisa el partido pedido por la URL mientras carga
     assert "rutas.js?v=generica-20261113" in app    # rutas.js cambió (catálogo de deportes): otra versión para saltar la caché
 
