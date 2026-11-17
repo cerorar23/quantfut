@@ -365,3 +365,12 @@ def test_headers_fijan_version_de_api(monkeypatch):
     assert whop._headers("apik_x")["Api-Version-Date"] == whop.API_VERSION_DATE
     monkeypatch.setenv("WHOP_API_VERSION_DATE", "2026-06-08")
     assert whop._headers("apik_x")["Api-Version-Date"] == "2026-06-08"
+
+
+
+def test_lectores_aceptan_la_forma_anidada_de_la_api_actual():
+    # Pago real del sandbox (2026-11-16): plan y membresía anidados, total como número.
+    pago = {"plan": {"id": "plan_x"}, "membership": {"id": "mem_y"}, "total": 33.99}
+    assert whop._plan_id(pago) == "plan_x" and whop._membership_id(pago) == "mem_y"
+    assert whop._plan_id({"plan_id": "plan_z"}) == "plan_z" and whop._membership_id({}) is None
+    assert whop._cents(33.99) == 3399 and whop._cents({"amount": "14.99"}) == 1499 and whop._cents(None) is None
