@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 07:48 UTC · Huella del resumen IA sin cifras vivas, filas VIP en tenis/NBA y pie de cuota quitado · API (PR #493 app, PR #494 API; `main` `f67a6cf8`)
+- **Motivo:** el resumen IA se regeneraba (y cobraba APIMart) con cada cambio de cifras, porque `datos_hash` incluía las casillas vivas (en el VPS, dos huellas del mismo partido NBA en 19 minutos). Además, tenis y NBA no listaban las familias bloqueadas para VIP.
+- **Cambio API:** `analisis_futbol._hash` excluye `datos`. El resumen se escribe una vez por pronóstico. Sin cambios de base de datos.
+- **Cambio app (PR #493):** filas VIP bloqueadas por familia en tenis y NBA, y sin la leyenda de cuota al final. Sin desplegar: falta un build nuevo de la app con subida de versión.
+- Pre-vuelo: `scripts/deploy.sh estado` desde un worktree en `origin/main`. La API corría `quantfut-api:4b8587ea` y su única diferencia con `main` era `analisis_futbol.py` (este cambio). Worker sin tocar (`da7e5f40`), con 17 archivos distintos a `main`: deriva anterior, fuera de este despliegue, pendiente de revisar.
+- Método: imagen `quantfut-api:f67a6cf8` construida desde `main`, ensayada (`modulos con error: ninguno`, `rutas: 324`) y desplegada recreando **solo `api`** (`CONFIRMO=si scripts/deploy.sh desplegar api quantfut-api:f67a6cf8`).
+- Verificado: salud 200 local y en `https://pronosticosdeportivos.pro/health`; el contenedor corre `quantfut-api:f67a6cf8` con las redes `tenis-db_tenis-interna`, `nba-api-red` y `quantfut_default`; `/web/deportes/tenis/analisis/9017545026` responde 200.
+- **Sin verificar:** que la siguiente regeneración de resúmenes encaje con la nueva huella (se medirá en `analisis_resumen` con la fecha de hoy); la app en un dispositivo.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261117-074819.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-17 12:56 UTC · Whop: reembolsos con el pago anidado · API (PR #489; `main` `4b8587ea`)
 - **Motivo:** prueba de reembolso en el sandbox (`pay_lvLZZbaGN8uwIo`, plus_1m). `refund.created` (versión de webhook `2026-11-14-1`) trae `payment: {id}` y no `payment_id`; el servidor respondía `pago_desconocido` y no revocaba.
 - **Qué lleva:** `apply_refund` en `src/qf/comercial/whop.py` lee `payment_id` o `payment.id`. Sin migración.

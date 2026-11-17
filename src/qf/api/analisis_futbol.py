@@ -300,7 +300,11 @@ def _clave(match_id: str, pick: dict) -> str:
 
 
 def _hash(hechos: dict) -> str:
-    return hashlib.sha256(json.dumps(hechos, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:32]
+    # Las cifras vivas (`datos`: forma, ranking, bajas, estadísticas a la fecha) cambian con cada refresco. Si entraran en la
+    # huella, cada cambio encargaría otro resumen a la IA (medido en el VPS: dos huellas del mismo partido en 19 minutos).
+    # El resumen describe el pronóstico sellado; las casillas siguen siendo en vivo.
+    estable = {k: v for k, v in hechos.items() if k != "datos"}
+    return hashlib.sha256(json.dumps(estable, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:32]
 
 
 def _leer(match_id: str, clave: str, h: str) -> dict | None:

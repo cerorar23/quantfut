@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_locale.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
+import 'sports.dart';
 import 'sports_feed.dart';
 
 /// Avisos de lo que el cupo del deporte deja para VIP en un partido (menú `/control/cupos`): el destacado con
@@ -88,4 +89,43 @@ class SportVipBadge extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Fila bloqueada de una familia de mercados que el cupo deja para VIP: nombre de la familia, número de mercados y candado.
+/// No enseña selección, probabilidad ni cuota; el toque lleva a VIP.
+class SportLockedFamilyRow extends StatelessWidget {
+  const SportLockedFamilyRow({super.key, required this.family, required this.count, this.onVip});
+
+  final String family;
+  final int count;
+  final VoidCallback? onVip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onVip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: const ShapeDecoration(
+          color: QfColors.surface,
+          shape: CutCornerBorder(cut: 8, border: BorderSide(color: QfColors.border)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.mmGroupCount(sportFamilyTitle(l10n, family, fallback: family), count),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: .4, color: QfColors.muted),
+              ),
+            ),
+            const Icon(Icons.lock_outline, color: QfColors.yellow, size: 18),
+            const SizedBox(width: 6),
+            const Text('VIP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: QfColors.yellow)),
+          ],
+        ),
+      ),
+    );
+  }
 }

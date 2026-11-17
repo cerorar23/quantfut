@@ -45,6 +45,34 @@ void main() {
     }
   });
 
+  test('las familias que el cupo deja para VIP se cuentan para pintar filas bloqueadas', () {
+    final e = SportEvent(
+      id: '9',
+      sport: kTennis,
+      home: 'H',
+      away: 'A',
+      league: 'ATP',
+      start: DateTime(2026, 11, 16, 20),
+      status: 'scheduled',
+      seal: 'x',
+      sealedAt: DateTime.utc(2026, 11, 1),
+      markets: [
+        SportMarket(id: 'winner', label: 'G', selection: 'H', probability: .6, sealedAt: DateTime.utc(2026, 11, 1), eligible: true, family: 'winner'),
+        SportMarket(id: 'games_total-2', label: 'J', selection: 'Más', probability: .7, sealedAt: DateTime.utc(2026, 11, 1), eligible: true, family: 'games_total'),
+        SportMarket(id: 'games_total-3', label: 'J', selection: 'Más', probability: .5, sealedAt: DateTime.utc(2026, 11, 1), eligible: true, family: 'games_total'),
+        SportMarket(id: 'set_winner-1', label: 'S', selection: 'H', probability: .4, sealedAt: DateTime.utc(2026, 11, 1), eligible: true, family: 'set_winner'),
+      ],
+      serverFeatured: true,
+      featuredId: 'winner',
+    );
+    final out = applyQuota([e], const SportQuota(marketsPerMatch: 1), plus: false, now: _now).single;
+    expect(_ids(out), ['winner']);
+    expect(out.vipCount, 3);
+    expect(out.vipFamilies, {'games_total': 2, 'set_winner': 1});
+    final full = applyQuota([e], null, plus: false, now: _now).single;
+    expect(full.vipFamilies, isEmpty);
+  });
+
   test('el destacado va abierto solo en los N partidos del día con mayor probabilidad', () {
     final list = [_e('1', 16, {'a': .80}), _e('2', 16, {'a': .90}), _e('3', 16, {'a': .85}), _e('4', 17, {'a': .76})];
     final out = applyQuota(list, const SportQuota(featuredPerDay: 2), plus: false, now: _now);
