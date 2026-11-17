@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 03:55 UTC · Fecha local en el historial de parleys de un partido · API (PR #485, imagen `dc81e2f6`)
+- El historial usa como fecha el inicio local del partido. El lote sellado conserva su día UTC. Se actualizaron las URLs de los módulos JavaScript para evitar servir la versión anterior en caché.
+- Imagen `quantfut-api:dc81e2f6` construida desde `main` y ensayada (sin errores de importación, 324 rutas). Se recreó solo el servicio API.
+- Verificado en el VPS y en el dominio público: salud HTTP 200, página con el JavaScript nuevo y Boston Celtics–Orlando Magic bajo `2026-11-16` al renderizar los datos públicos en `America/Mexico_City`. Worker en `da7e5f40`.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-215458.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-17 03:16 UTC · Reintento del análisis de NBA en frío · API (PR #483; `main` `8986fffa`)
 - **Cambio:** el análisis reintenta una vez cuando `nba-api` no responde a tiempo o falla una consulta necesaria para localizar el partido. El CI de `main` pasó con pruebas que cubren el reintento y su límite.
 - **Despliegue:** imagen `quantfut-api:8986fffa` desde `main`, ensayada de forma aislada (324 rutas y ningún módulo con error). `scripts/deploy.sh desplegar api` recreó solo la API. El contenedor arrancó a las 03:16:34 UTC con las tres redes originales y cero reinicios al verificar.
