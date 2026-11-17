@@ -134,3 +134,49 @@ def test_ruta_del_analisis_devuelve_404_sin_datos_y_200_con_ellos(monkeypatch):
     assert cliente.get("/web/deportes/nba/analisis/999").status_code == 404           # sin análisis
     assert cliente.get("/web/deportes/nba/analisis/abc").status_code == 404           # id no numérico
     assert cliente.get("/web/deportes/nba/analisis/1234567890").status_code == 404    # demasiado largo
+
+
+def _datos(monkeypatch, ventana, mercados=None):
+    from datetime import date
+    monkeypatch.setattr(an.nba_datos, "hoy_et", lambda: date(2026, 11, 16))
+    monkeypatch.setattr(an.nba_datos, "cartelera_ventana", ventana)
+    monkeypatch.setattr(an.nba_datos, "mercados", mercados or (lambda pid, f: {"destacado": mercado("game_total")}))
+    monkeypatch.setattr(an.nba_datos, "estadisticas", lambda pid, f: EST)
+    monkeypatch.setattr(an.nba_datos, "disponibilidad", lambda pid: DIS)
+
+
+def test_en_frio_reintenta_si_nba_api_no_responde_y_devuelve_el_analisis(monkeypatch):
+    from datetime import date
+    llamadas = []
+
+    def ventana(d, h):
+        llamadas.append(1)
+        if len(llamadas) == 1:
+            raise an.nba_datos.NbaNoDisponible("timeout")
+        return {date(2026, 11, 16): [EVENTO]}
+    _datos(monkeypatch, ventana)
+    assert an.para_partido("18712")["receta"] == "total" and len(llamadas) == 2
+
+
+def test_reintenta_si_el_dia_fallo_y_el_partido_no_aparece_pero_no_mas_de_dos_veces(monkeypatch):
+    llamadas = []
+    _datos(monkeypatch, lambda d, h: llamadas.append(1) or {})
+    assert an.para_partido("18712") is None and len(llamadas) == 2
+
+
+def test_sin_destacado_no_se_reintenta(monkeypatch):
+    from datetime import date
+    llamadas = []
+    _datos(monkeypatch, lambda d, h: llamadas.append(1) or {date(2026, 11, 16): [EVENTO]},
+           mercados=lambda pid, f: {"destacado": None})
+    assert an.para_partido("18712") is None and len(llamadas) == 1
+
+
+def test_un_error_inesperado_no_se_reintenta(monkeypatch):
+    llamadas = []
+
+    def ventana(d, h):
+        llamadas.append(1)
+        raise ValueError("roto")
+    _datos(monkeypatch, ventana)
+    assert an.para_partido("18712") is None and len(llamadas) == 1
