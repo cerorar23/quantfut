@@ -8,7 +8,7 @@ import { conCupos, loadSportWeb, loadResults, loadFootballFeatured, loadImages, 
 import { createSportWindow } from './sports-window.js?v=cupos-20261116';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=parley-fecha-local-20261116';
+import { createConversionViews } from './conversion-views.js?v=parley-historial-7-dias-20261116';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();

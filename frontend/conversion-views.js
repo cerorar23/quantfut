@@ -69,27 +69,19 @@ export function primeraHuella(...fuentes) {
   return null;
 }
 
-export function agruparHistorialPorDia(diasList = [], maxTickets = 10) {
-  const recogidos = [];
+export function agruparHistorialPorDia(diasList = [], maxDias = 7) {
+  const porDia = new Map();
   for (const d of diasList) {
     for (const t of (d.tickets ?? [])) {
       if (t.locked) continue;
       const inicio = d.ambito === 'partido' ? t.patas?.[0]?.kickoff_utc : null;
       const fechaPartido = inicio ? new Date(inicio) : null;
       const dia = fechaPartido && Number.isFinite(fechaPartido.getTime()) ? localDay(fechaPartido) : String(d.dia);
-      recogidos.push({ ...t, _dia: dia });
+      if (!porDia.has(dia)) porDia.set(dia, { dia, tickets: [] });
+      porDia.get(dia).tickets.push(t);
     }
   }
-  recogidos.sort((a, b) => b._dia.localeCompare(a._dia));
-  const mapa = new Map();
-  for (const t of recogidos.slice(0, maxTickets)) {
-    const k = t._dia;
-    if (!mapa.has(k)) {
-      mapa.set(k, { dia: k, tickets: [] });
-    }
-    mapa.get(k).tickets.push(t);
-  }
-  return Array.from(mapa.values());
+  return [...porDia.values()].sort((a, b) => b.dia.localeCompare(a.dia)).slice(0, maxDias);
 }
 
 // ------------------------------------------------------------ vistas
@@ -335,7 +327,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       ? `<p class="cv-sub">${esc(String(ultimo.dia))}${huella ? ` · lote sellado <code>${hash(huella)}</code>` : ''}. Se elige después del lote diario y antes de los partidos: fútbol, tenis y NBA. Una pata que falla lo pierde.</p><div class="cv-list">${tarjetasHoy}</div>`
       : `<div class="cv-empty cyber-card"><h3>${v2?.activo ? 'Hoy no hay combinaciones que cumplan la regla' : 'El parley del día todavía no está activo'}</h3><p>Sin combinaciones válidas, no se fuerza ninguna.</p></div>`;
 
-    const agrupados = agruparHistorialPorDia(anteriores, 10);
+    const agrupados = agruparHistorialPorDia(anteriores);
     const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${(d.tickets ?? []).filter(t => !t.locked).map(ticketV2).join('')}</div></details>`;
     const historial = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
@@ -392,7 +384,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const filas = Object.entries(porEscalon).sort((a, b) => Number(a[0]) - Number(b[0])).map(([e, b]) => `<div class="cv-row" role="listitem"><span class="cv-row-name">Escalón ${esc(e)}</span>${meter(b.acierto_real, 'cyber-progress--green')}<strong>${realNumber(b.aciertos)} de ${realNumber(b.n)}</strong><small>real ${pct(b.acierto_real, 0)} · prometido ${pct(b.prob_media, 0)} · <span class="${Number(b.unidades) >= 0 ? 'cv-pos' : 'cv-neg'}">${unidades(b.unidades)}</span></small></div>`).join('');
     const prueba = `<section class="cv-section" id="cv-historial" tabindex="-1" aria-label="Historial del parley"><div class="cv-section-head"><p class="eyebrow">HISTORIAL PÚBLICO</p><h2>Prometido frente a real, escalón por escalón</h2></div>${filas ? `<div class="cv-rows" role="list">${filas}</div>` : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 
-    const agrupados = agruparHistorialPorDia(anteriores, 10);
+    const agrupados = agruparHistorialPorDia(anteriores);
     const dia = d => `<details class="cv-day"><summary><strong>${esc(String(d.dia))}</strong><span>${(d.tickets ?? []).filter(t => !t.locked).map(t => `<i class="cv-mini ${t.outcome === 'ganado' ? 'win' : t.outcome === 'perdido' ? 'loss' : 'open'}">${realNumber(t.cuota_total, 2)} ${t.outcome ? (t.outcome === 'ganado' ? '✓' : t.outcome === 'perdido' ? '✗' : '↺') : '…'}</i>`).join('')}</span></summary><div class="cv-list">${(d.tickets ?? []).filter(t => !t.locked).map(ticket).join('')}</div></details>`;
     const historial = `<section class="cv-section" aria-label="Días anteriores"><div class="cv-section-head"><p class="eyebrow">DÍA POR DÍA</p><h2>Cada parley, también los que se perdieron</h2></div>${agrupados.length ? agrupados.map(dia).join('') : '<p>El historial empieza con el primer día sellado.</p>'}</section>`;
 

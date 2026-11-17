@@ -235,28 +235,30 @@ test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 es
   assert.doesNotMatch(view, /cv-legal/);
 });
 
-test('agruparHistorialPorDia junta varios parlays del mismo dia en una sola fila y limita a 10', () => {
+test('agruparHistorialPorDia conserva todos los parlays visibles de las siete fechas más recientes', () => {
   const dias = [
     { dia: '2026-11-07', tickets: [{ id: 1, cuota_total: 1.87, outcome: 'perdido' }] },
     { dia: '2026-11-07', tickets: [{ id: 2, cuota_total: 1.94, outcome: 'perdido' }] },
     { dia: '2026-11-07', tickets: [{ id: 3, cuota_total: 1.73, outcome: 'ganado' }] },
     { dia: '2026-11-06', tickets: [{ id: 4, cuota_total: 2.10, outcome: 'ganado' }, { id: 5, cuota_total: 3.10, outcome: 'perdido' }] },
   ];
-  const agrupado = agruparHistorialPorDia(dias, 10);
+  const agrupado = agruparHistorialPorDia(dias);
   assert.equal(agrupado.length, 2);
   assert.equal(agrupado[0].dia, '2026-11-07');
   assert.equal(agrupado[0].tickets.length, 3);
   assert.equal(agrupado[1].dia, '2026-11-06');
   assert.equal(agrupado[1].tickets.length, 2);
 
-  // Probar tope de 10
-  const muchos = Array.from({ length: 15 }, (_, i) => ({
-    dia: `2026-11-${String(i + 1).padStart(2, '0')}`,
-    tickets: [{ id: i + 1, cuota_total: 2.0, outcome: 'ganado' }],
+  const muchos = Array.from({ length: 8 }, (_, i) => ({
+    dia: `2026-11-${10 + i}`,
+    tickets: i === 7 ? Array.from({ length: 12 }, (_, id) => ({ id })) : [{ id: 12 + i }],
   }));
-  const limitado = agruparHistorialPorDia(muchos, 10);
-  const totalTickets = limitado.reduce((acc, d) => acc + d.tickets.length, 0);
-  assert.equal(totalTickets, 10);
+  muchos.push({ dia: '2026-11-18', tickets: [{ locked: true }] });
+  const limitado = agruparHistorialPorDia(muchos);
+  assert.deepEqual(limitado.map(d => d.dia), [
+    '2026-11-17', '2026-11-16', '2026-11-15', '2026-11-14', '2026-11-13', '2026-11-12', '2026-11-11',
+  ]);
+  assert.equal(limitado[0].tickets.length, 12);
 });
 
 test('parley v2.1 agrupa tickets del mismo dia en una sola fila en el historial', () => {
