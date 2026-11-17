@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 03:59 UTC · Destacado de NBA por receta y resumen redactado con IA · API (PR #479; `main` `9f936672`)
+- **Motivo:** pedido del titular, mismo criterio que fútbol y tenis: casillas según el mercado y «Resumen del pronóstico». Solo NBA y solo la app; la app instalada no llama al endpoint hasta compilar una versión con el cambio.
+- **Qué lleva:** `src/qf/api/analisis_nba.py` (recetas ganador/hándicap, total y puntos de equipo; datos de `nba-api` vía `nba_datos`: puntos y posesiones proyectados del sello, estadísticas de equipo, cara a cara y reporte oficial de bajas) y `GET /web/deportes/nba/analisis/{id}` en `web.py`. Sin migración: usa `analisis_resumen` (db/118). Los mercados de jugador y los partidos sin sello no tienen análisis.
+- **Método:** `scripts/deploy.sh construir api`, `ensayo` (`modulos con error: ninguno`, `rutas: 324`) y `desplegar api` con `quantfut-api:9f936672`. Pre-vuelo `estado`: API con 1 archivo distinto y 1 ausente frente a `main` (`web.py` y `analisis_nba.py`, los de este cambio). La imagen que corría era `quantfut-api:ae6b93a5` (otra sesión había desplegado después de mi `527ad314`; su código coincidía con `main` salvo lo de este cambio). Redes intactas (`nba-api-red`, `quantfut_default`, `tenis-db_tenis-interna`).
+- **Verificado en el dominio:** salud 200; `GET /web/deportes/nba/analisis/18712` (CLE–CHI, destacado «Cleveland menos de 137,5»): receta `equipo` con proyección, ataque/defensa y ritmo; resumen real en los 6 idiomas (cifras correctas: 91 %, 121,9, 137,5, 117,5, 125,9, 101,3); partido inexistente y partido sin sello → 404.
+- **Límite encontrado en la verificación:** la PRIMERA llamada en frío devolvió 404 (`nba-api` tarda más que el timeout de 4 s de `nba_datos` y su caché de mercados dura 60 s); la 2.ª ya devolvió el análisis y la 3.ª el resumen. La app lo trata como «sin análisis» (tarjeta compacta). Se corrige con un reintento en un PR aparte.
+- **No hecho:** la app no se ha compilado ni visto la tarjeta; «bajas» cuenta jugadores `Out` del reporte oficial (no minutos ni impacto: `impacto_bloqueado`); el resumen se genera al abrir el partido, no al sellar.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-205943.yml docker-compose.yml && docker compose up -d --no-deps api` (vuelve a `ae6b93a5`). Nada del código anterior usa lo nuevo; las filas de `analisis_resumen` pueden quedarse.
+
 ### 2026-11-17 03:33 UTC · Whop: versión de API fijada para el checkout por plan_id · API (PR #478; `main` `ae6b93a5`)
 - **Motivo:** el pago de prueba (cuenta de prueba, sandbox) fallaba con «No se pudo completar la solicitud». Whop respondía `400 variant_id is required for payment mode`: sin `Api-Version-Date` usa la versión más nueva, que exige `variant_id` y no acepta el `plan_id` que guardamos por plan.
 - **Qué lleva:** `src/qf/comercial/whop.py` envía `Api-Version-Date: 2025-01-01` por defecto (`WHOP_API_VERSION_DATE` sigue mandando). Sin migración. Afecta también al modo `live` (misma cabecera); no se ha probado con la clave de producción.
