@@ -14,6 +14,15 @@
 - **Alcance:** solo fútbol y solo la app. Córners, tarjetas y primera mitad caen en la receta general hasta medir su cobertura; NBA y tenis, la web y el resumen generado al sellar (no al abrir) quedan para siguientes PR. La ficha cacheada trae el bloque `analisis` solo en `mercados.destacado_app`.
 - **Despliegue pendiente:** aplicar `db/118_analisis_resumen.sql` y desplegar la API (`DEPLOYS.md`); la app necesita un build nuevo.
 
+## 17-nov-2026 · Destacado de NBA: casillas según el mercado y resumen redactado (`app/destacado-nba-recetas`)
+- **Decisión (pedido del titular, mismo criterio que fútbol y tenis):** tarjeta de análisis del destacado de NBA con tres recetas: `ganador` (ganador y hándicap: margen proyectado, forma de los últimos 6, diferencial de puntos), `total` (total proyectado, ritmo, total medio de los cara a cara, ataque) y `equipo` (puntos proyectados del equipo, su ataque contra la defensa del rival, ritmo). Descanso y bajas confirmadas completan cuando falta otro dato. `src/qf/api/analisis_nba.py`.
+- **Ritmo sí existe:** el sello del modelo trae `escenarios.posesiones_regulacion` (posesiones proyectadas del partido) y `mu` (puntos proyectados de cada equipo); la medición anterior solo miraba las posesiones capturadas por partido, que esta temporada no hay. Todo sale de lo que `nba-api` ya publica y `nba_datos` ya lee (cartelera sellada, estadísticas de equipo a la fecha, reporte oficial de bajas): no se calcula ninguna probabilidad.
+- **Mercados de jugador sin receta:** conservan la tarjeta compacta (falta exponer media, minutos y rival por jugador). Un partido sin sello (el sello es ~1 h antes del inicio) no tiene destacado ni análisis.
+- **Entrega:** `GET /web/deportes/nba/analisis/{id}` en la API de QuantFut, no en `nba-api`: Caddy envía `/nba/v1/*` directo a ese contenedor y desplegarlo es otro circuito. La app solo pinta la tarjeta si el `mercado_id` es su destacado.
+- **App:** el panel de tenis pasa a ser `SportForecastPanel` (tenis o NBA, `nba: true`). 17 textos nuevos en los 6 idiomas. Resumen con la misma maquinaria que fútbol y tenis (`resumen_para`, `significado` en inglés por reglas, sin hablar de precio).
+- **Límites:** «bajas» cuenta jugadores `Out` del reporte oficial, no minutos ni impacto por jugador (`metricas_bajas` llega vacío y el modelo de impacto está bloqueado en el sello: `impacto_bloqueado`). Sin verificar visualmente en la app ni generado un resumen real para NBA.
+
+
 
 ## 17-nov-2026 · Destacado de tenis: casillas según el mercado y resumen redactado (`app/destacado-tenis-recetas`)
 - **Decisión (pedido del titular, mismo criterio que fútbol):** la tarjeta de análisis del pronóstico destacado de tenis, con las casillas que ayudan a ese mercado. Dos recetas: `ganador` (ganador, hándicap de sets y de juegos, ganador del set: saque retenido, ranking, cara a cara, quiebres, forma, victorias en la superficie) y `duracion` (juegos y sets totales, tie-break: saque, partidos a tres sets, quiebres, forma). `src/qf/api/analisis_tenis.py`.

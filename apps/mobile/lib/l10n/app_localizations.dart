@@ -6175,6 +6175,18 @@ abstract class AppLocalizations {
   /// **'todas las superficies'**
   String get tileAllSurfaces;
 
+  /// No description provided for @tileAttackDefense.
+  ///
+  /// In es, this message translates to:
+  /// **'Ataque contra defensa rival'**
+  String get tileAttackDefense;
+
+  /// No description provided for @tileAttackDefenseCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos del equipo y puntos que concede su rival'**
+  String get tileAttackDefenseCaption;
+
   /// No description provided for @tileBreak.
   ///
   /// In es, this message translates to:
@@ -6277,6 +6289,12 @@ abstract class AppLocalizations {
   /// **'Cara a cara'**
   String get tileH2h;
 
+  /// No description provided for @tileH2hTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total medio directo'**
+  String get tileH2hTotal;
+
   /// No description provided for @tileHold.
   ///
   /// In es, this message translates to:
@@ -6295,6 +6313,18 @@ abstract class AppLocalizations {
   /// **'{n} partidos'**
   String tileMatchesCount(int n);
 
+  /// No description provided for @tileOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Bajas confirmadas'**
+  String get tileOut;
+
+  /// No description provided for @tileOutCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Jugadores descartados: local · visita'**
+  String get tileOutCaption;
+
   /// No description provided for @tileOver25Model.
   ///
   /// In es, this message translates to:
@@ -6307,11 +6337,47 @@ abstract class AppLocalizations {
   /// **'Más de 2,5 en sus últimos partidos'**
   String get tileOver25Recent;
 
+  /// No description provided for @tilePace.
+  ///
+  /// In es, this message translates to:
+  /// **'Ritmo proyectado'**
+  String get tilePace;
+
+  /// No description provided for @tilePaceCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Posesiones esperadas en el partido'**
+  String get tilePaceCaption;
+
   /// No description provided for @tilePerMatch.
   ///
   /// In es, this message translates to:
   /// **'Por partido'**
   String get tilePerMatch;
+
+  /// No description provided for @tilePointDiff.
+  ///
+  /// In es, this message translates to:
+  /// **'Diferencial por partido'**
+  String get tilePointDiff;
+
+  /// No description provided for @tilePointDiffCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos a favor menos en contra: local · visita'**
+  String get tilePointDiffCaption;
+
+  /// No description provided for @tilePointsFor.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos por partido'**
+  String get tilePointsFor;
+
+  /// No description provided for @tilePointsForCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Anotados esta temporada: local · visita'**
+  String get tilePointsForCaption;
 
   /// No description provided for @tileProbability.
   ///
@@ -6319,11 +6385,47 @@ abstract class AppLocalizations {
   /// **'Probabilidad'**
   String get tileProbability;
 
+  /// No description provided for @tileProjMargin.
+  ///
+  /// In es, this message translates to:
+  /// **'Margen proyectado'**
+  String get tileProjMargin;
+
+  /// No description provided for @tileProjTeamPoints.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos proyectados'**
+  String get tileProjTeamPoints;
+
+  /// No description provided for @tileProjTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total proyectado'**
+  String get tileProjTotal;
+
   /// No description provided for @tileRank.
   ///
   /// In es, this message translates to:
   /// **'Ranking'**
   String get tileRank;
+
+  /// No description provided for @tileRecordCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Balance: local · visita'**
+  String get tileRecordCaption;
+
+  /// No description provided for @tileRest.
+  ///
+  /// In es, this message translates to:
+  /// **'Descanso'**
+  String get tileRest;
+
+  /// No description provided for @tileRestCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Días de descanso: local · visita'**
+  String get tileRestCaption;
 
   /// No description provided for @tileScores.
   ///

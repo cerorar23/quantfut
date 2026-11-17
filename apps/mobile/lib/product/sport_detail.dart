@@ -81,7 +81,7 @@ class _SportDetailState extends State<SportDetail> {
   int tab = 0;
   late final Future<JsonMap?> stats;
 
-  /// Casillas y resumen del destacado de tenis (`/web/deportes/tenis/analisis/{id}`); null en los demás deportes.
+  /// Casillas y resumen del destacado (`/web/deportes/{tenis,nba}/analisis/{id}`); null en los deportes sin él.
   late final Future<JsonMap?>? analysis;
   Future<JsonMap?>? _availability;
   Future<JsonMap?> get availability => _availability ??= _loadAvailability();
@@ -90,14 +90,14 @@ class _SportDetailState extends State<SportDetail> {
   void initState() {
     super.initState();
     stats = _loadStats();
-    analysis = nba || e.generic ? null : _loadAnalysis();
+    analysis = e.generic ? null : _loadAnalysis();
   }
 
   /// Cualquier fallo (404 incluido) es «sin análisis»: se queda la tarjeta compacta de siempre.
   Future<JsonMap?> _loadAnalysis() async {
     try {
       final r = await widget.api.request(
-        '/web/deportes/tenis/analisis/${Uri.encodeComponent(e.id)}',
+        '/web/deportes/${nba ? 'nba' : 'tenis'}/analisis/${Uri.encodeComponent(e.id)}',
       );
       return r is Map<String, dynamic> ? r : null;
     } catch (_) {
@@ -162,6 +162,7 @@ class _SportDetailState extends State<SportDetail> {
             images: widget.images,
             accent: accent,
             quotes: widget.quotes,
+            analysis: analysis,
           ),
           1 => SportPropsTab(
             api: widget.api,
@@ -618,7 +619,8 @@ class _FeaturedSlot extends StatelessWidget {
         if (data == null || '${data['mercado_id']}' != market.id) {
           return compact;
         }
-        return TennisForecastPanel(
+        return SportForecastPanel(
+          nba: event.sport == kNba,
           analisis: data,
           pickText: sportPickText(l10n, market),
           probability: market.probability,

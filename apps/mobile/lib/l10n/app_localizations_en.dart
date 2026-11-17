@@ -3770,6 +3770,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tileAllSurfaces => 'all surfaces';
 
   @override
+  String get tileAttackDefense => 'Offence vs opponent\'s defence';
+
+  @override
+  String get tileAttackDefenseCaption =>
+      'Team points and points its opponent concedes';
+
+  @override
   String get tileBreak => 'Breaks of serve won';
 
   @override
@@ -3829,6 +3836,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tileH2h => 'Head to head';
 
   @override
+  String get tileH2hTotal => 'Average head-to-head total';
+
+  @override
   String get tileHold => 'Service games held';
 
   @override
@@ -3840,19 +3850,62 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tileOut => 'Confirmed absences';
+
+  @override
+  String get tileOutCaption => 'Players ruled out: home · away';
+
+  @override
   String get tileOver25Model => 'Over 2.5 according to the model';
 
   @override
   String get tileOver25Recent => 'Over 2.5 in their recent matches';
 
   @override
+  String get tilePace => 'Projected pace';
+
+  @override
+  String get tilePaceCaption => 'Possessions expected in the game';
+
+  @override
   String get tilePerMatch => 'Per match';
+
+  @override
+  String get tilePointDiff => 'Point differential per game';
+
+  @override
+  String get tilePointDiffCaption =>
+      'Points scored minus conceded: home · away';
+
+  @override
+  String get tilePointsFor => 'Points per game';
+
+  @override
+  String get tilePointsForCaption => 'Scored this season: home · away';
 
   @override
   String get tileProbability => 'Probability';
 
   @override
+  String get tileProjMargin => 'Projected margin';
+
+  @override
+  String get tileProjTeamPoints => 'Projected points';
+
+  @override
+  String get tileProjTotal => 'Projected total';
+
+  @override
   String get tileRank => 'Ranking';
+
+  @override
+  String get tileRecordCaption => 'Record: home · away';
+
+  @override
+  String get tileRest => 'Rest';
+
+  @override
+  String get tileRestCaption => 'Days of rest: home · away';
 
   @override
   String get tileScores => 'Matches with a goal';

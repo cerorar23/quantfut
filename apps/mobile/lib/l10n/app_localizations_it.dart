@@ -3802,6 +3802,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tileAllSurfaces => 'tutte le superfici';
 
   @override
+  String get tileAttackDefense => 'Attacco contro difesa avversaria';
+
+  @override
+  String get tileAttackDefenseCaption =>
+      'Punti della squadra e punti subiti dall\'avversario';
+
+  @override
   String get tileBreak => 'Break ottenuti';
 
   @override
@@ -3862,6 +3869,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tileH2h => 'Scontri diretti';
 
   @override
+  String get tileH2hTotal => 'Totale medio degli scontri';
+
+  @override
   String get tileHold => 'Giochi di servizio vinti';
 
   @override
@@ -3873,19 +3883,62 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get tileOut => 'Assenze confermate';
+
+  @override
+  String get tileOutCaption => 'Giocatori fuori: casa · ospite';
+
+  @override
   String get tileOver25Model => 'Più di 2,5 secondo il modello';
 
   @override
   String get tileOver25Recent => 'Più di 2,5 nelle ultime partite';
 
   @override
+  String get tilePace => 'Ritmo previsto';
+
+  @override
+  String get tilePaceCaption => 'Possessi attesi nella partita';
+
+  @override
   String get tilePerMatch => 'A partita';
+
+  @override
+  String get tilePointDiff => 'Differenza punti a partita';
+
+  @override
+  String get tilePointDiffCaption => 'Punti fatti meno subiti: casa · ospite';
+
+  @override
+  String get tilePointsFor => 'Punti a partita';
+
+  @override
+  String get tilePointsForCaption =>
+      'Segnati in questa stagione: casa · ospite';
 
   @override
   String get tileProbability => 'Probabilità';
 
   @override
+  String get tileProjMargin => 'Margine previsto';
+
+  @override
+  String get tileProjTeamPoints => 'Punti previsti';
+
+  @override
+  String get tileProjTotal => 'Totale previsto';
+
+  @override
   String get tileRank => 'Ranking';
+
+  @override
+  String get tileRecordCaption => 'Bilancio: casa · ospite';
+
+  @override
+  String get tileRest => 'Riposo';
+
+  @override
+  String get tileRestCaption => 'Giorni di riposo: casa · ospite';
 
   @override
   String get tileScores => 'Partite con gol';
