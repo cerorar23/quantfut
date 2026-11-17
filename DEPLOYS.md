@@ -33,7 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
-### 2026-11-17 07:48 UTC · Huella del resumen IA sin cifras vivas, filas VIP en tenis/NBA y pie de cuota quitado · API (PR #493 app, PR #494 API; `main` `f67a6cf8`)
+### 2026-11-17 14:18 UTC · Worker reconstruido desde `main`, sin deriva · worker (`main` `e2482add`)
+- **Motivo:** el worker (`da7e5f40`) tenía 17 archivos distintos de `main` y 8 que faltaban. Casi todos eran módulos de la API que el worker no ejecuta. Los relevantes: `cuotas_respaldo*`, `cuotas_therundown`, `cuotas_sharpapi`, `fichas`, `partido_mercados`, `acceso_cupos` y `config`. Su cron `cuotas_respaldo --auto` (línea 24 de `/etc/cron.d/quantfut`) solo devolvía `{'estado': 'desactivado'}`: el cron real corre en el host con los archivos de `releases/cuotas-cascada-20261109/`. Sin efecto práctico hoy, pero era la mezcla de versiones que ya rompió escalera y parley el 13-nov.
+- Pre-vuelo: contenedor sin `.py` modificados (`docker diff`); solo `__pycache__`. Imagen `quantfut-worker:e2482add` construida desde `main` y ensayada (`modulos con error: ninguno`).
+- Método: recreado solo `worker` (`CONFIRMO=si scripts/deploy.sh desplegar worker quantfut-worker:e2482add`) en un minuto 3 mod 5 (14:18:11 UTC) y con 0 procesos `python -m` en curso. API sin tocar (`f67a6cf8`).
+- Verificado: contenedor `quantfut-worker:e2482add` en marcha; `import qf.publish.daily, qf.publish.escalera_datos, qf.ingest.odds_worker` sin error. Falta confirmar el primer ciclo de cron (ver abajo).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261117-081833.yml docker-compose.yml && docker compose up -d --no-deps --no-build worker` (la imagen `quantfut-worker:da7e5f40` sigue en el host).
+
+### 2026-11-17 13:48 UTC · Huella del resumen IA sin cifras vivas, filas VIP en tenis/NBA y pie de cuota quitado · API (PR #493 app, PR #494 API; `main` `f67a6cf8`)
 - **Motivo:** el resumen IA se regeneraba (y cobraba APIMart) con cada cambio de cifras, porque `datos_hash` incluía las casillas vivas (en el VPS, dos huellas del mismo partido NBA en 19 minutos). Además, tenis y NBA no listaban las familias bloqueadas para VIP.
 - **Cambio API:** `analisis_futbol._hash` excluye `datos`. El resumen se escribe una vez por pronóstico. Sin cambios de base de datos.
 - **Cambio app (PR #493):** filas VIP bloqueadas por familia en tenis y NBA, y sin la leyenda de cuota al final. Sin desplegar: falta un build nuevo de la app con subida de versión.
