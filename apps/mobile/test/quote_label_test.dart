@@ -222,24 +222,24 @@ void main() {
     expect(find.text('@1,62'), findsNothing);
   });
 
-  testWidgets('ficha NBA: cuotas por fila y UNA sola leyenda de referencia', (tester) async {
+  testWidgets('ficha NBA: cuotas por fila y sin leyenda de referencia al final', (tester) async {
     await pump(tester, sheet(nbaEvent(), nbaOverlay()));
     expect(find.text('@1,62'), findsOneWidget);
     expect(find.text('@1,90'), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
     expect(
       find.text('Cuota de referencia de la captura usada al sellar el pronóstico'),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
-  testWidgets('ficha sin cuotas: «—» en cada fila y la leyenda sigue una vez', (tester) async {
+  testWidgets('ficha sin cuotas: «—» en cada fila y sin leyenda al final', (tester) async {
     await pump(tester, sheet(nbaEvent(), QuotesOverlay.empty));
     expect(find.text('—'), findsNWidgets(3));
     expect(texts(tester).where((t) => RegExp(r'@\s*\d').hasMatch(t)), isEmpty);
     expect(
       find.text('Cuota de referencia de la captura usada al sellar el pronóstico'),
-      findsOneWidget,
+      findsNothing,
     );
   });
 
