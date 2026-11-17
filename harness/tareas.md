@@ -3385,7 +3385,8 @@ Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
 - [x] Walk-forward 2019-24: ATP −0,0022 [−0,0028; −0,0017], WTA −0,0026 [−0,0035; −0,0017] frente a la capa de pendiente; pasa en los dos circuitos.
 - [x] Registro preparado (17-nov), **no ejecutado**: artefacto `apps/tenis/artefactos/tenis-2.1-capa-edad.json` (`tenis-2.1+55c17ba1c6e2`), `ops/registrar_artefacto.py` (validar / registrar / reactivar, sin `--ejecutar` no toca la base), cargador estricto por huella y `python -m tenis.motor` ya ejecuta una pasada real. `docs/tenis_registro_artefacto_20261117.md`.
 - [x] Desplegado y activado el 17-nov 22:11 UTC (`tenis-motor:67f0f87c`, artefacto `tenis-2.1+55c17ba1c6e2`); ver DEPLOYS.md. La base `tenis` real ya tenía 495.714 partidos de TML.
-- [ ] Colector de calendario hacia `tenis.programa` (SofaScore/PropLine): sin él el motor v2 no tiene partidos que pronosticar (`programa` sin partidos futuros).
+- [x] Colector de calendario desde el archivo de PropLine hacia `tenis.partido/programa` (17-nov): `captura/propline_calendario.py`, `ops/calendario_propline.sh`, exportación PIT con `propline` como fuente con hora real; 35 de 67 candidatos reales resueltos. Ver `docs/tenis_calendario_propline_20261117.md`.
+- [ ] Cobertura del calendario: Champaign, Colina (WTA 125) y otros no están en TML; tabla de alias o fuente de torneos. Estado del filtro en Parquet (plan H.2) si 5 min y 4,4 GB por pasada molestan. Pasar `TG_BOT_TOKEN`/`TG_ALERT_CHAT` a `ejecutar_motor.sh`.
 - [x] Motor con el filtro real (17-nov): `tenis/inferencia.py` reproduce el filtro desde la base; π idéntico (Δ = 0) al walk-forward en 60.741 partidos reales; sin pronóstico no se sella. Ver `docs/tenis_motor_filtro_real_20261117.md`.
 - [ ] Estado del filtro en Parquet (plan H.2) para no leer toda la base en cada pasada (hoy ≈ 3 min).
 - [ ] Opcional: edad dentro del filtro (reestimar hiperparámetros) y explicar la señal de actividad reciente.
