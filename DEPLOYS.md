@@ -33,6 +33,12 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 04:21 UTC · Siete fechas en el historial de parleys · API (PR #487, imagen `1e0cebfc`)
+- El historial conserva todos los tickets visibles de las siete fechas más recientes. Los tickets de un solo partido siguen agrupados por la fecha local de inicio.
+- Imagen `quantfut-api:1e0cebfc` construida desde `main` y ensayada (sin errores de importación, 324 rutas). Se recreó solo el servicio API. El worker quedó en `da7e5f40`.
+- Verificado en producción: salud HTTP 200, JavaScript actualizado y 63 tickets en siete fechas del 10 al 16 de noviembre al renderizar los datos públicos en `America/Mexico_City`.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-222010.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-17 03:55 UTC · Fecha local en el historial de parleys de un partido · API (PR #485, imagen `dc81e2f6`)
 - El historial usa como fecha el inicio local del partido. El lote sellado conserva su día UTC. Se actualizaron las URLs de los módulos JavaScript para evitar servir la versión anterior en caché.
 - Imagen `quantfut-api:dc81e2f6` construida desde `main` y ensayada (sin errores de importación, 324 rutas). Se recreó solo el servicio API.
