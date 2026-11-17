@@ -22,6 +22,7 @@ from ..db import conn
 from . import meta_capi, pasarelas, suscripciones
 
 log = logging.getLogger(__name__)
+API_VERSION_DATE = "2025-01-01"
 TOLERANCE_SECONDS = 300  # Standard Webhooks: se rechaza lo que difiere más de 5 minutos.
 ACTOR = "whop"
 
@@ -71,9 +72,11 @@ def verify_signature(secret: str, headers: dict, body: bytes, now: float | None 
 # --- Checkout (lo crea el servidor) ----------------------------------------------------------------
 
 def _headers(api_key: str) -> dict:
-    h = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    if os.getenv("WHOP_API_VERSION_DATE"):
-        h["Api-Version-Date"] = os.environ["WHOP_API_VERSION_DATE"]
+    # Sin versión fijada Whop responde con la más nueva, que exige `variant_id` en vez de `plan_id`
+    # (400 "variant_id is required for payment mode", comprobado en el sandbox el 2026-11-16).
+    # 2025-01-01 acepta `plan_id`, que es lo que guardamos por plan.
+    h = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+         "Api-Version-Date": os.getenv("WHOP_API_VERSION_DATE") or API_VERSION_DATE}
     return h
 
 

@@ -356,3 +356,11 @@ def test_purchase_web_lleva_ciudad_estado_zip_y_telefono_cifrados():
     assert {"ct", "st", "zp", "ph", "em", "country", "external_id", "fn"} <= set(event["user_data"])
     assert not any(k.startswith("_") for k in event["custom_data"])
     assert event["user_data"]["ph"] == [hashlib.sha256(b"528112345678").hexdigest()]
+
+
+def test_headers_fijan_version_de_api(monkeypatch):
+    # Sin versión, Whop usa la más nueva y exige variant_id: el checkout por plan_id falla con 400.
+    monkeypatch.delenv("WHOP_API_VERSION_DATE", raising=False)
+    assert whop._headers("apik_x")["Api-Version-Date"] == whop.API_VERSION_DATE
+    monkeypatch.setenv("WHOP_API_VERSION_DATE", "2026-06-08")
+    assert whop._headers("apik_x")["Api-Version-Date"] == "2026-06-08"
