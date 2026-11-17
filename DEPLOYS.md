@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-16 21:53 UTC · SharpAPI como respaldo interno de fútbol, NBA y tenis · PR #469, main adadef85
+
+- Se instaló el recolector de los tres deportes en `~/sharpapi/sharpapi_captura.py` y se actualizaron cuatro módulos de ingesta en el ejecutor `~/quantfut/releases/cuotas-cascada-20261109/`. Los archivos se extrajeron del commit fusionado y se verificaron las huellas. El ejecutor monta `/home/qf/sharpapi_data` en solo lectura como `/capturas/sharpapi`.
+- Los dos cron conservan sus horarios. El cambio se instaló bajo los candados existentes. La API y el worker siguieron en sus contenedores, con salud HTTP 200. SharpAPI se usa como quinto nivel interno.
+- Verificación hasta las 00:19 UTC del 17-nov: 58 capturas nuevas de fútbol, 21 NBA y 481 tenis. En el contenedor se tradujeron muestras reales de los tres deportes. La cascada automática terminó con `estado: ok` y cero entradas SharpAPI aplicadas en la pasada revisada.
+- Vuelta atrás bajo los mismos candados: restaurar `sharpapi_captura.py` en `~/sharpapi/`, `run.sh` en el ejecutor y `cuotas_respaldo.py`, `cuotas_respaldo_futbol.py` y `cuotas_therundown.py` en `src/ingest/` del ejecutor desde `~/respaldos/sharpapi-adadef85-20261116-215315/`. El lanzador restaurado deja de montar SharpAPI.
+
+
 ### 2026-11-16 19:00 UTC · Separación de estáticos del rate limit y aumento a 120 req/min · API (PR #466; `main` `28833c3d`)
 - **Motivo:** al navegar o recargar páginas web (p. ej. `/en/`), los ~25 archivos estáticos de la raíz (`app.js`, CSS, etc.) agotaban el cupo global de 60/min por IP devolviendo HTTP 429 («Demasiadas solicitudes, intenta más tarde»).
 - **Cambio:** recursos estáticos del frontend (`.js`, `.css`, imágenes, fuentes, etc.) pasan al scope `escudos` con contador propio (10× el límite base). El límite general por defecto se eleva a 120/min. Se añade soporte de traducción progresiva en `/control/configuracion` para evitar timeouts 524 de Cloudflare.
