@@ -108,8 +108,9 @@ def create_checkout(account: dict, plan_code: str, *, fbp: str | None, fbc: str 
             "metadata": {"qf_account_id": str(account["account_id"]), "qf_plan_code": plan_code}}
     if creds["account_id"]:
         body["account_id"] = creds["account_id"]
-    if redirect_url:
-        body["redirect_url"] = redirect_url
+    # Sin redirect_url Whop deja al comprador en su propia página de la empresa tras pagar (comprobado
+    # en el sandbox el 2026-11-16): se le devuelve siempre a nuestra web, que espera el webhook.
+    body["redirect_url"] = redirect_url or f"https://{os.getenv('DOMAIN', 'pronosticosdeportivos.pro').strip()}/?checkout=1"
     try:
         r = (client or httpx).post(f"{pasarelas.api_base(modo)}/checkout_configurations", json=body,
                                    headers=_headers(creds["api_key"]), timeout=15)

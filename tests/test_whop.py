@@ -224,6 +224,7 @@ def test_checkout_lo_crea_el_servidor_y_el_purchase_comparte_event_id(pool, monk
     url, body, headers = http.calls[0]
     assert url.endswith("/checkout_configurations") and headers["Authorization"] == "Bearer clave"
     assert body["plan_id"] == plan_id and body["metadata"]["qf_account_id"] == str(acc["account_id"])
+    assert body["redirect_url"].endswith("/?checkout=1")  # sin esto Whop deja al comprador en su página
     assert out["event_id"] == f"purchase:{out['checkout_id']}"
     whop.handle_event(*_evento("payment.succeeded", {
         **_pago(plan_id, acc["account_id"], "pay_" + uuid.uuid4().hex[:8]),
