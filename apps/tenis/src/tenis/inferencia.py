@@ -96,7 +96,7 @@ def resolver(pron: pd.DataFrame, partido: dict) -> dict:
     fila = _fila(pron, partido["partido_id"])
     if fila is None:
         return {"ok": False, "motivo": "fuera_de_la_exportacion"}
-    if fila.motivo:
+    if pd.notna(fila.motivo) and fila.motivo:          # pandas 3 guarda NaN (no None) donde no hay motivo
         return {"ok": False, "motivo": str(fila.motivo)}
     if {int(fila.jugador_1), int(fila.jugador_2)} != {int(partido["jugador_1"]), int(partido["jugador_2"])}:
         return {"ok": False, "motivo": "jugadores_no_coinciden"}
