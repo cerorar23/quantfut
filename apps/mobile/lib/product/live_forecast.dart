@@ -149,9 +149,12 @@ class ForecastPanel extends StatelessWidget {
     final redactado = jsonMap(
       jsonMap(pick['analisis'])['resumen'],
     )[AppLocale.instance.code];
-    if (redactado is String && redactado.trim().isNotEmpty)
-      return redactado.trim();
     final l10n = AppLocale.instance.l10n;
+    if (redactado is String && redactado.trim().isNotEmpty) {
+      // El precio nunca lo redacta la IA: va con el texto fijo, correcto en los 6 idiomas.
+      final precio = _priceSentence(l10n);
+      return precio == null ? redactado.trim() : '${redactado.trim()} $precio';
+    }
     final local = jsonMap(ficha['local'])['nombre'] ?? l10n.dictHomeDefault;
     final away = jsonMap(ficha['visitante'])['nombre'] ?? l10n.dictAwayDefault;
     final parts = <String>[
@@ -174,17 +177,22 @@ class ForecastPanel extends StatelessWidget {
         ),
       );
     }
+    final precio = _priceSentence(l10n);
+    if (precio != null) parts.add(precio);
+    return parts.join(' ');
+  }
+
+  /// Cuota publicada frente a la justa del modelo (null si falta alguna de las dos).
+  String? _priceSentence(AppLocalizations l10n) {
     final price = pick['ref_price'] ?? pick['price'];
     final prob = pick['prob'];
     if (price is num && prob is num && prob > 0) {
       final edge = price * prob - 1;
-      parts.add(
-        edge >= 0
-            ? l10n.dictOddsAbove(decimalText(1 / prob))
-            : l10n.dictOddsBelow(decimalText(1 / prob)),
-      );
+      return edge >= 0
+          ? l10n.dictOddsAbove(decimalText(1 / prob))
+          : l10n.dictOddsBelow(decimalText(1 / prob));
     }
-    return parts.join(' ');
+    return null;
   }
 
   String _pct(dynamic v) => v is num ? '${v.round()} %' : '—';

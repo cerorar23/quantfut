@@ -63,7 +63,9 @@ def test_pocos_partidos_no_dan_porcentaje():
 
 def test_cifras_validas_acepta_los_datos_y_rechaza_ajenos():
     h = af.hechos_de(pick(), ficha(), "resultado", [{"id": "empate", "a": 15, "b": 10, "liga": 28}])
-    assert af.cifras_validas("Hay un 78 % de probabilidad; la cuota (1,23) queda bajo la justa (1,28). 1X2.", h)
+    assert af.cifras_validas("Hay un 78 % de probabilidad. 1X2.", h)
+    assert "cuota_justa" not in h and "cuota_publicada" not in h and "precio" not in h
+    assert not af.cifras_validas("La cuota (1,23) queda bajo la justa (1,28).", h)
     assert af.cifras_validas("Empata el 15 % en casa y el 10 % fuera frente al 28 % de la liga.", h)
     assert af.cifras_validas("Se esperan más de 2,5 goles.", af.hechos_de(pick("totals", line=2.5, texto="Más de 2,5 goles"), ficha(), "goles", []))
     assert not af.cifras_validas("Tiene un 91 % de probabilidad.", h)
@@ -108,3 +110,16 @@ def test_redactar_descarta_el_resumen_si_un_idioma_trae_cifras_ajenas(monkeypatc
     malos = {**buenos, "fr": "Un 91 % de probabilité."}
     monkeypatch.setattr(af.apimart, "_chat_completion", lambda **k: {"content": __import__("json").dumps(malos)})
     assert af.redactar(h) is None
+
+
+def test_significado_deja_claro_el_pronostico_sin_ambiguedad_de_idioma():
+    f = ficha()
+    assert "NO draw" in af.significado(pick("double_chance", selection="12"), "Albacete", "Celta II")
+    assert "Albacete wins or the match is drawn" in af.significado(pick("double_chance", selection="1X"), "Albacete", "Celta II")
+    assert af.significado(pick("totals", selection="over", line=2.5), "A", "B") == "More than 2.5 total goals in the match"
+    assert af.significado(pick("btts", selection="no"), "A", "B") == "At least one of the teams does not score"
+    assert af.significado(pick("spreads", selection="home", line=0.0), "A", "B") == "A wins (a draw returns the stake)"
+    assert af.significado(pick("corners", selection="over", line=9.5), "A", "B") is None
+    h = af.hechos_de(pick("double_chance", selection="12"), f, "resultado", [])
+    assert "NO draw" in h["significado"]
+    assert af.cifras_validas("Un 78 % de probabilidad de que no haya empate.", h)

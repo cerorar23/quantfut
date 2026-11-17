@@ -56,6 +56,11 @@ void main() {
     expect(find.text('15 % · 10 %'), findsOneWidget);
     expect(find.text('13 – 8'), findsOneWidget);
     expect(find.textContaining('rara vez termina en tablas'), findsOneWidget);
+    // La frase del precio la pone la app (cuota 1,23 por debajo de la justa 1,28), no la IA.
+    expect(
+      find.textContaining('queda por debajo de la cuota justa'),
+      findsOneWidget,
+    );
     expect(find.textContaining('—'), findsNothing);
   });
 

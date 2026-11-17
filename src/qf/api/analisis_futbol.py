@@ -184,16 +184,43 @@ def cifras_validas(texto: str, hechos: dict) -> bool:
 
 
 def hechos_de(pick: dict, ficha: dict, receta: str, tarjetas: list[dict]) -> dict:
+    """Lo único que ve la IA. Sin cuotas ni precio: la frase sobre el precio la pone la app con su texto fijo
+    (la IA contó que «el precio apoya» con una cuota por debajo de la justa, y eso la comprobación de cifras no lo ve)."""
     prob = _num(pick.get("prob"))
-    justa = round(1 / prob, 2) if prob else None
-    publicada = _num(pick.get("ref_price"))
-    return {"partido": f"{(ficha.get('local') or {}).get('nombre')} vs {(ficha.get('visitante') or {}).get('nombre')}",
-            "pronostico": pick.get("texto"), "linea": _num(pick.get("line")), "mercado": receta,
-            "probabilidad_pct": round(prob * 100) if prob else None, "cuota_justa": justa,
-            "cuota_publicada": publicada,
-            "precio": None if not (justa and publicada) else ("por encima de la justa" if publicada >= justa
-                                                              else "por debajo de la justa"),
-            "datos": tarjetas}
+    local, visita = (ficha.get("local") or {}).get("nombre"), (ficha.get("visitante") or {}).get("nombre")
+    out = {"partido": f"{local} vs {visita}",
+           "pronostico": pick.get("texto"), "linea": _num(pick.get("line")), "mercado": receta,
+           "probabilidad_pct": round(prob * 100) if prob else None, "datos": tarjetas}
+    sig = significado(pick, str(local), str(visita))
+    if sig:
+        out["significado"] = sig
+    return out
+
+
+def significado(pick: dict, local: str, visita: str) -> str | None:
+    """Lo que quiere decir el pronóstico, en inglés y sin ambigüedad: el modelo pequeño leyó «(sin empate)» en
+    alemán como «empate» (el 17-nov-2026), y eso no lo detecta la comprobación de cifras."""
+    market, sel, line = pick.get("market"), str(pick.get("selection")), _num(pick.get("line"))
+    lado = {"home": local, "away": visita}.get(sel)
+    if market == "h2h":
+        return {"home": f"{local} wins the match", "away": f"{visita} wins the match",
+                "draw": "The match ends in a draw"}.get(sel)
+    if market == "double_chance":
+        return {"1X": f"{local} wins or the match is drawn (it fails only if {visita} wins)",
+                "X2": f"{visita} wins or the match is drawn (it fails only if {local} wins)",
+                "12": f"NO draw is expected: either {local} or {visita} wins (it fails only if the match is drawn)",
+                }.get(sel)
+    if market == "spreads" and lado:
+        return (f"{lado} wins (a draw returns the stake)" if line == 0
+                else f"{lado} covers the handicap {line:+g}" if line is not None else None)
+    if market == "totals" and line is not None:
+        return f"{'More' if sel == 'over' else 'Fewer'} than {line:g} total goals in the match"
+    if market in ("team_totals_home", "team_totals_away") and line is not None:
+        eq = local if market == "team_totals_home" else visita
+        return f"{eq} scores {'more' if sel == 'over' else 'fewer'} than {line:g} goals"
+    if market == "btts":
+        return "Both teams score" if sel == "yes" else "At least one of the teams does not score"
+    return None
 
 
 GLOSARIO = (
@@ -216,13 +243,16 @@ PROMPT = (
     "Write in these languages: {idiomas}. For each language write 2 or 3 sentences, at most {max} characters. "
     "Sentence 1 is a hook that states the conclusion about the match itself (for example what kind of match to expect), "
     "with the probability; do not call it a 'bet', 'tip' or 'opportunity' and do not use hype words such as "
-    "'very attractive'. The next sentences justify it with the figures: use EVERY item of 'datos' that is relevant, "
-    "each described exactly as the glossary says. "
+    "'very attractive'. The next sentences justify it with the figures: mention EVERY item of 'datos' "
+    "(one short clause each, described exactly as the glossary says); never skip one, and say what 'empate' means "
+    "for the forecast when it is there. "
     "Use ONLY numbers that appear in the data (the market line 'linea' is allowed); never invent, derive or round to a "
     "new number. Write numbers the way that language does (decimal comma in es, pt, fr, it, de; decimal point in en) "
-    "and put a space before % in es, fr and de. Close with one short sentence about the price: if 'precio' says the "
-    "published odds are below the fair odds, say the appeal is in the probability, not the price; if above, say the "
-    "price also supports it. Never promise or guarantee a result. "
+    "and put a space before % in es, fr and de. 'probabilidad_pct' is the probability that the forecast in "
+    "'pronostico' comes true; 'significado' says in plain English exactly what 'pronostico' means (for example "
+    "that no draw is expected): follow it and never reverse it. Do not mention odds, prices or "
+    "value at all: the app adds the sentence about the price itself. "
+    "Never promise or guarantee a result. "
     + GLOSARIO + " Return ONLY a JSON object with the language codes as keys.\nDATA:\n{datos}"
 )
 
