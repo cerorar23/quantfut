@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 · Destacado de NBA por receta y resumen con IA: registro del despliegue real · API (PR #479 y #483; imagen `quantfut-api:1e0cebfc`, `main` `369191de`)
+- **Qué corre:** `quantfut-api:1e0cebfc` (merge de #487) desplegada por otra sesión a las 05:18 hora local. Incluye el destacado de NBA (#479) y el reintento en frío de `para_partido` (#483, `INTENTOS = 2`). `docker-compose.yml` ya fija esa imagen; no hace falta cambiarlo.
+- **Lo que no se hizo:** la imagen `quantfut-api:9f936672` (#479) se construyó y verificó, pero no llegó a producción. La de `8986fffa` (#483) se construyó y ensayó, pero el despliegue se rechazó porque `main` ya había avanzado; no se desplegó para no retroceder el código de #487 (parleys).
+- **Verificado en el dominio:** salud 200 y `pronosticosdeportivos.pro` 200; redes de la API intactas (`nba-api-red`, `quantfut_default`, `tenis-db_tenis-interna`); `GET /web/deportes/nba/analisis/18712` responde 200 en dos llamadas seguidas. El resumen en 6 idiomas se comprobó con la imagen 9f936672 (mismo código de análisis).
+- **No verificado:** que el primer visitante en frío ya no reciba 404 (no se pudo forzar un arranque en frío).
+- **Vuelta atrás:** la anterior a 1e0cebfc queda en `releases/` del servidor; el despliegue anterior de la API lo registra la sesión que desplegó #487.
+
 ### 2026-11-17 04:21 UTC · Siete fechas en el historial de parleys · API (PR #487, imagen `1e0cebfc`)
 - El historial conserva todos los tickets visibles de las siete fechas más recientes. Los tickets de un solo partido siguen agrupados por la fecha local de inicio.
 - Imagen `quantfut-api:1e0cebfc` construida desde `main` y ensayada (sin errores de importación, 324 rutas). Se recreó solo el servicio API. El worker quedó en `da7e5f40`.
