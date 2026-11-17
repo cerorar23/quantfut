@@ -13,12 +13,17 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
+import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from tenis.alertas import enviar_alerta
-from tenis.modelo.datos import FORMATOS, indice_formato
+from tenis.modelo import capa_edad
+from tenis.inferencia import inferir
+from tenis.modelo.datos import FORMATOS
 from tenis.modelo.hiperparametros import huella
 from tenis.modelo.union import sigma_m, unir
 from tenis.sellado import redondear_distribucion, sellar_pronostico
@@ -28,6 +33,8 @@ from tenis.simulador.salida import a_contrato
 
 log = logging.getLogger(__name__)
 UTC = timezone.utc
+# Artefactos congelados que viajan en la imagen del motor (apps/tenis/artefactos/); `TENIS_ARTEFACTOS_DIR` lo sobrescribe.
+DIRECTORIO_ARTEFACTOS = Path(__file__).resolve().parents[2] / "artefactos"
 
 
 def cargar_artefacto_activo(db: Any, ruta_directorio: Path | None = None) -> dict[str, Any]:
@@ -43,37 +50,54 @@ def cargar_artefacto_activo(db: Any, ruta_directorio: Path | None = None) -> dic
 
     sha256_esperado, tipo, version_modelo, imagen = row
 
-    # Si se proporciona directorio o se busca en ubicaciones conocidas
-    rutas_candidatas = []
-    if ruta_directorio:
-        rutas_candidatas.extend(list(ruta_directorio.glob("*.json")))
+    # Plan §H.2: la huella se recalcula al arrancar; si ningún fichero coincide con la registrada, el motor NO sella.
+    # Sin ruta fija ni respaldo: solo ficheros dentro del directorio de artefactos de la imagen (o el pasado por parámetro).
+    directorio = ruta_directorio or Path(os.environ.get("TENIS_ARTEFACTOS_DIR") or DIRECTORIO_ARTEFACTOS)
+    for r in sorted(directorio.glob("*.json")):
+        try:
+            datos = json.loads(r.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        copia = dict(datos)
+        declarada = copia.pop("sha256_contenido", None)
+        if huella(copia) == sha256_esperado and declarada in (None, sha256_esperado):
+            return {"version_modelo": version_modelo, "sha256": sha256_esperado, "parametros": datos}
 
-    rutas_candidatas.extend([
-        Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\rediseno_20261104\modelo_s3\hiperparametros.json"),
-        Path("hiperparametros.json"),
-    ])
+    raise FileNotFoundError(f"Ningún fichero de {directorio} tiene la huella del artefacto activo {sha256_esperado}")
 
-    for r in rutas_candidatas:
-        if r.exists():
-            try:
-                datos = json.loads(r.read_text(encoding="utf-8"))
-                copia = dict(datos)
-                copia.pop("sha256_contenido", None)
-                if huella(copia) == sha256_esperado:
-                    return {"version_modelo": version_modelo, "sha256": sha256_esperado, "parametros": datos}
-            except Exception:
-                continue
 
-    # Si no se encuentra archivo con esa huella, pero se dispone de los hiperparámetros por defecto
-    for r in rutas_candidatas:
-        if r.exists():
-            try:
-                datos = json.loads(r.read_text(encoding="utf-8"))
-                return {"version_modelo": version_modelo, "sha256": sha256_esperado, "parametros": datos}
-            except Exception:
-                pass
+def edades_al_corte(db: Any, jugador_1: int, jugador_2: int, corte: datetime) -> tuple[float | None, float | None]:
+    """Edad (años) de cada jugador en la fecha del corte, con la misma regla que la exportación PIT: aserción
+    `fecha_nacimiento` visible en el corte, la de mayor prioridad de fuente y, a igualdad, la más reciente.
+    (fecha_corte − nacimiento) / 365,25; sin fecha de nacimiento → None."""
+    out = []
+    for j in (jugador_1, jugador_2):
+        row = db.execute(
+            "SELECT a.valor FROM jugador_asercion a JOIN fuente f ON f.fuente = a.fuente "
+            "WHERE a.jugador_id = %s AND a.campo = 'fecha_nacimiento' AND a.recibido_en <= %s "
+            "ORDER BY f.prioridad_calendario ASC, a.recibido_en DESC, a.asercion_id DESC LIMIT 1",
+            (j, corte),
+        ).fetchone()
+        try:
+            nac = datetime.strptime(row[0], "%Y-%m-%d").replace(tzinfo=UTC) if row else None
+        except (TypeError, ValueError):
+            nac = None
+        out.append(None if nac is None else (corte - nac).days / 365.25)
+    return out[0], out[1]
 
-    raise FileNotFoundError(f"No se encontró el fichero JSON del artefacto activo {sha256_esperado}")
+
+def aplicar_capa_edad(pi_lado1: float, edad_1: float | None, edad_2: float | None, circ_params: dict[str, Any]) -> tuple[float, dict]:
+    """Aplica la capa de edad del artefacto (si la trae) a π del lado 1. Devuelve (π', trazas para las entradas selladas).
+
+    Sin `capa_edad` en el artefacto, π pasa intacta. Edad desconocida: solo actúa la pendiente de la capa."""
+    cfg = circ_params.get("capa_edad")
+    if not cfg:
+        return pi_lado1, {}                       # sin capa: las entradas selladas quedan como antes
+    capa = capa_edad.CapaEdad.desde_dict(cfg)
+    dif = capa_edad.diferencia_edad(float("nan") if edad_1 is None else edad_1, float("nan") if edad_2 is None else edad_2)
+    pi = float(capa_edad.aplicar(pi_lado1, dif, capa))
+    return pi, {"capa_edad": True, "pi_base": round(pi_lado1, 6),
+                "edad_dif": None if math.isnan(float(dif)) else round(float(dif), 3)}
 
 
 def buscar_partidos_pendientes(
@@ -112,8 +136,12 @@ def simular_y_sellar_partido(
     parametros: dict[str, Any],
     forzar_corte: datetime | None = None,
     dry_run: bool = False,
+    inferencia: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Ejecuta inferencia con parámetros congelados y sella el pronóstico."""
+    """Ejecuta inferencia con parámetros congelados y sella el pronóstico.
+
+    `inferencia` (resultado de `tenis.inferencia.resolver` para este partido) la calcula la pasada del motor una sola vez para
+    todos los partidos en ventana; si no se pasa, se calcula aquí solo para este partido."""
     partido_id = partido["partido_id"]
     t_ref = partido["inicio_programado_utc"]
     if not t_ref.tzinfo:
@@ -132,23 +160,24 @@ def simular_y_sellar_partido(
 
     circ = partido["circuito"].lower()
     circ_params = parametros.get("circuitos", {}).get(circ, {})
-    psi_p = circ_params.get("psi_p", {})
-    psi_r = circ_params.get("psi_r", {})
 
-    sig_eps = float(psi_p.get("sigma_eps", 0.179))
-    rho_eps = float(psi_p.get("rho_eps", -0.733))
-    c_inf = float(circ_params.get("c_inf", 0.020))
+    # Inferencia REAL: filtro con Ψ congelado reproducido desde la evidencia (tenis.inferencia). Sin valores por omisión.
+    if inferencia is None:
+        inferencia = inferir(db, parametros, [partido]).get(partido_id, {"ok": False, "motivo": "sin_inferencia"})
+    if not inferencia.get("ok"):
+        motivo = inferencia.get("motivo", "desconocido")
+        enviar_alerta("jugador_sin_historia" if motivo == "sin_historia_ni_ranking" else "sin_pronostico",
+                      f"Partido {partido_id} sin pronóstico: {motivo}", partido_id=partido_id)
+        return {"estado": "omitido_sin_modelo", "partido_id": partido_id, "motivo": motivo}
 
-    mejor_de = int(partido.get("mejor_de", 3))
-    decisivo = "tiebreak_7" if mejor_de == 3 else "tiebreak_10"
-    fmt_idx = indice_formato(mejor_de, decisivo)
-    if fmt_idx < 0:
-        fmt_idx = 0
-
-    # Inferencia simplificada de demostración si no hay ratings previos cargados
-    s_hat = 1.25
-    pi_lado1 = 0.585
-    var_rho = 0.009
+    psi_r = circ_params["psi_r"]
+    sig_eps, rho_eps, c_inf = float(psi_r["sigma_eps"]), float(psi_r["rho_eps"]), float(psi_r.get("c_inf", 0.0))
+    mejor_de, decisivo = FORMATOS[inferencia["fmt"]]
+    fmt_idx = inferencia["fmt"]
+    s_hat, pi_lado1, var_rho = inferencia["s_hat"], inferencia["pi_lado1"], inferencia["var_rho"]
+    # Capa de edad (17-nov-2026): solo si el artefacto activo la incluye. Las edades se leen al corte, en vivo.
+    e1, e2 = edades_al_corte(db, partido["jugador_1"], partido["jugador_2"], corte) if circ_params.get("capa_edad") else (None, None)
+    pi_lado1, traza_edad = aplicar_capa_edad(pi_lado1, e1, e2, circ_params)
     var_pred = var_rho + c_inf
 
     u = unir(s_hat, pi_lado1, fmt_idx, sig_eps, rho_eps, var_pred)
@@ -171,7 +200,12 @@ def simular_y_sellar_partido(
         "S_hat": round(s_hat, 4),
         "pi_modelo": round(pi_lado1, 6),
         "var_pred": round(var_pred, 6),
-    }
+        "formato": f"mejor_de_{mejor_de}_{decisivo}",
+        "prior_ranking": inferencia["prior_ranking"],
+        "historia_corta": inferencia["historia_corta"],
+        "fatiga_desconocida": inferencia["fatiga_desconocida"],
+        "fuente_pi": "filtro_psi_congelado",
+    } | traza_edad
 
     # Buscar referencia de mercado a la fecha de corte
     ref_row = db.execute(
@@ -203,6 +237,16 @@ def simular_y_sellar_partido(
     return {"estado": "sellado", "partido_id": partido_id, "hash": h}
 
 
+def _en_ventana(partido: dict[str, Any], ahora: datetime, forzar_corte: datetime | None) -> bool:
+    """¿Toca sellar este partido ahora? Mismas reglas que `simular_y_sellar_partido` antes de inferir."""
+    t_ref = partido["inicio_programado_utc"]
+    if not t_ref.tzinfo:
+        t_ref = t_ref.replace(tzinfo=UTC)
+    if forzar_corte is not None:
+        return True
+    return (t_ref - timedelta(minutes=60)) <= ahora < t_ref
+
+
 def ejecutar_pasada_motor(
     db: Any,
     version_datos: str = "d_actual",
@@ -210,11 +254,26 @@ def ejecutar_pasada_motor(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Ejecuta una pasada completa del motor programado sobre partidos pendientes."""
-    artefacto = cargar_artefacto_activo(db)
+    try:
+        artefacto = cargar_artefacto_activo(db)
+    except (FileNotFoundError, RuntimeError) as exc:      # sin artefacto verificable no se sella nada (plan §H.2)
+        enviar_alerta("contrato_roto", f"Motor sin artefacto activo verificable: {exc}")
+        return {"version_modelo": None, "total_encontrados": 0, "resultados": [], "error": str(exc)}
     v_modelo = artefacto["version_modelo"]
     params = artefacto["parametros"]
 
     pendientes = buscar_partidos_pendientes(db, v_modelo)
+
+    # El filtro solo se reproduce si algún partido está dentro de su ventana de sellado (una lectura de la base por pasada).
+    ahora = datetime.now(UTC)
+    en_ventana = [p for p in pendientes if _en_ventana(p, ahora, forzar_corte)]
+    try:
+        inferencias = inferir(db, params, en_ventana)
+    except Exception as exc:                      # sin inferencia no se sella nada: alerta y se reintenta en la pasada siguiente
+        log.exception("inferencia fallida")
+        enviar_alerta("inferencia_fallida", f"La inferencia del motor falló: {exc!r}")
+        inferencias = {p["partido_id"]: {"ok": False, "motivo": "inferencia_fallida"} for p in en_ventana}
+
     resultados = []
     for p in pendientes:
         res = simular_y_sellar_partido(
@@ -225,6 +284,7 @@ def ejecutar_pasada_motor(
             parametros=params,
             forzar_corte=forzar_corte,
             dry_run=dry_run,
+            inferencia=inferencias.get(p["partido_id"], {"ok": False, "motivo": "fuera_de_ventana"}),
         )
         resultados.append(res)
 
@@ -235,12 +295,36 @@ def ejecutar_pasada_motor(
     }
 
 
-def main():
+def main(argv=None) -> int:
+    """Una pasada del motor (el cron la lanza cada 30 min). Código de salida 0 si terminó; 1 si no pudo sellar por un fallo."""
+    import psycopg
     parser = argparse.ArgumentParser(description="Motor programado de tenis v2")
     parser.add_argument("--dry-run", action="store_true", help="Simula sin persistir sellos")
-    args = parser.parse_args()
-    print(f"Motor de tenis v2 iniciado (dry_run={args.dry_run})")
+    parser.add_argument("--dsn", default=os.environ.get("PG_DSN"), help="por omisión, la variable de entorno PG_DSN")
+    parser.add_argument("--esquema", default="tenis")
+    args = parser.parse_args(argv)
+    if not args.dsn:
+        print("falta --dsn o PG_DSN", flush=True)
+        return 1
+    if not re.fullmatch(r"[a-z_][a-z0-9_]*", args.esquema):
+        print("nombre de esquema no válido", flush=True)
+        return 1
+    print(f"Motor de tenis v2 iniciado (dry_run={args.dry_run})", flush=True)
+    try:
+        with psycopg.connect(args.dsn, autocommit=True) as db:
+            db.execute(f"SET search_path TO {args.esquema}, public")
+            resumen = ejecutar_pasada_motor(db, dry_run=args.dry_run)
+    except Exception as exc:                                   # el motor no sella a medias: alerta y sale con error
+        log.exception("pasada del motor fallida")
+        enviar_alerta("motor_fallido", f"La pasada del motor falló: {exc!r}")
+        return 1
+    conteo: dict[str, int] = {}
+    for r in resumen["resultados"]:
+        conteo[r["estado"]] = conteo.get(r["estado"], 0) + 1
+    print(json.dumps({"version_modelo": resumen["version_modelo"], "pendientes": resumen["total_encontrados"],
+                      "estados": conteo, "error": resumen.get("error")}, ensure_ascii=False), flush=True)
+    return 1 if resumen.get("error") else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

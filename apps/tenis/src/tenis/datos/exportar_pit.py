@@ -293,6 +293,8 @@ def construir(t: dict, desde: date | None = None) -> dict:
     for lado in (1, 2):
         K = K.merge(nac.rename(columns={"jugador_id": f"jugador_{lado}", "nacimiento": f"nac_{lado}"}),
                     on=f"jugador_{lado}", how="left")
+        if K[f"nac_{lado}"].dtype == object:         # base sin ninguna fecha de nacimiento: columna vacía de tipo object
+            K[f"nac_{lado}"] = pd.to_datetime(K[f"nac_{lado}"])
         K[f"edad_{lado}"] = ((K["fecha_partido"] - K[f"nac_{lado}"]).dt.days / 365.25).round(3)
 
     # ---- ranking «as of»
