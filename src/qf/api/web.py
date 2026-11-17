@@ -96,6 +96,11 @@ def sports_window_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sports-window.js", media_type="text/javascript")
 
 
+@router.get("/window-i18n.js")
+def forecast_window_translations() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "window-i18n.js", media_type="text/javascript")
+
+
 @router.get("/sport-images.js")
 def sport_images_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sport-images.js", media_type="text/javascript")

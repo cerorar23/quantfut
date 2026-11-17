@@ -1423,6 +1423,34 @@
   }
 }
 
+.is-win-picks .win-strip .win-picks-actions {
+  display: flex;
+  flex: none;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.is-win-picks .win-picks-actions button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+@media (max-width: 999px) {
+  .is-win-picks .win {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .is-win-picks .content {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+
+  .is-win-picks .win-matchbar {
+    position: static;
+  }
+}
+
 /* ================= Planes y paquetes: tarjetas CYBERCORE =================
  * Solo disposición. La etiqueta del plan vive dentro de la tarjeta (antes sobresalía y el recorte
  * de esquinas de cyber-card la cortaba) y las tarjetas ocupan todo el ancho: ya no comparten fila
