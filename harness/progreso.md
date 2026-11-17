@@ -7,6 +7,14 @@
 - Las rutas públicas conservan desactivado este nivel para limitar el uso a análisis personal. El archivo está montado en el ejecutor del VPS desde el despliegue de adadef85. [Guía de operación](../docs/sharpapi_captura_20261102.md#respaldo-interno-desde-el-archivo).
 
 
+## 16-nov-2026 · Pasarelas de pago en /control con sandbox solo para cuentas de prueba (`feat/pasarelas-pago`)
+- **Decisión (pedido del titular):** las claves de Whop (producción y sandbox) se configuran en `/control/pasarelas` en vez de en el `.env`; cifradas con `cifrado.py`, solo se ve la máscara, auditadas. Producción sigue con el entorno si no hay claves guardadas.
+- **Por qué NO hay interruptor global real↔sandbox:** con la tarjeta de prueba cualquier visitante obtendría Plus gratis y los planes reales no existen en el sandbox. El sandbox es solo de las cuentas de `pasarela_cuentas_prueba`; el resto siempre paga en producción, y una cuenta de prueba sin claves falla en vez de caer a producción.
+- **Webhook propio** `/webhooks/whop-sandbox` con su secreto: concede solo a cuentas de prueba, importe 0, nota `whop-sandbox:`, `modo='sandbox'` y nada hacia Meta. Plan de sandbox en `plans.whop_plan_id_sandbox`.
+- Sustituye al PR #465 (`WHOP_API_BASE` + instancia aparte); guía en `docs/pasarelas_pago_20261116.md`.
+- **Sin verificar:** contra el sandbox real de Whop (faltan las claves, que las pone el titular en la pantalla) ni la página en un navegador; hay pruebas con base real. db/117 antes que el código.
+
+
 
 ## 16-nov-2026 · El destacado de la app es el de la web (`app/destacado-servidor`)
 - **Causa de la diferencia:** la web recibe el destacado ya elegido por el servidor (`aplicar_acceso_web`: de TODOS los mercados, también los VIP y los complementarios, con cuota de casa); la app lo calculaba sola con los pronósticos abiertos que le llegan. En Albacete–Celta II la web destacaba la doble oportunidad (78 %, 1,23) y la app solo tenía abierto «Más de 0,5» (87 %, 1,11 < 1,20), así que mostraba «ningún pronóstico entra en el destacado».
