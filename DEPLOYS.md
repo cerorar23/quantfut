@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 14:29 UTC · Agenda de la web muestra los partidos finalizados (pestaña Ayer) · API (PR #491, #496; `main` `b9bbdad3`)
+- **Motivo:** la pestaña Ayer salía vacía aunque hubiera partidos terminados: el filtro de inicio arrancaba en «próximos», que oculta los finalizados (`frontend/app.js`, `homeStatus`). Solo frontend; sin cambios de `src/` ni de base de datos.
+- **Cambio:** `homeStatus` por defecto `todos`; `app.js?v=agenda-finalizados-20261117` en `index.html` (sin subir la versión, Cloudflare y el navegador servirían la copia anterior horas) y la prueba `test_rutas_web.py` actualizada.
+- Pre-vuelo: `scripts/deploy.sh estado` con API y worker en 0 diferencias frente a `main` (worker `e2482add`, API `f67a6cf8`). `estado` solo compara `src/*.py`, así que no ve el frontend: la imagen se reconstruyó igualmente.
+- Método: imagen `quantfut-api:b9bbdad3` construida desde `main`, ensayada (`modulos con error: ninguno`, `rutas: 324`) y desplegada recreando **solo `api`**. Worker sin tocar.
+- Verificado: salud 200 local y en el dominio; el contenedor corre `quantfut-api:b9bbdad3` con las redes `tenis-db_tenis-interna`, `nba-api-red` y `quantfut_default`; `index.html` sirve `app.js?v=agenda-finalizados-20261117` y esa `app.js` trae `homeStatus: 'todos'`.
+- **Sin verificar:** la pestaña Ayer en un navegador (ayer, 16-nov, solo hay un partido: Albacete–Celta de Vigo II, LaLiga 2).
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261117-082931.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-17 14:18 UTC · Worker reconstruido desde `main`, sin deriva · worker (`main` `e2482add`)
 - **Motivo:** el worker (`da7e5f40`) tenía 17 archivos distintos de `main` y 8 que faltaban. Casi todos eran módulos de la API que el worker no ejecuta. Los relevantes: `cuotas_respaldo*`, `cuotas_therundown`, `cuotas_sharpapi`, `fichas`, `partido_mercados`, `acceso_cupos` y `config`. Su cron `cuotas_respaldo --auto` (línea 24 de `/etc/cron.d/quantfut`) solo devolvía `{'estado': 'desactivado'}`: el cron real corre en el host con los archivos de `releases/cuotas-cascada-20261109/`. Sin efecto práctico hoy, pero era la mezcla de versiones que ya rompió escalera y parley el 13-nov.
 - Pre-vuelo: contenedor sin `.py` modificados (`docker diff`); solo `__pycache__`. Imagen `quantfut-worker:e2482add` construida desde `main` y ensayada (`modulos con error: ninguno`).
