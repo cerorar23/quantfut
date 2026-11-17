@@ -307,10 +307,12 @@ def apply_refund(c, data: dict) -> dict:
     """refund.created / refund.updated con estado `succeeded`: se revoca el periodo que dio ese pago."""
     if data.get("status") != "succeeded":
         return {"estado": "ignorado", "motivo": f"estado {data.get('status')}"}
+    # Versión 2026-11-14-1 del webhook: el pago viene anidado (`payment: {id}`); antes, `payment_id`.
+    payment_id = data.get("payment_id") or (data.get("payment") or {}).get("id")
     row = c.execute("SELECT subscription_id FROM whop_payments WHERE payment_id = %s",
-                    (data.get("payment_id"),)).fetchone()
+                    (payment_id,)).fetchone()
     if not row or row["subscription_id"] is None:
-        _alert(f"Whop: reembolso {data.get('id')} de un pago desconocido ({data.get('payment_id')})")
+        _alert(f"Whop: reembolso {data.get('id')} de un pago desconocido ({payment_id})")
         return {"estado": "pago_desconocido"}
     done = suscripciones.revoke_in(c, row["subscription_id"], ACTOR, f"whop: reembolso {data.get('id')}")
     return {"estado": "revocado" if done else "ya_revocado"}
