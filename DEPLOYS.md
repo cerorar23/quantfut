@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 19:19 UTC · Acomodo 2 en las secciones web · API (PR #503)
+
+- Parley del día, Reto Escalera, Alta probabilidad, Historial, Planes y Mi cuenta usan el acomodo 2 de `secciones.html`, con la cabecera común y el panel de evidencia apilado en móvil.
+- Imagen `quantfut-api:9546aebc` construida desde `origin/main` después de fusionar el PR #503. Ensayo aislado con 325 rutas y ningún módulo con error. Se recreó solo la API y `/health` respondió 200.
+- Las rutas públicas y las variantes en inglés y portugués comprobadas respondieron 200. Sirven los archivos de la revisión `secciones-20261117`, que coinciden con el repositorio. Las seis vistas se probaron en Chrome a 1366 y 390 px con datos públicos y una sesión local de prueba para la cuenta.
+- Respaldo del compose en `~/quantfut/releases/compose-antes-20261117-131949.yml`. Para volver a `quantfut-api:08212356`, restaurar ese compose y recrear únicamente `api`.
+
 ### 2026-11-17 18:46 UTC · Pronósticos en la ventana de partidos · API (PR #500)
 
 - Se migró Pronósticos a la ventana de partidos con la cabecera común de QuantFut. Incluye controles de teclado, escudos y retratos del servidor e interfaz en español, inglés y portugués.
