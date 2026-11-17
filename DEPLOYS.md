@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 20:20 UTC · Reto escalera y parley compactos, con menos scroll · API (PR #506; `main` `2132c644`)
+
+- **Motivo:** petición del titular: menos scroll en `/reto-escalera/` y `/parley-del-dia/` sin perder información. Solo frontend (`conversion-views.js`, clases nuevas en `conversion.css`; `app.js` e `index.html` solo suben la versión de caché a `escalera-parley-20261117`); sin cambios de `src/` ni de base de datos.
+- Pre-vuelo: `scripts/deploy.sh estado` con la API en 0 diferencias frente a `main` (`quantfut-api:9546aebc`); `app.js`, `conversion.css` y `conversion-views.js` servidos eran idénticos a `main` antes del cambio. El worker difiere en `api/web.py`, ajeno a este despliegue.
+- Método: imagen `quantfut-api:2132c644` construida desde `origin/main`, ensayo aislado (325 rutas, ningún módulo con error) y recreada **solo `api`**. Worker sin tocar.
+- Verificado: salud 200 en el dominio; el contenedor corre `quantfut-api:2132c644` con las redes `nba-api-red`, `quantfut_default` y `tenis-db_tenis-interna`; `index.html` sirve `app.js` y `conversion.css` con `?v=escalera-parley-20261117` y las huellas de los tres archivos coinciden con `main`; rutas `/parley-del-dia/`, `/reto-escalera/`, `/en/ladder-challenge/` y `/pt/desafio-escada/` en 200. En el navegador a 375 px: escalera con 9 escalones en filas y la tarjeta de retos en espera (sección ~1.680 px, antes ~3.950); parley con combinadas desplegables y «Ver N días anteriores»; sin errores en consola.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261117-141222.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+
 ### 2026-11-17 19:19 UTC · Acomodo 2 en las secciones web · API (PR #503)
 
 - Parley del día, Reto Escalera, Alta probabilidad, Historial, Planes y Mi cuenta usan el acomodo 2 de `secciones.html`, con la cabecera común y el panel de evidencia apilado en móvil.
