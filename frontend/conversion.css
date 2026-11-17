@@ -457,7 +457,7 @@
 .qf-section-layout .cv-card-grid > * { min-width: 0; overflow-wrap: anywhere; }
 .qf-section-layout .cv-card-grid .cv-lock { grid-template-columns: auto minmax(0, 1fr); }
 .qf-section-layout .cv-card-grid .cv-lock-side { grid-column: 2; text-align: start; justify-items: start; }
-.qf-section-aside :is(.cv-section, .win-plans-section, .account-section) {
+.qf-section-aside :is(.cv-section, .win-plans-section, .account-section, .cv-summary-chart) {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -518,6 +518,10 @@
 
 @media (max-width: 900px) {
   .qf-account .member-account-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .top-layout:has(.qf-section-layout) .header-main { height: auto; }
 }
 
 @media (max-width: 650px) {

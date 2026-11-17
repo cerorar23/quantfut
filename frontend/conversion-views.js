@@ -294,10 +294,10 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         badge('Fútbol · Tenis · NBA', 'accent'),
         badge('Lote sellado', 'good'),
       ].filter(Boolean),
-      extra: conPatas
-        ? curva(patas.serie, { unidadLabel: 'patas', titulo: 'Patas: aciertos menos fallos', valor: conSigno, nota: 'Cada pata acertada suma 1 y cada fallada resta 1. Cuenta patas, no dinero: un parley se pierde con una sola pata fallada.' })
-        : curva(serie, { unidadLabel: 'parlays', nota: 'La curva incluye las combinadas perdidas: cada bajada es un parley perdido.' }),
     });
+    const grafica = conPatas
+      ? curva(patas.serie, { unidadLabel: 'patas', titulo: 'Patas: aciertos menos fallos', valor: conSigno, nota: 'Cada pata acertada suma 1 y cada fallada resta 1. Cuenta patas, no dinero: un parley se pierde con una sola pata fallada.' })
+      : curva(serie, { unidadLabel: 'parlays', nota: 'La curva incluye las combinadas perdidas: cada bajada es un parley perdido.' });
 
     const racha = dots(lista);
 
@@ -347,7 +347,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         ['¿Qué deportes entran en el parley v2.1?', 'Fútbol, tenis y NBA. Se seleccionan tras el sellado del lote diario y antes de que inicien los partidos.'],
         ['¿Hay garantía de ganancia?', 'No. Ninguna racha asegura la siguiente. Las apuestas combinadas tienen alta varianza y se muestran con total transparencia.'],
       ])}
-      ${legal}`, `${racha}${historial}${sealBlock(huella)}`);
+      ${legal}`, `${racha}${historial}${sealBlock(huella)}${grafica ? `<div class="cv-summary-chart">${grafica}</div>` : ''}`);
   }
 
   function parleyLegacyView(data) {
@@ -476,10 +476,10 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
       bigLabel: conPeldanos ? 'escalones acertados menos fallados' : 'ganancia acumulada',
       bigSub: conPeldanos ? `${realNumber(peldanos.aciertos)} escalones acertados y ${realNumber(peldanos.fallos)} fallados · ganancia ${unidades(r.ganancia)} sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% de retos completados` : r.cerrados ? `sobre ${realNumber(r.invertido, 0)} u invertidas · rendimiento ${realPercent(r.roi, 1)} · ${realNumber(r.tasa_completados, 1)}% completados` : 'Aún no se cerró ningún reto',
       chips: [badge(activo ? 'Reto activo' : 'Reto inactivo', activo ? 'good' : 'muted'), badge('Datos del servidor', 'accent')].filter(Boolean),
-      extra: conPeldanos
-        ? curva(peldanos.serie, { unidadLabel: 'escalones', titulo: 'Escalones: aciertos menos fallos', valor: conSigno, nota: 'Cada escalón acertado suma 1 y cada fallado resta 1. Cuenta escalones, no dinero: un reto se pierde con un solo escalón fallado.' })
-        : curva(serie),
     });
+    const grafica = conPeldanos
+      ? curva(peldanos.serie, { unidadLabel: 'escalones', titulo: 'Escalones: aciertos menos fallos', valor: conSigno, nota: 'Cada escalón acertado suma 1 y cada fallado resta 1. Cuenta escalones, no dinero: un reto se pierde con un solo escalón fallado.' })
+      : curva(serie);
 
     const abiertos = actuales.length ? `<div class="cv-list cv-card-grid">${actuales.map(reto).join('')}</div>` : `<div class="cv-empty cyber-card"><h3>${activo ? 'No hay retos abiertos' : 'El reto escalera todavía no está activo'}</h3><p>${activo ? 'El próximo empieza en cuanto un partido cumpla la regla.' : 'Cuando se active, aparecerá aquí.'}</p></div>`;
 
@@ -503,7 +503,7 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
         [reglas.targets?.length ? `¿Y si en ${realNumber(reglas.dias_max ?? 10)} días el reto no llega a su objetivo?` : `¿Y si en ${realNumber(reglas.dias_max ?? 7)} días no aparece el segundo escalón?`, `El reto queda «Expirado»: conservas el saldo (lo ya ganado sigue ahí), pero no cuenta como cumplido. Por eso se publica cuántos expiran, igual que los fallidos.`],
         ['¿Pueden cambiar un escalón después?', 'No. Se sella en la cadena antes del partido; tocarlo rompería la cadena.'],
       ])}
-      ${legal}`, `${dots(lista)}${prueba}${sealBlock(huella)}`);
+      ${legal}`, `${dots(lista)}${prueba}${sealBlock(huella)}${grafica ? `<div class="cv-summary-chart">${grafica}</div>` : ''}`);
   }
 
   // Las barras usan `--progress-value` de CyberCore: se fija por CSSOM tras pintar
