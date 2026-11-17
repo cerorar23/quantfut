@@ -300,6 +300,25 @@ test('parley v2.1 agrupa tickets del mismo dia en una sola fila en el historial'
   assert.match(view, /1\.73 ✓/);
 });
 
+test('el historial agrupa el parley de un partido por la fecha local de inicio', () => {
+  const inicioLocal = new Date(2026, 10, 16, 18, 30).toISOString();
+  const partido = { id: 1, patas: [{ kickoff_utc: inicioLocal }] };
+  const diario17 = { id: 2, patas: [{ kickoff_utc: inicioLocal }] };
+  const diario16 = { id: 3 };
+  const partidoSinHora = { id: 4, patas: [{ kickoff_utc: null }] };
+  const dias = [
+    { dia: '2026-11-17', ambito: 'partido', tickets: [partido, partidoSinHora] },
+    { dia: '2026-11-17', ambito: 'diario', tickets: [diario17] },
+    { dia: '2026-11-16', ambito: 'diario', tickets: [diario16] },
+  ];
+  const grupos = agruparHistorialPorDia(dias);
+
+  assert.deepEqual(grupos.map(({ dia, tickets }) => [dia, tickets.map(t => t.id)]), [
+    ['2026-11-17', [4, 2]],
+    ['2026-11-16', [1, 3]],
+  ]);
+});
+
 test('escalera por objetivo de cobro: describe objetivos y no promete un porcentaje del reto entero', () => {
   const data = {
     activo: true,
