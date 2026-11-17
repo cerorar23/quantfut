@@ -14,6 +14,8 @@ import argparse
 import json
 import logging
 import math
+import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -31,6 +33,8 @@ from tenis.simulador.salida import a_contrato
 
 log = logging.getLogger(__name__)
 UTC = timezone.utc
+# Artefactos congelados que viajan en la imagen del motor (apps/tenis/artefactos/); `TENIS_ARTEFACTOS_DIR` lo sobrescribe.
+DIRECTORIO_ARTEFACTOS = Path(__file__).resolve().parents[2] / "artefactos"
 
 
 def cargar_artefacto_activo(db: Any, ruta_directorio: Path | None = None) -> dict[str, Any]:
@@ -46,37 +50,20 @@ def cargar_artefacto_activo(db: Any, ruta_directorio: Path | None = None) -> dic
 
     sha256_esperado, tipo, version_modelo, imagen = row
 
-    # Si se proporciona directorio o se busca en ubicaciones conocidas
-    rutas_candidatas = []
-    if ruta_directorio:
-        rutas_candidatas.extend(list(ruta_directorio.glob("*.json")))
+    # Plan §H.2: la huella se recalcula al arrancar; si ningún fichero coincide con la registrada, el motor NO sella.
+    # Sin ruta fija ni respaldo: solo ficheros dentro del directorio de artefactos de la imagen (o el pasado por parámetro).
+    directorio = ruta_directorio or Path(os.environ.get("TENIS_ARTEFACTOS_DIR") or DIRECTORIO_ARTEFACTOS)
+    for r in sorted(directorio.glob("*.json")):
+        try:
+            datos = json.loads(r.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        copia = dict(datos)
+        declarada = copia.pop("sha256_contenido", None)
+        if huella(copia) == sha256_esperado and declarada in (None, sha256_esperado):
+            return {"version_modelo": version_modelo, "sha256": sha256_esperado, "parametros": datos}
 
-    rutas_candidatas.extend([
-        Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\rediseno_20261104\modelo_s3\hiperparametros.json"),
-        Path("hiperparametros.json"),
-    ])
-
-    for r in rutas_candidatas:
-        if r.exists():
-            try:
-                datos = json.loads(r.read_text(encoding="utf-8"))
-                copia = dict(datos)
-                copia.pop("sha256_contenido", None)
-                if huella(copia) == sha256_esperado:
-                    return {"version_modelo": version_modelo, "sha256": sha256_esperado, "parametros": datos}
-            except Exception:
-                continue
-
-    # Si no se encuentra archivo con esa huella, pero se dispone de los hiperparámetros por defecto
-    for r in rutas_candidatas:
-        if r.exists():
-            try:
-                datos = json.loads(r.read_text(encoding="utf-8"))
-                return {"version_modelo": version_modelo, "sha256": sha256_esperado, "parametros": datos}
-            except Exception:
-                pass
-
-    raise FileNotFoundError(f"No se encontró el fichero JSON del artefacto activo {sha256_esperado}")
+    raise FileNotFoundError(f"Ningún fichero de {directorio} tiene la huella del artefacto activo {sha256_esperado}")
 
 
 def edades_al_corte(db: Any, jugador_1: int, jugador_2: int, corte: datetime) -> tuple[float | None, float | None]:
@@ -267,7 +254,11 @@ def ejecutar_pasada_motor(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Ejecuta una pasada completa del motor programado sobre partidos pendientes."""
-    artefacto = cargar_artefacto_activo(db)
+    try:
+        artefacto = cargar_artefacto_activo(db)
+    except (FileNotFoundError, RuntimeError) as exc:      # sin artefacto verificable no se sella nada (plan §H.2)
+        enviar_alerta("contrato_roto", f"Motor sin artefacto activo verificable: {exc}")
+        return {"version_modelo": None, "total_encontrados": 0, "resultados": [], "error": str(exc)}
     v_modelo = artefacto["version_modelo"]
     params = artefacto["parametros"]
 
@@ -304,12 +295,36 @@ def ejecutar_pasada_motor(
     }
 
 
-def main():
+def main(argv=None) -> int:
+    """Una pasada del motor (el cron la lanza cada 30 min). Código de salida 0 si terminó; 1 si no pudo sellar por un fallo."""
+    import psycopg
     parser = argparse.ArgumentParser(description="Motor programado de tenis v2")
     parser.add_argument("--dry-run", action="store_true", help="Simula sin persistir sellos")
-    args = parser.parse_args()
-    print(f"Motor de tenis v2 iniciado (dry_run={args.dry_run})")
+    parser.add_argument("--dsn", default=os.environ.get("PG_DSN"), help="por omisión, la variable de entorno PG_DSN")
+    parser.add_argument("--esquema", default="tenis")
+    args = parser.parse_args(argv)
+    if not args.dsn:
+        print("falta --dsn o PG_DSN", flush=True)
+        return 1
+    if not re.fullmatch(r"[a-z_][a-z0-9_]*", args.esquema):
+        print("nombre de esquema no válido", flush=True)
+        return 1
+    print(f"Motor de tenis v2 iniciado (dry_run={args.dry_run})", flush=True)
+    try:
+        with psycopg.connect(args.dsn, autocommit=True) as db:
+            db.execute(f"SET search_path TO {args.esquema}, public")
+            resumen = ejecutar_pasada_motor(db, dry_run=args.dry_run)
+    except Exception as exc:                                   # el motor no sella a medias: alerta y sale con error
+        log.exception("pasada del motor fallida")
+        enviar_alerta("motor_fallido", f"La pasada del motor falló: {exc!r}")
+        return 1
+    conteo: dict[str, int] = {}
+    for r in resumen["resultados"]:
+        conteo[r["estado"]] = conteo.get(r["estado"], 0) + 1
+    print(json.dumps({"version_modelo": resumen["version_modelo"], "pendientes": resumen["total_encontrados"],
+                      "estados": conteo, "error": resumen.get("error")}, ensure_ascii=False), flush=True)
+    return 1 if resumen.get("error") else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
