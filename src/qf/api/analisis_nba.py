@@ -187,20 +187,39 @@ def _buscar(partido_id: str) -> tuple[dict, Any] | None:
     return None
 
 
-def para_partido(partido_id: str) -> dict | None:
-    """Análisis del destacado de un partido de NBA (el que elige el servidor en `mercados.destacado`).
-    Lleva `mercado_id` para que la app solo lo use si su destacado es ese mismo mercado."""
+INTENTOS = 2
+
+
+def _intento(partido_id: str) -> tuple[dict | None, bool]:
+    """(análisis o None, ¿merece otro intento?). Reintentable: el partido no aparece (un día de la ventana pudo no
+    responder a tiempo) o `nba-api` no contestó."""
     try:
         hallado = _buscar(partido_id)
         if not hallado:
-            return None
+            return None, True
         evento, fecha = hallado
         pid = int(evento["id"])
         mercado = nba_datos.mercados(pid, fecha).get("destacado")
         if not isinstance(mercado, dict):
-            return None
+            return None, False          # sin destacado (sin sello): no hay nada que esperar
         out = construir(evento, mercado, nba_datos.estadisticas(pid, fecha), nba_datos.disponibilidad(pid))
-        return None if out is None else {**out, "mercado_id": mercado.get("id")}
+        return (None if out is None else {**out, "mercado_id": mercado.get("id")}), False
+    except nba_datos.NbaNoDisponible:
+        return None, True
     except Exception:  # noqa: BLE001 - sin análisis la app sigue con su tarjeta compacta
         log.exception("análisis de NBA del partido %s", partido_id)
-        return None
+        return None, False
+
+
+def para_partido(partido_id: str) -> dict | None:
+    """Análisis del destacado de un partido de NBA (el que elige el servidor en `mercados.destacado`).
+    Lleva `mercado_id` para que la app solo lo use si su destacado es ese mismo mercado.
+
+    En frío `nba-api` tarda más que el timeout de `nba_datos` (4 s) y la caché de mercados dura 60 s: la primera llamada
+    de la verificación del 17-nov-2026 devolvió 404 y la segunda ya traía el análisis. La primera vuelta deja en caché lo
+    que sí respondió, así que un reintento suele bastar."""
+    for _ in range(INTENTOS):
+        out, reintentar = _intento(partido_id)
+        if out is not None or not reintentar:
+            return out
+    return None
