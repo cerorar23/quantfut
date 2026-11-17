@@ -159,8 +159,9 @@ def _cents(money) -> int | None:
 
 
 def _plan_id(data: dict) -> str | None:
-    """El plan llega como `plan_id` (forma plana) o como objeto `plan: {id}` (API actual, comprobado 2026-11-16)."""
-    return data.get("plan_id") or (data.get("plan") or {}).get("id")
+    """El plan llega como `variant_id` (versión 2026-11-14-1 del webhook del sandbox, mismo `plan_…`), como
+    `plan_id` (forma plana) o como objeto `plan: {id}` (versión 2025-01-01). Comprobado el 2026-11-16."""
+    return data.get("plan_id") or data.get("variant_id") or (data.get("plan") or {}).get("id")
 
 
 def _membership_id(data: dict) -> str | None:

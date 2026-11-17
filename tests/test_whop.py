@@ -373,4 +373,7 @@ def test_lectores_aceptan_la_forma_anidada_de_la_api_actual():
     pago = {"plan": {"id": "plan_x"}, "membership": {"id": "mem_y"}, "total": 33.99}
     assert whop._plan_id(pago) == "plan_x" and whop._membership_id(pago) == "mem_y"
     assert whop._plan_id({"plan_id": "plan_z"}) == "plan_z" and whop._membership_id({}) is None
+    # Versión 2026-11-14-1 (la del webhook del sandbox): variant_id plano y total como objeto.
+    nuevo = {"variant_id": "plan_v", "membership_id": "mem_n", "total": {"amount": "33.99", "currency": "usd"}}
+    assert whop._plan_id(nuevo) == "plan_v" and whop._membership_id(nuevo) == "mem_n" and whop._cents(nuevo["total"]) == 3399
     assert whop._cents(33.99) == 3399 and whop._cents({"amount": "14.99"}) == 1499 and whop._cents(None) is None
