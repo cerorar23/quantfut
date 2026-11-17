@@ -326,7 +326,7 @@ const state = {
   sportEvent: '',
   sportMarket: 'partido',
   homeSearch: '',
-  homeStatus: 'proximos',
+  homeStatus: 'todos',
   homeLeague: 'Todas',
   homeSort: 'hora',
   pickLeague: 'Todas',
