@@ -33,6 +33,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 04:08 UTC · Whop: volver a la web tras pagar y leer el pago con su forma real · API (PR #481; `main` `3c8facd4`)
+- **Motivo:** en la prueba del sandbox el comprador acababa en la página de la empresa en Whop y la cuenta seguía «sin suscripción activa». Dos causas: (1) la `checkout_configuration` no llevaba `redirect_url`; (2) el webhook `payment.succeeded` se descartaba como `plan_desconocido` porque el código leía `plan_id`/`membership_id` y el webhook (fijado a la versión `2026-11-14-1`) manda `variant_id`/`membership_id`; con la versión `2025-01-01` manda `plan: {id}` y `total` numérico.
+- **Qué lleva:** `src/qf/comercial/whop.py` envía `redirect_url=https://DOMAIN/?checkout=1` y lee el plan de `plan_id`, `variant_id` o `plan.id`, la membresía de `membership_id` o `membership.id` y el importe como número u objeto; `frontend/membership.js` entiende `checkout_status=success` al volver. Sin migración.
+- **Método:** `scripts/deploy.sh construir api`, `ensayo` (`modulos con error: ninguno`, `rutas: 324`) y `desplegar api` con `quantfut-api:3c8facd4`. Pre-vuelo `estado`: API con 1 archivo distinto (`comercial/whop.py`) frente a `main`. Redes intactas (`nba-api-red`, `quantfut_default`, `tenis-db_tenis-interna`).
+- **Verificado:** salud 200 y web 200. Los dos pagos de prueba que el webhook había descartado (`pay_lvLZZbaGN8uwIo` `plus_1m` y `pay_c3Vh1cuiNCmE6z` `plus_3m`, cuenta de prueba 3) se aplicaron a mano con `apply_payment` sobre los datos de `GET /payments/{id}`: suscripciones 36 y 37, importes 1990 y 3399 en `whop_payments`, precio 0 en `subscriptions` (sandbox).
+- **Webhook de producción (revisado en el panel de Whop, solo lectura):** `https://pronosticosdeportivos.pro/webhooks/whop`, activo, v1, los 5 eventos correctos, sin entregas aún. Pendiente: comparar el secreto con `/control/pasarelas` y probar un reembolso en el sandbox.
+- **No hecho:** pago de punta a punta con la redirección nueva; `refund.*` y `membership.*` sin ejercitar en el sandbox.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-210815.yml docker-compose.yml && docker compose up -d --no-deps api` (vuelve a `ae6b93a5`).
+
 ### 2026-11-17 03:33 UTC · Whop: versión de API fijada para el checkout por plan_id · API (PR #478; `main` `ae6b93a5`)
 - **Motivo:** el pago de prueba (cuenta de prueba, sandbox) fallaba con «No se pudo completar la solicitud». Whop respondía `400 variant_id is required for payment mode`: sin `Api-Version-Date` usa la versión más nueva, que exige `variant_id` y no acepta el `plan_id` que guardamos por plan.
 - **Qué lleva:** `src/qf/comercial/whop.py` envía `Api-Version-Date: 2025-01-01` por defecto (`WHOP_API_VERSION_DATE` sigue mandando). Sin migración. Afecta también al modo `live` (misma cabecera); no se ha probado con la clave de producción.
