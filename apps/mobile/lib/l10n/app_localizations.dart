@@ -1923,13 +1923,13 @@ abstract class AppLocalizations {
   /// No description provided for @forecastSourceModel.
   ///
   /// In es, this message translates to:
-  /// **'MODELO PROPIO'**
+  /// **'MODELO ALGORÍTMICO'**
   String get forecastSourceModel;
 
   /// No description provided for @forecastTitle.
   ///
   /// In es, this message translates to:
-  /// **'ANÁLISIS ESTADÍSTICO'**
+  /// **'MODELO ALGORÍTMICO'**
   String get forecastTitle;
 
   /// No description provided for @forecastUnlocked.
@@ -1941,7 +1941,7 @@ abstract class AppLocalizations {
   /// No description provided for @forecastVerdictTitle.
   ///
   /// In es, this message translates to:
-  /// **'💡  DICTAMEN DEL MODELO'**
+  /// **'💡  RESUMEN DEL PRONÓSTICO'**
   String get forecastVerdictTitle;
 
   /// No description provided for @formatScheduleUnavailable.
@@ -6169,6 +6169,36 @@ abstract class AppLocalizations {
   /// **'PROBABILIDAD DE GANAR'**
   String get tenWinProbTitle;
 
+  /// No description provided for @tileBtts.
+  ///
+  /// In es, this message translates to:
+  /// **'Ambos marcan'**
+  String get tileBtts;
+
+  /// No description provided for @tileBttsCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Partidos en que marcaron ambos: local · visita'**
+  String get tileBttsCaption;
+
+  /// No description provided for @tileConcedes.
+  ///
+  /// In es, this message translates to:
+  /// **'Goles que encaja el rival'**
+  String get tileConcedes;
+
+  /// No description provided for @tileDraws.
+  ///
+  /// In es, this message translates to:
+  /// **'Empates'**
+  String get tileDraws;
+
+  /// Pie de la casilla de empates con la media de la liga
+  ///
+  /// In es, this message translates to:
+  /// **'En casa y fuera · liga {league} %'**
+  String tileDrawsCaption(String league);
+
   /// No description provided for @tileFairOdds.
   ///
   /// In es, this message translates to:
@@ -6193,6 +6223,30 @@ abstract class AppLocalizations {
   /// **'Probabilidades no disponibles'**
   String get tileFavoriteNA;
 
+  /// No description provided for @tileFormCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos: local · visita'**
+  String get tileFormCaption;
+
+  /// Etiqueta de la casilla de forma reciente
+  ///
+  /// In es, this message translates to:
+  /// **'Forma (últ. {n})'**
+  String tileFormLabel(int n);
+
+  /// No description provided for @tileGoalsMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Goles por partido'**
+  String get tileGoalsMatch;
+
+  /// No description provided for @tileGoalsMatchCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Totales en sus partidos: local · visita'**
+  String get tileGoalsMatchCaption;
+
   /// No description provided for @tileGoalsNA.
   ///
   /// In es, this message translates to:
@@ -6204,6 +6258,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tendencia goles'**
   String get tileGoalsTrend;
+
+  /// No description provided for @tileHomeAway.
+  ///
+  /// In es, this message translates to:
+  /// **'Victorias casa / fuera'**
+  String get tileHomeAway;
 
   /// No description provided for @tileOver25Model.
   ///
@@ -6217,11 +6277,41 @@ abstract class AppLocalizations {
   /// **'Más de 2,5 en sus últimos partidos'**
   String get tileOver25Recent;
 
+  /// No description provided for @tilePerMatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Por partido'**
+  String get tilePerMatch;
+
   /// No description provided for @tileProbability.
   ///
   /// In es, this message translates to:
   /// **'Probabilidad'**
   String get tileProbability;
+
+  /// No description provided for @tileScores.
+  ///
+  /// In es, this message translates to:
+  /// **'Partidos con gol'**
+  String get tileScores;
+
+  /// No description provided for @tileScoresCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Del equipo, en sus últimos partidos'**
+  String get tileScoresCaption;
+
+  /// No description provided for @tileSplitCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Local en casa · visita fuera'**
+  String get tileSplitCaption;
+
+  /// No description provided for @tileTrendCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Partidos con más de 2,5 goles: local · visita'**
+  String get tileTrendCaption;
 
   /// No description provided for @tileXg.
   ///
@@ -6240,6 +6330,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Disponible en mercados de goles'**
   String get tileXgNA;
+
+  /// No description provided for @tileXgd.
+  ///
+  /// In es, this message translates to:
+  /// **'Dif. de xG'**
+  String get tileXgd;
+
+  /// No description provided for @tileXgdCaption.
+  ///
+  /// In es, this message translates to:
+  /// **'Por partido: local · visita'**
+  String get tileXgdCaption;
 
   /// No description provided for @titleAsianHandicap.
   ///

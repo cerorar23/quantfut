@@ -168,7 +168,8 @@ class FixtureApi extends QuantFutApi {
     bool retry = true,
   }) async {
     paths.add(path);
-    if (path == '/mobile/v1/markets/history' || path == '/mobile/v1/markets/destacados') {
+    if (path == '/mobile/v1/markets/history' ||
+        path == '/mobile/v1/markets/destacados') {
       return {'items': <JsonMap>[]};
     }
     if (path == '/nba/v1/cartelera' && nbaFeed != null) return nbaFeed;
@@ -302,29 +303,32 @@ void main() {
     matching: find.byKey(const ValueKey('sport-selected-mark')),
   );
 
-  testWidgets('el selector aparece en Inicio, Predicciones y Mercados y no en Coins ni Perfil', (
+  testWidgets(
+    'el selector aparece en Inicio, Predicciones y Mercados y no en Coins ni Perfil',
+    (tester) async {
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      for (final (label, shown) in [
+        ('Inicio', true),
+        ('Picks', true),
+        ('Mercados', true),
+        ('Coins', false),
+        ('Perfil', false),
+      ]) {
+        await navigate(tester, label);
+        expect(
+          find.byType(SportSelector),
+          shown ? findsOneWidget : findsNothing,
+          reason: label,
+        );
+      }
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
+  testWidgets('en NBA el switcher muestra Alta prob., Reto Escalera y Parley', (
     tester,
   ) async {
-    final api = FixtureApi();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-    for (final (label, shown) in [
-      ('Inicio', true),
-      ('Picks', true),
-      ('Mercados', true),
-      ('Coins', false),
-      ('Perfil', false),
-    ]) {
-      await navigate(tester, label);
-      expect(
-        find.byType(SportSelector),
-        shown ? findsOneWidget : findsNothing,
-        reason: label,
-      );
-    }
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('en NBA el switcher muestra Alta prob., Reto Escalera y Parley', (tester) async {
     final api = FixtureApi();
     await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
     await navigate(tester, 'Predicciones');
@@ -337,21 +341,29 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('cambiar de deporte no cambia de pestaña ni se guarda como deporte de arranque', (tester) async {
-    final api = FixtureApi();
-    final store = <String, String>{};
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
-    await navigate(tester, 'Predicciones');
-    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
-    await tester.pumpAndSettle();
-    expect(store.keys.where((k) => k.contains('last')), isEmpty);
-    expect(await memoryPrefs(store).initial(), kFootball);
-    expect(find.byKey(const ValueKey('streams-switcher')), findsOneWidget);
-    expect(selectedMark('tenis'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('al abrir se elige el primer deporte del orden de Mis deportes', (tester) async {
+  testWidgets(
+    'cambiar de deporte no cambia de pestaña ni se guarda como deporte de arranque',
+    (tester) async {
+      final api = FixtureApi();
+      final store = <String, String>{};
+      await open(
+        tester,
+        ProductShell(api: api, sportPrefs: memoryPrefs(store)),
+      );
+      await navigate(tester, 'Predicciones');
+      await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+      await tester.pumpAndSettle();
+      expect(store.keys.where((k) => k.contains('last')), isEmpty);
+      expect(await memoryPrefs(store).initial(), kFootball);
+      expect(find.byKey(const ValueKey('streams-switcher')), findsOneWidget);
+      expect(selectedMark('tenis'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
+  testWidgets('al abrir se elige el primer deporte del orden de Mis deportes', (
+    tester,
+  ) async {
     final api = FixtureApi();
     await open(
       tester,
@@ -364,20 +376,29 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('tras tocar otro deporte y reiniciar el shell abre el primero del orden', (tester) async {
-    final api = FixtureApi();
-    final store = {'sports_order': 'nba,futbol,tenis'};
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
-    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
-    await tester.pumpAndSettle();
-    expect(selectedMark('tenis'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
-    expect(selectedMark('nba'), findsOneWidget);
-    expect(selectedMark('tenis'), findsNothing);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+  testWidgets(
+    'tras tocar otro deporte y reiniciar el shell abre el primero del orden',
+    (tester) async {
+      final api = FixtureApi();
+      final store = {'sports_order': 'nba,futbol,tenis'};
+      await open(
+        tester,
+        ProductShell(api: api, sportPrefs: memoryPrefs(store)),
+      );
+      await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+      await tester.pumpAndSettle();
+      expect(selectedMark('tenis'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await open(
+        tester,
+        ProductShell(api: api, sportPrefs: memoryPrefs(store)),
+      );
+      expect(selectedMark('nba'), findsOneWidget);
+      expect(selectedMark('tenis'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
   testWidgets('deslizar cambia de tipo, no de deporte', (tester) async {
     final api = FixtureApi();
     final store = <String, String>{};
@@ -385,7 +406,11 @@ void main() {
     await navigate(tester, 'Predicciones');
     final indicator = find.byKey(const ValueKey('streams-indicator'));
     final before = tester.getTopLeft(indicator).dx;
-    await tester.fling(find.byType(RefreshIndicator), const Offset(-300, 0), 1500);
+    await tester.fling(
+      find.byType(RefreshIndicator),
+      const Offset(-300, 0),
+      1500,
+    );
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(indicator).dx, greaterThan(before + 50));
     expect(selectedMark('futbol'), findsOneWidget);
@@ -394,7 +419,9 @@ void main() {
     api.dispose();
   });
   for (final code in ['es', 'en', 'pt', 'fr', 'it', 'de']) {
-    testWidgets('a 360 dp las etiquetas del selector no se recortan ($code)', (tester) async {
+    testWidgets('a 360 dp las etiquetas del selector no se recortan ($code)', (
+      tester,
+    ) async {
       await AppLocale.instance.select(code);
       addTearDown(AppLocale.instance.reset);
       for (final active in sportCatalog.ids) {
@@ -420,98 +447,148 @@ void main() {
             matching: find.byType(Text),
           );
           final paragraph = tester.renderObject<RenderParagraph>(text.first);
-          expect(paragraph.didExceedMaxLines, isFalse, reason: '$code $active $sport');
+          expect(
+            paragraph.didExceedMaxLines,
+            isFalse,
+            reason: '$code $active $sport',
+          );
         }
       }
     });
-    testWidgets('a 360 dp la barra de navegación no se desborda ni recorta ($code)', (tester) async {
-      await AppLocale.instance.select(code);
-      addTearDown(AppLocale.instance.reset);
-      final api = FixtureApi();
+    testWidgets(
+      'a 360 dp la barra de navegación no se desborda ni recorta ($code)',
+      (tester) async {
+        await AppLocale.instance.select(code);
+        addTearDown(AppLocale.instance.reset);
+        final api = FixtureApi();
+        await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+        tester.view.physicalSize = const Size(360, 640);
+        await tester.pumpAndSettle();
+        expect(find.byType(QfBottomNav), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        api.dispose();
+      },
+    );
+  }
+  testWidgets(
+    'si el fútbol falla, el selector sigue y NBA no muestra el error',
+    (tester) async {
+      final api = FixtureApi()..fail = true;
       await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-      tester.view.physicalSize = const Size(360, 640);
+      expect(find.byType(SportSelector), findsOneWidget);
+      expect(find.text('Sin conexión'), findsOneWidget);
+      expect(find.text('Reintentar'), findsOneWidget);
+      // Acción que no compra: primary, nunca ámbar.
+      final retry = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Reintentar'),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(
+        retry.style?.backgroundColor?.resolve(<WidgetState>{}),
+        QfColors.primary,
+      );
+      await tester.tap(find.byKey(const ValueKey('sport-nba')));
       await tester.pumpAndSettle();
-      expect(find.byType(QfBottomNav), findsOneWidget);
-      expect(tester.takeException(), isNull);
+      // El Inicio de NBA tiene su propio hueco: sin el error del fútbol.
+      expect(find.byKey(const ValueKey('sport-home-nba')), findsOneWidget);
+      expect(find.text('Sin conexión'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('sport-futbol')));
+      await tester.pumpAndSettle();
+      expect(find.text('Sin conexión'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       api.dispose();
-    });
-  }
-  testWidgets('si el fútbol falla, el selector sigue y NBA no muestra el error', (tester) async {
-    final api = FixtureApi()..fail = true;
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-    expect(find.byType(SportSelector), findsOneWidget);
-    expect(find.text('Sin conexión'), findsOneWidget);
-    expect(find.text('Reintentar'), findsOneWidget);
-    // Acción que no compra: primary, nunca ámbar.
-    final retry = tester.widget<FilledButton>(find.ancestor(of: find.text('Reintentar'), matching: find.byType(FilledButton)));
-    expect(retry.style?.backgroundColor?.resolve(<WidgetState>{}), QfColors.primary);
-    await tester.tap(find.byKey(const ValueKey('sport-nba')));
-    await tester.pumpAndSettle();
-    // El Inicio de NBA tiene su propio hueco: sin el error del fútbol.
-    expect(find.byKey(const ValueKey('sport-home-nba')), findsOneWidget);
-    expect(find.text('Sin conexión'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('sport-futbol')));
-    await tester.pumpAndSettle();
-    expect(find.text('Sin conexión'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('mientras carga el fútbol, el selector se ve y NBA se puede tocar', (tester) async {
-    final api = FixtureApi()..gate = Completer<void>();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()), settle: false);
-    await tester.pump();
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.byType(SportSelector), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('sport-nba')));
-    await tester.pump();
-    await tester.pump();
-    expect(find.byKey(const ValueKey('sport-home-nba')), findsOneWidget);
-    expect(find.byKey(const ValueKey('football-loading')), findsNothing);
-    api.gate!.complete();
-    await tester.pumpAndSettle();
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('feed NBA caído: aviso y reintento solo en NBA; fútbol y tenis siguen', (
-    tester,
-  ) async {
-    // FixtureApi no sirve el feed NBA (responde otra cosa): loadSport lo da por no listo.
-    final api = FixtureApi();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera'), isEmpty); // carga perezosa
-    await tester.tap(find.byKey(const ValueKey('sport-nba')));
-    await tester.pumpAndSettle();
-    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsOneWidget);
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 1 * 9); // 9 días por carga
-    // Las cuotas se piden junto al feed; si no llegan (aqui, respuesta ajena) no cambia nada.
-    expect(api.paths.where((p) => p == '/web/deportes/nba/cuotas').length, 1);
-    await tester.tap(find.byKey(const ValueKey('sport-feed-retry')));
-    await tester.pumpAndSettle();
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 9); // 9 días por carga
-    await tester.tap(find.byKey(const ValueKey('sport-futbol')));
-    await tester.pumpAndSettle();
-    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
-    await scrollToAgenda(tester);
-    expect(find.text('Equipo A'), findsWidgets);
-    // Volver a NBA no repite la petición: el estado se guarda por deporte.
-    await tester.tap(find.byKey(const ValueKey('sport-nba')));
-    await tester.pumpAndSettle();
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 9); // 9 días por carga
-    // Tenis carga su propio feed sin heredar el aviso de NBA.
-    api.tennisFeed = jsonMap(
-      jsonDecode(File('test/fixtures/tennis_feed.json').readAsStringSync()),
-    );
-    await tester.tap(find.byKey(const ValueKey('sport-tenis')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('home-sport-tenis')), findsOneWidget);
-    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
-    expect(find.byKey(const ValueKey('sport-feed-retry')), findsNothing);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+    },
+  );
+  testWidgets(
+    'mientras carga el fútbol, el selector se ve y NBA se puede tocar',
+    (tester) async {
+      final api = FixtureApi()..gate = Completer<void>();
+      await open(
+        tester,
+        ProductShell(api: api, sportPrefs: memoryPrefs()),
+        settle: false,
+      );
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SportSelector), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('sport-nba')));
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(const ValueKey('sport-home-nba')), findsOneWidget);
+      expect(find.byKey(const ValueKey('football-loading')), findsNothing);
+      api.gate!.complete();
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
+  testWidgets(
+    'feed NBA caído: aviso y reintento solo en NBA; fútbol y tenis siguen',
+    (tester) async {
+      // FixtureApi no sirve el feed NBA (responde otra cosa): loadSport lo da por no listo.
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      expect(
+        api.paths.where((p) => p == '/nba/v1/cartelera'),
+        isEmpty,
+      ); // carga perezosa
+      await tester.tap(find.byKey(const ValueKey('sport-nba')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No se pudieron cargar los datos de este deporte.'),
+        findsOneWidget,
+      );
+      expect(
+        api.paths.where((p) => p == '/nba/v1/cartelera').length,
+        1 * 9,
+      ); // 9 días por carga
+      // Las cuotas se piden junto al feed; si no llegan (aqui, respuesta ajena) no cambia nada.
+      expect(api.paths.where((p) => p == '/web/deportes/nba/cuotas').length, 1);
+      await tester.tap(find.byKey(const ValueKey('sport-feed-retry')));
+      await tester.pumpAndSettle();
+      expect(
+        api.paths.where((p) => p == '/nba/v1/cartelera').length,
+        2 * 9,
+      ); // 9 días por carga
+      await tester.tap(find.byKey(const ValueKey('sport-futbol')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No se pudieron cargar los datos de este deporte.'),
+        findsNothing,
+      );
+      await scrollToAgenda(tester);
+      expect(find.text('Equipo A'), findsWidgets);
+      // Volver a NBA no repite la petición: el estado se guarda por deporte.
+      await tester.tap(find.byKey(const ValueKey('sport-nba')));
+      await tester.pumpAndSettle();
+      expect(
+        api.paths.where((p) => p == '/nba/v1/cartelera').length,
+        2 * 9,
+      ); // 9 días por carga
+      // Tenis carga su propio feed sin heredar el aviso de NBA.
+      api.tennisFeed = jsonMap(
+        jsonDecode(File('test/fixtures/tennis_feed.json').readAsStringSync()),
+      );
+      await tester.tap(find.byKey(const ValueKey('sport-tenis')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('home-sport-tenis')), findsOneWidget);
+      expect(
+        find.text('No se pudieron cargar los datos de este deporte.'),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('sport-feed-retry')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
   testWidgets('un refresco fallido conserva el feed NBA bueno', (tester) async {
-    final soon = DateTime.now().add(const Duration(hours: 3)).toUtc().toIso8601String();
+    final soon = DateTime.now()
+        .add(const Duration(hours: 3))
+        .toUtc()
+        .toIso8601String();
     final now = DateTime.now().toUtc().toIso8601String();
     final api = FixtureApi()
       ..nbaFeed = {
@@ -535,21 +612,34 @@ void main() {
     api.nbaFeed = null; // el siguiente refresco falla
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
-    expect(api.paths.where((p) => p == '/nba/v1/cartelera').length, 2 * 9); // 9 días por carga
+    expect(
+      api.paths.where((p) => p == '/nba/v1/cartelera').length,
+      2 * 9,
+    ); // 9 días por carga
     expect(find.byKey(const ValueKey('sport-event-1')), findsOneWidget);
-    expect(find.text('No se pudieron cargar los datos de este deporte.'), findsNothing);
+    expect(
+      find.text('No se pudieron cargar los datos de este deporte.'),
+      findsNothing,
+    );
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('una lectura inicial tardía no pisa la elección del usuario', (tester) async {
+  testWidgets('una lectura inicial tardía no pisa la elección del usuario', (
+    tester,
+  ) async {
     final api = FixtureApi();
     final read = Completer<String?>();
     final store = <String, String>{};
     final prefs = SportPrefs(
-      read: (k) => k == SportPrefs.orderKey ? read.future : Future.value(store[k]),
+      read: (k) =>
+          k == SportPrefs.orderKey ? read.future : Future.value(store[k]),
       write: (k, v) async => store[k] = v,
     );
-    await open(tester, ProductShell(api: api, sportPrefs: prefs), settle: false);
+    await open(
+      tester,
+      ProductShell(api: api, sportPrefs: prefs),
+      settle: false,
+    );
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('sport-tenis')));
     await tester.pump();
@@ -560,77 +650,82 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('el menú abre Mis deportes en Perfil y ocultar el deporte actual lo cambia', (
-    tester,
-  ) async {
-    final api = FixtureApi();
-    final store = {'sports_order': 'nba,futbol,tenis'};
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs(store)));
-    expect(selectedMark('nba'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('home-menu')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('more-sports')));
-    await tester.pumpAndSettle();
-    final section = find.byKey(const ValueKey('my-sports'));
-    expect(section, findsOneWidget);
-    expect(tester.getTopLeft(section).dy, lessThan(844));
-    await tester.tap(find.byKey(const ValueKey('my-sport-switch-nba')));
-    await tester.pumpAndSettle();
-    expect(store['sports_hidden'], 'nba');
-    await navigate(tester, 'Inicio');
-    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
-    expect(selectedMark('futbol'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('el foco de Mis deportes se consume: volver a Perfil lo abre arriba', (
-    tester,
-  ) async {
-    final api = FixtureApi();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-    ScrollPosition profileScroll() => tester
-        .state<ScrollableState>(
-          find
-              .descendant(
-                of: find.byType(LiveProfileScreen),
-                matching: find.byType(Scrollable),
-              )
-              .first,
-        )
-        .position;
-    final title = find.text('Perfil y configuración');
-    final section = find.byKey(const ValueKey('my-sports'));
-    Future<void> viaMenu() async {
+  testWidgets(
+    'el menú abre Mis deportes en Perfil y ocultar el deporte actual lo cambia',
+    (tester) async {
+      final api = FixtureApi();
+      final store = {'sports_order': 'nba,futbol,tenis'};
+      await open(
+        tester,
+        ProductShell(api: api, sportPrefs: memoryPrefs(store)),
+      );
+      expect(selectedMark('nba'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('home-menu')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('more-sports')));
       await tester.pumpAndSettle();
-    }
+      final section = find.byKey(const ValueKey('my-sports'));
+      expect(section, findsOneWidget);
+      expect(tester.getTopLeft(section).dy, lessThan(844));
+      await tester.tap(find.byKey(const ValueKey('my-sport-switch-nba')));
+      await tester.pumpAndSettle();
+      expect(store['sports_hidden'], 'nba');
+      await navigate(tester, 'Inicio');
+      expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+      expect(selectedMark('futbol'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
+  testWidgets(
+    'el foco de Mis deportes se consume: volver a Perfil lo abre arriba',
+    (tester) async {
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      ScrollPosition profileScroll() => tester
+          .state<ScrollableState>(
+            find
+                .descendant(
+                  of: find.byType(LiveProfileScreen),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          )
+          .position;
+      final title = find.text('Perfil y configuración');
+      final section = find.byKey(const ValueKey('my-sports'));
+      Future<void> viaMenu() async {
+        await tester.tap(find.byKey(const ValueKey('home-menu')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('more-sports')));
+        await tester.pumpAndSettle();
+      }
 
-    await viaMenu();
-    // El menú desplaza: la sección queda arriba y el título del Perfil fuera de la vista.
-    expect(profileScroll().pixels, greaterThan(0));
-    expect(tester.getTopLeft(section).dy, lessThan(200));
-    expect(title.hitTestable(), findsNothing);
+      await viaMenu();
+      // El menú desplaza: la sección queda arriba y el título del Perfil fuera de la vista.
+      expect(profileScroll().pixels, greaterThan(0));
+      expect(tester.getTopLeft(section).dy, lessThan(200));
+      expect(title.hitTestable(), findsNothing);
 
-    for (final other in ['Inicio', 'Coins']) {
-      await navigate(tester, other);
-      await navigate(tester, 'Perfil');
-      expect(profileScroll().pixels, 0, reason: 'tras $other');
-      expect(title.hitTestable(), findsOneWidget, reason: 'tras $other');
-    }
+      for (final other in ['Inicio', 'Coins']) {
+        await navigate(tester, other);
+        await navigate(tester, 'Perfil');
+        expect(profileScroll().pixels, 0, reason: 'tras $other');
+        expect(title.hitTestable(), findsOneWidget, reason: 'tras $other');
+      }
 
-    // Una petición nueva del menú vuelve a desplazar, también estando ya en Perfil.
-    await viaMenu();
-    expect(profileScroll().pixels, greaterThan(0));
-    profileScroll().jumpTo(0);
-    await tester.pump();
-    await viaMenu();
-    expect(profileScroll().pixels, greaterThan(0));
-    expect(tester.getTopLeft(section).dy, lessThan(200));
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+      // Una petición nueva del menú vuelve a desplazar, también estando ya en Perfil.
+      await viaMenu();
+      expect(profileScroll().pixels, greaterThan(0));
+      profileScroll().jumpTo(0);
+      await tester.pump();
+      await viaMenu();
+      expect(profileScroll().pixels, greaterThan(0));
+      expect(tester.getTopLeft(section).dy, lessThan(200));
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
   testWidgets('home uses API calendar and all five tabs including Coins', (
     tester,
   ) async {
@@ -654,44 +749,45 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('los partidos terminados no salen en Inicio, los de en juego sí', (
-    tester,
-  ) async {
-    JsonMap match(String home, String status, {List<int>? score}) => {
-      'match_id': home,
-      'kickoff_utc': DateTime.now()
-          .subtract(const Duration(hours: 1))
-          .toUtc()
-          .toIso8601String(),
-      'estado': status,
-      'marcador': score,
-      'local': {'nombre': home},
-      'visitante': {'nombre': 'Rival de $home'},
-      'liga': {'nombre': 'Liga de prueba'},
-    };
-    final api = FixtureApi()
-      ..extraAgenda = [
-        match('Terminado FC', 'finished', score: [5, 0]),
-        match('Directo FC', 'live'),
-      ];
-    await open(tester, ProductShell(api: api));
-    await tester.scrollUntilVisible(
-      find.textContaining('Directo FC'),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const ValueKey('home-scroll')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(find.textContaining('Equipo A'), findsWidgets); // por jugar
-    expect(find.textContaining('Directo FC'), findsOneWidget); // en juego
-    expect(find.textContaining('Terminado FC'), findsNothing);
-    expect(find.textContaining('Resultado: 5'), findsNothing);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+  testWidgets(
+    'los partidos terminados no salen en Inicio, los de en juego sí',
+    (tester) async {
+      JsonMap match(String home, String status, {List<int>? score}) => {
+        'match_id': home,
+        'kickoff_utc': DateTime.now()
+            .subtract(const Duration(hours: 1))
+            .toUtc()
+            .toIso8601String(),
+        'estado': status,
+        'marcador': score,
+        'local': {'nombre': home},
+        'visitante': {'nombre': 'Rival de $home'},
+        'liga': {'nombre': 'Liga de prueba'},
+      };
+      final api = FixtureApi()
+        ..extraAgenda = [
+          match('Terminado FC', 'finished', score: [5, 0]),
+          match('Directo FC', 'live'),
+        ];
+      await open(tester, ProductShell(api: api));
+      await tester.scrollUntilVisible(
+        find.textContaining('Directo FC'),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const ValueKey('home-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(find.textContaining('Equipo A'), findsWidgets); // por jugar
+      expect(find.textContaining('Directo FC'), findsOneWidget); // en juego
+      expect(find.textContaining('Terminado FC'), findsNothing);
+      expect(find.textContaining('Resultado: 5'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
   testWidgets('la cabecera muestra las monedas disponibles y abre Coins', (
     tester,
   ) async {
@@ -817,49 +913,112 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  testWidgets('sin candidatos que cumplan la regla no muestra un destacado fuera de limites', (tester) async {
-    final api = FixtureApi()
-      ..richDetail = true
-      ..detailPicks = [
-        {'market': 'corners', 'texto': 'Más de 6,5 córners', 'prob': .85, 'ref_price': 1.12},
-        {'market': 'totals', 'texto': 'Más de 1,5 goles', 'prob': .50, 'ref_price': 2.40},
-      ];
-    await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
-    expect(find.byType(ForecastPanel), findsNothing);
-    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 75 % o más'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('el destacado que manda el servidor (el de la web) se muestra aunque los abiertos no cumplan la regla', (tester) async {
-    final api = FixtureApi()
-      ..richDetail = true
-      ..detailPicks = [
-        {'market': 'totals', 'texto': 'Más de 0,5 goles', 'prob': .87, 'ref_price': 1.11},
-      ]
-      ..mercados = {
-        'filas': <JsonMap>[],
-        'destacado_app': {'texto': 'Albacete o Celta de Vigo II (sin empate)', 'prob': .78, 'price': 1.23, 'ref_price': 1.23, 'ref_book': 'Bovada', 'free': true},
-      };
-    await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
-    expect(find.byType(ForecastPanel), findsOneWidget);
-    expect(find.text('Albacete o Celta de Vigo II (sin empate)'), findsWidgets);
-    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado'), findsNothing);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
-  testWidgets('si el servidor dice que no hay destacado, la app no inventa uno con sus abiertos', (tester) async {
-    final api = FixtureApi()
-      ..richDetail = true
-      ..detailPicks = [
-        {'market': 'totals', 'texto': 'Más de 1,5 goles', 'prob': .90, 'ref_price': 1.25},
-      ]
-      ..mercados = {'filas': <JsonMap>[], 'destacado_app': null};
-    await open(tester, LiveMatchDetail(api: api, id: 'real-match', onVip: () {}));
-    expect(find.byType(ForecastPanel), findsNothing);
-    expect(find.textContaining('Ningún pronóstico de este partido entra en el destacado'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+  testWidgets(
+    'sin candidatos que cumplan la regla no muestra un destacado fuera de limites',
+    (tester) async {
+      final api = FixtureApi()
+        ..richDetail = true
+        ..detailPicks = [
+          {
+            'market': 'corners',
+            'texto': 'Más de 6,5 córners',
+            'prob': .85,
+            'ref_price': 1.12,
+          },
+          {
+            'market': 'totals',
+            'texto': 'Más de 1,5 goles',
+            'prob': .50,
+            'ref_price': 2.40,
+          },
+        ];
+      await open(
+        tester,
+        LiveMatchDetail(api: api, id: 'real-match', onVip: () {}),
+      );
+      expect(find.byType(ForecastPanel), findsNothing);
+      expect(
+        find.textContaining(
+          'Ningún pronóstico de este partido entra en el destacado (cuota de 1,20 o más y probabilidad de 75 % o más',
+        ),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
+  testWidgets(
+    'el destacado que manda el servidor (el de la web) se muestra aunque los abiertos no cumplan la regla',
+    (tester) async {
+      final api = FixtureApi()
+        ..richDetail = true
+        ..detailPicks = [
+          {
+            'market': 'totals',
+            'texto': 'Más de 0,5 goles',
+            'prob': .87,
+            'ref_price': 1.11,
+          },
+        ]
+        ..mercados = {
+          'filas': <JsonMap>[],
+          'destacado_app': {
+            'texto': 'Albacete o Celta de Vigo II (sin empate)',
+            'prob': .78,
+            'price': 1.23,
+            'ref_price': 1.23,
+            'ref_book': 'Bovada',
+            'free': true,
+          },
+        };
+      await open(
+        tester,
+        LiveMatchDetail(api: api, id: 'real-match', onVip: () {}),
+      );
+      expect(find.byType(ForecastPanel), findsOneWidget);
+      expect(
+        find.text('Albacete o Celta de Vigo II (sin empate)'),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Ningún pronóstico de este partido entra en el destacado',
+        ),
+        findsNothing,
+      );
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
+  testWidgets(
+    'si el servidor dice que no hay destacado, la app no inventa uno con sus abiertos',
+    (tester) async {
+      final api = FixtureApi()
+        ..richDetail = true
+        ..detailPicks = [
+          {
+            'market': 'totals',
+            'texto': 'Más de 1,5 goles',
+            'prob': .90,
+            'ref_price': 1.25,
+          },
+        ]
+        ..mercados = {'filas': <JsonMap>[], 'destacado_app': null};
+      await open(
+        tester,
+        LiveMatchDetail(api: api, id: 'real-match', onVip: () {}),
+      );
+      expect(find.byType(ForecastPanel), findsNothing);
+      expect(
+        find.textContaining(
+          'Ningún pronóstico de este partido entra en el destacado',
+        ),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
   testWidgets('forecast tab shows featured pick with real indicators only', (
     tester,
   ) async {
@@ -930,7 +1089,7 @@ void main() {
     // con los 4 indicadores, y sin chips de mercado.
     expect(find.byType(ForecastPanel), findsOneWidget);
     expect(find.byType(ChoiceChip), findsNothing);
-    expect(find.text('ANÁLISIS ESTADÍSTICO'), findsOneWidget);
+    expect(find.text('MODELO ALGORÍTMICO'), findsOneWidget);
     expect(find.text('CUOTAS DEL MERCADO'), findsOneWidget);
     expect(
       find.text('61 %'),
@@ -956,7 +1115,7 @@ void main() {
     ); // candados agrupados por categoría
     expect(find.text('Marcadores más probables'), findsOneWidget);
     expect(find.text('2-0'), findsOneWidget);
-    expect(find.textContaining('DICTAMEN DEL MODELO'), findsOneWidget);
+    expect(find.textContaining('RESUMEN DEL PRONÓSTICO'), findsOneWidget);
     await capture(tester, 'forecast_panel');
     expect(find.text('Gana el local'), findsNothing);
     // Con un pronóstico abierto no se ofrece VIP arriba aunque el partido tenga otros bloqueados,
@@ -1066,26 +1225,35 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     api.dispose();
   });
-  void installCatalog(List<(String, String)> sports) => sportCatalogNotifier.value = SportCatalog.fromJson({
-    'deportes': [
-      for (final (i, (id, icon)) in sports.indexed)
-        {
-          'id': id,
-          'orden': i + 1,
-          'estado': 'on',
-          'nombre': {'es': id, 'en': id},
-          'icono': icon,
-          'color': '#336699',
-          'secciones': ['high'],
-        },
-    ],
-  })!;
+  void installCatalog(List<(String, String)> sports) =>
+      sportCatalogNotifier.value = SportCatalog.fromJson({
+        'deportes': [
+          for (final (i, (id, icon)) in sports.indexed)
+            {
+              'id': id,
+              'orden': i + 1,
+              'estado': 'on',
+              'nombre': {'es': id, 'en': id},
+              'icono': icon,
+              'color': '#336699',
+              'secciones': ['high'],
+            },
+        ],
+      })!;
 
-  testWidgets('catálogo del servidor sin NBA: el shell no la ofrece', (tester) async {
+  testWidgets('catálogo del servidor sin NBA: el shell no la ofrece', (
+    tester,
+  ) async {
     addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
     installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
     final api = FixtureApi();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs({'sports_order': 'nba,futbol,tenis'})));
+    await open(
+      tester,
+      ProductShell(
+        api: api,
+        sportPrefs: memoryPrefs({'sports_order': 'nba,futbol,tenis'}),
+      ),
+    );
     expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
     expect(selectedMark('futbol'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -1093,38 +1261,48 @@ void main() {
     api.dispose();
   });
 
-  testWidgets('si llega un catálogo nuevo con el shell abierto y el deporte actual desaparece, pasa al primero', (tester) async {
-    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
-    final api = FixtureApi();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-    await tester.tap(find.byKey(const ValueKey('sport-nba')));
-    await tester.pumpAndSettle();
-    expect(selectedMark('nba'), findsOneWidget);
-    installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
-    expect(selectedMark('futbol'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+  testWidgets(
+    'si llega un catálogo nuevo con el shell abierto y el deporte actual desaparece, pasa al primero',
+    (tester) async {
+      addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      await tester.tap(find.byKey(const ValueKey('sport-nba')));
+      await tester.pumpAndSettle();
+      expect(selectedMark('nba'), findsOneWidget);
+      installCatalog([('futbol', 'futbol'), ('tenis', 'tenis')]);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('sport-nba')), findsNothing);
+      expect(selectedMark('futbol'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
 
-  testWidgets('un deporte nuevo del catálogo (golf, icono desconocido) se elige y no rompe Inicio, Predicciones ni Mercados', (tester) async {
-    addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
-    installCatalog([('futbol', 'futbol'), ('golf', 'icono_futuro'), ('nba', 'baloncesto')]);
-    final api = FixtureApi();
-    await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
-    await tester.tap(find.byKey(const ValueKey('sport-golf')));
-    await tester.pumpAndSettle();
-    expect(selectedMark('golf'), findsOneWidget);
-    for (final tab in ['Predicciones', 'Mercados', 'Inicio']) {
-      await navigate(tester, tab);
-      expect(tester.takeException(), isNull, reason: tab);
-      expect(selectedMark('golf'), findsOneWidget, reason: tab);
-    }
-    await tester.pumpWidget(const SizedBox());
-    api.dispose();
-  });
+  testWidgets(
+    'un deporte nuevo del catálogo (golf, icono desconocido) se elige y no rompe Inicio, Predicciones ni Mercados',
+    (tester) async {
+      addTearDown(() => sportCatalogNotifier.value = SportCatalog.builtIn);
+      installCatalog([
+        ('futbol', 'futbol'),
+        ('golf', 'icono_futuro'),
+        ('nba', 'baloncesto'),
+      ]);
+      final api = FixtureApi();
+      await open(tester, ProductShell(api: api, sportPrefs: memoryPrefs()));
+      await tester.tap(find.byKey(const ValueKey('sport-golf')));
+      await tester.pumpAndSettle();
+      expect(selectedMark('golf'), findsOneWidget);
+      for (final tab in ['Predicciones', 'Mercados', 'Inicio']) {
+        await navigate(tester, tab);
+        expect(tester.takeException(), isNull, reason: tab);
+        expect(selectedMark('golf'), findsOneWidget, reason: tab);
+      }
+      await tester.pumpWidget(const SizedBox());
+      api.dispose();
+    },
+  );
   testWidgets('navigation tolerates larger text', (tester) async {
     final api = FixtureApi();
     await open(tester, ProductShell(api: api), scale: 1.3);

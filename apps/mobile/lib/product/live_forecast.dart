@@ -134,7 +134,23 @@ class ForecastPanel extends StatelessWidget {
   const ForecastPanel({super.key, required this.pick, required this.ficha});
   final JsonMap pick, ficha;
 
+  /// Casillas del análisis que el servidor eligió según el mercado del pick (vacío en servidores antiguos).
+  List<JsonMap> get _casillas {
+    final raw = jsonMap(pick['analisis'])['casillas'];
+    return raw is List
+        ? [
+            for (final c in raw)
+              if (c is Map) jsonMap(c),
+          ]
+        : const [];
+  }
+
   String get dictamen {
+    final redactado = jsonMap(
+      jsonMap(pick['analisis'])['resumen'],
+    )[AppLocale.instance.code];
+    if (redactado is String && redactado.trim().isNotEmpty)
+      return redactado.trim();
     final l10n = AppLocale.instance.l10n;
     final local = jsonMap(ficha['local'])['nombre'] ?? l10n.dictHomeDefault;
     final away = jsonMap(ficha['visitante'])['nombre'] ?? l10n.dictAwayDefault;
@@ -169,6 +185,149 @@ class ForecastPanel extends StatelessWidget {
       );
     }
     return parts.join(' ');
+  }
+
+  String _pct(dynamic v) => v is num ? '${v.round()} %' : '—';
+  String _pair(JsonMap c) => '${_pct(c['a'])} · ${_pct(c['b'])}';
+  String _signed(dynamic v) =>
+      v is num ? '${v > 0 ? '+' : ''}${decimalText(v, 1)}' : '—';
+
+  /// Primera fila: probabilidad + primera casilla del servidor; segunda fila: las otras dos.
+  List<Widget> _analysisRows(
+    BuildContext context,
+    List<JsonMap> c,
+    dynamic prob,
+    String home,
+    String away,
+  ) {
+    final l10n = context.l10n;
+    final probTile = _Tile(
+      icon: Icons.track_changes,
+      label: l10n.tileProbability,
+      value: realPercent(prob),
+      color: liveCyan,
+      caption: l10n.tileFairOdds(
+        decimalText(prob is num && prob > 0 ? 1 / prob : null),
+      ),
+    );
+    Widget slot(int i) => Expanded(
+      child: i < c.length
+          ? _analysisTile(l10n, c[i], home, away)
+          : const SizedBox.shrink(),
+    );
+    return [
+      Row(
+        children: [
+          Expanded(child: probTile),
+          const SizedBox(width: 10),
+          slot(0),
+        ],
+      ),
+      if (c.length > 1) ...[
+        const SizedBox(height: 10),
+        Row(children: [slot(1), const SizedBox(width: 10), slot(2)]),
+      ],
+    ];
+  }
+
+  _Tile _analysisTile(
+    AppLocalizations l10n,
+    JsonMap c,
+    String home,
+    String away,
+  ) {
+    switch (c['id']) {
+      case 'xg':
+        return _Tile(
+          icon: Icons.sports_soccer,
+          label: l10n.tileXg,
+          color: liveGold,
+          value: decimalText(c['total']),
+          caption: l10n.tileXgCaption(decimalText(c['a']), decimalText(c['b'])),
+        );
+      case 'xg_equipo':
+        return _Tile(
+          icon: Icons.sports_soccer,
+          label: l10n.tileXg,
+          color: liveGold,
+          value: decimalText(c['a']),
+          caption: c['equipo'] == 'a' ? home : away,
+        );
+      case 'empate':
+        return _Tile(
+          icon: Icons.compare_arrows,
+          label: l10n.tileDraws,
+          color: statsPurple,
+          value: _pair(c),
+          caption: c['liga'] is num
+              ? l10n.tileDrawsCaption('${c['liga']}')
+              : l10n.tileSplitCaption,
+        );
+      case 'forma':
+        return _Tile(
+          icon: Icons.trending_up,
+          label: l10n.tileFormLabel((c['n_a'] as num?)?.toInt() ?? 5),
+          color: statsPurple,
+          value: '${c['a']} – ${c['b']}',
+          caption: l10n.tileFormCaption,
+        );
+      case 'xgd':
+        return _Tile(
+          icon: Icons.bar_chart,
+          label: l10n.tileXgd,
+          color: statsLime,
+          value: '${_signed(c['a'])} · ${_signed(c['b'])}',
+          caption: l10n.tileXgdCaption,
+        );
+      case 'tendencia':
+        return _Tile(
+          icon: Icons.bar_chart,
+          label: l10n.tileGoalsTrend,
+          color: statsLime,
+          value: _pair(c),
+          caption: l10n.tileTrendCaption,
+        );
+      case 'ambos':
+        return _Tile(
+          icon: Icons.swap_horiz,
+          label: l10n.tileBtts,
+          color: statsPurple,
+          value: _pair(c),
+          caption: l10n.tileBttsCaption,
+        );
+      case 'goles_partido':
+        return _Tile(
+          icon: Icons.sports_soccer,
+          label: l10n.tileGoalsMatch,
+          color: liveGold,
+          value: '${decimalText(c['a'], 1)} · ${decimalText(c['b'], 1)}',
+          caption: l10n.tileGoalsMatchCaption,
+        );
+      case 'marca':
+        return _Tile(
+          icon: Icons.sports_soccer,
+          label: l10n.tileScores,
+          color: statsLime,
+          value: _pct(c['a']),
+          caption: l10n.tileScoresCaption,
+        );
+      case 'concede':
+        return _Tile(
+          icon: Icons.shield_outlined,
+          label: l10n.tileConcedes,
+          color: statsPurple,
+          value: decimalText(c['a'], 1),
+          caption: l10n.tilePerMatch,
+        );
+      default: // 'locvis'
+        return _Tile(
+          icon: Icons.home_outlined,
+          label: l10n.tileHomeAway,
+          color: statsPurple,
+          value: _pair(c),
+          caption: l10n.tileSplitCaption,
+        );
+    }
   }
 
   Widget _resultBanner(JsonMap pick) {
@@ -381,71 +540,83 @@ class ForecastPanel extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _Tile(
-                      icon: Icons.track_changes,
-                      label: l10n.tileProbability,
-                      value: realPercent(prob),
-                      color: liveCyan,
-                      caption: l10n.tileFairOdds(
-                        decimalText(prob is num && prob > 0 ? 1 / prob : null),
+              if (_casillas.isNotEmpty)
+                ..._analysisRows(
+                  context,
+                  _casillas,
+                  prob,
+                  '${local['nombre'] ?? l10n.commonHome}',
+                  '${away['nombre'] ?? l10n.commonAway}',
+                )
+              else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Tile(
+                        icon: Icons.track_changes,
+                        label: l10n.tileProbability,
+                        value: realPercent(prob),
+                        color: liveCyan,
+                        caption: l10n.tileFairOdds(
+                          decimalText(
+                            prob is num && prob > 0 ? 1 / prob : null,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Tile(
-                      icon: Icons.sports_soccer,
-                      label: l10n.tileXg,
-                      value: decimalText(xg['total']),
-                      color: liveGold,
-                      caption: xg['total'] is num
-                          ? l10n.tileXgCaption(
-                              decimalText(xg['local']),
-                              decimalText(xg['visita']),
-                            )
-                          : l10n.tileXgNA,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _Tile(
+                        icon: Icons.sports_soccer,
+                        label: l10n.tileXg,
+                        value: decimalText(xg['total']),
+                        color: liveGold,
+                        caption: xg['total'] is num
+                            ? l10n.tileXgCaption(
+                                decimalText(xg['local']),
+                                decimalText(xg['visita']),
+                              )
+                            : l10n.tileXgNA,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _Tile(
-                      icon: Icons.compare_arrows,
-                      label: l10n.tileFavorite,
-                      value: side.isEmpty ? '—' : realPercent(side.first.$2),
-                      color: statsPurple,
-                      caption: side.isEmpty
-                          ? l10n.tileFavoriteNA
-                          : side.length > 1
-                          ? l10n.tileFavoriteLead(
-                              side.first.$1,
-                              ((side.first.$2 - side.last.$2) * 100).round(),
-                            )
-                          : side.first.$1,
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Tile(
+                        icon: Icons.compare_arrows,
+                        label: l10n.tileFavorite,
+                        value: side.isEmpty ? '—' : realPercent(side.first.$2),
+                        color: statsPurple,
+                        caption: side.isEmpty
+                            ? l10n.tileFavoriteNA
+                            : side.length > 1
+                            ? l10n.tileFavoriteLead(
+                                side.first.$1,
+                                ((side.first.$2 - side.last.$2) * 100).round(),
+                              )
+                            : side.first.$1,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Tile(
-                      icon: Icons.bar_chart,
-                      label: l10n.tileGoalsTrend,
-                      value: over25 == null ? '—' : realPercent(over25 / 100),
-                      color: statsLime,
-                      caption: over25 == null
-                          ? l10n.tileGoalsNA
-                          : modelo['mas_2_5'] is num
-                          ? l10n.tileOver25Model
-                          : l10n.tileOver25Recent,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _Tile(
+                        icon: Icons.bar_chart,
+                        label: l10n.tileGoalsTrend,
+                        value: over25 == null ? '—' : realPercent(over25 / 100),
+                        color: statsLime,
+                        caption: over25 == null
+                            ? l10n.tileGoalsNA
+                            : modelo['mas_2_5'] is num
+                            ? l10n.tileOver25Model
+                            : l10n.tileOver25Recent,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,

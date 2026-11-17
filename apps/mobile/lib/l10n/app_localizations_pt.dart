@@ -1100,16 +1100,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get forecastSourceMarket => 'ODDS DO MERCADO';
 
   @override
-  String get forecastSourceModel => 'MODELO PRÓPRIO';
+  String get forecastSourceModel => 'MODELO ALGORÍTMICO';
 
   @override
-  String get forecastTitle => 'ANÁLISE ESTATÍSTICA';
+  String get forecastTitle => 'MODELO ALGORÍTMICO';
 
   @override
   String get forecastUnlocked => 'DESBLOQUEADO';
 
   @override
-  String get forecastVerdictTitle => '💡  PARECER DO MODELO';
+  String get forecastVerdictTitle => '💡  RESUMO DO PALPITE';
 
   @override
   String get formatScheduleUnavailable => 'Horário não disponível';
@@ -3795,6 +3795,24 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tenWinProbTitle => 'PROBABILIDADE DE VITÓRIA';
 
   @override
+  String get tileBtts => 'Ambos marcam';
+
+  @override
+  String get tileBttsCaption =>
+      'Jogos em que ambos marcaram: mandante · visitante';
+
+  @override
+  String get tileConcedes => 'Gols que o rival sofre';
+
+  @override
+  String get tileDraws => 'Empates';
+
+  @override
+  String tileDrawsCaption(String league) {
+    return 'Em casa e fora · liga $league %';
+  }
+
+  @override
   String tileFairOdds(String value) {
     return 'Odd justa $value';
   }
@@ -3811,10 +3829,28 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileFavoriteNA => 'Probabilidades não disponíveis';
 
   @override
+  String get tileFormCaption => 'Pontos: mandante · visitante';
+
+  @override
+  String tileFormLabel(int n) {
+    return 'Forma (últ. $n)';
+  }
+
+  @override
+  String get tileGoalsMatch => 'Gols por jogo';
+
+  @override
+  String get tileGoalsMatchCaption =>
+      'Totais nos seus jogos: mandante · visitante';
+
+  @override
   String get tileGoalsNA => 'Histórico insuficiente';
 
   @override
   String get tileGoalsTrend => 'Tendência de gols';
+
+  @override
+  String get tileHomeAway => 'Vitórias casa / fora';
 
   @override
   String get tileOver25Model => 'Mais de 2,5 segundo o modelo';
@@ -3823,7 +3859,23 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileOver25Recent => 'Mais de 2,5 nos últimos jogos';
 
   @override
+  String get tilePerMatch => 'Por jogo';
+
+  @override
   String get tileProbability => 'Probabilidade';
+
+  @override
+  String get tileScores => 'Jogos com gol';
+
+  @override
+  String get tileScoresCaption => 'Da equipe, nos últimos jogos';
+
+  @override
+  String get tileSplitCaption => 'Mandante em casa · visitante fora';
+
+  @override
+  String get tileTrendCaption =>
+      'Jogos com mais de 2,5 gols: mandante · visitante';
 
   @override
   String get tileXg => 'xG projetado';
@@ -3835,6 +3887,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tileXgNA => 'Disponível em mercados de gols';
+
+  @override
+  String get tileXgd => 'Dif. de xG';
+
+  @override
+  String get tileXgdCaption => 'Por jogo: mandante · visitante';
 
   @override
   String get titleAsianHandicap => 'Handicap asiático';

@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Res
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg.errors import UndefinedTable
 
-from . import console, cuentas, fichas, panel, partido_mercados, rewards
+from . import analisis_futbol, console, cuentas, fichas, panel, partido_mercados, rewards
 from ..comercial import acceso_reglas, suscripciones, mobile_updates
 from ..comercial.auditoria import audit
 from ..db import conn, query, query_one
@@ -475,6 +475,10 @@ def mercados_partido(match_id: str, ficha: dict, picks: list[dict], plus: bool, 
         try:
             de_la_web = partido_mercados.construir(match_id, local, visitante, abiertas, plus, True, kickoff)
             mercados['destacado_app'] = partido_mercados.pick_de_destacado(de_la_web and de_la_web['destacado'])
+            if mercados['destacado_app']:
+                # Casillas según el mercado y resumen redactado (decisión del titular, 2026-11-17).
+                mercados['destacado_app']['analisis'] = analisis_futbol.construir(
+                    match_id, mercados['destacado_app'], ficha, partido_mercados.lambdas_goles(match_id))
         except Exception:  # noqa: BLE001 - sin destacado la app sigue con su regla local
             logging.getLogger(__name__).exception('destacado del partido %s', match_id)
     return mercados

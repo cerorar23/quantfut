@@ -103,6 +103,9 @@ def _bloque(ps: list[dict]) -> dict:
         "tiros_puerta_favor": _media([p["tiros_puerta"][0] for p in ps]),
         "corners_favor": _media([p["corners"][0] for p in ps]),
         "corners_contra": _media([p["corners"][1] for p in ps]),
+        "pct_victorias": pct(lambda p: p["res"] == "G"),
+        "pct_empates": pct(lambda p: p["res"] == "E"),
+        "pct_marca": pct(lambda p: p["gf"] > 0),
         "pct_ambos_marcan": pct(lambda p: p["gf"] > 0 and p["gc"] > 0),
         "pct_mas_2_5": pct(lambda p: p["gf"] + p["gc"] > 2.5),
         "pct_porteria_cero": pct(lambda p: p["gc"] == 0),
@@ -415,6 +418,16 @@ def _agenda(inicio: datetime, fin: datetime, liga: str | None) -> list[dict]:
     return salida
 
 
+def _pct_empates_liga(league_id: str) -> float | None:
+    """% de empates de la liga en los últimos 365 días (referencia del análisis del destacado)."""
+    def calcular():
+        r = query_one("SELECT 100.0 * avg((home_goals = away_goals)::int) AS p, count(*) AS n FROM matches "
+                      "WHERE league_id = %s AND status = 'finished' AND home_goals IS NOT NULL "
+                      "AND kickoff_utc > now() - interval '365 days'", (league_id,))
+        return float(r["p"]) if r and r["p"] is not None and r["n"] >= 30 else None
+    return _cacheado(("empates_liga", league_id), 6 * 3600, calcular)
+
+
 def _ficha(match_id: str) -> dict | None:
     m = query_one(
         f"""SELECT {_COLS}, m.status, m.season, m.home_goals_ht, m.away_goals_ht,
@@ -442,7 +455,8 @@ def _ficha(match_id: str) -> dict | None:
             "match_id": m["match_id"], "kickoff_utc": ko, "estado": m["status"],
             "temporada": m["season"],
             "liga": {"id": m["league_id"], "nombre": m["league_name"],
-                     "pais": m["pais"], "copa": m["cross_league"]},
+                     "pais": m["pais"], "copa": m["cross_league"],
+                     "pct_empates": _pct_empates_liga(m["league_id"])},
             "marcador": [m["home_goals"], m["away_goals"]] if terminado else None,
             "descanso": ([m["home_goals_ht"], m["away_goals_ht"]]
                          if terminado and m["home_goals_ht"] is not None else None),

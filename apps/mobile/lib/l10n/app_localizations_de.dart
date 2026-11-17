@@ -1099,16 +1099,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get forecastSourceMarket => 'MARKTQUOTEN';
 
   @override
-  String get forecastSourceModel => 'EIGENES MODELL';
+  String get forecastSourceModel => 'ALGORITHMISCHES MODELL';
 
   @override
-  String get forecastTitle => 'STATISTISCHE ANALYSE';
+  String get forecastTitle => 'ALGORITHMISCHES MODELL';
 
   @override
   String get forecastUnlocked => 'FREIGESCHALTET';
 
   @override
-  String get forecastVerdictTitle => '💡  MODELLURTEIL';
+  String get forecastVerdictTitle => '💡  ZUSAMMENFASSUNG DER PROGNOSE';
 
   @override
   String get formatScheduleUnavailable => 'Uhrzeit nicht verfügbar';
@@ -3789,6 +3789,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tenWinProbTitle => 'GEWINNWAHRSCHEINLICHKEIT';
 
   @override
+  String get tileBtts => 'Beide treffen';
+
+  @override
+  String get tileBttsCaption => 'Spiele mit Toren beider Teams: Heim · Gast';
+
+  @override
+  String get tileConcedes => 'Gegentore des Gegners';
+
+  @override
+  String get tileDraws => 'Unentschieden';
+
+  @override
+  String tileDrawsCaption(String league) {
+    return 'Heim und auswärts · Liga $league %';
+  }
+
+  @override
   String tileFairOdds(String value) {
     return 'Faire Quote $value';
   }
@@ -3805,10 +3822,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tileFavoriteNA => 'Wahrscheinlichkeiten nicht verfügbar';
 
   @override
+  String get tileFormCaption => 'Punkte: Heim · Gast';
+
+  @override
+  String tileFormLabel(int n) {
+    return 'Form (letzte $n)';
+  }
+
+  @override
+  String get tileGoalsMatch => 'Tore pro Spiel';
+
+  @override
+  String get tileGoalsMatchCaption => 'Gesamt in ihren Spielen: Heim · Gast';
+
+  @override
   String get tileGoalsNA => 'Unzureichender Verlauf';
 
   @override
   String get tileGoalsTrend => 'Tor-Trend';
+
+  @override
+  String get tileHomeAway => 'Siege Heim / Auswärts';
 
   @override
   String get tileOver25Model => 'Über 2,5 laut Modell';
@@ -3817,7 +3851,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tileOver25Recent => 'Über 2,5 in ihren letzten Spielen';
 
   @override
+  String get tilePerMatch => 'Pro Spiel';
+
+  @override
   String get tileProbability => 'Wahrscheinlichkeit';
+
+  @override
+  String get tileScores => 'Spiele mit Tor';
+
+  @override
+  String get tileScoresCaption => 'Des Teams, in den letzten Spielen';
+
+  @override
+  String get tileSplitCaption => 'Heimteam zu Hause · Gast auswärts';
+
+  @override
+  String get tileTrendCaption => 'Spiele mit über 2,5 Toren: Heim · Gast';
 
   @override
   String get tileXg => 'Prognostiziertes xG';
@@ -3829,6 +3878,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tileXgNA => 'Verfügbar bei Tormärkten';
+
+  @override
+  String get tileXgd => 'xG-Differenz';
+
+  @override
+  String get tileXgdCaption => 'Pro Spiel: Heim · Gast';
 
   @override
   String get titleAsianHandicap => 'Asiatisches Handicap';
