@@ -60,6 +60,15 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - Vuelta atrás bajo los mismos candados: restaurar `sharpapi_captura.py` en `~/sharpapi/`, `run.sh` en el ejecutor y `cuotas_respaldo.py`, `cuotas_respaldo_futbol.py` y `cuotas_therundown.py` en `src/ingest/` del ejecutor desde `~/respaldos/sharpapi-adadef85-20261116-215315/`. El lanzador restaurado deja de montar SharpAPI.
 
 
+### 2026-11-17 00:50 UTC · Pasarelas de pago en /control (db/117) · API (PR #468; `main` `478b79e5`)
+- **Motivo:** configurar desde `/control/pasarelas` las claves de Whop (producción y sandbox, cifradas) y probar el cobro con el sandbox solo para cuentas de prueba, sin interruptor global.
+- **Cambio:** `db/117_pasarelas_pago.sql` aplicado antes (aditivo: tablas `pasarela_config` y `pasarela_cuentas_prueba`, columnas `plans.whop_plan_id_sandbox`, `whop_checkouts.modo`, `whop_payments.modo`); API con `comercial/pasarelas.py`, `api/pasarelas_panel.py`, ruta `/webhooks/whop-sandbox` y el frontend con `environment` en el checkout. Producción sigue con las variables de entorno mientras no se guarden claves. La imagen incluye además lo que ya había en `main` (SharpAPI, carga TML).
+- Pre-vuelo: `deploy.sh estado` (API sin diferencias antes salvo lo nuevo de `main`); imagen `quantfut-api:478b79e5` construida y ensayada (`modulos con error: ninguno`, `rutas: 322`); desplegada recreando **solo `api`**. Worker sin tocar (`da7e5f40`).
+- Verificado: salud 200; contenedor `quantfut-api:478b79e5`; `/app/v1/plans` con 19,90 / 33,99 / 53,99; `/control/pasarelas` redirige al acceso (existe); `/webhooks/whop-sandbox` responde 503 «Webhook no configurado» (esperado sin claves).
+- **Sin verificar:** la pantalla en un navegador y un pago de prueba real (faltan las claves de sandbox, que pone el titular en la pantalla).
+- **Después:** otra sesión desplegó `quantfut-api:05b89518` (construida desde un `main` posterior que ya incluye este código); hoy corre esa imagen y mantiene `pasarelas.py` y `/webhooks/whop-sandbox`. La vuelta atrás vigente es la de esa entrega, no la de abajo.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-184531.yml docker-compose.yml && docker compose up -d --no-deps --no-build api` (las columnas y tablas nuevas son inocuas para la versión anterior).
+
 ### 2026-11-16 19:00 UTC · Separación de estáticos del rate limit y aumento a 120 req/min · API (PR #466; `main` `28833c3d`)
 - **Motivo:** al navegar o recargar páginas web (p. ej. `/en/`), los ~25 archivos estáticos de la raíz (`app.js`, CSS, etc.) agotaban el cupo global de 60/min por IP devolviendo HTTP 429 («Demasiadas solicitudes, intenta más tarde»).
 - **Cambio:** recursos estáticos del frontend (`.js`, `.css`, imágenes, fuentes, etc.) pasan al scope `escudos` con contador propio (10× el límite base). El límite general por defecto se eleva a 120/min. Se añade soporte de traducción progresiva en `/control/configuracion` para evitar timeouts 524 de Cloudflare.
