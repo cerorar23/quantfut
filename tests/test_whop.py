@@ -377,3 +377,17 @@ def test_lectores_aceptan_la_forma_anidada_de_la_api_actual():
     nuevo = {"variant_id": "plan_v", "membership_id": "mem_n", "total": {"amount": "33.99", "currency": "usd"}}
     assert whop._plan_id(nuevo) == "plan_v" and whop._membership_id(nuevo) == "mem_n" and whop._cents(nuevo["total"]) == 3399
     assert whop._cents(33.99) == 3399 and whop._cents({"amount": "14.99"}) == 1499 and whop._cents(None) is None
+
+
+
+def test_reembolso_acepta_el_pago_anidado_de_la_version_actual():
+    # Cuerpo real de refund.created del sandbox (2026-11-17): `payment: {id}` y sin `payment_id`.
+    class _C:
+        def execute(self, sql, params=()):
+            self.params = params
+            class _R:
+                def fetchone(_): return None
+            return _R()
+    c = _C()
+    whop.apply_refund(c, {"id": "rf_x", "status": "succeeded", "payment": {"id": "pay_anidado"}})
+    assert c.params == ("pay_anidado",)

@@ -163,6 +163,7 @@ class _SportDetailState extends State<SportDetail> {
             accent: accent,
             quotes: widget.quotes,
             analysis: analysis,
+            onVip: widget.onVip,
           ),
           1 => SportPropsTab(
             api: widget.api,
@@ -201,6 +202,7 @@ class _SportDetailState extends State<SportDetail> {
           accent: accent,
           quotes: widget.quotes,
           analysis: analysis,
+          onVip: widget.onVip,
         ),
         1 => SportAnalysis(
           stats: stats,
@@ -456,7 +458,9 @@ class _Predictions extends StatelessWidget {
     required this.accent,
     required this.quotes,
     this.analysis,
+    this.onVip,
   });
+  final VoidCallback? onVip;
   final QuantFutApi api;
   final SportEvent event;
   final ImageCatalog images;
@@ -472,7 +476,7 @@ class _Predictions extends StatelessWidget {
       for (final m in event.markets)
         if (m.eligible) m,
     ];
-    if (all.isEmpty) {
+    if (all.isEmpty && event.vipCount == 0) {
       return event.sport == kNba && event.markets.isEmpty
           ? _SealCard(event: event, accent: accent)
           : SportNote(l10n.detailNoPicks);
@@ -529,9 +533,12 @@ class _Predictions extends StatelessWidget {
                 ),
               ),
             ),
+        for (final f in event.vipFamilies.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SportLockedFamilyRow(family: f.key, count: f.value, onVip: onVip),
+          ),
         const SizedBox(height: 4),
-        const QuoteReferenceCaption(),
-        const SizedBox(height: 8),
         SealLine(seal: event.seal, publishedAt: event.sealedAt),
       ],
     );
