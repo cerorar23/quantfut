@@ -43,6 +43,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 - **Sin verificar:** que la siguiente regeneración de resúmenes encaje con la nueva huella (se medirá en `analisis_resumen` con la fecha de hoy); la app en un dispositivo.
 - Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261117-074819.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
 
+### 2026-11-17 12:56 UTC · Whop: reembolsos con el pago anidado · API (PR #489; `main` `4b8587ea`)
+- **Motivo:** prueba de reembolso en el sandbox (`pay_lvLZZbaGN8uwIo`, plus_1m). `refund.created` (versión de webhook `2026-11-14-1`) trae `payment: {id}` y no `payment_id`; el servidor respondía `pago_desconocido` y no revocaba.
+- **Qué lleva:** `apply_refund` en `src/qf/comercial/whop.py` lee `payment_id` o `payment.id`. Sin migración.
+- **Método:** `construir api`, `ensayo` (`modulos con error: ninguno`, `rutas: 324`) y `desplegar api` con `quantfut-api:4b8587ea`. Pre-vuelo: 1 archivo distinto (`comercial/whop.py`). Redes intactas; salud 200 y web 200.
+- **Verificado:** como Whop no reenvía un aviso ya recibido, `apply_refund` se ejecutó a mano con el reembolso real (`rf_dDov0abcl2hLfc9`, leído de `GET /refunds`): `estado: revocado`, suscripción 36 revocada y la 37 intacta.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261117-065606.yml docker-compose.yml && docker compose up -d --no-deps api` (vuelve a `3c8facd4`).
+
 ### 2026-11-17 04:21 UTC · Siete fechas en el historial de parleys · API (PR #487, imagen `1e0cebfc`)
 - El historial conserva todos los tickets visibles de las siete fechas más recientes. Los tickets de un solo partido siguen agrupados por la fecha local de inicio.
 - Imagen `quantfut-api:1e0cebfc` construida desde `main` y ensayada (sin errores de importación, 324 rutas). Se recreó solo el servicio API. El worker quedó en `da7e5f40`.
