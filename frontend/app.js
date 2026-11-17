@@ -1,14 +1,14 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createMembershipUI } from './membership.js?v=pasarela-20261116';
+import { createMembershipUI } from './membership.js?v=secciones-20261117';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
-import { createRealViews } from './real-views.js?v=cupos-20261116';
+import { createRealViews } from './real-views.js?v=secciones-20261117';
 import { conCupos, loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=cupos-20261116';
 import { createSportWindow } from './sports-window.js?v=pronosticos-ventana-20261117';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=parley-historial-7-dias-20261116';
+import { createConversionViews } from './conversion-views.js?v=secciones-20261117';
 
 import { windowLocale, windowSelection, windowText } from './window-i18n.js?v=20261117';
 
