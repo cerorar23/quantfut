@@ -856,3 +856,74 @@
   .co-steps li + li::before { display: none; }
   .co-steps b { margin: 0 auto; }
 }
+
+/* Reto escalera: escalones en filas compactas (pendiente abierto, liquidado plegado) */
+.cv-pasos { display: grid; gap: 6px; margin-top: 10px; }
+.cv-paso { --paso-color: var(--yellow); border: 1px solid var(--line); border-left: 3px solid var(--paso-color); background: color-mix(in srgb, var(--cyber-void-700) 55%, transparent); }
+.cv-paso.win { --paso-color: var(--green); }
+.cv-paso.loss { --paso-color: var(--magenta); }
+.cv-paso > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 6px 10px; }
+.cv-paso > summary::-webkit-details-marker { display: none; }
+.cv-paso > summary:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.cv-paso-ic { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font: 700 12px var(--font-mono); color: var(--cyber-void-900); background: var(--paso-color); }
+.cv-paso-main { display: grid; gap: 1px; min-width: 0; }
+.cv-paso-main strong { font-size: 14px; line-height: 1.25; }
+.cv-paso-main small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.cv-paso-main small i { font-style: normal; opacity: 0.7; }
+.cv-paso-cuota { display: grid; justify-items: end; gap: 0; text-align: right; }
+.cv-paso-cuota strong { font: 700 17px var(--font-mono); font-variant-numeric: tabular-nums; }
+.cv-paso-cuota small { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.cv-paso-meta { margin: 0; padding: 0 10px 6px 40px; color: var(--muted); font: 600 11px/1.5 var(--font-mono); letter-spacing: 0.03em; }
+.cv-paso-meta.cv-prob { margin-top: 0; padding-bottom: 8px; }
+.cv-paso:not([open]) > summary::after { content: none; }
+
+/* Retos aún sin escalón: una tarjeta con una línea por reto */
+.cv-espera { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cv-espera li { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-left: 3px solid var(--yellow); font-size: 13px; }
+.cv-espera-fila { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: baseline; }
+.cv-espera li small { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.cv-espera-fila span { color: var(--muted); font-size: 12px; }
+.cv-espera-fila b { font: 700 13px var(--font-mono); }
+
+.qf-section-layout .cv-card-grid .cv-reto { padding: 12px 14px; }
+.qf-section-layout .cv-card-grid .cv-reto h3 { font-size: 16px; margin: 3px 0 2px; }
+.qf-section-layout .cv-card-grid .cv-reto .cv-ticket-odds strong { font-size: 22px; white-space: nowrap; }
+.qf-section-layout .cv-card-grid .cv-reto-head > div:first-child { min-width: 0; }
+.qf-section-layout .cv-card-grid .cv-reto .cv-ticket-meta { margin: 6px 0 0; font-size: 12px; line-height: 1.4; }
+.qf-section-layout .cv-card-grid .cv-reto-espera .cv-ticket-meta { margin-bottom: 8px; }
+.cv-pasos-mas > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; padding: 0 10px; color: var(--cyan); font: 600 12px var(--font-mono); letter-spacing: 0.04em; }
+.cv-pasos-mas > summary:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.cv-pasos-mas > .cv-pasos { margin-top: 0; }
+
+/* Parley: patas y parleys del historial compactos */
+.cv-tk .cv-legs { padding: 0 10px 10px; gap: 4px; }
+.cv-tk .cv-leg, .cv-card-grid .cv-ticket .cv-leg { grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; padding: 6px 8px; }
+.cv-tk .cv-leg strong, .cv-card-grid .cv-ticket .cv-leg strong { font-size: 13px; line-height: 1.25; }
+.cv-tk .cv-leg small, .cv-card-grid .cv-ticket .cv-leg small { font-size: 11px; line-height: 1.3; }
+.cv-tk .cv-leg-price strong, .cv-card-grid .cv-ticket .cv-leg-price strong { font-size: 15px; }
+.cv-tk .cv-leg-res, .cv-card-grid .cv-ticket .cv-leg-res { width: 22px; height: 22px; }
+.cv-day .cv-pasos { padding: 0 10px 10px; margin-top: 0; }
+.cv-section > .cv-pasos-mas { margin-top: 8px; }
+.qf-section-layout .cv-card-grid .cv-ticket { padding: 12px 14px; }
+.qf-section-layout .cv-card-grid .cv-ticket h3 { font-size: 16px; margin: 3px 0 2px; }
+.qf-section-layout .cv-card-grid .cv-ticket .cv-ticket-odds strong { font-size: 22px; white-space: nowrap; }
+.qf-section-layout .cv-card-grid .cv-ticket .cv-ticket-meta { margin: 4px 0 8px; font-size: 12px; line-height: 1.4; }
+
+.cv-leg .badge { display: inline-block; margin: 0 4px 0 0; padding: 0 5px; font-size: 10px; line-height: 1.5; vertical-align: 1px; }
+.qf-section-layout .cv-card-grid .cv-lock { padding: 12px 14px; gap: 6px 12px; }
+.qf-section-layout .cv-card-grid .cv-lock .cv-ghost { display: none; }
+.qf-section-layout .cv-card-grid .cv-lock-icon { width: 34px; height: 34px; }
+.qf-section-layout .cv-card-grid .cv-lock-icon .cv-icon { width: 18px; height: 18px; }
+.qf-section-layout .cv-card-grid .cv-lock h3 { font-size: 16px; margin: 3px 0 2px; }
+.qf-section-layout .cv-card-grid .cv-lock-side strong { font-size: 20px; }
+
+/* Parley del día: cada combinada se pliega; el estado, la cuota y la probabilidad quedan a la vista */
+.cv-tk-d > summary { list-style: none; cursor: pointer; display: block; }
+.cv-tk-d > summary::-webkit-details-marker { display: none; }
+.cv-tk-d > summary:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.cv-tk-toggle { display: flex; align-items: center; min-height: 44px; color: var(--cyan); font: 600 12px var(--font-mono); letter-spacing: 0.04em; }
+.cv-tk-d .cv-tk-ocultar, .cv-tk-d[open] .cv-tk-ver { display: none; }
+.cv-tk-d[open] .cv-tk-ocultar { display: inline; }
+.cv-tk-d[open] .cv-tk-toggle { min-height: 36px; }
+.cv-tk-d > .cv-legs { margin-top: 2px; }
+.cv-tk .cv-leg-price, .cv-card-grid .cv-ticket .cv-leg-price { grid-column: auto; text-align: right; }
