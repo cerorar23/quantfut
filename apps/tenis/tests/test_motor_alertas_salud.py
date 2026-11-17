@@ -6,6 +6,7 @@ import pytest
 psycopg = pytest.importorskip("psycopg")
 
 from db_util import cargar_minimo, insertar, ts
+from inferencia_util import params_prueba, ranking
 from tenis import alertas, salud
 from tenis.motor import (
     buscar_partidos_pendientes,
@@ -82,6 +83,7 @@ def test_motor_simulacion_y_sellado(esquema):
             "VALUES (%s, %s, 'fija', 'programado', 'sofascore', %s, %s)",
             (p, inicio_futuro, r, ts("2026-01-05")),
         )
+        ranking(db, m["jugadores"][1], 80)      # el jugador 1 ya trae ranking; sin esto el motor no pronostica (sin historia)
 
         pendientes = buscar_partidos_pendientes(db, "v1")
         assert any(x["partido_id"] == p for x in pendientes)
@@ -94,7 +96,7 @@ def test_motor_simulacion_y_sellado(esquema):
             partido=partido_dict,
             version_modelo="v1",
             version_datos="d_test",
-            parametros={},
+            parametros=params_prueba(),
             forzar_corte=datetime.now(UTC) - timedelta(hours=1),
             dry_run=True,
         )
@@ -108,7 +110,7 @@ def test_motor_simulacion_y_sellado(esquema):
             partido=partido_dict,
             version_modelo="v1",
             version_datos="d_test",
-            parametros={},
+            parametros=params_prueba(),
             forzar_corte=corte_fijo,
             dry_run=False,
         )

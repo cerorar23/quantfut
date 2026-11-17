@@ -33,6 +33,7 @@ def test_edad_desconocida_solo_pendiente():
 
 psycopg = pytest.importorskip("psycopg")
 from db_util import cargar_minimo, ts  # noqa: E402
+from inferencia_util import params_prueba, partido_futuro, ranking  # noqa: E402
 
 
 def test_edades_al_corte_pit(esquema):
@@ -59,10 +60,13 @@ def test_motor_con_capa_cambia_la_probabilidad_y_deja_traza(esquema):
         for j, valor in ((a, "1996-04-10"), (b, "2003-02-01")):
             db.execute("INSERT INTO jugador_asercion (jugador_id, campo, valor, fuente, recibo_id, recibido_en) "
                        "VALUES (%s, 'fecha_nacimiento', %s, 'sofascore', %s, %s)", (j, valor, r, ts("2026-01-05")))
-        partido = next(x for x in motor.buscar_partidos_pendientes(db, "vx") if x["partido_id"] == m["partido"])
+        ranking(db, b, 80)
+        partido = partido_futuro(db, m, a, b, "SF")
+        partido = next(x for x in motor.buscar_partidos_pendientes(db, "vx") if x["partido_id"] == partido)
         corte = datetime.now(UTC) - timedelta(hours=2)
         kw = dict(db=db, partido=partido, version_modelo="vx", version_datos="d", forzar_corte=corte, dry_run=True)
-        sin = motor.simular_y_sellar_partido(parametros={}, **kw)
-        con = motor.simular_y_sellar_partido(parametros={"circuitos": {"atp": PARAMS}}, **kw)
+        sin = motor.simular_y_sellar_partido(parametros=params_prueba(), **kw)
+        con = motor.simular_y_sellar_partido(parametros=params_prueba(capa_edad=CAPA.como_dict()), **kw)
+        assert sin["estado"] == con["estado"] == "dry_run_ok"
         # lado 2 (b) es ~7 años más joven: la capa le quita probabilidad al lado 1
         assert con["distribucion"]["mercados"]["gana_a"] < sin["distribucion"]["mercados"]["gana_a"]

@@ -20,7 +20,8 @@ from typing import Any
 
 from tenis.alertas import enviar_alerta
 from tenis.modelo import capa_edad
-from tenis.modelo.datos import FORMATOS, indice_formato
+from tenis.inferencia import inferir
+from tenis.modelo.datos import FORMATOS
 from tenis.modelo.hiperparametros import huella
 from tenis.modelo.union import sigma_m, unir
 from tenis.sellado import redondear_distribucion, sellar_pronostico
@@ -148,8 +149,12 @@ def simular_y_sellar_partido(
     parametros: dict[str, Any],
     forzar_corte: datetime | None = None,
     dry_run: bool = False,
+    inferencia: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Ejecuta inferencia con parámetros congelados y sella el pronóstico."""
+    """Ejecuta inferencia con parámetros congelados y sella el pronóstico.
+
+    `inferencia` (resultado de `tenis.inferencia.resolver` para este partido) la calcula la pasada del motor una sola vez para
+    todos los partidos en ventana; si no se pasa, se calcula aquí solo para este partido."""
     partido_id = partido["partido_id"]
     t_ref = partido["inicio_programado_utc"]
     if not t_ref.tzinfo:
@@ -168,23 +173,21 @@ def simular_y_sellar_partido(
 
     circ = partido["circuito"].lower()
     circ_params = parametros.get("circuitos", {}).get(circ, {})
-    psi_p = circ_params.get("psi_p", {})
-    psi_r = circ_params.get("psi_r", {})
 
-    sig_eps = float(psi_p.get("sigma_eps", 0.179))
-    rho_eps = float(psi_p.get("rho_eps", -0.733))
-    c_inf = float(circ_params.get("c_inf", 0.020))
+    # Inferencia REAL: filtro con Ψ congelado reproducido desde la evidencia (tenis.inferencia). Sin valores por omisión.
+    if inferencia is None:
+        inferencia = inferir(db, parametros, [partido]).get(partido_id, {"ok": False, "motivo": "sin_inferencia"})
+    if not inferencia.get("ok"):
+        motivo = inferencia.get("motivo", "desconocido")
+        enviar_alerta("jugador_sin_historia" if motivo == "sin_historia_ni_ranking" else "sin_pronostico",
+                      f"Partido {partido_id} sin pronóstico: {motivo}", partido_id=partido_id)
+        return {"estado": "omitido_sin_modelo", "partido_id": partido_id, "motivo": motivo}
 
-    mejor_de = int(partido.get("mejor_de", 3))
-    decisivo = "tiebreak_7" if mejor_de == 3 else "tiebreak_10"
-    fmt_idx = indice_formato(mejor_de, decisivo)
-    if fmt_idx < 0:
-        fmt_idx = 0
-
-    # Inferencia simplificada de demostración si no hay ratings previos cargados
-    s_hat = 1.25
-    pi_lado1 = 0.585
-    var_rho = 0.009
+    psi_r = circ_params["psi_r"]
+    sig_eps, rho_eps, c_inf = float(psi_r["sigma_eps"]), float(psi_r["rho_eps"]), float(psi_r.get("c_inf", 0.0))
+    mejor_de, decisivo = FORMATOS[inferencia["fmt"]]
+    fmt_idx = inferencia["fmt"]
+    s_hat, pi_lado1, var_rho = inferencia["s_hat"], inferencia["pi_lado1"], inferencia["var_rho"]
     # Capa de edad (17-nov-2026): solo si el artefacto activo la incluye. Las edades se leen al corte, en vivo.
     e1, e2 = edades_al_corte(db, partido["jugador_1"], partido["jugador_2"], corte) if circ_params.get("capa_edad") else (None, None)
     pi_lado1, traza_edad = aplicar_capa_edad(pi_lado1, e1, e2, circ_params)
@@ -210,6 +213,11 @@ def simular_y_sellar_partido(
         "S_hat": round(s_hat, 4),
         "pi_modelo": round(pi_lado1, 6),
         "var_pred": round(var_pred, 6),
+        "formato": f"mejor_de_{mejor_de}_{decisivo}",
+        "prior_ranking": inferencia["prior_ranking"],
+        "historia_corta": inferencia["historia_corta"],
+        "fatiga_desconocida": inferencia["fatiga_desconocida"],
+        "fuente_pi": "filtro_psi_congelado",
     } | traza_edad
 
     # Buscar referencia de mercado a la fecha de corte
@@ -242,6 +250,16 @@ def simular_y_sellar_partido(
     return {"estado": "sellado", "partido_id": partido_id, "hash": h}
 
 
+def _en_ventana(partido: dict[str, Any], ahora: datetime, forzar_corte: datetime | None) -> bool:
+    """¿Toca sellar este partido ahora? Mismas reglas que `simular_y_sellar_partido` antes de inferir."""
+    t_ref = partido["inicio_programado_utc"]
+    if not t_ref.tzinfo:
+        t_ref = t_ref.replace(tzinfo=UTC)
+    if forzar_corte is not None:
+        return True
+    return (t_ref - timedelta(minutes=60)) <= ahora < t_ref
+
+
 def ejecutar_pasada_motor(
     db: Any,
     version_datos: str = "d_actual",
@@ -254,6 +272,17 @@ def ejecutar_pasada_motor(
     params = artefacto["parametros"]
 
     pendientes = buscar_partidos_pendientes(db, v_modelo)
+
+    # El filtro solo se reproduce si algún partido está dentro de su ventana de sellado (una lectura de la base por pasada).
+    ahora = datetime.now(UTC)
+    en_ventana = [p for p in pendientes if _en_ventana(p, ahora, forzar_corte)]
+    try:
+        inferencias = inferir(db, params, en_ventana)
+    except Exception as exc:                      # sin inferencia no se sella nada: alerta y se reintenta en la pasada siguiente
+        log.exception("inferencia fallida")
+        enviar_alerta("inferencia_fallida", f"La inferencia del motor falló: {exc!r}")
+        inferencias = {p["partido_id"]: {"ok": False, "motivo": "inferencia_fallida"} for p in en_ventana}
+
     resultados = []
     for p in pendientes:
         res = simular_y_sellar_partido(
@@ -264,6 +293,7 @@ def ejecutar_pasada_motor(
             parametros=params,
             forzar_corte=forzar_corte,
             dry_run=dry_run,
+            inferencia=inferencias.get(p["partido_id"], {"ok": False, "motivo": "fuera_de_ventana"}),
         )
         resultados.append(res)
 

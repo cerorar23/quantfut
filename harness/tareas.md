@@ -3384,5 +3384,6 @@ Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
 - [x] `evaluar_wf.py` mide la capa y la compuerta `G_capa_edad`; `ops/congelar_capa_edad.py` escribe el artefacto nuevo con huella propia.
 - [x] Walk-forward 2019-24: ATP −0,0022 [−0,0028; −0,0017], WTA −0,0026 [−0,0035; −0,0017] frente a la capa de pendiente; pasa en los dos circuitos.
 - [ ] Registrar `hiperparametros_capa_edad.json` como `artefacto_activo` con `version_modelo` nueva (decisión del titular).
-- [ ] El motor sella con valores de demostración (`pi_lado1 = 0.585`): conectar el filtro real antes de que la capa cambie pronósticos.
+- [x] Motor con el filtro real (17-nov): `tenis/inferencia.py` reproduce el filtro desde la base; π idéntico (Δ = 0) al walk-forward en 60.741 partidos reales; sin pronóstico no se sella. Ver `docs/tenis_motor_filtro_real_20261117.md`.
+- [ ] Estado del filtro en Parquet (plan H.2) para no leer toda la base en cada pasada (hoy ≈ 3 min).
 - [ ] Opcional: edad dentro del filtro (reestimar hiperparámetros) y explicar la señal de actividad reciente.

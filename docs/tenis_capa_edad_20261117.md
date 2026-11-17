@@ -54,9 +54,8 @@ la compuerta pase por circuito. El `hiperparametros.json` original queda intacto
 corte, mayor prioridad de fuente, la más reciente) y aplica la capa solo si el artefacto activo trae `capa_edad` (`aplicar_capa_edad`).
 Con capa, las entradas selladas añaden `capa_edad`, `pi_base` y `edad_dif`; sin ella quedan exactamente como antes.
 
-**Hallazgo importante:** `simular_y_sellar_partido` todavía usa valores de demostración (`pi_lado1 = 0.585`, `S_hat = 1.25`); la inferencia real
-del filtro solo corre en los scripts de entrenamiento y walk-forward. La capa está lista para cuando el motor use el filtro, pero hoy no
-cambia ningún pronóstico en producción.
+**Actualización (mismo día):** el motor ya usa el filtro real en lugar de valores de demostración; ver `docs/tenis_motor_filtro_real_20261117.md`.
+La capa de edad se aplica ahora sobre el π real del filtro.
 
 ## Lo que NO se hizo
 
