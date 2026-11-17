@@ -3795,6 +3795,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tenWinProbTitle => 'PROBABILIDADE DE VITÓRIA';
 
   @override
+  String get tileAllSurfaces => 'todas as superfícies';
+
+  @override
+  String get tileBreak => 'Quebras conquistadas';
+
+  @override
   String get tileBtts => 'Ambos marcam';
 
   @override
@@ -3850,7 +3856,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileGoalsTrend => 'Tendência de gols';
 
   @override
+  String get tileH2h => 'Confronto direto';
+
+  @override
+  String get tileHold => 'Games de saque ganhos';
+
+  @override
   String get tileHomeAway => 'Vitórias casa / fora';
+
+  @override
+  String tileMatchesCount(int n) {
+    return '$n jogos';
+  }
 
   @override
   String get tileOver25Model => 'Mais de 2,5 segundo o modelo';
@@ -3865,6 +3882,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileProbability => 'Probabilidade';
 
   @override
+  String get tileRank => 'Ranking';
+
+  @override
   String get tileScores => 'Jogos com gol';
 
   @override
@@ -3872,6 +3892,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tileSplitCaption => 'Mandante em casa · visitante fora';
+
+  @override
+  String get tileSurfaceWins => 'Vitórias na superfície';
+
+  @override
+  String get tileThreeSets => 'Jogos de três sets';
 
   @override
   String get tileTrendCaption =>

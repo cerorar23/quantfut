@@ -13,6 +13,7 @@ import 'quote_label.dart';
 import 'screen_definition.dart';
 import 'sport_contract.dart';
 import 'sport_detail_tabs.dart';
+import 'sport_forecast.dart';
 import 'sport_images.dart';
 import 'sport_props.dart';
 import 'sport_screen_blocks.dart';
@@ -79,6 +80,9 @@ class SportDetail extends StatefulWidget {
 class _SportDetailState extends State<SportDetail> {
   int tab = 0;
   late final Future<JsonMap?> stats;
+
+  /// Casillas y resumen del destacado de tenis (`/web/deportes/tenis/analisis/{id}`); null en los demás deportes.
+  late final Future<JsonMap?>? analysis;
   Future<JsonMap?>? _availability;
   Future<JsonMap?> get availability => _availability ??= _loadAvailability();
 
@@ -86,6 +90,19 @@ class _SportDetailState extends State<SportDetail> {
   void initState() {
     super.initState();
     stats = _loadStats();
+    analysis = nba || e.generic ? null : _loadAnalysis();
+  }
+
+  /// Cualquier fallo (404 incluido) es «sin análisis»: se queda la tarjeta compacta de siempre.
+  Future<JsonMap?> _loadAnalysis() async {
+    try {
+      final r = await widget.api.request(
+        '/web/deportes/tenis/analisis/${Uri.encodeComponent(e.id)}',
+      );
+      return r is Map<String, dynamic> ? r : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   SportEvent get e => widget.event;
@@ -182,6 +199,7 @@ class _SportDetailState extends State<SportDetail> {
           images: widget.images,
           accent: accent,
           quotes: widget.quotes,
+          analysis: analysis,
         ),
         1 => SportAnalysis(
           stats: stats,
@@ -436,12 +454,14 @@ class _Predictions extends StatelessWidget {
     required this.images,
     required this.accent,
     required this.quotes,
+    this.analysis,
   });
   final QuantFutApi api;
   final SportEvent event;
   final ImageCatalog images;
   final Color accent;
   final QuotesOverlay quotes;
+  final Future<JsonMap?>? analysis;
 
   @override
   Widget build(BuildContext context) {
@@ -471,12 +491,13 @@ class _Predictions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (featured != null) ...[
-          _FeaturedCard(
+          _FeaturedSlot(
             api: api,
             event: event,
             market: featured,
             quote: quoteFor(event, featured, quotes),
             l10n: l10n,
+            analysis: analysis,
           ),
           const SizedBox(height: 12),
         ],
@@ -557,6 +578,55 @@ class _SealCard extends StatelessWidget {
           Text(body, style: const TextStyle(fontSize: 13, color: QfColors.text2)),
         ],
       ),
+    );
+  }
+}
+
+/// El destacado: la tarjeta de análisis (tenis) si el servidor mandó casillas para ESE mercado; si no, la compacta.
+class _FeaturedSlot extends StatelessWidget {
+  const _FeaturedSlot({
+    required this.api,
+    required this.event,
+    required this.market,
+    required this.quote,
+    required this.l10n,
+    required this.analysis,
+  });
+
+  final QuantFutApi api;
+  final SportEvent event;
+  final SportMarket market;
+  final SportQuote? quote;
+  final AppLocalizations l10n;
+  final Future<JsonMap?>? analysis;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = _FeaturedCard(
+      api: api,
+      event: event,
+      market: market,
+      quote: quote,
+      l10n: l10n,
+    );
+    final pending = analysis;
+    if (pending == null) return compact;
+    return FutureBuilder<JsonMap?>(
+      future: pending,
+      builder: (context, snap) {
+        final data = snap.data;
+        if (data == null || '${data['mercado_id']}' != market.id) {
+          return compact;
+        }
+        return TennisForecastPanel(
+          analisis: data,
+          pickText: sportPickText(l10n, market),
+          probability: market.probability,
+          quote: QuoteLabel(quote: quote),
+          home: event.home,
+          away: event.away,
+        );
+      },
     );
   }
 }

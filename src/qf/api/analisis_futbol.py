@@ -239,7 +239,7 @@ GLOSARIO = (
 )
 
 PROMPT = (
-    "You write the short 'forecast summary' shown on a football analytics card. "
+    "You write the short 'forecast summary' shown on a {deporte} analytics card. "
     "Write in these languages: {idiomas}. For each language write 2 or 3 sentences, at most {max} characters. "
     "Sentence 1 is a hook that states the conclusion about the match itself (for example what kind of match to expect), "
     "with the probability; do not call it a 'bet', 'tip' or 'opportunity' and do not use hype words such as "
@@ -253,16 +253,16 @@ PROMPT = (
     "that no draw is expected): follow it and never reverse it. Do not mention odds, prices or "
     "value at all: the app adds the sentence about the price itself. "
     "Never promise or guarantee a result. "
-    + GLOSARIO + " Return ONLY a JSON object with the language codes as keys.\nDATA:\n{datos}"
+    "{glosario} Return ONLY a JSON object with the language codes as keys.\nDATA:\n{datos}"
 )
 
 
-def redactar(hechos: dict) -> dict[str, str] | None:
+def redactar(hechos: dict, deporte: str = "football", glosario: str = GLOSARIO) -> dict[str, str] | None:
     cfg = _config()
     if not cfg:
         return None
     prompt = PROMPT.format(idiomas=", ".join(f"{k} ({NOMBRE_IDIOMA[k]})" for k in IDIOMAS), max=MAX_TEXTO,
-                           datos=json.dumps(hechos, ensure_ascii=False))
+                           deporte=deporte, glosario=glosario, datos=json.dumps(hechos, ensure_ascii=False))
     res = apimart._chat_completion(api_key=cfg["api_key"], base_url=cfg["base_url"], model=cfg["model"],
                                    messages=[{"role": "user", "content": prompt}], expect_json=True,
                                    max_tokens=1200, timeout=60.0)
@@ -309,10 +309,10 @@ def _leer(match_id: str, clave: str, h: str) -> dict | None:
     return row["textos"] if row else None
 
 
-def _generar(match_id: str, clave: str, h: str, hechos: dict) -> None:
+def _generar(match_id: str, clave: str, h: str, hechos: dict, deporte: str, glosario: str) -> None:
     k = f"{match_id}|{clave}|{h}"
     try:
-        textos = redactar(hechos)
+        textos = redactar(hechos, deporte, glosario)
         if textos:
             execute("INSERT INTO analisis_resumen (match_id, clave, datos_hash, textos, modelo) "
                     "VALUES (%s, %s, %s, %s::jsonb, %s) ON CONFLICT DO NOTHING",
@@ -328,6 +328,21 @@ def _generar(match_id: str, clave: str, h: str, hechos: dict) -> None:
             _en_curso.discard(k)
 
 
+def resumen_para(match_id: str, clave: str, hechos: dict, deporte: str = "football",
+                 glosario: str = GLOSARIO) -> dict | None:
+    """Resumen ya generado (por idioma) o None; si falta, lo encarga a un hilo aparte (una vez por huella de datos)."""
+    h = _hash(hechos)
+    textos = _leer(match_id, clave, h)
+    k = f"{match_id}|{clave}|{h}"
+    if textos is None and _config():
+        with _LOCK:
+            reciente = time.monotonic() - _fallos.get(k, -REINTENTO_S) < REINTENTO_S
+            if k not in _en_curso and not reciente:
+                _en_curso.add(k)
+                _POOL.submit(_generar, match_id, clave, h, hechos, deporte, glosario)
+    return textos
+
+
 def construir(match_id: str, pick: dict, ficha: dict, lam_mu: tuple | None) -> dict | None:
     """Bloque `analisis` del destacado: receta, casillas y, si ya está generado, el resumen por idioma."""
     receta, tarjetas = casillas(pick, ficha, lam_mu)
@@ -336,15 +351,7 @@ def construir(match_id: str, pick: dict, ficha: dict, lam_mu: tuple | None) -> d
     out: dict[str, Any] = {"receta": receta, "casillas": tarjetas, "resumen": None}
     try:
         hechos = hechos_de(pick, ficha, receta, tarjetas)
-        clave, h = _clave(match_id, pick), _hash(hechos)
-        out["resumen"] = _leer(match_id, clave, h)
-        k = f"{match_id}|{clave}|{h}"
-        if out["resumen"] is None and _config():
-            with _LOCK:
-                reciente = time.monotonic() - _fallos.get(k, -REINTENTO_S) < REINTENTO_S
-                if k not in _en_curso and not reciente:
-                    _en_curso.add(k)
-                    _POOL.submit(_generar, match_id, clave, h, hechos)
+        out["resumen"] = resumen_para(match_id, _clave(match_id, pick), hechos)
     except Exception:  # noqa: BLE001 - sin resumen la app sigue con las casillas y su plantilla
         log.exception("resumen del partido %s", match_id)
     return out

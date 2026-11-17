@@ -6169,6 +6169,18 @@ abstract class AppLocalizations {
   /// **'PROBABILIDAD DE GANAR'**
   String get tenWinProbTitle;
 
+  /// No description provided for @tileAllSurfaces.
+  ///
+  /// In es, this message translates to:
+  /// **'todas las superficies'**
+  String get tileAllSurfaces;
+
+  /// No description provided for @tileBreak.
+  ///
+  /// In es, this message translates to:
+  /// **'Quiebres logrados'**
+  String get tileBreak;
+
   /// No description provided for @tileBtts.
   ///
   /// In es, this message translates to:
@@ -6259,11 +6271,29 @@ abstract class AppLocalizations {
   /// **'Tendencia goles'**
   String get tileGoalsTrend;
 
+  /// No description provided for @tileH2h.
+  ///
+  /// In es, this message translates to:
+  /// **'Cara a cara'**
+  String get tileH2h;
+
+  /// No description provided for @tileHold.
+  ///
+  /// In es, this message translates to:
+  /// **'Saque retenido'**
+  String get tileHold;
+
   /// No description provided for @tileHomeAway.
   ///
   /// In es, this message translates to:
   /// **'Victorias casa / fuera'**
   String get tileHomeAway;
+
+  /// Número de partidos de cara a cara
+  ///
+  /// In es, this message translates to:
+  /// **'{n} partidos'**
+  String tileMatchesCount(int n);
 
   /// No description provided for @tileOver25Model.
   ///
@@ -6289,6 +6319,12 @@ abstract class AppLocalizations {
   /// **'Probabilidad'**
   String get tileProbability;
 
+  /// No description provided for @tileRank.
+  ///
+  /// In es, this message translates to:
+  /// **'Ranking'**
+  String get tileRank;
+
   /// No description provided for @tileScores.
   ///
   /// In es, this message translates to:
@@ -6306,6 +6342,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Local en casa · visita fuera'**
   String get tileSplitCaption;
+
+  /// No description provided for @tileSurfaceWins.
+  ///
+  /// In es, this message translates to:
+  /// **'Victorias en la superficie'**
+  String get tileSurfaceWins;
+
+  /// No description provided for @tileThreeSets.
+  ///
+  /// In es, this message translates to:
+  /// **'Partidos a tres sets'**
+  String get tileThreeSets;
 
   /// No description provided for @tileTrendCaption.
   ///

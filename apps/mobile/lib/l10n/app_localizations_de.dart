@@ -3789,6 +3789,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tenWinProbTitle => 'GEWINNWAHRSCHEINLICHKEIT';
 
   @override
+  String get tileAllSurfaces => 'alle Beläge';
+
+  @override
+  String get tileBreak => 'Breaks erzielt';
+
+  @override
   String get tileBtts => 'Beide treffen';
 
   @override
@@ -3842,7 +3848,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tileGoalsTrend => 'Tor-Trend';
 
   @override
+  String get tileH2h => 'Direktvergleich';
+
+  @override
+  String get tileHold => 'Aufschlagspiele gewonnen';
+
+  @override
   String get tileHomeAway => 'Siege Heim / Auswärts';
+
+  @override
+  String tileMatchesCount(int n) {
+    return '$n Spiele';
+  }
 
   @override
   String get tileOver25Model => 'Über 2,5 laut Modell';
@@ -3857,6 +3874,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tileProbability => 'Wahrscheinlichkeit';
 
   @override
+  String get tileRank => 'Weltrangliste';
+
+  @override
   String get tileScores => 'Spiele mit Tor';
 
   @override
@@ -3864,6 +3884,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tileSplitCaption => 'Heimteam zu Hause · Gast auswärts';
+
+  @override
+  String get tileSurfaceWins => 'Siege auf diesem Belag';
+
+  @override
+  String get tileThreeSets => 'Drei-Satz-Spiele';
 
   @override
   String get tileTrendCaption => 'Spiele mit über 2,5 Toren: Heim · Gast';
