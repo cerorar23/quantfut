@@ -161,6 +161,8 @@ def _numeros(obj: Any, acc: set[float]) -> None:
         return
     if isinstance(obj, (int, float)) and math.isfinite(obj):
         acc.add(float(obj))
+    elif isinstance(obj, str):
+        acc.update(float(c.replace(",", ".")) for c in _NUM.findall(obj))
     elif isinstance(obj, dict):
         for v in obj.values():
             _numeros(v, acc)
@@ -186,7 +188,7 @@ def hechos_de(pick: dict, ficha: dict, receta: str, tarjetas: list[dict]) -> dic
     justa = round(1 / prob, 2) if prob else None
     publicada = _num(pick.get("ref_price"))
     return {"partido": f"{(ficha.get('local') or {}).get('nombre')} vs {(ficha.get('visitante') or {}).get('nombre')}",
-            "pronostico": pick.get("texto"), "mercado": receta,
+            "pronostico": pick.get("texto"), "linea": _num(pick.get("line")), "mercado": receta,
             "probabilidad_pct": round(prob * 100) if prob else None, "cuota_justa": justa,
             "cuota_publicada": publicada,
             "precio": None if not (justa and publicada) else ("por encima de la justa" if publicada >= justa
@@ -194,15 +196,34 @@ def hechos_de(pick: dict, ficha: dict, receta: str, tarjetas: list[dict]) -> dic
             "datos": tarjetas}
 
 
+GLOSARIO = (
+    "Meaning of each item in 'datos' (a = home team, b = away team; n_a/n_b = matches counted): "
+    "xg = goals the MODEL projects for this match (a, b and total; a projection, NOT past performance); "
+    "xg_equipo = goals the model projects for one team (a); "
+    "empate = % of draws of the home team playing at home (a) and of the away team playing away (b), 'liga' = league average; "
+    "forma = points won in the last n matches by each team; "
+    "xgd = average xG difference (xG for minus xG against) per match in recent matches; "
+    "tendencia = % of recent matches with more than 2.5 goals for each team; "
+    "ambos = % of recent matches in which both teams scored, for each team; "
+    "goles_partido = average total goals in each team's recent matches; "
+    "locvis = % of wins of the home team at home (a) and of the away team away (b); "
+    "marca = % of recent matches in which the team scored; "
+    "concede = goals per match the opponent concedes."
+)
+
 PROMPT = (
-    "You write the short 'forecast summary' shown on a football betting-analytics card. "
+    "You write the short 'forecast summary' shown on a football analytics card. "
     "Write in these languages: {idiomas}. For each language write 2 or 3 sentences, at most {max} characters. "
-    "Open with the strong conclusion (a hook a reader would want to keep reading), then justify it with the figures. "
-    "Use ONLY numbers that appear in the data; never invent, derive or round to a new number. "
-    "If 'precio' says the published odds are below the fair odds, close by saying the appeal is in the probability, "
-    "not the price; if above, say the price also supports it. Never promise or guarantee a result. "
-    "In each 'datos' item a/b are the home/away team values (a/b = home/away; n_a/n_b are matches counted). "
-    "Return ONLY a JSON object with the language codes as keys.\nDATA:\n{datos}"
+    "Sentence 1 is a hook that states the conclusion about the match itself (for example what kind of match to expect), "
+    "with the probability; do not call it a 'bet', 'tip' or 'opportunity' and do not use hype words such as "
+    "'very attractive'. The next sentences justify it with the figures: use EVERY item of 'datos' that is relevant, "
+    "each described exactly as the glossary says. "
+    "Use ONLY numbers that appear in the data (the market line 'linea' is allowed); never invent, derive or round to a "
+    "new number. Write numbers the way that language does (decimal comma in es, pt, fr, it, de; decimal point in en) "
+    "and put a space before % in es, fr and de. Close with one short sentence about the price: if 'precio' says the "
+    "published odds are below the fair odds, say the appeal is in the probability, not the price; if above, say the "
+    "price also supports it. Never promise or guarantee a result. "
+    + GLOSARIO + " Return ONLY a JSON object with the language codes as keys.\nDATA:\n{datos}"
 )
 
 

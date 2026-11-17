@@ -65,6 +65,7 @@ def test_cifras_validas_acepta_los_datos_y_rechaza_ajenos():
     h = af.hechos_de(pick(), ficha(), "resultado", [{"id": "empate", "a": 15, "b": 10, "liga": 28}])
     assert af.cifras_validas("Hay un 78 % de probabilidad; la cuota (1,23) queda bajo la justa (1,28). 1X2.", h)
     assert af.cifras_validas("Empata el 15 % en casa y el 10 % fuera frente al 28 % de la liga.", h)
+    assert af.cifras_validas("Se esperan más de 2,5 goles.", af.hechos_de(pick("totals", line=2.5, texto="Más de 2,5 goles"), ficha(), "goles", []))
     assert not af.cifras_validas("Tiene un 91 % de probabilidad.", h)
     assert not af.cifras_validas("La cuota justa es 1,50.", h)
 
