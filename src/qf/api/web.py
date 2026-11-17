@@ -50,6 +50,21 @@ def tennis_event_stats(event_id: str, response: Response):
     return data
 
 
+@router.get("/web/deportes/tenis/analisis/{event_id}")
+def tennis_event_analysis(event_id: str, response: Response):
+    """Casillas según el mercado y resumen redactado del destacado de un partido de tenis (app CyberCore)."""
+    from . import analisis_tenis
+    from .tenis_publico import public_data
+    response.headers["Cache-Control"] = "no-store"
+    evento = None
+    if event_id.isdigit() and len(event_id) <= 12:
+        evento = next((e for e in public_data().get("events") or [] if str(e.get("id")) == event_id), None)
+    data = analisis_tenis.para_evento(evento) if evento else None
+    if data is None:
+        raise HTTPException(404, "Sin análisis para este partido")
+    return data
+
+
 @router.get("/web/deportes/nba/estadisticas/{event_id}")
 def nba_event_stats(event_id: str, response: Response):
     from .nba_estadisticas import public_event

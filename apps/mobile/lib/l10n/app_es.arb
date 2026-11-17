@@ -3532,6 +3532,8 @@
     }
   },
   "tenWinProbTitle": "PROBABILIDAD DE GANAR",
+  "tileAllSurfaces": "todas las superficies",
+  "tileBreak": "Quiebres logrados",
   "tileBtts": "Ambos marcan",
   "tileBttsCaption": "Partidos en que marcaron ambos: local · visita",
   "tileConcedes": "Goles que encaja el rival",
@@ -3580,14 +3582,28 @@
   "tileGoalsMatchCaption": "Totales en sus partidos: local · visita",
   "tileGoalsNA": "Historial insuficiente",
   "tileGoalsTrend": "Tendencia goles",
+  "tileH2h": "Cara a cara",
+  "tileHold": "Saque retenido",
   "tileHomeAway": "Victorias casa / fuera",
+  "tileMatchesCount": "{n} partidos",
+  "@tileMatchesCount": {
+    "description": "Número de partidos de cara a cara",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "tileOver25Model": "Más de 2,5 según el modelo",
   "tileOver25Recent": "Más de 2,5 en sus últimos partidos",
   "tilePerMatch": "Por partido",
   "tileProbability": "Probabilidad",
+  "tileRank": "Ranking",
   "tileScores": "Partidos con gol",
   "tileScoresCaption": "Del equipo, en sus últimos partidos",
   "tileSplitCaption": "Local en casa · visita fuera",
+  "tileSurfaceWins": "Victorias en la superficie",
+  "tileThreeSets": "Partidos a tres sets",
   "tileTrendCaption": "Partidos con más de 2,5 goles: local · visita",
   "tileXg": "xG proyectado",
   "tileXgCaption": "{home} local · {away} visita",

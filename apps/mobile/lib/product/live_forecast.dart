@@ -209,7 +209,7 @@ class ForecastPanel extends StatelessWidget {
     String away,
   ) {
     final l10n = context.l10n;
-    final probTile = _Tile(
+    final probTile = ForecastTile(
       icon: Icons.track_changes,
       label: l10n.tileProbability,
       value: realPercent(prob),
@@ -238,7 +238,7 @@ class ForecastPanel extends StatelessWidget {
     ];
   }
 
-  _Tile _analysisTile(
+  ForecastTile _analysisTile(
     AppLocalizations l10n,
     JsonMap c,
     String home,
@@ -246,7 +246,7 @@ class ForecastPanel extends StatelessWidget {
   ) {
     switch (c['id']) {
       case 'xg':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.sports_soccer,
           label: l10n.tileXg,
           color: liveGold,
@@ -254,7 +254,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileXgCaption(decimalText(c['a']), decimalText(c['b'])),
         );
       case 'xg_equipo':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.sports_soccer,
           label: l10n.tileXg,
           color: liveGold,
@@ -262,7 +262,7 @@ class ForecastPanel extends StatelessWidget {
           caption: c['equipo'] == 'a' ? home : away,
         );
       case 'empate':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.compare_arrows,
           label: l10n.tileDraws,
           color: statsPurple,
@@ -272,7 +272,7 @@ class ForecastPanel extends StatelessWidget {
               : l10n.tileSplitCaption,
         );
       case 'forma':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.trending_up,
           label: l10n.tileFormLabel((c['n_a'] as num?)?.toInt() ?? 5),
           color: statsPurple,
@@ -280,7 +280,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileFormCaption,
         );
       case 'xgd':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.bar_chart,
           label: l10n.tileXgd,
           color: statsLime,
@@ -288,7 +288,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileXgdCaption,
         );
       case 'tendencia':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.bar_chart,
           label: l10n.tileGoalsTrend,
           color: statsLime,
@@ -296,7 +296,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileTrendCaption,
         );
       case 'ambos':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.swap_horiz,
           label: l10n.tileBtts,
           color: statsPurple,
@@ -304,7 +304,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileBttsCaption,
         );
       case 'goles_partido':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.sports_soccer,
           label: l10n.tileGoalsMatch,
           color: liveGold,
@@ -312,7 +312,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileGoalsMatchCaption,
         );
       case 'marca':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.sports_soccer,
           label: l10n.tileScores,
           color: statsLime,
@@ -320,7 +320,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tileScoresCaption,
         );
       case 'concede':
-        return _Tile(
+        return ForecastTile(
           icon: Icons.shield_outlined,
           label: l10n.tileConcedes,
           color: statsPurple,
@@ -328,7 +328,7 @@ class ForecastPanel extends StatelessWidget {
           caption: l10n.tilePerMatch,
         );
       default: // 'locvis'
-        return _Tile(
+        return ForecastTile(
           icon: Icons.home_outlined,
           label: l10n.tileHomeAway,
           color: statsPurple,
@@ -560,7 +560,7 @@ class ForecastPanel extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: _Tile(
+                      child: ForecastTile(
                         icon: Icons.track_changes,
                         label: l10n.tileProbability,
                         value: realPercent(prob),
@@ -574,7 +574,7 @@ class ForecastPanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _Tile(
+                      child: ForecastTile(
                         icon: Icons.sports_soccer,
                         label: l10n.tileXg,
                         value: decimalText(xg['total']),
@@ -593,7 +593,7 @@ class ForecastPanel extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: _Tile(
+                      child: ForecastTile(
                         icon: Icons.compare_arrows,
                         label: l10n.tileFavorite,
                         value: side.isEmpty ? '—' : realPercent(side.first.$2),
@@ -610,7 +610,7 @@ class ForecastPanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _Tile(
+                      child: ForecastTile(
                         icon: Icons.bar_chart,
                         label: l10n.tileGoalsTrend,
                         value: over25 == null ? '—' : realPercent(over25 / 100),
@@ -685,8 +685,10 @@ class ForecastPanel extends StatelessWidget {
 }
 
 /// Recuadro de un indicador: icono + etiqueta, valor grande y una línea de contexto.
-class _Tile extends StatelessWidget {
-  const _Tile({
+/// Casilla de indicador de la tarjeta de análisis (fútbol y tenis).
+class ForecastTile extends StatelessWidget {
+  const ForecastTile({
+    super.key,
     required this.icon,
     required this.label,
     required this.value,

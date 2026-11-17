@@ -15,6 +15,17 @@
 - **Despliegue pendiente:** aplicar `db/118_analisis_resumen.sql` y desplegar la API (`DEPLOYS.md`); la app necesita un build nuevo.
 
 
+## 17-nov-2026 · Destacado de tenis: casillas según el mercado y resumen redactado (`app/destacado-tenis-recetas`)
+- **Decisión (pedido del titular, mismo criterio que fútbol):** la tarjeta de análisis del pronóstico destacado de tenis, con las casillas que ayudan a ese mercado. Dos recetas: `ganador` (ganador, hándicap de sets y de juegos, ganador del set: saque retenido, ranking, cara a cara, quiebres, forma, victorias en la superficie) y `duracion` (juegos y sets totales, tie-break: saque, partidos a tres sets, quiebres, forma). `src/qf/api/analisis_tenis.py`.
+- **Fuente: `tenis-db` (TML), no API-Tennis.** El feed de estadísticas de la app sale de API-Tennis, que vence y que el titular descartó; Hold % y Break % solo existen en TML. Hold % = 100 − (puntos de quiebre afrontados − salvados) / juegos de saque; Break % es lo mismo medido sobre el rival. Ventana de 52 semanas; la superficie del partido solo si ambos tienen ≥ 8 partidos con estadística (si no, todas las superficies, y la casilla lo dice); ≥ 15 partidos para fiarse de un Hold/Break general.
+- **Jugadores por nombre exacto y ÚNICO dentro del circuito del torneo** (ATP/WTA). Con duda o sin dato no hay tarjeta: la app conserva la compacta de siempre. Es preferible a mostrar los datos de otra persona.
+- **Ranking en la misma semana:** la última fila de cada jugador es de semanas distintas y salía «1 contra 1» (Sinner y Zverev). Se compara en la última semana que tienen los dos y se omite si pasa de 35 días. Lo encontró la prueba real, no las unitarias.
+- **Entrega:** `GET /web/deportes/tenis/analisis/{id}` (hermano de `/estadisticas/{id}`), con `mercado_id`: la app solo pinta la tarjeta si su destacado es ese mercado. No se tocó el contrato `/deportes/v1` (la app de tenis lee `/web/deportes/tenis`, no el contrato) ni el modelo `SportEvent`.
+- **Resumen redactado:** misma maquinaria que fútbol (`analisis_futbol.resumen_para`, parametrizada por deporte y glosario): una vez por huella de datos, en hilo aparte, tabla `analisis_resumen`, cifras comprobadas, `significado` en inglés por reglas y sin hablar de precio (tenis no publica cuotas).
+- **App:** `TennisForecastPanel` (`sport_forecast.dart`) reutiliza `ForecastTile` (antes privada) y el detalle de tenis lo muestra desde `_FeaturedSlot`. 8 textos nuevos en los 6 idiomas.
+- **Límites:** TML llega semanal, así que forma y ranking pueden ir una semana por detrás y no incluyen el torneo en curso; la fatiga sigue sin fuente diaria. Sin verificar visualmente en la app. Falta el resumen real con APIMart para tenis (probadas las casillas con datos reales). NBA y la web, en otros PR.
+
+
 
 ## 16-nov-2026 · Pasarelas de pago en /control con sandbox solo para cuentas de prueba (`feat/pasarelas-pago`)
 - **Decisión (pedido del titular):** las claves de Whop (producción y sandbox) se configuran en `/control/pasarelas` en vez de en el `.env`; cifradas con `cifrado.py`, solo se ve la máscara, auditadas. Producción sigue con el entorno si no hay claves guardadas.
