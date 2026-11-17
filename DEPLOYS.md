@@ -33,6 +33,16 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 00:40 UTC · Tenis: carga semanal de TML en `tenis-db` sin duplicados · solo `~/tenis-isolated` (PR #470, rama `fix/tml-carga-idempotente`)
+- **Motivo:** hacía falta Hold %, Break % y duración para el análisis, y la descarga semanal del VPS no se cargaba (el paso estaba a mano y apuntaba a `weekly/20261102`).
+- **Incidente:** la primera carga (16-nov, 21:40 UTC) y una segunda (17-nov, 00:20 UTC, por un script reescrito sin el código corregido) duplicaron resultado, estadística, ranking y aserciones (resultados 495.039 → 668.406). Se restauró el respaldo previo las dos veces; las bases con duplicados quedan en `tenis_duplicada` y `tenis_duplicada_2` (sin borrar).
+- **Método:** `tml_escritor.py` y `tml_carga.py` corregidos se montan de solo lectura desde `~/tenis-isolated/parche_tml/` sobre `tenis-motor:78a3aa93` (no se reconstruyó la imagen). `cargar_tml.sh` toma siempre la descarga más reciente, exige los dos archivos y se niega si `tml_escritor.py` no es la versión corregida. Cuando la imagen se reconstruya desde `main` ya traerá el código: entonces se pueden quitar los montajes.
+- **Ensayo previo:** copia del respaldo en `tenis_ensayo`, descarga `20261116` cargada dos veces: segunda pasada sin filas nuevas.
+- **Resultado en la base viva:** 495.714 partidos (+675), 495.924 resultados (+675 y 210 versiones corregidas), 519.332 estadísticas, 463.870 rankings, 47.810 aserciones.
+- **Cron:** lunes 11:30 hora del servidor, respaldo + `flock` del motor + `cargar_tml.sh`. Etiqueta `tenis-tml-carga-semanal`.
+- **No hecho:** la fatiga sigue sin fuente diaria (TML llega semanal). No se reconstruyó la imagen `tenis-motor`.
+- Vuelta atrás: `crontab ~/crontab_antes_tml_20261117.txt`; datos: `~/backups/tenis-db/tenis-20261117T003214Z.dump` es el respaldo previo a esta carga (restaurar en una base temporal y cambiar nombres, como el 16-nov).
+
 ### 2026-11-16 19:00 UTC · Separación de estáticos del rate limit y aumento a 120 req/min · API (PR #466; `main` `28833c3d`)
 - **Motivo:** al navegar o recargar páginas web (p. ej. `/en/`), los ~25 archivos estáticos de la raíz (`app.js`, CSS, etc.) agotaban el cupo global de 60/min por IP devolviendo HTTP 429 («Demasiadas solicitudes, intenta más tarde»).
 - **Cambio:** recursos estáticos del frontend (`.js`, `.css`, imágenes, fuentes, etc.) pasan al scope `escudos` con contador propio (10× el límite base). El límite general por defecto se eleva a 120/min. Se añade soporte de traducción progresiva en `/control/configuracion` para evitar timeouts 524 de Cloudflare.
