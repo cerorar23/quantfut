@@ -110,6 +110,7 @@ class SportEvent {
     this.access,
     this.vipCount = 0,
     this.featuredVip = false,
+    this.vipFamilies = const {},
   });
 
   final String id;
@@ -146,6 +147,9 @@ class SportEvent {
   /// El destacado de este partido es VIP: [featuredMarket] devuelve null y no se sustituye por otro.
   final bool featuredVip;
 
+  /// Mercados que el cupo deja para VIP, contados por familia (`family` o `market`). Solo para pintar filas bloqueadas.
+  final Map<String, int> vipFamilies;
+
   /// Mismo partido con otra lista de mercados (NBA: la v2 completa de `/nba/v1/partido/{id}/mercados`). Conserva el
   /// acceso del partido: la lista nueva pasa por el mismo cupo.
   SportEvent withMarkets(
@@ -154,7 +158,7 @@ class SportEvent {
     bool serverFeaturedField = false,
   }) => applyAccess(_withMarkets(value, featured: featured, serverFeaturedField: serverFeaturedField), access);
 
-  SportEvent _gated(List<SportMarket> open, SportAccess? value, {int vip = 0, bool featuredLocked = false}) => SportEvent(
+  SportEvent _gated(List<SportMarket> open, SportAccess? value, {int vip = 0, bool featuredLocked = false, Map<String, int> families = const {}}) => SportEvent(
     id: id,
     sport: sport,
     home: home,
@@ -177,6 +181,7 @@ class SportEvent {
     access: value,
     vipCount: vip,
     featuredVip: featuredLocked,
+    vipFamilies: families,
   );
 
   SportEvent _withMarkets(
@@ -736,7 +741,19 @@ SportEvent applyAccess(SportEvent e, SportAccess? access) {
     access,
     vip: e.markets.length - open.length,
     featuredLocked: featured != null && !open.contains(featured),
+    families: _vipFamilies(e.markets, open),
   );
+}
+
+/// Cuenta por familia los mercados que el cupo deja fuera (los que no están en [open]).
+Map<String, int> _vipFamilies(List<SportMarket> all, Set<SportMarket> open) {
+  final out = <String, int>{};
+  for (final m in all) {
+    if (open.contains(m)) continue;
+    final key = m.family ?? m.market ?? m.id.split('-').first;
+    out.update(key, (n) => n + 1, ifAbsent: () => 1);
+  }
+  return out;
 }
 
 /// Aplica el cupo del deporte a la cartelera. Con VIP, sin cupo o con ambos números sin límite no cambia nada.
