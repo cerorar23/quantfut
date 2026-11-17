@@ -3384,7 +3384,8 @@ Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
 - [x] `evaluar_wf.py` mide la capa y la compuerta `G_capa_edad`; `ops/congelar_capa_edad.py` escribe el artefacto nuevo con huella propia.
 - [x] Walk-forward 2019-24: ATP −0,0022 [−0,0028; −0,0017], WTA −0,0026 [−0,0035; −0,0017] frente a la capa de pendiente; pasa en los dos circuitos.
 - [x] Registro preparado (17-nov), **no ejecutado**: artefacto `apps/tenis/artefactos/tenis-2.1-capa-edad.json` (`tenis-2.1+55c17ba1c6e2`), `ops/registrar_artefacto.py` (validar / registrar / reactivar, sin `--ejecutar` no toca la base), cargador estricto por huella y `python -m tenis.motor` ya ejecuta una pasada real. `docs/tenis_registro_artefacto_20261117.md`.
-- [ ] Activar el artefacto (OK del titular en el chat): antes, fusionar #505, cargar datos en la base `tenis` real y ensayar la imagen.
+- [x] Desplegado y activado el 17-nov 22:11 UTC (`tenis-motor:67f0f87c`, artefacto `tenis-2.1+55c17ba1c6e2`); ver DEPLOYS.md. La base `tenis` real ya tenía 495.714 partidos de TML.
+- [ ] Colector de calendario hacia `tenis.programa` (SofaScore/PropLine): sin él el motor v2 no tiene partidos que pronosticar (`programa` sin partidos futuros).
 - [x] Motor con el filtro real (17-nov): `tenis/inferencia.py` reproduce el filtro desde la base; π idéntico (Δ = 0) al walk-forward en 60.741 partidos reales; sin pronóstico no se sella. Ver `docs/tenis_motor_filtro_real_20261117.md`.
 - [ ] Estado del filtro en Parquet (plan H.2) para no leer toda la base en cada pasada (hoy ≈ 3 min).
 - [ ] Opcional: edad dentro del filtro (reestimar hiperparámetros) y explicar la señal de actividad reciente.
