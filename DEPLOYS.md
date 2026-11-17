@@ -33,6 +33,14 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 18:46 UTC · Pronósticos en la ventana de partidos · API (PR #500)
+
+- Se migró Pronósticos a la ventana de partidos con la cabecera común de QuantFut. Incluye controles de teclado, escudos y retratos del servidor e interfaz en español, inglés y portugués.
+- Versión activa: imagen `quantfut-api:08212356`, construida desde `origin/main`. El PR #500 se fusionó en `2cc6e40e`. Entre ese commit y la revisión desplegada solo hay cambios de la app móvil. La imagen anterior era `quantfut-api:b9bbdad3` y sus archivos web comprobados coincidían con el commit registrado.
+- Ensayo aislado: 325 rutas, cero módulos con error. Se recreó solo la API. El worker sigue en `quantfut-worker:e2482add` y la API conserva sus tres redes.
+- Verificado: salud 200 en el VPS y en el dominio público, modelo `0.1.0`, y versión nueva en /pronosticos/, /en/predictions/ y /pt/previsoes/. El módulo window-i18n.js devuelve 200. Las huellas de app.js, index.html, window-i18n.js y web.py coinciden con la revisión desplegada.
+- Vuelta atrás: cd ~/quantfut && cp -p releases/compose-antes-20261117-124635.yml docker-compose.yml && docker compose up -d --no-deps --no-build api.
+
 ### 2026-11-17 14:29 UTC · Agenda de la web muestra los partidos finalizados (pestaña Ayer) · API (PR #491, #496; `main` `b9bbdad3`)
 - **Motivo:** la pestaña Ayer salía vacía aunque hubiera partidos terminados: el filtro de inicio arrancaba en «próximos», que oculta los finalizados (`frontend/app.js`, `homeStatus`). Solo frontend; sin cambios de `src/` ni de base de datos.
 - **Cambio:** `homeStatus` por defecto `todos`; `app.js?v=agenda-finalizados-20261117` en `index.html` (sin subir la versión, Cloudflare y el navegador servirían la copia anterior horas) y la prueba `test_rutas_web.py` actualizada.
