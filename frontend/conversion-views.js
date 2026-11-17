@@ -4,6 +4,8 @@
 // «segura» o «certera»; la escasez que se enseña (gratis por lote, cierre al
 // empezar el partido) ya existe en el servidor.
 
+import { localDay } from './fichas-data.js?v=real-20261029';
+
 const MUESTRA_MIN = 50;
 const RACHA_MAX = 30;
 // Decisión del titular (2026-10-18): lo bloqueado se ve difuminado, cuota incluida. El servidor no envía el dato real.
@@ -71,16 +73,17 @@ export function agruparHistorialPorDia(diasList = [], maxTickets = 10) {
   const recogidos = [];
   for (const d of diasList) {
     for (const t of (d.tickets ?? [])) {
-      if (!t.locked) {
-        recogidos.push({ ...t, _dia: d.dia });
-        if (recogidos.length >= maxTickets) break;
-      }
+      if (t.locked) continue;
+      const inicio = d.ambito === 'partido' ? t.patas?.[0]?.kickoff_utc : null;
+      const fechaPartido = inicio ? new Date(inicio) : null;
+      const dia = fechaPartido && Number.isFinite(fechaPartido.getTime()) ? localDay(fechaPartido) : String(d.dia);
+      recogidos.push({ ...t, _dia: dia });
     }
-    if (recogidos.length >= maxTickets) break;
   }
+  recogidos.sort((a, b) => b._dia.localeCompare(a._dia));
   const mapa = new Map();
-  for (const t of recogidos) {
-    const k = String(t._dia);
+  for (const t of recogidos.slice(0, maxTickets)) {
+    const k = t._dia;
     if (!mapa.has(k)) {
       mapa.set(k, { dia: k, tickets: [] });
     }
