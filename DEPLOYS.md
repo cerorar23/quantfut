@@ -33,12 +33,18 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
-### 2026-11-17 03:59 UTC · Destacado de NBA por receta y resumen redactado con IA · API (PR #479; `main` `9f936672`)
+### 2026-11-17 03:16 UTC · Reintento del análisis de NBA en frío · API (PR #483; `main` `8986fffa`)
+- **Cambio:** el análisis reintenta una vez cuando `nba-api` no responde a tiempo o falla una consulta necesaria para localizar el partido. El CI de `main` pasó con pruebas que cubren el reintento y su límite.
+- **Despliegue:** imagen `quantfut-api:8986fffa` desde `main`, ensayada de forma aislada (324 rutas y ningún módulo con error). `scripts/deploy.sh desplegar api` recreó solo la API. El contenedor arrancó a las 03:16:34 UTC con las tres redes originales y cero reinicios al verificar.
+- **Verificado en producción:** `/health` devolvió 200 con modelo `0.1.0`. La primera solicitud de comprobación a `/web/deportes/nba/analisis/18712` tras el despliegue devolvió 200 en 19 s, con receta `equipo` y campos de casillas y resumen. Un partido inexistente devolvió 404.
+- **Vuelta atrás:** `cd ~/quantfut && cp -p releases/compose-antes-20261116-211628.yml docker-compose.yml && docker compose up -d --no-deps --no-build --force-recreate api` (restaura `quantfut-api:3c8facd4`).
+
+### 2026-11-17 02:59 UTC · Destacado de NBA por receta y resumen redactado con IA · API (PR #479; `main` `9f936672`)
 - **Motivo:** pedido del titular, mismo criterio que fútbol y tenis: casillas según el mercado y «Resumen del pronóstico». Solo NBA y solo la app; la app instalada no llama al endpoint hasta compilar una versión con el cambio.
 - **Qué lleva:** `src/qf/api/analisis_nba.py` (recetas ganador/hándicap, total y puntos de equipo; datos de `nba-api` vía `nba_datos`: puntos y posesiones proyectados del sello, estadísticas de equipo, cara a cara y reporte oficial de bajas) y `GET /web/deportes/nba/analisis/{id}` en `web.py`. Sin migración: usa `analisis_resumen` (db/118). Los mercados de jugador y los partidos sin sello no tienen análisis.
 - **Método:** `scripts/deploy.sh construir api`, `ensayo` (`modulos con error: ninguno`, `rutas: 324`) y `desplegar api` con `quantfut-api:9f936672`. Pre-vuelo `estado`: API con 1 archivo distinto y 1 ausente frente a `main` (`web.py` y `analisis_nba.py`, los de este cambio). La imagen que corría era `quantfut-api:ae6b93a5` (otra sesión había desplegado después de mi `527ad314`; su código coincidía con `main` salvo lo de este cambio). Redes intactas (`nba-api-red`, `quantfut_default`, `tenis-db_tenis-interna`).
 - **Verificado en el dominio:** salud 200; `GET /web/deportes/nba/analisis/18712` (CLE–CHI, destacado «Cleveland menos de 137,5»): receta `equipo` con proyección, ataque/defensa y ritmo; resumen real en los 6 idiomas (cifras correctas: 91 %, 121,9, 137,5, 117,5, 125,9, 101,3); partido inexistente y partido sin sello → 404.
-- **Límite encontrado en la verificación:** la PRIMERA llamada en frío devolvió 404 (`nba-api` tarda más que el timeout de 4 s de `nba_datos` y su caché de mercados dura 60 s); la 2.ª ya devolvió el análisis y la 3.ª el resumen. La app lo trata como «sin análisis» (tarjeta compacta). Se corrige con un reintento en un PR aparte.
+- **Límite encontrado en la verificación:** la PRIMERA llamada en frío devolvió 404 (`nba-api` tarda más que el timeout de 4 s de `nba_datos` y su caché de mercados dura 60 s); la 2.ª ya devolvió el análisis y la 3.ª el resumen. La app lo trata como «sin análisis» (tarjeta compacta). El PR #483 incorporó el reintento, registrado en la entrada de las 03:16 UTC.
 - **No hecho:** la app no se ha compilado ni visto la tarjeta; «bajas» cuenta jugadores `Out` del reporte oficial (no minutos ni impacto: `impacto_bloqueado`); el resumen se genera al abrir el partido, no al sellar.
 - Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-205943.yml docker-compose.yml && docker compose up -d --no-deps api` (vuelve a `ae6b93a5`). Nada del código anterior usa lo nuevo; las filas de `analisis_resumen` pueden quedarse.
 
