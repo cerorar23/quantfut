@@ -1625,3 +1625,9 @@ El titular pidió TheRundown (cuenta Free) como último respaldo para fútbol, N
     - `flutter analyze --no-pub`: **0 issues**.
     - `flutter test --no-pub`: **673/673 tests pasados al 100%**.
     - Rediseño completo concluido a través de todas las fases autorizadas: F0, F1, F2, F3a-e, F4a-g, F5a-d, F6 y F8.
+
+## 17-nov-2026 · Tenis v2: capa de edad (`tenis/capa-edad`)
+- **Decisión (pedido del titular):** la edad entra como segunda etapa sobre π (`logit π' = b·logit π + β·Δedad/escala`, sin intercepto, reemplaza la pendiente de recalibración). Walk-forward 2019-24 con ajuste solo en temporadas anteriores: −0,0022 ATP y −0,0026 WTA de log-loss frente a la capa actual (IC95 por debajo de 0), −0,0087/−0,0082 frente a Elo recalibrado. Reserva 2025-26 intacta. `docs/tenis_capa_edad_20261117.md`.
+- **Por qué segunda etapa y no dentro del filtro:** la edad solo existe para 73-88 % de los partidos y viene de SofaScore; dentro del filtro exigiría reestimar todos los hiperparámetros. El efecto es el mismo en partidos de TML y de SofaScore, así que no es sesgo de supervivencia.
+- **No adoptado:** actividad reciente (signo contrario a fatiga, sin causa conocida). La fatiga del modelo sigue en φ1 ≈ 0.
+- **Hallazgo:** `motor.py` usa valores de demostración (`pi_lado1 = 0.585`); la inferencia del filtro no corre en el motor. La capa está lista y probada, pero no cambia pronósticos hasta que el motor use el filtro y se registre el artefacto nuevo (`hiperparametros_capa_edad.json`).

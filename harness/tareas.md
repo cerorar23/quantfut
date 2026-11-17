@@ -3374,3 +3374,15 @@ Referencia visual: `apps/mobile/docs/render_cybercore_20261114/` (36 láminas).
 
 - [x] **F7 · Servidor del rediseño CyberCore (15-nov-2026, PR #440):** código hecho (bajas con `regreso_fecha`/`jugador_id`/`foto`/`posicion`, `tenistas_sofascore.py` + bloque `tenis_sofascore`, comprobaciones F7c). Sin subir ni desplegar: ver la sección «Rediseño de la app — F7 servidor». Detalle: `apps/mobile/docs/PLAN_REDISENO_FASES_20261114.md` §F7.
 - [x] **F7c · Avisos push por deporte (15-nov-2026):** `db/115_push_por_deporte.sql` (`firebase_preferences.push_sports` TEXT[], NULL = todos; `account_notifications.sport`), `/app/v1/firebase/preferences` lee y guarda `push_sports` (sin el campo no se toca lo guardado: apps antiguas intactas), `enqueue(..., sport=)` y `deliver()` respetan la lista, `/notifications` devuelve `sport`, y la app 1.2.0+13 activa los interruptores por deporte (`kPushSports`, `push-sport-<deporte>`). **Falta aplicar la migración y desplegar la API** (confirmación del titular). `enqueue` aún no tiene llamadores en producción: nada emite avisos todavía.
+
+## Tenis: capa de edad (2026-11-17)
+
+Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
+
+- [x] Test de residuos de ~25 variables sobre el modelo congelado; la edad es la única con señal estable (6/6 temporadas ATP).
+- [x] `modelo/capa_edad.py` (ajuste, aplicación, ventana expansiva), 9 pruebas; gancho en `motor.py` (`edades_al_corte`, `aplicar_capa_edad`) con pruebas contra Postgres.
+- [x] `evaluar_wf.py` mide la capa y la compuerta `G_capa_edad`; `ops/congelar_capa_edad.py` escribe el artefacto nuevo con huella propia.
+- [x] Walk-forward 2019-24: ATP −0,0022 [−0,0028; −0,0017], WTA −0,0026 [−0,0035; −0,0017] frente a la capa de pendiente; pasa en los dos circuitos.
+- [ ] Registrar `hiperparametros_capa_edad.json` como `artefacto_activo` con `version_modelo` nueva (decisión del titular).
+- [ ] El motor sella con valores de demostración (`pi_lado1 = 0.585`): conectar el filtro real antes de que la capa cambie pronósticos.
+- [ ] Opcional: edad dentro del filtro (reestimar hiperparámetros) y explicar la señal de actividad reciente.

@@ -13,11 +13,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from tenis.alertas import enviar_alerta
+from tenis.modelo import capa_edad
 from tenis.modelo.datos import FORMATOS, indice_formato
 from tenis.modelo.hiperparametros import huella
 from tenis.modelo.union import sigma_m, unir
@@ -74,6 +76,40 @@ def cargar_artefacto_activo(db: Any, ruta_directorio: Path | None = None) -> dic
                 pass
 
     raise FileNotFoundError(f"No se encontró el fichero JSON del artefacto activo {sha256_esperado}")
+
+
+def edades_al_corte(db: Any, jugador_1: int, jugador_2: int, corte: datetime) -> tuple[float | None, float | None]:
+    """Edad (años) de cada jugador en la fecha del corte, con la misma regla que la exportación PIT: aserción
+    `fecha_nacimiento` visible en el corte, la de mayor prioridad de fuente y, a igualdad, la más reciente.
+    (fecha_corte − nacimiento) / 365,25; sin fecha de nacimiento → None."""
+    out = []
+    for j in (jugador_1, jugador_2):
+        row = db.execute(
+            "SELECT a.valor FROM jugador_asercion a JOIN fuente f ON f.fuente = a.fuente "
+            "WHERE a.jugador_id = %s AND a.campo = 'fecha_nacimiento' AND a.recibido_en <= %s "
+            "ORDER BY f.prioridad_calendario ASC, a.recibido_en DESC, a.asercion_id DESC LIMIT 1",
+            (j, corte),
+        ).fetchone()
+        try:
+            nac = datetime.strptime(row[0], "%Y-%m-%d").replace(tzinfo=UTC) if row else None
+        except (TypeError, ValueError):
+            nac = None
+        out.append(None if nac is None else (corte - nac).days / 365.25)
+    return out[0], out[1]
+
+
+def aplicar_capa_edad(pi_lado1: float, edad_1: float | None, edad_2: float | None, circ_params: dict[str, Any]) -> tuple[float, dict]:
+    """Aplica la capa de edad del artefacto (si la trae) a π del lado 1. Devuelve (π', trazas para las entradas selladas).
+
+    Sin `capa_edad` en el artefacto, π pasa intacta. Edad desconocida: solo actúa la pendiente de la capa."""
+    cfg = circ_params.get("capa_edad")
+    if not cfg:
+        return pi_lado1, {}                       # sin capa: las entradas selladas quedan como antes
+    capa = capa_edad.CapaEdad.desde_dict(cfg)
+    dif = capa_edad.diferencia_edad(float("nan") if edad_1 is None else edad_1, float("nan") if edad_2 is None else edad_2)
+    pi = float(capa_edad.aplicar(pi_lado1, dif, capa))
+    return pi, {"capa_edad": True, "pi_base": round(pi_lado1, 6),
+                "edad_dif": None if math.isnan(float(dif)) else round(float(dif), 3)}
 
 
 def buscar_partidos_pendientes(
@@ -149,6 +185,9 @@ def simular_y_sellar_partido(
     s_hat = 1.25
     pi_lado1 = 0.585
     var_rho = 0.009
+    # Capa de edad (17-nov-2026): solo si el artefacto activo la incluye. Las edades se leen al corte, en vivo.
+    e1, e2 = edades_al_corte(db, partido["jugador_1"], partido["jugador_2"], corte) if circ_params.get("capa_edad") else (None, None)
+    pi_lado1, traza_edad = aplicar_capa_edad(pi_lado1, e1, e2, circ_params)
     var_pred = var_rho + c_inf
 
     u = unir(s_hat, pi_lado1, fmt_idx, sig_eps, rho_eps, var_pred)
@@ -171,7 +210,7 @@ def simular_y_sellar_partido(
         "S_hat": round(s_hat, 4),
         "pi_modelo": round(pi_lado1, 6),
         "var_pred": round(var_pred, 6),
-    }
+    } | traza_edad
 
     # Buscar referencia de mercado a la fecha de corte
     ref_row = db.execute(
