@@ -433,10 +433,12 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
   /** Vuelta de un paso externo (3D Secure): Whop añade ?payment=…&status=… a la URL de retorno. */
   function handleReturn() {
     const params = new URLSearchParams(location.search);
-    if (!params.get('checkout') || !params.get('status')) return;
+    // Whop añade `payment`+`status` al returnUrl (3D Secure) y `payment_id`+`checkout_status` a la redirect_url del checkout.
+    const status = params.get('status') || ({ success: 'succeeded', failed: 'failed', canceled: 'canceled' })[params.get('checkout_status')];
+    if (!params.get('checkout') || !status) return;
     history.replaceState(null, '', `${location.pathname}#checkout`);
-    if (params.get('status') === 'succeeded') { state.pay = { phase: 'paid' }; waitForAccess(); }
-    else state.pay = { phase: 'error', message: params.get('status') === 'canceled' ? 'Cancelaste el pago. Puedes intentarlo de nuevo.' : 'El pago no se completó. Revisa los datos e inténtalo de nuevo.' };
+    if (status === 'succeeded') { state.pay = { phase: 'paid' }; waitForAccess(); }
+    else state.pay = { phase: 'error', message: status === 'canceled' ? 'Cancelaste el pago. Puedes intentarlo de nuevo.' : 'El pago no se completó. Revisa los datos e inténtalo de nuevo.' };
     state.route = 'checkout';
   }
 

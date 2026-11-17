@@ -224,6 +224,7 @@ def test_checkout_lo_crea_el_servidor_y_el_purchase_comparte_event_id(pool, monk
     url, body, headers = http.calls[0]
     assert url.endswith("/checkout_configurations") and headers["Authorization"] == "Bearer clave"
     assert body["plan_id"] == plan_id and body["metadata"]["qf_account_id"] == str(acc["account_id"])
+    assert body["redirect_url"].endswith("/?checkout=1")  # sin esto Whop deja al comprador en su página
     assert out["event_id"] == f"purchase:{out['checkout_id']}"
     whop.handle_event(*_evento("payment.succeeded", {
         **_pago(plan_id, acc["account_id"], "pay_" + uuid.uuid4().hex[:8]),
@@ -364,3 +365,15 @@ def test_headers_fijan_version_de_api(monkeypatch):
     assert whop._headers("apik_x")["Api-Version-Date"] == whop.API_VERSION_DATE
     monkeypatch.setenv("WHOP_API_VERSION_DATE", "2026-06-08")
     assert whop._headers("apik_x")["Api-Version-Date"] == "2026-06-08"
+
+
+
+def test_lectores_aceptan_la_forma_anidada_de_la_api_actual():
+    # Pago real del sandbox (2026-11-16): plan y membresía anidados, total como número.
+    pago = {"plan": {"id": "plan_x"}, "membership": {"id": "mem_y"}, "total": 33.99}
+    assert whop._plan_id(pago) == "plan_x" and whop._membership_id(pago) == "mem_y"
+    assert whop._plan_id({"plan_id": "plan_z"}) == "plan_z" and whop._membership_id({}) is None
+    # Versión 2026-11-14-1 (la del webhook del sandbox): variant_id plano y total como objeto.
+    nuevo = {"variant_id": "plan_v", "membership_id": "mem_n", "total": {"amount": "33.99", "currency": "usd"}}
+    assert whop._plan_id(nuevo) == "plan_v" and whop._membership_id(nuevo) == "mem_n" and whop._cents(nuevo["total"]) == 3399
+    assert whop._cents(33.99) == 3399 and whop._cents({"amount": "14.99"}) == 1499 and whop._cents(None) is None

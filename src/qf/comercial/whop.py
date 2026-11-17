@@ -108,8 +108,9 @@ def create_checkout(account: dict, plan_code: str, *, fbp: str | None, fbc: str 
             "metadata": {"qf_account_id": str(account["account_id"]), "qf_plan_code": plan_code}}
     if creds["account_id"]:
         body["account_id"] = creds["account_id"]
-    if redirect_url:
-        body["redirect_url"] = redirect_url
+    # Sin redirect_url Whop deja al comprador en su propia página de la empresa tras pagar (comprobado
+    # en el sandbox el 2026-11-16): se le devuelve siempre a nuestra web, que espera el webhook.
+    body["redirect_url"] = redirect_url or f"https://{os.getenv('DOMAIN', 'pronosticosdeportivos.pro').strip()}/?checkout=1"
     try:
         r = (client or httpx).post(f"{pasarelas.api_base(modo)}/checkout_configurations", json=body,
                                    headers=_headers(creds["api_key"]), timeout=15)
@@ -149,10 +150,22 @@ def create_checkout(account: dict, plan_code: str, *, fbp: str | None, fbc: str 
 # --- Webhooks ---------------------------------------------------------------------------------------
 
 def _cents(money) -> int | None:
+    """Importe en centavos. Whop lo manda como número (`33.99`, API actual) o como objeto `{"amount": "33.99"}`."""
     try:
-        return int((Decimal(str(money["amount"])) * 100).to_integral_value())
+        valor = money["amount"] if isinstance(money, dict) else money
+        return int((Decimal(str(valor)) * 100).to_integral_value())
     except (TypeError, KeyError, InvalidOperation):
         return None
+
+
+def _plan_id(data: dict) -> str | None:
+    """El plan llega como `variant_id` (versión 2026-11-14-1 del webhook del sandbox, mismo `plan_…`), como
+    `plan_id` (forma plana) o como objeto `plan: {id}` (versión 2025-01-01). Comprobado el 2026-11-16."""
+    return data.get("plan_id") or data.get("variant_id") or (data.get("plan") or {}).get("id")
+
+
+def _membership_id(data: dict) -> str | None:
+    return data.get("membership_id") or (data.get("membership") or {}).get("id")
 
 
 def _when(value: str | None) -> datetime:
@@ -180,9 +193,9 @@ def _owner(c, data: dict) -> tuple[int | None, dict | None]:
             return row["account_id"], checkout
     if checkout:
         return checkout["account_id"], checkout
-    if data.get("membership_id"):
+    if _membership_id(data):
         row = c.execute("SELECT account_id FROM whop_payments WHERE membership_id = %s LIMIT 1",
-                        (data["membership_id"],)).fetchone()
+                        (_membership_id(data),)).fetchone()
         if row:
             return row["account_id"], None
     return None, None
@@ -206,9 +219,9 @@ def apply_payment(c, data: dict, modo: str = "live") -> dict:
         return {"estado": "cuenta_no_autorizada"}
     columna = "whop_plan_id_sandbox" if modo == "sandbox" else "whop_plan_id"
     plan = c.execute(f"SELECT plan_code, name, duration_days FROM plans WHERE {columna} = %s",
-                     (data.get("plan_id"),)).fetchone()
+                     (_plan_id(data),)).fetchone()
     if plan is None or not plan["duration_days"]:
-        _alert(f"Whop: pago {payment_id} con plan {data.get('plan_id')} sin plan equivalente")
+        _alert(f"Whop: pago {payment_id} con plan {_plan_id(data)} sin plan equivalente")
         return {"estado": "plan_desconocido"}
     # Bloquear la cuenta serializa dos concesiones simultáneas (igual que suscripciones.grant).
     c.execute("SELECT 1 FROM accounts WHERE account_id = %s FOR UPDATE", (account_id,))
@@ -227,13 +240,13 @@ def apply_payment(c, data: dict, modo: str = "live") -> dict:
                                     note=f"whop{'-sandbox' if modo == 'sandbox' else ''}:{payment_id}",
                                     actor=ACTOR)
     previous = c.execute("SELECT 1 FROM whop_payments WHERE membership_id = %s LIMIT 1",
-                         (data.get("membership_id"),)).fetchone() if data.get("membership_id") else None
+                         (_membership_id(data),)).fetchone() if _membership_id(data) else None
     c.execute(
         """INSERT INTO whop_payments (payment_id, account_id, plan_code, subscription_id, checkout_id,
                                       membership_id, amount_cents, currency, billing_reason, modo)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
         (payment_id, account_id, plan["plan_code"], sub["subscription_id"],
-         data.get("checkout_configuration_id"), data.get("membership_id"), amount, currency,
+         data.get("checkout_configuration_id"), _membership_id(data), amount, currency,
          data.get("billing_reason"), modo))
     if modo == "live":
         _enqueue_meta(c, account_id, plan["plan_code"], data, checkout, amount, currency, bool(previous))
