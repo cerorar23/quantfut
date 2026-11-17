@@ -270,7 +270,8 @@ def nombre_casa(casa) -> str | None:
     return _CASAS.get(k) or k.replace('_', ' ').title()
 
 
-def cuotas_casas(match_id: str, con_respaldo: bool = True) -> dict[str, tuple[float, str, datetime]]:
+def cuotas_casas(match_id: str, con_respaldo: bool = True, *,
+                 incluir_sharpapi: bool = False) -> dict[str, tuple[float, str, datetime]]:
     """
     Mejor cuota de las casas de los suscriptores (`settings.soft_books`; Pinnacle es la referencia, no una casa
     donde apostar) para cada mercado, lado y línea: `clave -> (cuota, casa, hora de captura)`.
@@ -299,10 +300,10 @@ def cuotas_casas(match_id: str, con_respaldo: bool = True) -> dict[str, tuple[fl
         actual = mejores.get(k)
         if actual is None or (-cand[0], cand[1]) < (-actual[0], actual[1]):
             mejores[k] = cand
-    return _con_respaldo(match_id, mejores) if con_respaldo else mejores
+    return _con_respaldo(match_id, mejores, incluir_sharpapi=incluir_sharpapi) if con_respaldo else mejores
 
 
-def _con_respaldo(match_id: str, mejores: dict) -> dict:
+def _con_respaldo(match_id: str, mejores: dict, *, incluir_sharpapi=False) -> dict:
     """Respaldo de cuotas de fútbol (decisión del titular, 9-nov-2026): PropLine siempre gana y el respaldo
     (The Odds API y, si no, SportsAPIPro; `ingest/cuotas_respaldo_futbol.py`) solo rellena las claves que PropLine
     no trajo. Solo lee un JSON en disco; nunca lanza ni gasta créditos."""
@@ -311,12 +312,13 @@ def _con_respaldo(match_id: str, mejores: dict) -> dict:
         from ..ingest import cuotas_respaldo_futbol as rf
         from ..publish.picks import canonical_book
         entradas = rf.leer_cache(rf.ruta_cache())
-        if match_id not in entradas:
+        if match_id not in entradas and not (incluir_sharpapi and match_id + rf.csh.SUFIJO in entradas):
             return mejores
         hasta = query("SELECT LEAST(now(), kickoff_utc) AS hasta FROM matches WHERE match_id=%s", (match_id,))
         if not hasta:
             return mejores
-        extra = rf.cuotas_de_cache(entradas, match_id, hasta[0]['hasta'], settings.soft_books, canonical_book)
+        extra = rf.cuotas_de_cache(entradas, match_id, hasta[0]['hasta'], settings.soft_books, canonical_book,
+                                 incluir_sharpapi=incluir_sharpapi)
         return {**extra, **mejores}
     except Exception:  # noqa: BLE001 — una caché rota no puede romper la ficha del partido
         return mejores

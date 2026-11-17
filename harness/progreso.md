@@ -1,6 +1,19 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 16-nov-2026 · SharpAPI como respaldo interno de cuotas
+
+- El quinto nivel consume las capturas locales. El titular autorizó las consultas necesarias a SharpAPI para ampliar el capturador de fútbol a NBA y tenis. El catálogo y las respuestas prepartido de ambos deportes se comprobaron con la clave del VPS. La disponibilidad depende de las casas incluidas en el plan.
+- Las rutas públicas conservan desactivado este nivel para limitar el uso a análisis personal. El archivo está montado en el ejecutor del VPS desde el despliegue de adadef85. [Guía de operación](../docs/sharpapi_captura_20261102.md#respaldo-interno-desde-el-archivo).
+
+
+## 16-nov-2026 · Pasarelas de pago en /control con sandbox solo para cuentas de prueba (`feat/pasarelas-pago`)
+- **Decisión (pedido del titular):** las claves de Whop (producción y sandbox) se configuran en `/control/pasarelas` en vez de en el `.env`; cifradas con `cifrado.py`, solo se ve la máscara, auditadas. Producción sigue con el entorno si no hay claves guardadas.
+- **Por qué NO hay interruptor global real↔sandbox:** con la tarjeta de prueba cualquier visitante obtendría Plus gratis y los planes reales no existen en el sandbox. El sandbox es solo de las cuentas de `pasarela_cuentas_prueba`; el resto siempre paga en producción, y una cuenta de prueba sin claves falla en vez de caer a producción.
+- **Webhook propio** `/webhooks/whop-sandbox` con su secreto: concede solo a cuentas de prueba, importe 0, nota `whop-sandbox:`, `modo='sandbox'` y nada hacia Meta. Plan de sandbox en `plans.whop_plan_id_sandbox`.
+- Sustituye al PR #465 (`WHOP_API_BASE` + instancia aparte); guía en `docs/pasarelas_pago_20261116.md`.
+- **Sin verificar:** contra el sandbox real de Whop (faltan las claves, que las pone el titular en la pantalla) ni la página en un navegador; hay pruebas con base real. db/117 antes que el código.
+
 
 ## 16-nov-2026 · La carga TML de tenis ya no duplica al recargar (`fix/tml-carga-idempotente`)
 - **Qué pasó:** al cargar a mano la descarga semanal del 16-nov, `tenis-db` pasó de 495.039 a 668.406 resultados (172.692 partidos con varias filas), 785.722 estadísticas, 631.387 rankings y 61.150 aserciones. `recibido_en` forma parte de las claves únicas (`ON CONFLICT ... recibido_en DO NOTHING`) y cada descarga semanal trae una fecha nueva, así que cada recarga insertaba otra copia de todo. Las tres cargas anteriores no lo mostraron porque cargaron archivos distintos cada vez. Se restauró el respaldo previo (la base duplicada quedó como `tenis_duplicada`, sin borrar).

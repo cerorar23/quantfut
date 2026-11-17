@@ -5,7 +5,7 @@
 import * as cuenta from './cuenta-api.js?v=b298f1c04385';
 import { googleIdToken } from './google-auth.js?v=w2b3c4d5e6f7';
 import { init as initPixel, identify, track, browserIds, openPreferences as openAdsPreferences } from './meta-pixel.js?v=preferencias-20261108';
-import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=oscuro-20261115';
+import { mount as mountCheckout, destroy as destroyCheckout } from './whop-checkout.js?v=pasarela-20261116';
 
 // Un plan nuevo creado en la base sin texto aquí se muestra con su nombre del panel.
 const PLAN_COPY = Object.freeze({
@@ -371,7 +371,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (!config || config.status === 'loading') return '<section class="checkout-payment"><p class="eyebrow">PAGO</p><h2>Preparando el pago…</h2></section>';
     if (!config.enabled) return `<section class="checkout-payment"><p class="eyebrow">PAGO / TODAVÍA NO HABILITADO</p><h2>La activación se completará aquí.</h2><p>Cuando el pago en línea esté conectado, el acceso se activará al confirmarse el cobro. Por ahora no se solicita tarjeta ni se crea una orden.</p><div class="payment-placeholder"><span aria-hidden="true">▣</span><strong>Pago en línea no disponible</strong><small>No se solicita tarjeta ni se crea una orden.</small></div><div class="checkout-gate">${publicStatus()}</div></section>`;
     if (p.phase === 'paid') return `<section class="checkout-payment co-paid" aria-live="polite"><span class="co-paid-mark" aria-hidden="true">✓</span><p class="eyebrow">PAGO / RECIBIDO</p><h2>${state.session?.plus ? 'Tu acceso ya está activo.' : 'Pago recibido. Activando tu acceso…'}</h2><p>${state.session?.plus ? 'Ya puedes entrar a tu cuenta para verlo.' : 'La confirmación del cobro puede tardar unos segundos. No cierres esta página.'}</p><div class="checkout-actions"><button type="button" class="primary-button" data-route="cuenta">Ir a mi cuenta <span aria-hidden="true">↗</span></button></div></section>`;
-    if (p.phase === 'ready') return `<section class="checkout-payment"><div class="co-pay-head"><div><p class="eyebrow">PASO 2 DE 3</p><h2>Datos de pago</h2></div><span class="co-secure">${LOCK} Conexión cifrada</span></div><div class="co-frame"><div id="whop-checkout" class="whop-mount" aria-live="polite"></div></div>${trust(q)}</section>`;
+    if (p.phase === 'ready') return `<section class="checkout-payment"><div class="co-pay-head"><div><p class="eyebrow">PASO 2 DE 3</p><h2>Datos de pago</h2></div><span class="co-secure">${LOCK} Conexión cifrada</span></div>${p.environment === 'sandbox' ? '<p class="membership-note" role="status">Modo de prueba: no se cobra dinero real. Usa una tarjeta de prueba de Whop.</p>' : ''}<div class="co-frame"><div id="whop-checkout" class="whop-mount" aria-live="polite"></div></div>${trust(q)}</section>`;
     const busy = p.phase === 'preparing' ? ' disabled aria-busy="true"' : '';
     return `<section class="checkout-payment"><div class="co-pay-head"><div><p class="eyebrow">PASO 2 DE 3</p><h2>Paga y activa tu acceso</h2></div><span class="co-secure">${LOCK} Conexión cifrada</span></div>${q ? `<div class="co-recap"><div><strong>QuantFut Plus · ${esc(q.name)}</strong><small>${q.months == null ? 'Pago único · acceso de por vida' : `${q.period} de acceso completo`}</small></div><b>${esc(membershipMoney(q.totalCents, q.currency))}</b></div><button type="button" class="primary-button full co-pay-button" data-membership-action="start-payment"${busy}>${p.phase === 'preparing' ? 'Preparando el formulario seguro…' : `${LOCK} Continuar al pago · ${esc(membershipMoney(q.totalCents, q.currency))}`}</button>` : plansStatus()}${notice(p.message, true)}${trust(q)}</section>`;
   }
@@ -386,7 +386,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
       const out = await cuenta.createCheckout({ plan_code: q.id, fbp: ids.fbp, fbc: ids.fbc, source_url: `${location.origin}/#checkout` });
       identify(state.session);
       track('InitiateCheckout', { currency: q.currency, value: q.totalCents / 100, content_ids: [q.id], content_type: 'product', num_items: 1 }, out.initiate_event_id);
-      state.pay = { phase: 'ready', checkoutId: out.checkout_id, eventId: out.event_id, plan: q };
+      state.pay = { phase: 'ready', checkoutId: out.checkout_id, eventId: out.event_id, environment: out.environment, plan: q };
     } catch (error) {
       state.pay = { phase: 'error', message: error.message };
     }
@@ -416,6 +416,7 @@ export function createMembershipUI({ state, esc, badge, oddsToggle, leagues, fix
     if (state.route !== 'checkout' || p.phase !== 'ready' || !node) return;
     mountCheckout(node, {
       checkoutId: p.checkoutId,
+      environment: p.environment,
       email: state.session?.account?.email,
       returnUrl: `${location.origin}/?checkout=1#checkout`,
       onComplete: result => {

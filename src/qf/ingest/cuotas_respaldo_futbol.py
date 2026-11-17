@@ -28,6 +28,7 @@ from pathlib import Path
 from qf.config import settings
 from qf.db import query
 from qf.ingest import cuotas_respaldo as cr
+from qf.ingest import cuotas_sharpapi as csh
 from qf.ingest import cuotas_sportsapipro as csp
 from qf.ingest import cuotas_therundown as crd
 
@@ -77,7 +78,8 @@ def escribir_cache(path, entries: Mapping, now: datetime) -> None:
     for k, e in entries.items():
         try:
             # TheRundown Free: la licencia no permite guardar sus datos más de 24 h.
-            limite = timedelta(hours=24) if k.endswith(SUFIJO_RD) else timedelta(days=2)
+            limites = {SRC_R: timedelta(hours=24), csh.FUENTE: csh.EDAD_MAX}
+            limite = limites.get(e.get("fuente"), timedelta(days=2))
             if pl_time(e["captured_at"]) >= now - limite:
                 vivas[k] = e
         except Exception:  # noqa: BLE001
@@ -114,7 +116,7 @@ def _mejores(e: Mapping, hasta: datetime, soft_books, canonical) -> dict:
     for r in e.get("rows") or []:
         try:
             casa = canonical(str(r["bookmaker"]))
-            if e.get("fuente") not in (SRC_S, SRC_R) and casa not in soft_books:
+            if e.get("fuente") not in (SRC_S, SRC_R, csh.FUENTE) and casa not in soft_books:
                 continue
             clave = f"{r['market']}:{r['selection']}:{None if r.get('line') is None else float(r['line']) + 0.0}"
             cand = (float(r["price"]), casa, t)
@@ -126,12 +128,14 @@ def _mejores(e: Mapping, hasta: datetime, soft_books, canonical) -> dict:
     return out
 
 
-def cuotas_de_cache(entradas: Mapping, match_id: str, hasta: datetime, soft_books, canonical) -> dict:
+def cuotas_de_cache(entradas: Mapping, match_id: str, hasta: datetime, soft_books, canonical, *,
+                    incluir_sharpapi=False) -> dict:
     """Mejor cuota por clave `market:selection:line` de las entradas vigentes del partido, como `cuotas_casas`:
     `clave -> (cuota, casa, hora de captura)`. The Odds API respeta las casas de los suscriptores y gana donde
     cotiza; SportsAPIPro (entrada `<id>|sp`) trae una sola casa sin identificar y solo rellena lo que falte."""
     out = _mejores(entradas.get(match_id) or {}, hasta, soft_books, canonical)
-    for sufijo in (SUFIJO_SP, SUFIJO_RD):
+    sufijos = (SUFIJO_SP, SUFIJO_RD, csh.SUFIJO) if incluir_sharpapi else (SUFIJO_SP, SUFIJO_RD)
+    for sufijo in sufijos:
         for clave, cand in _mejores(entradas.get(match_id + sufijo) or {}, hasta, soft_books, canonical).items():
             out.setdefault(clave, cand)
     return out
@@ -144,15 +148,18 @@ def _tiene_basicos(claves: set) -> bool:
     return {"h2h:home:None", "h2h:draw:None", "h2h:away:None"} <= claves and any(k.startswith("totals:over:") for k in claves)
 
 
-def huecos(now: datetime, *, propline_ok=None) -> list[dict]:
-    """Partidos que empiezan en las próximas 36 h sin 1X2 o sin totales de PropLine para los suscriptores."""
-    from qf.api import partido_mercados as pm
-    filas = query("""SELECT m.match_id, m.league_id, m.kickoff_utc, l.odds_api_key
+def _programados(now: datetime) -> list[dict]:
+    return query("""SELECT m.match_id, m.league_id, m.kickoff_utc, l.odds_api_key
                      FROM matches m JOIN leagues l ON l.league_id = m.league_id AND l.active
                      WHERE m.status = 'scheduled' AND m.kickoff_utc > %s AND m.kickoff_utc <= %s
                      ORDER BY m.kickoff_utc""", (now, now + VENTANA))
+
+
+def huecos(now: datetime, *, propline_ok=None, programados=None) -> list[dict]:
+    """Partidos que empiezan en las próximas 36 h sin 1X2 o sin totales de PropLine para los suscriptores."""
+    from qf.api import partido_mercados as pm
     ok = propline_ok or (lambda mid: _tiene_basicos(set(pm.cuotas_casas(mid))))
-    return [dict(f) for f in filas if not ok(f["match_id"])]
+    return [dict(f) for f in (_programados(now) if programados is None else programados) if not ok(f["match_id"])]
 
 
 def _bloque(now: datetime) -> str:
@@ -271,9 +278,30 @@ def nivel4(cli: "crd.Cliente", pend: list[dict], entries: dict, intentos: dict, 
     return nuevas
 
 
+def nivel5_sharpapi(archivo, partidos, entries, meta, igual) -> int:
+    nuevas = 0
+    for h in partidos:
+        mid = h["match_id"]
+        if mid not in meta:
+            continue
+        captura = archivo.buscar("futbol", meta[mid]["home"], meta[mid]["away"], h["kickoff_utc"],
+                                 liga=h.get("odds_api_key"), igual=igual)
+        if captura is None:
+            continue
+        evento, recibido, _, _, _ = captura
+        filas = csh.filas_futbol(captura)
+        if filas:
+            clave = mid + csh.SUFIJO
+            entrada = dict(fuente=csh.FUENTE, captured_at=recibido.isoformat(), odds_event=evento, rows=filas)
+            if entries.get(clave) != entrada:
+                entries[clave] = entrada
+                nuevas += 1
+    return nuevas
+
+
 def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, salida=print, key=None, sp_key=None,
            sp_call=None, sp_raiz=None, cache_path=None, info=None, lista_huecos=None, regiones=None, rd_key=None,
-           rd_call=None, rd_sleep=None, resolutor=None, suelo_creditos=cr.SUELO) -> dict:
+           rd_call=None, rd_sleep=None, resolutor=None, suelo_creditos=cr.SUELO, sharpapi_raiz=None) -> dict:
     now = now or datetime.now(timezone.utc)
     if key is None:
         key, gratis = cr.resolver_clave(getattr(settings, "odds_api_respaldo_key", None))
@@ -281,7 +309,8 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
     sp_key = sp_key if sp_key is not None else getattr(settings, "sportsapipro_key", None)
     cache = ruta_cache(cache_path if cache_path is not None else None)
     rd_key = rd_key if rd_key is not None else getattr(settings, "therundown_key", None)
-    if cache is None or not (key or sp_key or rd_key):
+    archivo_sharp = csh.raiz(sharpapi_raiz)
+    if cache is None or not (key or sp_key or rd_key or archivo_sharp):
         return {"estado": "sin_configuracion"}
     entries = dict(leer_cache(cache))
     from qf.publish.picks import canonical_book
@@ -290,21 +319,24 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
     def cubierto(h) -> bool:
         return CLAVES_1X2 <= set(cuotas_de_cache(entries, h["match_id"], now, soft, canonical_book))
     # Un partido con la cuota ya servida por una entrada vigente deja de ser hueco.
-    pend = [h for h in (lista_huecos if lista_huecos is not None else huecos(now)) if not cubierto(h)]
+    programados = _programados(now) if archivo_sharp and lista_huecos is None else lista_huecos
+    iniciales = lista_huecos if lista_huecos is not None else (
+        huecos(now, programados=programados) if programados is not None else huecos(now))
+    pend = [h for h in iniciales if not cubierto(h)]
     salida(f"fútbol: {len(pend)} partidos sin cuota de PropLine")
-    if not ejecutar or not pend:
+    if not ejecutar or (not pend and not archivo_sharp):
         return {"estado": "seco" if not ejecutar else "sin_huecos", "huecos": len(pend)}
     intentos = cr.leer_intentos(cache)
     n2 = n3 = 0
     cli = cr.Cliente(get or cr._transporte(key or ""), cr.Presupuesto(max_creditos, suelo=suelo_creditos), regiones or settings.odds_api_regions)
-    if key and max_creditos > 0:
+    if pend and key and max_creditos > 0:
         try:
             cli.saldo()
             n2 = nivel2(cli, pend, entries, intentos, now, regiones or settings.odds_api_regions, salida)
         except cr.Parar as e:
             salida(f"parado: {e} (lo que falte pasa a SportsAPIPro)")
     cli3 = None
-    if sp_key:
+    if pend and sp_key:
         raiz = sp_raiz if sp_raiz is not None else (
             Path(settings.artifact_dir) / "sportsapipro_cuotas" if getattr(settings, "artifact_dir", None) else None)
         cli3 = csp.Cliente(sp_key, call=sp_call, clock=lambda: now, raiz=raiz,
@@ -326,26 +358,34 @@ def correr(*, ejecutar=False, max_creditos=cr.MAX_CREDITOS, get=None, now=None, 
                 log.warning("respaldo fútbol: sin nombres de equipos, el hándicap de SportsAPIPro no se traduce")
         n3 = nivel3(cli3, cand3, entries, intentos, now, db, salida, meta3, resolutor or _resolutor_equipos())
     n4, cli4 = 0, None
-    if rd_key:
+    if pend and rd_key:
         from qf.ingest import odds_worker as ow
         cli4 = crd.Cliente(rd_key, call=rd_call, reserva=int(getattr(settings, "cuotas_therundown_reserva", crd.RESERVA)),
                            **({"sleep": rd_sleep} if rd_sleep else {}))
         candidatos = [h for h in pend if not cubierto(h)]
         meta = ow.match_meta([h["match_id"] for h in candidatos]) if candidatos else {}
         n4 = nivel4(cli4, candidatos, entries, intentos, now, meta, resolutor or _resolutor_equipos(), salida)
-    if n2 or n3 or n4:
+    n5 = 0
+    if archivo_sharp:
+        from qf.ingest import odds_worker as ow
+        candidatos = programados
+        meta = ow.match_meta([h["match_id"] for h in candidatos]) if candidatos else {}
+        n5 = nivel5_sharpapi(csh.Archivo(archivo_sharp, now), candidatos, entries, meta,
+                             resolutor or _resolutor_equipos())
+    if n2 or n3 or n4 or n5:
         escribir_cache(cache, entries, now)
     if intentos:
         try:
             cr.escribir_intentos(cache, intentos, now)
         except OSError:
             log.exception("respaldo fútbol: no se pudo guardar el registro de intentos")
-    out = dict(estado="ok", huecos=len(pend), the_odds_api=n2, sportsapipro=n3, therundown=n4, gastado=cli.p.gastado,
+    out = dict(estado="ok", huecos=len(pend), the_odds_api=n2, sportsapipro=n3, therundown=n4, sharpapi=n5,
+               gastado=cli.p.gastado,
                saldo=cli.p.saldo, peticiones_sportsapipro=cli3.peticiones if cli3 else 0,
                peticiones_therundown=cli4.peticiones if cli4 else 0, puntos_therundown=cli4.puntos if cli4 else 0)
     if info is not None:
         info.update(out)
-    salida(f"fútbol: The Odds API {n2} partidos, SportsAPIPro {n3}; créditos {cli.p.gastado}")
+    salida(f"fútbol: The Odds API {n2} partidos, SportsAPIPro {n3}, SharpAPI {n5}; créditos {cli.p.gastado}")
     return out
 
 

@@ -62,7 +62,7 @@ def test_webhook_rechaza_firma_mala_y_procesa_la_buena(monkeypatch):
     client = _client(monkeypatch)
     seen = []
     monkeypatch.setattr(whop, "handle_event",
-                        lambda wid, ev: seen.append((wid, ev["type"])) or {"estado": "concedido"})
+                        lambda wid, ev, modo="live": seen.append((wid, ev["type"])) or {"estado": "concedido"})
     body = json.dumps({"type": "payment.succeeded", "data": {}}).encode()
     bad = client.post("/webhooks/whop", content=body, headers={**sign(body), "webhook-signature": "v1,xx"})
     assert bad.status_code == 400 and seen == []
