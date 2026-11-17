@@ -33,6 +33,13 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-17 03:33 UTC · Whop: versión de API fijada para el checkout por plan_id · API (PR #478; `main` `ae6b93a5`)
+- **Motivo:** el pago de prueba (cuenta de prueba, sandbox) fallaba con «No se pudo completar la solicitud». Whop respondía `400 variant_id is required for payment mode`: sin `Api-Version-Date` usa la versión más nueva, que exige `variant_id` y no acepta el `plan_id` que guardamos por plan.
+- **Qué lleva:** `src/qf/comercial/whop.py` envía `Api-Version-Date: 2025-01-01` por defecto (`WHOP_API_VERSION_DATE` sigue mandando). Sin migración. Afecta también al modo `live` (misma cabecera); no se ha probado con la clave de producción.
+- **Método:** `scripts/deploy.sh construir api`, `ensayo` (`modulos con error: ninguno`, `rutas: 323`) y `desplegar api` con `quantfut-api:ae6b93a5`. Pre-vuelo `estado`: API con 1 archivo distinto (`comercial/whop.py`, el de este cambio) y compose coincidiendo (`527ad314`). Redes intactas (`nba-api-red`, `quantfut_default`, `tenis-db_tenis-interna`).
+- **Verificado:** salud API 200, web 200; desde el contenedor, `POST /checkout_configurations` del sandbox con `plan_IeG2PWPy3ECbO` → 200. No se ha completado un pago de prueba de punta a punta (tarjeta 4242…) ni se ha verificado el webhook del sandbox.
+- Vuelta atrás: `cd ~/quantfut && cp -p releases/compose-antes-20261116-203251.yml docker-compose.yml && docker compose up -d --no-deps api` (vuelve a `527ad314`).
+
 ### 2026-11-17 03:10 UTC · Destacado de tenis por receta y resumen redactado con IA · API (PR #476; `main` `527ad314`)
 - **Motivo:** pedido del titular, mismo criterio que el destacado de fútbol: casillas según el mercado y «Resumen del pronóstico». Solo tenis y solo la app; la app instalada no llama al endpoint nuevo hasta compilar una versión con el cambio.
 - **Qué lleva:** `src/qf/api/analisis_tenis.py` (datos de `tenis-db`/TML: Hold %, Break %, ranking, forma, cara a cara, victorias en la superficie, partidos a tres sets), `GET /web/deportes/tenis/analisis/{id}` en `web.py` y `analisis_futbol.py` generalizado por deporte. Sin migración: usa `analisis_resumen` (db/118). La API lee `tenis-db` solo en lectura con `TENIS_PG_DSN`.
