@@ -3798,6 +3798,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileAllSurfaces => 'todas as superfícies';
 
   @override
+  String get tileAttackDefense => 'Ataque contra defesa rival';
+
+  @override
+  String get tileAttackDefenseCaption =>
+      'Pontos da equipe e pontos que o rival sofre';
+
+  @override
   String get tileBreak => 'Quebras conquistadas';
 
   @override
@@ -3859,6 +3866,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileH2h => 'Confronto direto';
 
   @override
+  String get tileH2hTotal => 'Total médio dos confrontos';
+
+  @override
   String get tileHold => 'Games de saque ganhos';
 
   @override
@@ -3870,19 +3880,63 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get tileOut => 'Desfalques confirmados';
+
+  @override
+  String get tileOutCaption => 'Jogadores descartados: mandante · visitante';
+
+  @override
   String get tileOver25Model => 'Mais de 2,5 segundo o modelo';
 
   @override
   String get tileOver25Recent => 'Mais de 2,5 nos últimos jogos';
 
   @override
+  String get tilePace => 'Ritmo projetado';
+
+  @override
+  String get tilePaceCaption => 'Posses esperadas no jogo';
+
+  @override
   String get tilePerMatch => 'Por jogo';
+
+  @override
+  String get tilePointDiff => 'Saldo de pontos por jogo';
+
+  @override
+  String get tilePointDiffCaption =>
+      'Pontos feitos menos sofridos: mandante · visitante';
+
+  @override
+  String get tilePointsFor => 'Pontos por jogo';
+
+  @override
+  String get tilePointsForCaption =>
+      'Marcados nesta temporada: mandante · visitante';
 
   @override
   String get tileProbability => 'Probabilidade';
 
   @override
+  String get tileProjMargin => 'Margem projetada';
+
+  @override
+  String get tileProjTeamPoints => 'Pontos projetados';
+
+  @override
+  String get tileProjTotal => 'Total projetado';
+
+  @override
   String get tileRank => 'Ranking';
+
+  @override
+  String get tileRecordCaption => 'Retrospecto: mandante · visitante';
+
+  @override
+  String get tileRest => 'Descanso';
+
+  @override
+  String get tileRestCaption => 'Dias de descanso: mandante · visitante';
 
   @override
   String get tileScores => 'Jogos com gol';

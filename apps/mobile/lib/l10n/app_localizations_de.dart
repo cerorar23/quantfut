@@ -3792,6 +3792,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tileAllSurfaces => 'alle Beläge';
 
   @override
+  String get tileAttackDefense => 'Angriff gegen gegnerische Abwehr';
+
+  @override
+  String get tileAttackDefenseCaption =>
+      'Punkte des Teams und Gegenpunkte des Gegners';
+
+  @override
   String get tileBreak => 'Breaks erzielt';
 
   @override
@@ -3851,6 +3858,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tileH2h => 'Direktvergleich';
 
   @override
+  String get tileH2hTotal => 'Durchschnitt im Direktvergleich';
+
+  @override
   String get tileHold => 'Aufschlagspiele gewonnen';
 
   @override
@@ -3862,19 +3872,62 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get tileOut => 'Bestätigte Ausfälle';
+
+  @override
+  String get tileOutCaption => 'Ausgefallene Spieler: Heim · Gast';
+
+  @override
   String get tileOver25Model => 'Über 2,5 laut Modell';
 
   @override
   String get tileOver25Recent => 'Über 2,5 in ihren letzten Spielen';
 
   @override
+  String get tilePace => 'Prognostiziertes Tempo';
+
+  @override
+  String get tilePaceCaption => 'Erwartete Ballbesitze im Spiel';
+
+  @override
   String get tilePerMatch => 'Pro Spiel';
+
+  @override
+  String get tilePointDiff => 'Punktedifferenz pro Spiel';
+
+  @override
+  String get tilePointDiffCaption =>
+      'Erzielte minus kassierte Punkte: Heim · Gast';
+
+  @override
+  String get tilePointsFor => 'Punkte pro Spiel';
+
+  @override
+  String get tilePointsForCaption => 'Erzielt in dieser Saison: Heim · Gast';
 
   @override
   String get tileProbability => 'Wahrscheinlichkeit';
 
   @override
+  String get tileProjMargin => 'Prognostizierte Differenz';
+
+  @override
+  String get tileProjTeamPoints => 'Prognostizierte Punkte';
+
+  @override
+  String get tileProjTotal => 'Prognostizierte Summe';
+
+  @override
   String get tileRank => 'Weltrangliste';
+
+  @override
+  String get tileRecordCaption => 'Bilanz: Heim · Gast';
+
+  @override
+  String get tileRest => 'Ruhetage';
+
+  @override
+  String get tileRestCaption => 'Ruhetage: Heim · Gast';
 
   @override
   String get tileScores => 'Spiele mit Tor';

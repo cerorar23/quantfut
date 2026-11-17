@@ -65,6 +65,17 @@ def tennis_event_analysis(event_id: str, response: Response):
     return data
 
 
+@router.get("/web/deportes/nba/analisis/{event_id}")
+def nba_event_analysis(event_id: str, response: Response):
+    """Casillas según el mercado y resumen redactado del destacado de un partido de NBA (app CyberCore)."""
+    from . import analisis_nba
+    response.headers["Cache-Control"] = "no-store"
+    data = analisis_nba.para_partido(event_id) if event_id.isdigit() and len(event_id) <= 9 else None
+    if data is None:
+        raise HTTPException(404, "Sin análisis para este partido")
+    return data
+
+
 @router.get("/web/deportes/nba/estadisticas/{event_id}")
 def nba_event_stats(event_id: str, response: Response):
     from .nba_estadisticas import public_event

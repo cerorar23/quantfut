@@ -8,11 +8,11 @@ import 'live_widgets.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 
-/// Tarjeta de análisis del pronóstico destacado de tenis: la misma de fútbol, con los datos del deporte.
-/// Todo viene del servidor (`/web/deportes/tenis/analisis/{id}`): casillas elegidas según el mercado y resumen
+/// Tarjeta de análisis del pronóstico destacado de tenis o NBA: la misma de fútbol, con los datos del deporte.
+/// Todo viene del servidor (`/web/deportes/{tenis,nba}/analisis/{id}`): casillas elegidas según el mercado y resumen
 /// redactado. Lo que no llega no se dibuja: una casilla nunca se rellena con «—».
-class TennisForecastPanel extends StatelessWidget {
-  const TennisForecastPanel({
+class SportForecastPanel extends StatelessWidget {
+  const SportForecastPanel({
     super.key,
     required this.analisis,
     required this.pickText,
@@ -20,6 +20,7 @@ class TennisForecastPanel extends StatelessWidget {
     required this.quote,
     required this.home,
     required this.away,
+    this.nba = false,
   });
 
   final JsonMap analisis;
@@ -29,6 +30,9 @@ class TennisForecastPanel extends StatelessWidget {
   /// Etiqueta de cuota ya construida por quien llama (puede ser un widget vacío si no hay cuota).
   final Widget quote;
   final String home, away;
+
+  /// Las casillas son las de NBA (si no, las de tenis).
+  final bool nba;
 
   List<JsonMap> get _casillas {
     final raw = analisis['casillas'];
@@ -55,7 +59,107 @@ class TennisForecastPanel extends StatelessWidget {
     _ => l10n.tileAllSurfaces,
   };
 
+  String _signed(dynamic v) =>
+      v is num ? '${v > 0 ? '+' : ''}${decimalText(v, 1)}' : '—';
+
+  String _dec(dynamic v) => v is num ? decimalText(v, 1) : '—';
+
+  ForecastTile _nbaTile(AppLocalizations l10n, JsonMap c) {
+    final pair = '${c['a']} · ${c['b']}';
+    switch (c['id']) {
+      case 'proy_total':
+        return ForecastTile(
+          icon: Icons.sports_basketball,
+          label: l10n.tileProjTotal,
+          color: liveGold,
+          value: _dec(c['total']),
+          caption: l10n.tileXgCaption(_dec(c['a']), _dec(c['b'])),
+        );
+      case 'proy_margen':
+        return ForecastTile(
+          icon: Icons.sports_basketball,
+          label: l10n.tileProjMargin,
+          color: liveGold,
+          value: _signed(c['margen']),
+          caption: l10n.tileXgCaption(_dec(c['a']), _dec(c['b'])),
+        );
+      case 'proy_equipo':
+        return ForecastTile(
+          icon: Icons.sports_basketball,
+          label: l10n.tileProjTeamPoints,
+          color: liveGold,
+          value: _dec(c['a']),
+          caption: c['equipo'] == 'a' ? home : away,
+        );
+      case 'ritmo':
+        return ForecastTile(
+          icon: Icons.speed,
+          label: l10n.tilePace,
+          color: statsLime,
+          value: _dec(c['pos']),
+          caption: l10n.tilePaceCaption,
+        );
+      case 'forma':
+        return ForecastTile(
+          icon: Icons.trending_up,
+          label: l10n.tileFormLabel((c['n'] as num?)?.toInt() ?? 6),
+          color: statsPurple,
+          value: '${c['a_w']}-${c['a_l']} · ${c['b_w']}-${c['b_l']}',
+          caption: l10n.tileRecordCaption,
+        );
+      case 'dif':
+        return ForecastTile(
+          icon: Icons.bar_chart,
+          label: l10n.tilePointDiff,
+          color: statsLime,
+          value: '${_signed(c['a'])} · ${_signed(c['b'])}',
+          caption: l10n.tilePointDiffCaption,
+        );
+      case 'ataque':
+        return ForecastTile(
+          icon: Icons.sports_basketball,
+          label: l10n.tilePointsFor,
+          color: statsLime,
+          value: '${_dec(c['a'])} · ${_dec(c['b'])}',
+          caption: l10n.tilePointsForCaption,
+        );
+      case 'ataque_defensa':
+        return ForecastTile(
+          icon: Icons.shield_outlined,
+          label: l10n.tileAttackDefense,
+          color: statsPurple,
+          value: '${_dec(c['a'])} vs ${_dec(c['b'])}',
+          caption: l10n.tileAttackDefenseCaption,
+        );
+      case 'h2h_total':
+        return ForecastTile(
+          icon: Icons.compare_arrows,
+          label: l10n.tileH2hTotal,
+          color: statsPurple,
+          value: _dec(c['avg']),
+          caption: l10n.tileMatchesCount((c['n'] as num?)?.toInt() ?? 0),
+        );
+      case 'descanso':
+        return ForecastTile(
+          icon: Icons.bedtime_outlined,
+          label: l10n.tileRest,
+          color: statsPurple,
+          value: pair,
+          caption: l10n.tileRestCaption,
+        );
+      default: // 'bajas'
+        return ForecastTile(
+          icon: Icons.healing,
+          label: l10n.tileOut,
+          color: liveGold,
+          value: pair,
+          caption: l10n.tileOutCaption,
+        );
+    }
+  }
+
   ForecastTile _tile(AppLocalizations l10n, JsonMap c) {
+    if (nba) return _nbaTile(l10n, c);
     final players = '${_surname(home)} · ${_surname(away)}';
     switch (c['id']) {
       case 'saque':

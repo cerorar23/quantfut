@@ -308,7 +308,11 @@ void main() {
     await HttpOverrides.runZoned(() async {
       final api = _Api();
       await pump(tester, nbaEvent(), api: api);
-      expect(api.paths, ['/nba/v1/partido/0022600021/estadisticas']);
+      // Estadísticas y, además, el análisis del destacado (404 aquí: la tarjeta compacta sigue).
+      expect(api.paths, [
+        '/nba/v1/partido/0022600021/estadisticas',
+        '/web/deportes/nba/analisis/0022600021',
+      ]);
       // Pronósticos funciona: ganador, total, jugador con «Más de» y sello.
       expect(find.textContaining('Dallas Mavericks'), findsWidgets);
       expect(find.textContaining('Más de 224,5'), findsOneWidget);
@@ -667,7 +671,10 @@ void main() {
         ),
         api: api,
       );
-      expect(api.paths, ['/nba/v1/partido/a%20b%2Fc%3Fd/estadisticas']);
+      expect(api.paths, [
+        '/nba/v1/partido/a%20b%2Fc%3Fd/estadisticas',
+        '/web/deportes/nba/analisis/a%20b%2Fc%3Fd',
+      ]);
     }, createHttpClient: (_) => _Client404());
   });
 
