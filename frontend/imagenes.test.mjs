@@ -92,6 +92,14 @@ test('NBA mantiene los logos en la lista y en el encabezado',()=>{
  for(const code of ['BOS','BKN'])assert.equal(html.split(`src="/web/imagenes/nba/${manifest.nba[code].f}"`).length-1,2);
 });
 
+test('un retrato WebP de tenis se usa para la misma persona en la lista y el encabezado',()=>{
+ const html=sportView('tenis','Jakub Menšík','Adrian Mannarino',{
+  nba:{},tenis:{'jakub mensik':{f:'jakub-mensik.webp',a:'Autor',l:'CC BY'}}
+ });
+ assert.equal(html.split('src="/web/imagenes/tenis/jakub-mensik.webp"').length-1,2);
+ assert.ok(html.includes('CC BY'));
+});
+
 test('sin foto o con un nombre de archivo inválido usa iniciales y no solicita rutas arbitrarias',()=>{
  const html=sportView('tenis','Jugador desconocido','Otro jugador',{nba:{},tenis:{'otro jugador':{f:'../privado.png'}}});
  assert.ok(!html.includes('<img'));

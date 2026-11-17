@@ -15,6 +15,10 @@ const files = new Map([
   ['/real-views.js', ['real-views.js', 'text/javascript; charset=utf-8']],
   ['/sports-data.js', ['sports-data.js', 'text/javascript; charset=utf-8']],
   ['/sports-window.js', ['sports-window.js', 'text/javascript; charset=utf-8']],
+  ['/window-i18n.js', ['window-i18n.js', 'text/javascript; charset=utf-8']],
+  ['/conversion-views.js', ['conversion-views.js', 'text/javascript; charset=utf-8']],
+  ['/conversion.css', ['conversion.css', 'text/css; charset=utf-8']],
+  ['/historial-views.js', ['historial-views.js', 'text/javascript; charset=utf-8']],
   ['/sport-images.js', ['sport-images.js', 'text/javascript; charset=utf-8']],
   ['/sport-images.css', ['sport-images.css', 'text/css; charset=utf-8']],
   ['/ergonomic-views.js', ['ergonomic-views.js', 'text/javascript; charset=utf-8']],
@@ -35,7 +39,7 @@ const host = process.env.HOST || '127.0.0.1';
 
 createServer(async (request, response) => {
   const pathname = new URL(request.url || '/', 'http://localhost').pathname;
-  const file = files.get(SECCIONES.has(pathname) ? '/' : pathname);
+  const file = files.get(SECCIONES.has(pathname) || ['/en/predictions/', '/pt/previsoes/'].includes(pathname) ? '/' : pathname);
   if (!file) {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('No encontrado');
@@ -44,7 +48,7 @@ createServer(async (request, response) => {
   try {
     let body = await readFile(join(root, file[0]));
     // Desde una ruta anidada, './styles.css' pediría '/historial/styles.css': como hace el servidor real, rutas absolutas.
-    if (file[0] === 'index.html') body = body.toString('utf8').replace(/(href|src)="\.\//g, '$1="/');
+    if (file[0] === 'index.html') body = body.toString('utf8').replace(/\b(href|src)="\.\//g, '$1="/');
     response.writeHead(200, {
       'Content-Type': file[1],
       'Cache-Control': 'no-store',

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_PATH, INFO_PATHS, urlFor, routeFromLocation, cleanUrl, historyEntry, deporteDeUrl, isDeportePage, deporteBoot } from './rutas.js';
+import { windowSelection, windowText } from './window-i18n.js';
 
 const FRONTEND_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,6 +16,14 @@ const valid = route => VALID.has(route);
 const canonical = route => ALIAS[route] || route;
 const at = (pathname, hash = '', search = '') => ({ pathname, hash, search });
 const route = loc => routeFromLocation(loc, valid, canonical);
+
+test('Pronósticos traduce las etiquetas y selecciones conocidas sin cambiar equipos, jugadores ni líneas', () => {
+  assert.equal(windowText('DOBLE OPORTUNIDAD', 'en'), 'Double chance');
+  assert.equal(windowText('Estadísticas', 'pt'), 'Estatísticas');
+  assert.equal(windowSelection('Albacete o Celta de Vigo II (sin empate)', 'en'), 'Albacete or Celta de Vigo II (no draw)');
+  assert.equal(windowSelection('Más de 2.5 goles', 'pt'), 'Mais de 2,5 gols');
+  assert.equal(windowSelection('Jakub Menšík +4.5', 'en'), 'Jakub Menšík +4.5');
+});
 
 test('cada sección pública tiene una URL limpia, con barra final y única', () => {
   const paths = Object.values(ROUTE_PATH);
