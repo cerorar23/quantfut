@@ -1091,16 +1091,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forecastSourceMarket => 'MARKET ODDS';
 
   @override
-  String get forecastSourceModel => 'OWN MODEL';
+  String get forecastSourceModel => 'ALGORITHMIC MODEL';
 
   @override
-  String get forecastTitle => 'STATISTICAL ANALYSIS';
+  String get forecastTitle => 'ALGORITHMIC MODEL';
 
   @override
   String get forecastUnlocked => 'UNLOCKED';
 
   @override
-  String get forecastVerdictTitle => '💡  MODEL VERDICT';
+  String get forecastVerdictTitle => '💡  FORECAST SUMMARY';
 
   @override
   String get formatScheduleUnavailable => 'Time not available';
@@ -3767,6 +3767,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tenWinProbTitle => 'WIN PROBABILITY';
 
   @override
+  String get tileBtts => 'Both teams score';
+
+  @override
+  String get tileBttsCaption => 'Matches where both scored: home · away';
+
+  @override
+  String get tileConcedes => 'Goals the opponent concedes';
+
+  @override
+  String get tileDraws => 'Draws';
+
+  @override
+  String tileDrawsCaption(String league) {
+    return 'Home and away · league $league %';
+  }
+
+  @override
   String tileFairOdds(String value) {
     return 'Fair odds $value';
   }
@@ -3783,10 +3800,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tileFavoriteNA => 'Probabilities not available';
 
   @override
+  String get tileFormCaption => 'Points: home · away';
+
+  @override
+  String tileFormLabel(int n) {
+    return 'Form (last $n)';
+  }
+
+  @override
+  String get tileGoalsMatch => 'Goals per match';
+
+  @override
+  String get tileGoalsMatchCaption => 'Total in their matches: home · away';
+
+  @override
   String get tileGoalsNA => 'Insufficient history';
 
   @override
   String get tileGoalsTrend => 'Goals trend';
+
+  @override
+  String get tileHomeAway => 'Wins home / away';
 
   @override
   String get tileOver25Model => 'Over 2.5 according to the model';
@@ -3795,7 +3829,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tileOver25Recent => 'Over 2.5 in their recent matches';
 
   @override
+  String get tilePerMatch => 'Per match';
+
+  @override
   String get tileProbability => 'Probability';
+
+  @override
+  String get tileScores => 'Matches with a goal';
+
+  @override
+  String get tileScoresCaption => 'Of the team, in recent matches';
+
+  @override
+  String get tileSplitCaption => 'Home team at home · away team away';
+
+  @override
+  String get tileTrendCaption => 'Matches over 2.5 goals: home · away';
 
   @override
   String get tileXg => 'Projected xG';
@@ -3807,6 +3856,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tileXgNA => 'Available in goals markets';
+
+  @override
+  String get tileXgd => 'xG difference';
+
+  @override
+  String get tileXgdCaption => 'Per match: home · away';
 
   @override
   String get titleAsianHandicap => 'Asian handicap';

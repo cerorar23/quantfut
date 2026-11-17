@@ -930,7 +930,7 @@ void main() {
     // con los 4 indicadores, y sin chips de mercado.
     expect(find.byType(ForecastPanel), findsOneWidget);
     expect(find.byType(ChoiceChip), findsNothing);
-    expect(find.text('ANÁLISIS ESTADÍSTICO'), findsOneWidget);
+    expect(find.text('MODELO ALGORÍTMICO'), findsOneWidget);
     expect(find.text('CUOTAS DEL MERCADO'), findsOneWidget);
     expect(
       find.text('61 %'),
@@ -956,7 +956,7 @@ void main() {
     ); // candados agrupados por categoría
     expect(find.text('Marcadores más probables'), findsOneWidget);
     expect(find.text('2-0'), findsOneWidget);
-    expect(find.textContaining('DICTAMEN DEL MODELO'), findsOneWidget);
+    expect(find.textContaining('RESUMEN DEL PRONÓSTICO'), findsOneWidget);
     await capture(tester, 'forecast_panel');
     expect(find.text('Gana el local'), findsNothing);
     // Con un pronóstico abierto no se ofrece VIP arriba aunque el partido tenga otros bloqueados,

@@ -6,6 +6,15 @@
 - El quinto nivel consume las capturas locales. El titular autorizó las consultas necesarias a SharpAPI para ampliar el capturador de fútbol a NBA y tenis. El catálogo y las respuestas prepartido de ambos deportes se comprobaron con la clave del VPS. La disponibilidad depende de las casas incluidas en el plan.
 - Las rutas públicas conservan desactivado este nivel para limitar el uso a análisis personal. El archivo está montado en el ejecutor del VPS desde el despliegue de adadef85. [Guía de operación](../docs/sharpapi_captura_20261102.md#respaldo-interno-desde-el-archivo).
 
+## 17-nov-2026 · Destacado de fútbol: casillas según el mercado y resumen redactado con IA (`app/destacado-futbol-recetas`)
+- **Decisión (pedido del titular):** la tarjeta del pronóstico destacado deja de mostrar siempre las mismas cuatro casillas. Cada mercado pertenece a una receta (resultado, goles, equipo, general) con una lista de prioridad; el servidor elige las tres primeras casillas con dato tras la probabilidad y una casilla nunca queda vacía (si falta un dato sube la siguiente). `src/qf/api/analisis_futbol.py`; la ficha (`fichas.py`) añade victorias, empates y partidos con gol por equipo y la media de empates de la liga.
+- **Por qué faltaba el xG:** el destacado de la app (`pick_de_destacado`) no llevaba el xG proyectado, así que la casilla salía «—». Ahora sale de las lambdas del modelo (`partido_mercados.lambdas_goles`).
+- **Resumen redactado:** APIMart redacta los 6 idiomas en una llamada por (partido, mercado, huella de los datos), fuera de la petición (hilo aparte, una sola vez, reintento a la hora si falla) y se guarda en `analisis_resumen` (db/118). Toda cifra del texto debe estar en los datos entregados; si no, se descarta y la app usa su plantilla. Sin clave de APIMart no se genera nada. Abre con la conclusión (gancho) y cierra con precio frente a cuota justa.
+- **Textos (pedido del titular):** «Modelo algorítmico» (cabecera y chip) y «Resumen del pronóstico»; sin etiqueta «Redactado con IA». 20 textos nuevos o cambiados en los 6 idiomas.
+- **Alcance:** solo fútbol y solo la app. Córners, tarjetas y primera mitad caen en la receta general hasta medir su cobertura; NBA y tenis, la web y el resumen generado al sellar (no al abrir) quedan para siguientes PR. La ficha cacheada trae el bloque `analisis` solo en `mercados.destacado_app`.
+- **Despliegue pendiente:** aplicar `db/118_analisis_resumen.sql` y desplegar la API (`DEPLOYS.md`); la app necesita un build nuevo.
+
+
 
 ## 16-nov-2026 · Pasarelas de pago en /control con sandbox solo para cuentas de prueba (`feat/pasarelas-pago`)
 - **Decisión (pedido del titular):** las claves de Whop (producción y sandbox) se configuran en `/control/pasarelas` en vez de en el `.env`; cifradas con `cifrado.py`, solo se ve la máscara, auditadas. Producción sigue con el entorno si no hay claves guardadas.

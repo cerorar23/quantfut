@@ -1100,16 +1100,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get forecastSourceMarket => 'COTES DU MARCHÉ';
 
   @override
-  String get forecastSourceModel => 'MODÈLE PROPRE';
+  String get forecastSourceModel => 'MODÈLE ALGORITHMIQUE';
 
   @override
-  String get forecastTitle => 'ANALYSE STATISTIQUE';
+  String get forecastTitle => 'MODÈLE ALGORITHMIQUE';
 
   @override
   String get forecastUnlocked => 'DÉBLOQUÉ';
 
   @override
-  String get forecastVerdictTitle => '💡  VERDICT DU MODÈLE';
+  String get forecastVerdictTitle => '💡  RÉSUMÉ DU PRONOSTIC';
 
   @override
   String get formatScheduleUnavailable => 'Horaire non disponible';
@@ -3803,6 +3803,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tenWinProbTitle => 'PROBABILITÉ DE VICTOIRE';
 
   @override
+  String get tileBtts => 'Les deux marquent';
+
+  @override
+  String get tileBttsCaption =>
+      'Matchs où les deux ont marqué : domicile · visiteur';
+
+  @override
+  String get tileConcedes => 'Buts encaissés par l\'adversaire';
+
+  @override
+  String get tileDraws => 'Nuls';
+
+  @override
+  String tileDrawsCaption(String league) {
+    return 'À domicile et à l\'extérieur · ligue $league %';
+  }
+
+  @override
   String tileFairOdds(String value) {
     return 'Cote juste $value';
   }
@@ -3819,10 +3837,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tileFavoriteNA => 'Probabilités non disponibles';
 
   @override
+  String get tileFormCaption => 'Points : domicile · visiteur';
+
+  @override
+  String tileFormLabel(int n) {
+    return 'Forme ($n derniers)';
+  }
+
+  @override
+  String get tileGoalsMatch => 'Buts par match';
+
+  @override
+  String get tileGoalsMatchCaption =>
+      'Total dans leurs matchs : domicile · visiteur';
+
+  @override
   String get tileGoalsNA => 'Historique insuffisant';
 
   @override
   String get tileGoalsTrend => 'Tendance buts';
+
+  @override
+  String get tileHomeAway => 'Victoires dom. / ext.';
 
   @override
   String get tileOver25Model => 'Plus de 2,5 selon le modèle';
@@ -3831,7 +3867,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tileOver25Recent => 'Plus de 2,5 sur leurs derniers matchs';
 
   @override
+  String get tilePerMatch => 'Par match';
+
+  @override
   String get tileProbability => 'Probabilité';
+
+  @override
+  String get tileScores => 'Matchs avec but';
+
+  @override
+  String get tileScoresCaption => 'De l\'équipe, sur les derniers matchs';
+
+  @override
+  String get tileSplitCaption =>
+      'Équipe locale à domicile · visiteur à l\'extérieur';
+
+  @override
+  String get tileTrendCaption =>
+      'Matchs à plus de 2,5 buts : domicile · visiteur';
 
   @override
   String get tileXg => 'xG projeté';
@@ -3843,6 +3896,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tileXgNA => 'Disponible sur les marchés de buts';
+
+  @override
+  String get tileXgd => 'Écart de xG';
+
+  @override
+  String get tileXgdCaption => 'Par match : domicile · visiteur';
 
   @override
   String get titleAsianHandicap => 'Handicap asiatique';
