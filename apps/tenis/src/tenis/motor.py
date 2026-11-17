@@ -107,14 +107,21 @@ def buscar_partidos_pendientes(
     ahora_utc = fecha_corte_max or datetime.now(UTC)
 
     # Solo partidos con hora programada fija/estimada
+    # Un horario por partido (el último recibido: un aplazamiento añade otra fila de programa) y solo partidos que aún no
+    # empezaron o que empezaron hace menos de 45 min: así un partido perdido se avisa como sello tardío una vez y no en
+    # cada pasada para siempre.
     sql = """
     SELECT p.partido_id, p.edicion_id, p.jugador_1, p.jugador_2, p.mejor_de,
            t.circuito, e.superficie, pr.inicio_programado_utc
     FROM partido p
     JOIN edicion e ON p.edicion_id = e.edicion_id
     JOIN torneo t ON e.torneo_id = t.torneo_id
-    JOIN programa pr ON p.partido_id = pr.partido_id
-    WHERE pr.inicio_programado_utc IS NOT NULL
+    JOIN LATERAL (
+        SELECT x.inicio_programado_utc FROM programa x
+        WHERE x.partido_id = p.partido_id AND x.inicio_programado_utc IS NOT NULL
+        ORDER BY x.recibido_en DESC, x.programa_id DESC LIMIT 1
+    ) pr ON TRUE
+    WHERE pr.inicio_programado_utc > %s - interval '45 minutes'
       AND NOT EXISTS (
           SELECT 1 FROM pronostico pro
           WHERE pro.partido_id = p.partido_id
@@ -122,7 +129,7 @@ def buscar_partidos_pendientes(
       )
     ORDER BY pr.inicio_programado_utc ASC
     """
-    rows = db.execute(sql, (version_modelo,)).fetchall()
+    rows = db.execute(sql, (ahora_utc, version_modelo)).fetchall()
     cols = ["partido_id", "edicion_id", "jugador_1", "jugador_2", "mejor_de",
             "circuito", "superficie", "inicio_programado_utc"]
     return [dict(zip(cols, r)) for r in rows]

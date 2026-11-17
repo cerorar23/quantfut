@@ -16,3 +16,6 @@
 
 # 5. Respaldo de tenis-db cada 6 horas (conserva 24 copias = 6 días)
 0 0,6,12,18 * * * /app/apps/tenis/ops/tenis-db/respaldar.sh >> /var/log/tenis/respaldo.log 2>&1
+
+# 6. Calendario de tenis desde el archivo compartido de PropLine (minuto 12, tras la captura horaria del minuto 7)
+12 * * * * /usr/bin/flock -n /tmp/tenis-calendario.lock /home/qf/tenis-isolated/calendario_propline.sh >> /home/qf/.local/share/quantfut/tenis_calendario.log 2>&1

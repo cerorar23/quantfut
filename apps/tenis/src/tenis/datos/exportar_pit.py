@@ -34,6 +34,7 @@ from .visibilidad import (UN_MICRO, limite_por_partido, vis_asercion, vis_edicio
 VERSION = "tenis-export-pit-1.0.0"
 SALIDA_POR_OMISION = Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\rediseno_20261104\export_pit")
 ESTADOS_JUGADOS = ("completado", "retirada")
+FUENTES_CON_HORA = ("sofascore", "propline")
 MOTIVOS_DUROS = ("sin_hora_ni_calendario", "pareja_no_visible_en_su_corte", "resultado_visible_en_su_corte",
                  "visibilidad_no_monotona", "multiversion", "fuente_no_soportada")
 
@@ -165,7 +166,9 @@ def construir(t: dict, desde: date | None = None) -> dict:
     cal["visibilidad_no_monotona"] = len(no_mono)
 
     # ---- filas por fuente
-    soportadas = {"tml", "sofascore"}
+    # `propline` es fuente de CALENDARIO con hora real (captura/propline_calendario.py): se trata igual que SofaScore para el
+    # partido, su programa y su edición. En el resto de la exportación `fuente_tiempo = "sofascore"` significa «con hora real».
+    soportadas = {"tml", "sofascore", "propline"}
     otras = P[~P["fuente"].isin(soportadas)]
     cal["partidos_fuente_no_soportada"] = len(otras)
     ed_cols = ed[["edicion_id", "visible_desde", "fecha_fin", "lunes_semana"]].rename(
@@ -175,8 +178,8 @@ def construir(t: dict, desde: date | None = None) -> dict:
         pd.to_datetime(Pt["lunes_semana"]).dt.tz_localize("UTC") - pd.Timedelta(days=7))
     fin = Pt["fecha_fin"].fillna(Pt["lunes_semana"] + pd.Timedelta(days=6))
     Pt["ventana_fin"] = pd.to_datetime(fin).dt.tz_localize("UTC") + pd.Timedelta(days=1)
-    Ps = P[P["fuente"] == "sofascore"].copy()
-    prog_s = G[G["fuente"] == "sofascore"].groupby("partido_id").agg(
+    Ps = P[P["fuente"].isin(FUENTES_CON_HORA)].copy()
+    prog_s = G[G["fuente"].isin(FUENTES_CON_HORA)].groupby("partido_id").agg(
         inicio=("inicio_programado_utc", "min"), n_prog=("programa_id", "size")).reset_index()
     cal["multiversion_programa"] = int((prog_s["n_prog"] > 1).sum())
     Ps = Ps.merge(prog_s, on="partido_id", how="left")

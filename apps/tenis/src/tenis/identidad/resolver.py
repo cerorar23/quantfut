@@ -128,6 +128,11 @@ class ResolutorMultifuente:
             salida |= idx["claves"].get((circuito, *clave), set())
         return salida
 
+    def buscar_exacto(self, circuito: str, nombre: str) -> set[int]:
+        """Jugadores del circuito cuyo nombre coincide EXACTAMENTE (sin tildes, sin importar el orden). Solo lectura: no
+        crea jugadores ni alias (lo usa la captura de calendario de PropLine, que nunca inventa un jugador)."""
+        return set(self._indice()["exactos"].get((circuito, nombre_clave(nombre)), ()))
+
     def _diferencias(self, jid: int, nac: date) -> list[float]:
         idx = self._indice()
         dif = [_anios(abs((n - nac).days)) for n in idx["nacs"].get(jid, ())]
