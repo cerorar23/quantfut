@@ -3390,3 +3390,4 @@ Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
 - [x] Motor con el filtro real (17-nov): `tenis/inferencia.py` reproduce el filtro desde la base; π idéntico (Δ = 0) al walk-forward en 60.741 partidos reales; sin pronóstico no se sella. Ver `docs/tenis_motor_filtro_real_20261117.md`.
 - [ ] Estado del filtro en Parquet (plan H.2) para no leer toda la base en cada pasada (hoy ≈ 3 min).
 - [ ] Opcional: edad dentro del filtro (reestimar hiperparámetros) y explicar la señal de actividad reciente.
+- [ ] Fechas de nacimiento en `tenis-db` (SofaScore): sin ellas la capa de edad no actúa en producción (`edad_dif` null). Medido el 17-nov 23:48 UTC.
