@@ -19,3 +19,6 @@
 
 # 6. Calendario de tenis desde el archivo compartido de PropLine (minuto 12, tras la captura horaria del minuto 7)
 12 * * * * /usr/bin/flock -n /tmp/tenis-calendario.lock /home/qf/tenis-isolated/calendario_propline.sh >> /home/qf/.local/share/quantfut/tenis_calendario.log 2>&1
+
+# 7. Fechas de nacimiento estimadas desde las edades de TML (lunes 12:00, tras la carga semanal de TML de las 11:30)
+0 12 * * 1 /usr/bin/flock -w 900 /tmp/tenis-motor.lock /home/qf/tenis-isolated/nacimientos_tml.sh >> /home/qf/tenis-isolated/nacimientos_tml.log 2>&1

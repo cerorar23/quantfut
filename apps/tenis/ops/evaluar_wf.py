@@ -207,6 +207,7 @@ def main():
     ap.add_argument("--reps", type=int, default=ev.REPS)
     ap.add_argument("--circuitos", nargs="+", default=["atp", "wta"])
     ap.add_argument("--dir", default=str(SALIDA), help="carpeta con hiperparametros.json y de salida")
+    ap.add_argument("--export", default=str(dm.RUTA_EXPORT), help="carpeta de la exportación PIT (por omisión la de referencia)")
     ap.add_argument("--hasta", type=int, default=HASTA_DEFECTO, help="año máximo a cargar del histórico")
     ap.add_argument("--eval_min", type=int, default=EVAL_DEFECTO[0], help="año inicial a evaluar")
     ap.add_argument("--eval_max", type=int, default=EVAL_DEFECTO[1], help="año final a evaluar")
@@ -214,10 +215,11 @@ def main():
     salida = Path(a.dir)
     eval_rango = (a.eval_min, a.eval_max)
     hpj = hp.leer(salida / "hiperparametros.json")
-    p, e = dm.cargar_export(hasta=a.hasta)
-    stats = pd.read_parquet(dm.RUTA_EXPORT / "estadisticas_saque.parquet",
+    export = Path(a.export)
+    p, e = dm.cargar_export(export, hasta=a.hasta)
+    stats = pd.read_parquet(export / "estadisticas_saque.parquet",
                             columns=["partido_key", "lado", "puntos_saque", "puntos_saque_ganados", "visible_desde"])
-    edades = pd.read_parquet(dm.RUTA_EXPORT / "partidos.parquet", columns=["partido_key", "edad_1", "edad_2"],
+    edades = pd.read_parquet(export / "partidos.parquet", columns=["partido_key", "edad_1", "edad_2"],
                              filters=[("temporada", "<=", int(a.hasta))]).drop_duplicates("partido_key").set_index("partido_key")
     rng = np.random.default_rng(SEMILLA)
     informe, preds, filas = {"sha256_hiperparametros": hp.huella(hpj), "reps": a.reps, "eval_rango": eval_rango, "hasta": a.hasta, "circuitos": {}}, [], []
