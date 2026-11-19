@@ -3391,4 +3391,4 @@ Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
 - [ ] Estado del filtro en Parquet (plan H.2) para no leer toda la base en cada pasada (hoy ≈ 3 min).
 - [ ] Opcional: edad dentro del filtro (reestimar hiperparámetros) y explicar la señal de actividad reciente.
 - [ ] Fechas de nacimiento en `tenis-db` (SofaScore): sin ellas la capa de edad no actúa en producción (`edad_dif` null). Medido el 17-nov 23:48 UTC.
-- [x] Fechas de nacimiento desde las edades de TML (17-nov): `carga/nacimientos_tml.py`, `ops/nacimientos_tml.sh` (lunes 12:00), artefacto `tenis-2.2` con la capa reajustada a cobertura ~100 % (ATP −0,0038, WTA −0,0033). `docs/tenis_nacimientos_tml_20261117.md`. Pendiente de desplegar: imagen nueva, cargar en `tenis-db`, registrar 2.2.
+- [x] Fechas de nacimiento desde las edades de TML (17-nov): `carga/nacimientos_tml.py`, `ops/nacimientos_tml.sh` (lunes 12:00), artefacto `tenis-2.2` con la capa reajustada a cobertura ~100 % (ATP −0,0038, WTA −0,0033). `docs/tenis_nacimientos_tml_20261117.md`. Desplegado el 19-nov 03:27 UTC (ver DEPLOYS.md). Cron semanal instalado. Pendiente: comprobar `edad_dif` en el primer sello real.
