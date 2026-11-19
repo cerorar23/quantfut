@@ -3404,3 +3404,17 @@ Detalle en `docs/parley_auditoria_20261119.md`.
 - [x] Desplegado el 19-nov 13:46 UTC (`quantfut-api:2f7ada81`, `quantfut-worker:c7b283a8`; el cron del parley usa la imagen de `main`, ver DEPLOYS.md). Pendiente: comprobar el primer `nba_dia`/`sombra_nba` y el primer `sombra` diario (20-nov).
 - [ ] Hacia el 20-dic-2026: `python -m qf.publish.parley_v2_datos comparar 30`. Si cada nivel de la sombra acierta lo prometido, proponer al titular sustituir el v2 (o dejar 8,20 y 12,10 como «lotería» VIP).
 - [ ] Revisar las 19 patas viejas sin fuente (ITF y NBA del 15-nov) cuando lleguen las alertas de 72 h. No anular a ciegas.
+
+## Notificaciones push de la app (19-nov-2026)
+
+Plan: `apps/mobile/docs/PLAN_NOTIFICACIONES_PUSH_20261119.md` (según documentación oficial de FCM, Android y Apple).
+Hoy existe la tubería (tokens, bandeja, outbox, filtro por deporte) pero `enqueue()` no tiene llamadores y el texto es genérico.
+
+- [ ] Decisiones del titular (§9 del plan): catálogo de 7 tipos, tope 3/día, silencio 22-09, contenido del pick gratis, cuota en el aviso, recordatorio de monedas, provisional en iOS.
+- [ ] P0 · Desplegar `db/115` + API F7c y validar entrega FCM real en Android.
+- [ ] P1 · Servidor: `kind`, textos en `mensajes.py`, canal/headers por tipo, presupuesto diario, silencio, agrupación, limpieza de tokens.
+- [ ] P2 · Productores al final de la publicación (sin reordenar el pipeline): pick gratis, escalera, parley, VIP.
+- [ ] P3 · App: 7 canales Android traducidos, permiso en contexto, preferencias por tipo, ruteo por `kind`, `onTokenRefresh`.
+- [ ] P4 · Resumen de resultados, inicio de partido desbloqueado, recordatorio de monedas (con consentimiento).
+- [ ] P5 · iOS con APNs (requiere Mac y Apple Developer).
+- [ ] P6 · Medir 4 semanas aperturas y bajas por tipo; ajustar topes.
