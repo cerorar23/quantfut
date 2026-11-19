@@ -411,10 +411,11 @@ test('escalera y parley: la cifra grande y la curva cuentan aciertos menos fallo
     resumen: { cerrados: 2, completados: 1, ganancia: '-1.00', invertido: '20.00', roi: -5, tasa_completados: 50 }, por_longitud: {}, serie: [{ acumulado: '9.00', reto_id: 1 }, { acumulado: '-1.00', reto_id: 2 }],
   } };
   const pata = outcome => ({ texto: 'X', local: 'A', visitante: 'B', kickoff_utc: '2026-11-01T19:00:00Z', price: 1.5, prob: 0.6, outcome });
-  const ticket = (outcome, patas) => ({ escalon: 1, target: 2.1, outcome, cuota_total: 2.1, n_patas: patas.length, patas });
+  const ticket = (outcome, patas, estado = 'publicado') => ({ escalon: 1, target: 2.1, estado, outcome, cuota_total: 2.1, n_patas: patas.length, patas });
   const parley = { status: 'ready', data: { reglas: {}, dias: [], resumen: {}, v2: { activo: true, reglas: { targets: [2.1] }, dias: [
     { dia: '2026-11-02', tickets: [ticket('perdido', [pata('win'), pata('win'), pata('loss')])] },
-    { dia: '2026-11-01', tickets: [ticket('perdido', [pata('win'), pata('push'), pata('loss')])] },
+    // Un `solo_referencia` no es apuesta: no suma patas ni parlays (auditoría 19-nov-2026).
+    { dia: '2026-11-01', tickets: [ticket('perdido', [pata('win'), pata('push'), pata('loss')]), ticket('ganado', [pata('win'), pata('win')], 'solo_referencia')] },
   ] } } };
   const views = createConversionViews(helpers({ parley, escalera }));
   const e = views.escaleraView();

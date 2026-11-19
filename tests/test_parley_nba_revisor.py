@@ -74,7 +74,8 @@ def test_revisa_sella_por_partido_y_un_multipartido_por_dia(entorno):
     assert r["elegibles"] == [1, 2, 3] and [p["estado"] for p in r["partidos"]] == ["elegido"] * 3
     assert r["multi"]["estado"] == "elegido" and r["multi"]["partidos"] == 3
     claves = [l["clave"] for l in entorno]
-    assert "parley_objetivo|v2.1|nba_dia|2026-11-07" in claves and len(claves) == 4
+    assert "parley_objetivo|v2.1|nba_dia|2026-11-07" in claves and len(claves) == 5
+    assert "parley_probabilidad|v3-sombra|sombra_nba|2026-11-07" in claves      # la sombra va después, en su lote
     multi = next(l for l in entorno if l["ambito"] == "nba_dia")
     legs = [p for t in multi["payload"]["tickets"] for p in t["patas"]]
     assert len({p["evento_id"] for p in legs}) >= 2

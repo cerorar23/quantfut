@@ -24,6 +24,7 @@ from typing import Callable
 
 from ..db import conn, query, query_one
 from . import hashchain
+from . import parley_prob as prob
 from . import parley_v2 as v2
 from .escalera import Opcion
 
@@ -123,15 +124,16 @@ def _pata(o: Opcion) -> dict:
 
 
 def construir_lote(plan: v2.Plan, now: datetime, dia: date, br: Barrera, lote_diario: str | None,
-                   prev: str, ambito: str = "diario", evento_id: str | None = None) -> dict:
+                   prev: str, ambito: str = "diario", evento_id: str | None = None,
+                   estrategia: str = v2.ESTRATEGIA, version: str = v2.VERSION) -> dict:
     """Lote sellable: carga canónica, hashes y clave de idempotencia. No toca la base de datos."""
     tickets = []
     for t in sorted(plan.tickets, key=lambda x: x.target):
         r = v2.resumen(t)
         r["patas"] = [_pata(o) for o in t.legs]
         tickets.append(r)
-    clave = f"{v2.ESTRATEGIA}|{v2.VERSION}|{ambito}|{evento_id or dia.isoformat()}"
-    payload = {"estrategia": v2.ESTRATEGIA, "version": v2.VERSION, "dia": dia.isoformat(), "ambito": ambito,
+    clave = f"{estrategia}|{version}|{ambito}|{evento_id or dia.isoformat()}"
+    payload = {"estrategia": estrategia, "version": version, "dia": dia.isoformat(), "ambito": ambito,
                "evento_id": evento_id, "decidido_at": now.astimezone(timezone.utc).isoformat(),
                "barrera": br.como_dict(), "lote_diario_sha256": lote_diario, "tickets": tickets,
                "abstenciones": [{"target": a.target, "motivo": a.motivo} for a in plan.abstenciones]}
@@ -207,6 +209,12 @@ def _texto(mercado: str, sel: str, linea, local: str | None, visita: str | None,
     return f"{mercado}: {lado}{suf}" if sel in ("over", "under") else f"{lado}{suf}"
 
 
+# Lo que se enseña en /parley (web y app). Fuera, sellado pero sin publicar: el same-game NBA (`partido`, siempre
+# `solo_referencia`: sin cuota del paquete ni modelo conjunto; 76 de 124 boletos hasta el 19-nov-2026) y la sombra
+# del parley por probabilidad (`sombra*`, otra estrategia).
+AMBITOS_PUBLICOS = ("diario", "nba_dia")
+
+
 def informe_publico_v2(dias: int = 30) -> dict:
     """Tickets sellados del parley v2 con la forma del parley actual (escalón = índice del target)."""
     objetivos = {t: i for i, t in enumerate(v2.TARGETS, 1)}
@@ -216,7 +224,8 @@ def informe_publico_v2(dias: int = 30) -> dict:
                   t.p_bajo, t.p_alto, t.motivos, r.outcome, r.factor_pago
            FROM parley_v2_lotes l JOIN parley_v2_tickets t ON t.lote_id = l.lote_id
            LEFT JOIN parley_v2_resultados r ON r.ticket_id = t.ticket_id
-           WHERE l.dia >= CURRENT_DATE - %s ORDER BY l.dia DESC, l.ambito, t.target""", (dias,))
+           WHERE l.dia >= CURRENT_DATE - %s AND l.estrategia = %s AND l.ambito = ANY(%s)
+           ORDER BY l.dia DESC, l.ambito, t.target""", (dias, v2.ESTRATEGIA, list(AMBITOS_PUBLICOS)))
     patas = query(
         """SELECT p.ticket_id, p.deporte, p.evento_id, p.mercado, p.seleccion, p.linea, p.jugador, p.prob, p.price,
                   p.book, p.inicio_utc, p.evento, rp.outcome, rp.valor,
@@ -227,7 +236,8 @@ def informe_publico_v2(dias: int = 30) -> dict:
            LEFT JOIN matches m ON p.deporte = 'futbol' AND m.match_id = p.evento_id
            LEFT JOIN teams th ON th.team_id = m.home_team_id LEFT JOIN teams ta ON ta.team_id = m.away_team_id
            LEFT JOIN parley_v2_resultados_pata rp ON rp.pata_id = p.pata_id
-           WHERE l.dia >= CURRENT_DATE - %s ORDER BY p.inicio_utc, p.evento_id""", (dias,))
+           WHERE l.dia >= CURRENT_DATE - %s AND l.estrategia = %s AND l.ambito = ANY(%s)
+           ORDER BY p.inicio_utc, p.evento_id""", (dias, v2.ESTRATEGIA, list(AMBITOS_PUBLICOS)))
     por_ticket: dict = {}
     for p in patas:
         ev = p["evento"] if isinstance(p["evento"], list) else json.loads(p["evento"] or "[]")
@@ -292,6 +302,25 @@ def resumen_publico_v2(info: dict) -> dict:
                             for e in escalones}}
 
 
+def comparar(dias: int = 30) -> list[dict]:
+    """Parley publicado frente a la sombra por probabilidad: boletos liquidados, acierto prometido y real, unidades.
+
+    Puerta para sustituir el v2 (auditoría 19-nov-2026): ≥ 30 días de sombra con el acierto real dentro de lo
+    prometido en cada nivel. Uso: ``python -m qf.publish.parley_v2_datos comparar [días]``.
+    """
+    return query(
+        """SELECT l.estrategia, l.ambito, t.target, count(*) AS boletos,
+                  count(*) FILTER (WHERE r.outcome = 'ganado') AS ganados,
+                  round(avg(coalesce(t.prob_prudente, t.prob_conjunta))::numeric * 100, 1) AS prometido,
+                  round(avg((r.outcome = 'ganado')::int)::numeric * 100, 1) AS real,
+                  round(avg(t.cuota_total)::numeric, 2) AS cuota_media,
+                  round(sum(r.factor_pago - 1)::numeric, 2) AS unidades
+           FROM parley_v2_lotes l JOIN parley_v2_tickets t ON t.lote_id = l.lote_id
+           JOIN parley_v2_resultados r ON r.ticket_id = t.ticket_id AND r.outcome IN ('ganado', 'perdido')
+           WHERE l.dia >= CURRENT_DATE - %s AND l.ambito <> 'partido'
+           GROUP BY 1, 2, 3 ORDER BY 1, 2, 3""", (dias,))
+
+
 # ------------------------------------------------------------------ orquestación
 def habilitado() -> bool:
     return os.getenv("PARLEY_V2_ENABLED", "0") == "1"
@@ -322,7 +351,7 @@ def ejecutar(now: datetime, cargar_ops: Callable[[datetime, tuple[str, ...]], li
             return {"estado": "abstencion", "razones": br.razones, "dia": dia.isoformat()}
         if sig is not None:
             return {"estado": "esperando", "razones": br.razones, "siguiente_intento": sig.isoformat()}
-    ops = cargar_ops(now, br.deportes)
+    ops = todas = cargar_ops(now, br.deportes)
     calibracion = None
     if artefacto and artefacto.get("aprobado"):
         calibracion = Calibrador(artefacto).para_opciones(ops)
@@ -338,7 +367,30 @@ def ejecutar(now: datetime, cargar_ops: Callable[[datetime, tuple[str, ...]], li
     if not _guardar(lote):
         return {"estado": "ya_elegido", "dia": dia.isoformat()}
     log.info("Parley v2 sellado: %s", {k: v for k, v in resumen.items() if k != "tickets"})
-    return {**resumen, "chain": lote["chain_sha256"][:16]}
+    return {**resumen, "chain": lote["chain_sha256"][:16],
+            "sombra": sellar_sombra(todas, calibracion, now, dia, br, diario, "sombra")}
+
+
+def sellar_sombra(ops: list[Opcion], calibracion: dict | None, now: datetime, dia: date, br: Barrera,
+                  lote_diario: str | None, ambito: str) -> dict:
+    """Lote del parley por probabilidad (``parley_prob``) con las patas que recibió el v2. No se publica.
+
+    ``ops`` va ANTES del filtro por categoría del artefacto: la doble oportunidad y los goles por equipo no tienen
+    categoría propia («sin_medir») y el v2 los descarta, aunque en ``alta_prob_ext`` cumplen lo prometido. Donde hay
+    calibración se usa su p prudente; donde no, la del consenso de casas. Va después del v2 y en su propio lote: si
+    falla, el v2 ya está sellado y no cambia.
+    """
+    try:
+        plan = prob.a_plan(ops, calibracion)
+        lote = construir_lote(plan, now, dia, br, lote_diario, _prev(), ambito=ambito,
+                              estrategia=prob.ESTRATEGIA, version=prob.VERSION)
+        guardado = _guardar(lote)
+    except Exception:                              # la sombra nunca tumba el parley publicado
+        log.exception("Parley por probabilidad (sombra): no se pudo sellar")
+        return {"estado": "error"}
+    return {"estado": "elegido" if guardado else "ya_elegido",
+            "tickets": [{"nivel": t.target, "patas": len(t.legs), "p": round(t.p_prudente or 0, 3)} for t in plan.tickets],
+            "abstenciones": [a.target for a in plan.abstenciones]}
 
 
 def main() -> None:                                   # pragma: no cover - cableado de producción
@@ -372,4 +424,8 @@ def main() -> None:                                   # pragma: no cover - cable
 
 
 if __name__ == "__main__":                            # pragma: no cover
-    main()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "comparar":
+        print(json.dumps(comparar(int(sys.argv[2]) if len(sys.argv) > 2 else 30), ensure_ascii=False, indent=1, default=str))
+    else:
+        main()

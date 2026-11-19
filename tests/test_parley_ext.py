@@ -25,8 +25,9 @@ def casa(key, *mercados):
     return {"key": key, "markets": list(mercados)}
 
 
-def evento(i, inicio=None, sport="tennis", books=None, recibida=RECIBIDA):
-    return {"id": i, "sport_key": sport, "commence_time": (inicio or NOW + timedelta(hours=5)).isoformat(),
+def evento(i, inicio=None, sport="tennis", books=None, recibida=RECIBIDA, tour="ATP", torneo="ATP Finals"):
+    return {"id": i, "sport_key": sport, "tour": tour, "tournament": torneo,
+            "commence_time": (inicio or NOW + timedelta(hours=5)).isoformat(),
             "home_team": f"L{i}", "away_team": f"V{i}", "_received_at": recibida.isoformat(),
             "bookmakers": books or []}
 
@@ -227,3 +228,12 @@ def test_dos_jugadores_con_el_mismo_mercado_y_linea_no_se_funden_en_un_contrato(
     ops = ext.candidatos({"nba_props": [e]}, NOW)
     overs = {o.jugador[1]: o.price for o in ops if o.cand.selection == "over"}
     assert overs == {"A": 1.82, "B": 2.40}          # cada jugador conserva su mejor cuota
+
+
+def test_tenis_itf_utr_y_dobles_no_entran_porque_no_se_pueden_liquidar():
+    """Auditoría 19-nov-2026: las 19 patas de tenis sin resultado eran ITF/UTR."""
+    fuera = [ganador(1, tour="ITF", torneo="ITF Women Monastir"), ganador(2, tour="UTR", torneo="UTR Men Miami USA"),
+             ganador(3, tour="Challenger", torneo="Challenger Kobe, Doubles"), ganador(4, tour=None, torneo="")]
+    assert ext.candidatos({"tenis": fuera}, NOW) == []
+    dentro = ext.candidatos({"tenis": [ganador(5, tour="Challenger", torneo="ATP Challenger Champaign")]}, NOW)
+    assert {o.match_id for o in dentro} == {"tenis:5"}

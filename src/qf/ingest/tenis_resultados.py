@@ -34,6 +34,7 @@ DIARIO = 15                                 # peticiones propias/día (del plan 
 MIN_EDAD = timedelta(hours=2, minutes=30)   # antes de esto un partido suele seguir en juego o esperando a PropLine
 COOLDOWN_FECHA = timedelta(minutes=45)      # evita repetir la misma fecha en crons seguidos (:05/:20)
 VENTANA = timedelta(hours=36)               # tolera aplazamientos/lluvia frecuentes en torneos ITF/Challenger
+APLAZADO_NULO = timedelta(hours=48)        # aplazado y aún sin jugar 48 h después: nulo (regla habitual de las casas)
 MERCADOS_SOPORTADOS = ("h2h", "totals", "total_games", "spreads", "handicap_games")
 
 
@@ -366,6 +367,8 @@ class RespaldoTenis:
         inicio = _utc(inicio_utc)
         self._cargar_archivo(inicio)
         hallado = buscar_evento(self._eventos, local, visitante, inicio)
+        if hallado and self._aplazado_vencido(hallado[0], inicio):
+            return "void"
         if hallado and _es_terminal(hallado[0]):
             res = calificar_evento(hallado[0], hallado[1], mercado, seleccion, linea)
             if res:
@@ -379,6 +382,8 @@ class RespaldoTenis:
             self._consultar_fecha(fecha, ahora)
             hallado = buscar_evento(self._eventos, local, visitante, inicio)
             if hallado:
+                if self._aplazado_vencido(hallado[0], inicio):
+                    return "void"
                 if _es_terminal(hallado[0]):
                     res = calificar_evento(hallado[0], hallado[1], mercado, seleccion, linea)
                     if res:
@@ -389,6 +394,17 @@ class RespaldoTenis:
                         "postponed", "delayed", "interrupted"):
                     break
         return None
+
+    def _aplazado_vencido(self, e: dict, inicio: datetime) -> bool:
+        """Aplazado según una observación hecha ≥ ``APLAZADO_NULO`` después del inicio previsto.
+
+        Cuenta la hora de la OBSERVACIÓN, no la de ahora: un recibo viejo que decía «aplazado» no
+        basta, porque el partido pudo jugarse después (auditoría 19-nov-2026, García Cid–Maduzzi).
+        """
+        if str(((e.get("status") or {}).get("type") or "")).lower() != "postponed":
+            return False
+        visto = next((rec for rec, _f, ev in self._eventos.values() if ev is e), None)
+        return visto is not None and _utc(visto) >= _utc(inicio) + APLAZADO_NULO
 
     def resolver_pata(self, pata: dict, now: datetime) -> str | None:
         if pata.get("deporte") != "tenis":

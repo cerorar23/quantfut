@@ -98,6 +98,16 @@ def test_sella_un_lote_con_cadena_hash_y_estado_solo_referencia_en_sombra(entorn
     assert {"deporte", "evento_id", "mercado", "cuota", "casa", "cuota_en", "inicio_utc"} <= set(pata)
     assert all(pt["cuota_en"] <= p["decidido_at"] for t in p["tickets"] for pt in t["patas"])
     assert lote["clave"] == "parley_objetivo|v2.1|diario|2026-11-06"
+    # Después, en su propio lote, la sombra del parley por probabilidad con las mismas patas.
+    assert len(entorno) == 2 and entorno[1]["clave"] == "parley_probabilidad|v3-sombra|sombra|2026-11-06"
+    assert entorno[1]["payload"]["estrategia"] == "parley_probabilidad" and r["sombra"]["estado"] == "elegido"
+
+
+def test_un_fallo_de_la_sombra_no_toca_el_parley_sellado(monkeypatch, entorno):
+    from qf.publish import parley_prob
+    monkeypatch.setattr(parley_prob, "a_plan", lambda *a, **k: 1 / 0)
+    r = pd_.ejecutar(hora(9, 36), lambda n, d: ops(), RECIBOS, modo_referencia=True)
+    assert r["estado"] == "elegido" and r["sombra"] == {"estado": "error"} and len(entorno) == 1
 
 
 def test_es_idempotente_y_no_recalcula_un_lote_sellado(monkeypatch, entorno):
@@ -138,8 +148,11 @@ def test_informe_publico_v2_forma_acceso_y_textos(monkeypatch):
                     pata("b", deporte="futbol", evento_id="es.laliga:2425:a-b:20250225", mercado="h2h", seleccion="home",
                          linea=None, local_f="Cádiz", visita_f="Celta")]
         return [t("a", 2.1), t("b", 3.1), t("c", 8.2, "ganado")]
-    monkeypatch.setattr(pd_, "query", falso)
+    vistos = []
+    monkeypatch.setattr(pd_, "query", lambda sql, params=(): vistos.append(params) or falso(sql, params))
     inf = pd_.informe_publico_v2()
+    # Solo la estrategia publicada y sin same-game ni sombra (auditoría 19-nov-2026).
+    assert all(p[1] == "parley_objetivo" and p[2] == ["diario", "nba_dia"] for p in vistos)
     d = inf["dias"][0]
     assert d["chain_sha256"] == "c" * 64 and [x["escalon"] for x in d["tickets"]] == [1, 2, 3]
     pa = d["tickets"][0]["patas"]

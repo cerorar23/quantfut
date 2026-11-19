@@ -3394,3 +3394,13 @@ Plan y medición en `docs/tenis_capa_edad_20261117.md`. Rama `tenis/capa-edad`.
 - [x] Fechas de nacimiento desde las edades de TML (17-nov): `carga/nacimientos_tml.py`, `ops/nacimientos_tml.sh` (lunes 12:00), artefacto `tenis-2.2` con la capa reajustada a cobertura ~100 % (ATP −0,0038, WTA −0,0033). `docs/tenis_nacimientos_tml_20261117.md`. Pendiente de desplegar: imagen nueva, cargar en `tenis-db`, registrar 2.2.
 - [x] Avisos a Telegram (19-nov): credenciales por entorno, deduplicacion persistente entre pasadas, sello_tardio solo si era evitable, motivos esperados al log, salud programada cada hora. docs/tenis_avisos_telegram_20261119.md.
 - [x] Fechas de nacimiento desde las edades de TML (17-nov): `carga/nacimientos_tml.py`, `ops/nacimientos_tml.sh` (lunes 12:00), artefacto `tenis-2.2` con la capa reajustada a cobertura ~100 % (ATP −0,0038, WTA −0,0033). `docs/tenis_nacimientos_tml_20261117.md`. Desplegado el 19-nov 03:27 UTC (ver DEPLOYS.md). Cron semanal instalado. Pendiente: comprobar `edad_dif` en el primer sello real.
+
+## Parley: auditoría y parley por probabilidad en sombra (19-nov-2026)
+Detalle en `docs/parley_auditoria_20261119.md`.
+- [x] `db/119`: CHECK de ámbito con `nba_dia`, `sombra` y `sombra_nba` (el lote NBA multipartido nunca se había sellado).
+- [x] API `/parley`: solo la estrategia publicada y los ámbitos `diario` y `nba_dia`; la web cuenta solo `publicado`.
+- [x] Tenis no liquidable fuera (ITF, UTR, equipos, dobles); aplazado ≥ 48 h observado = nulo.
+- [x] `parley_prob` (2/3/4 patas, p ≥ 0,60/0,45/0,33) sellado en sombra tras el v2, diario y NBA.
+- [ ] Desplegar y pasar el cron del parley de `releases/parley-v2-20261106` a la imagen del worker de `main`.
+- [ ] Hacia el 20-dic-2026: `python -m qf.publish.parley_v2_datos comparar 30`. Si cada nivel de la sombra acierta lo prometido, proponer al titular sustituir el v2 (o dejar 8,20 y 12,10 como «lotería» VIP).
+- [ ] Revisar las 19 patas viejas sin fuente (ITF y NBA del 15-nov) cuando lleguen las alertas de 72 h. No anular a ciegas.
