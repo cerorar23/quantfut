@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from tenis import alertas
 from tenis.alertas import enviar_alerta
 from tenis.modelo import capa_edad
 from tenis.inferencia import inferir
@@ -33,6 +34,9 @@ from tenis.simulador.salida import a_contrato
 
 log = logging.getLogger(__name__)
 UTC = timezone.utc
+# Motivos por los que un partido no se pronostica y que son lo normal en el circuito (datos que llegan tarde, superficie o formato
+# que no se conocen, partidos por equipos): se registran en el log y se cuentan, pero no merecen un aviso al canal operativo.
+MOTIVOS_ESPERADOS = frozenset({"excluido_o_equipos", "superficie_desconocida", "formato_desconocido", "fuera_de_la_exportacion"})
 # Artefactos congelados que viajan en la imagen del motor (apps/tenis/artefactos/); `TENIS_ARTEFACTOS_DIR` lo sobrescribe.
 DIRECTORIO_ARTEFACTOS = Path(__file__).resolve().parents[2] / "artefactos"
 
@@ -112,7 +116,8 @@ def buscar_partidos_pendientes(
     # cada pasada para siempre.
     sql = """
     SELECT p.partido_id, p.edicion_id, p.jugador_1, p.jugador_2, p.mejor_de,
-           t.circuito, e.superficie, pr.inicio_programado_utc
+           t.circuito, e.superficie, pr.inicio_programado_utc,
+           (SELECT min(y.recibido_en) FROM programa y WHERE y.partido_id = p.partido_id) AS programa_visto_desde
     FROM partido p
     JOIN edicion e ON p.edicion_id = e.edicion_id
     JOIN torneo t ON e.torneo_id = t.torneo_id
@@ -131,7 +136,7 @@ def buscar_partidos_pendientes(
     """
     rows = db.execute(sql, (ahora_utc, version_modelo)).fetchall()
     cols = ["partido_id", "edicion_id", "jugador_1", "jugador_2", "mejor_de",
-            "circuito", "superficie", "inicio_programado_utc"]
+            "circuito", "superficie", "inicio_programado_utc", "programa_visto_desde"]
     return [dict(zip(cols, r)) for r in rows]
 
 
@@ -156,8 +161,15 @@ def simular_y_sellar_partido(
 
     ahora_utc = datetime.now(UTC)
     if ahora_utc >= t_ref and forzar_corte is None:
-        enviar_alerta("sello_tardio", f"Partido {partido_id} ya inició a las {t_ref.isoformat()}", partido_id=partido_id)
-        return {"estado": "omitido_tardio", "partido_id": partido_id}
+        # Solo es un fallo (y se avisa) si el horario se conocía con tiempo para sellar: con el horario recibido menos de 60 min
+        # antes del corte el partido nunca pudo sellarse, y avisar de eso a cada partido sería ruido.
+        visto = partido.get("programa_visto_desde")
+        evitable = visto is None or (visto.replace(tzinfo=visto.tzinfo or UTC) <= t_ref - timedelta(minutes=60))
+        if evitable:
+            enviar_alerta("sello_tardio", f"Partido {partido_id} ya inició a las {t_ref.isoformat()}", partido_id=partido_id)
+        else:
+            log.info("Partido %s omitido: su horario llegó menos de 60 min antes del corte (no evitable)", partido_id)
+        return {"estado": "omitido_tardio", "partido_id": partido_id, "evitable": evitable}
 
     # Corte fijo: T_ref - 60 min
     corte = forzar_corte or (t_ref - timedelta(minutes=60))
@@ -173,8 +185,11 @@ def simular_y_sellar_partido(
         inferencia = inferir(db, parametros, [partido]).get(partido_id, {"ok": False, "motivo": "sin_inferencia"})
     if not inferencia.get("ok"):
         motivo = inferencia.get("motivo", "desconocido")
-        enviar_alerta("jugador_sin_historia" if motivo == "sin_historia_ni_ranking" else "sin_pronostico",
-                      f"Partido {partido_id} sin pronóstico: {motivo}", partido_id=partido_id)
+        if motivo in MOTIVOS_ESPERADOS:
+            log.info("Partido %s sin pronóstico (esperado): %s", partido_id, motivo)
+        else:
+            enviar_alerta("jugador_sin_historia" if motivo == "sin_historia_ni_ranking" else "sin_pronostico",
+                          f"Partido {partido_id} sin pronóstico: {motivo}", partido_id=partido_id)
         return {"estado": "omitido_sin_modelo", "partido_id": partido_id, "motivo": motivo}
 
     psi_r = circ_params["psi_r"]
@@ -316,6 +331,7 @@ def main(argv=None) -> int:
     if not re.fullmatch(r"[a-z_][a-z0-9_]*", args.esquema):
         print("nombre de esquema no válido", flush=True)
         return 1
+    alertas.cargar_estado()                                    # TENIS_ESTADO_ALERTAS: no repetir avisos de pasadas anteriores
     print(f"Motor de tenis v2 iniciado (dry_run={args.dry_run})", flush=True)
     try:
         with psycopg.connect(args.dsn, autocommit=True) as db:

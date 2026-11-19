@@ -13,7 +13,8 @@ import logging
 import os
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -29,11 +30,57 @@ TIPOS_ALERTA = {
     "jugador_sin_historia",
     "fatiga_desconocida",
     "respaldo_fallido",
+    "sin_pronostico",
+    "inferencia_fallida",
+    "motor_fallido",
     "prueba",
 }
 
 # Memoria de deduplicación: {(tipo, partido_id, fecha_dia_utc)}
 _ALERTAS_ENVIADAS: set[tuple[str, int | None, str]] = set()
+
+
+ENV_ESTADO = "TENIS_ESTADO_ALERTAS"
+DIAS_DE_ESTADO = 3                       # solo se recuerdan los avisos de los últimos días (la clave lleva la fecha)
+
+
+def _ruta_estado(ruta: str | os.PathLike | None = None) -> Path | None:
+    valor = ruta or os.getenv(ENV_ESTADO)
+    return Path(valor) if valor else None
+
+
+def cargar_estado(ruta: str | os.PathLike | None = None) -> int:
+    """Siembra la deduplicación con lo ya avisado en pasadas anteriores (fichero JSON). Devuelve cuántas claves recuperó.
+
+    Cada pasada del motor es un proceso nuevo: sin esto la memoria empieza vacía y el mismo aviso se repetiría cada 30 min.
+    Un fichero ausente o corrupto no es un error (empieza vacío)."""
+    destino = _ruta_estado(ruta)
+    if destino is None or not destino.is_file():
+        return 0
+    try:
+        filas = json.loads(destino.read_text(encoding="utf-8"))
+        vigentes = {(str(t), None if p is None else int(p), str(f)) for t, p, f in filas}
+    except (OSError, ValueError, TypeError):
+        log.warning("Estado de alertas ilegible en %s: se empieza vacío", destino)
+        return 0
+    sembrar_alertas(vigentes)
+    return len(vigentes)
+
+
+def guardar_estado(ruta: str | os.PathLike | None = None) -> None:
+    """Guarda las claves recientes de forma atómica (temporal + reemplazo). Sin ruta configurada no hace nada."""
+    destino = _ruta_estado(ruta)
+    if destino is None:
+        return
+    desde = (datetime.now(timezone.utc) - timedelta(days=DIAS_DE_ESTADO)).strftime("%Y-%m-%d")
+    filas = sorted([t, p, f] for (t, p, f) in _ALERTAS_ENVIADAS if f >= desde)
+    try:
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        temporal = destino.with_name(destino.name + ".tmp")
+        temporal.write_text(json.dumps(filas), encoding="utf-8")
+        os.replace(temporal, destino)
+    except OSError as exc:
+        log.warning("No se pudo guardar el estado de alertas en %s: %s", destino, exc)
 
 
 def hoy_utc() -> str:
@@ -57,6 +104,7 @@ def esta_enviada(tipo: str, partido_id: int | None = None, fecha: str | None = N
 def registrar_enviada(tipo: str, partido_id: int | None = None, fecha: str | None = None) -> None:
     f = fecha or hoy_utc()
     _ALERTAS_ENVIADAS.add((tipo, partido_id, f))
+    guardar_estado()
 
 
 def enviar_alerta(

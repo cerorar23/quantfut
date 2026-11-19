@@ -22,3 +22,6 @@
 
 # 7. Fechas de nacimiento estimadas desde las edades de TML (lunes 12:00, tras la carga semanal de TML de las 11:30)
 0 12 * * 1 /usr/bin/flock -w 900 /tmp/tenis-motor.lock /home/qf/tenis-isolated/nacimientos_tml.sh >> /home/qf/tenis-isolated/nacimientos_tml.log 2>&1
+
+# 8. Salud del motor con avisos a Telegram (cada hora, minuto 40)
+40 * * * * /usr/bin/flock -n /tmp/tenis-salud.lock /home/qf/tenis-isolated/verificar_salud.sh >> /home/qf/tenis-isolated/salud.log 2>&1
