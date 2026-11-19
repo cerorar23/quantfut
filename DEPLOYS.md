@@ -33,6 +33,24 @@ imagen desde esa carpeta sin sincronizarla** con `main`: revertiría código.
 
 ## Registro (lo más reciente arriba)
 
+### 2026-11-19 13:36–13:46 UTC · Auditoría del parley: db/119, API, worker y cron del parley desde main · `quantfut-api:2f7ada81`, `quantfut-worker:c7b283a8` (PR #517)
+- **Motivo:** auditoría del parley (`docs/parley_auditoria_20261119.md`). El lote NBA multipartido nunca se selló (CHECK de ámbito). `/parley` llenaba la página de same-game `solo_referencia`. Se elegía tenis ITF/UTR que no se puede liquidar. El cron corría desde una carpeta congelada sobre `quantfut-worker-segura:53b1e5ed`. Además se sella en sombra el parley por probabilidad (`parley_prob`).
+- **Autorización:** «Errores y rediseño» y «Sí, despliega» del titular en el chat. CI 12/12 en verde antes de fusionar.
+- **Pre-vuelo:** `scripts/deploy.sh estado`. API y worker solo diferían de `main` en los archivos del PR; la API, además, en `alta_prob*` del PR #515, que ya estaban en `main`.
+- **Base:** `db/119` aplicada a las 13:36 UTC. El CHECK queda en `diario, partido, nba_dia, sombra, sombra_nba`; solo amplía la lista.
+- **Imágenes:** API `quantfut-api:2f7ada81` (ensayo: 325 rutas, ningún módulo con error) y worker `quantfut-worker:c7b283a8` (ensayo sin errores; `c7b283a8` solo añade una línea de `DEPLOYS.md` a `2f7ada81`). Se recrearon solo `api` y después `worker`. Hoy no había reentrenamiento: el servidor ya no entrena.
+- **Cron del parley:** `releases/parley-v2-20261106/run.sh` y `run_nba.sh` ya no montan código; usan la imagen `quantfut-worker:c7b283a8` con `artefacto.json`, las equivalencias de tenis y la caché de SportsAPIPro. Se probó antes de activarlos: `parley_v2_datos comparar 30` (lectura), una liquidación real (1 pata y 1 boleto) y la importación del revisor NBA y de `parley_prob`.
+- **Verificado:**
+  - `estado`: API y worker en 0 diferencias frente a `main`. La API corre con las redes `nba-api-red`, `quantfut_default` y `tenis-db_tenis-interna`.
+  - `/parley` solo trae el ámbito `diario` (45 publicados y 7 con candado): ya no aparece el same-game. El resumen sigue en 8 de 42 y −53,6 %.
+  - El dominio sirve `app.js?v=parley-auditoria-20261119`, con `/`, `/parley-del-dia/` y `/parley` en 200.
+- **Pendiente de comprobar:** el primer lote `nba_dia` y `sombra_nba` (esta noche, revisor NBA) y el primer `sombra` diario (20-nov, 09:35 UTC).
+- **Vuelta atrás:**
+  - API: `cd ~/quantfut && cp -p releases/compose-antes-20261119-074151.yml docker-compose.yml && docker compose up -d --no-deps --no-build api`.
+  - Worker: `cp -p releases/compose-antes-20261119-074524.yml docker-compose.yml && docker compose up -d --no-deps --no-build worker`.
+  - Cron del parley: `cd releases/parley-v2-20261106 && cp -p run.sh.antes-main-20261119 run.sh && cp -p run_nba.sh.antes-main-20261119 run_nba.sh`.
+  - `db/119`: vuelta atrás al pie del archivo, solo si no hay lotes con los ámbitos nuevos.
+
 ### 2026-11-19 05:03 UTC · Alta probabilidad: límite del ajuste de goles 0,020 (solo esa línea) · solo worker (PR #515; `main` `d270094a`)
 - **Motivo:** el límite `MAX_RESIDUO_AJUSTE = 0,01` (5-oct, sin medición) dejaba sin candidatos de goles al ~34 % de los partidos con cuotas (el 1X2 y la línea de Pinnacle no caben en una pareja de lambdas). Medición del 18-nov (`docs/medicion_residuo_ajuste_20261118.md`, PR #514): 14.216 partidos de football-data, protocolo fijado antes de calcular, errores por partido; la calibración no empeora con el residuo (0,01-0,015: +1,15; 0,015-0,02: +1,24; ≤ 0,01: +0,84 puntos sobre lo prometido) y el criterio acepta 0,015 y 0,020 y rechaza 0,03. **Decisión del titular (18-nov): subir a 0,020.**
 - **Cambio:** `alta_prob.MAX_RESIDUO_AJUSTE_ALTA = 0.02` (nuevo) y `ajuste_goles(..., max_residuo=None)`; solo `alta_prob_datos.decidir` (línea del 80 %) y `alta_prob_ext.candidatos` (ampliada) lo pasan. **Escalera, parley y primera mitad siguen en 0,010**: comparten `ajuste_goles`, no se midieron con 0,02 y cada una necesita su propia medición; una prueba (`test_el_limite_de_alta_probabilidad_no_se_cuela_en_rutas_no_medidas`) lo vigila. 7 pruebas nuevas (6 fallaban antes).
