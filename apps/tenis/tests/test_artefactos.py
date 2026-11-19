@@ -9,6 +9,7 @@ from tenis import artefactos as art
 from tenis.modelo import hiperparametros as hp
 
 ARTEFACTO = Path(__file__).resolve().parents[1] / "artefactos" / "tenis-2.1-capa-edad.json"
+ARTEFACTO_22 = Path(__file__).resolve().parents[1] / "artefactos" / "tenis-2.2-capa-edad.json"
 
 
 def _informe(contenido, pasa=True, capa=True, base=None):
@@ -32,6 +33,15 @@ def test_el_artefacto_del_repo_es_valido_y_trae_la_capa_en_los_dos_circuitos(tmp
     assert plan["version_modelo"] == f"tenis-2.1+{plan['sha256'][:12]}"
     assert set(plan["capa_edad"]) == {"atp", "wta"} and all(plan["capa_edad"].values())
     assert any("G_calibracion" in x for x in plan["advertencias"])          # advierte, no bloquea
+
+
+def test_el_artefacto_2_2_es_valido_y_comparte_la_base_con_el_2_1(tmp_path):
+    c21, c22 = hp.leer(ARTEFACTO), hp.leer(ARTEFACTO_22)
+    assert art._base_sin_capa(c21) == art._base_sin_capa(c22)                 # mismos hiperparámetros base: solo cambia la capa
+    plan = art.validar(ARTEFACTO_22, _escribir(tmp_path, _informe(c22)), menor=2)
+    assert plan["version_modelo"] == f"tenis-2.2+{plan['sha256'][:12]}" and plan["sha256"] != art.validar(
+        ARTEFACTO, _escribir(tmp_path, _informe(c21)))["sha256"]
+    assert all(plan["capa_edad"][c]["beta"] < 0 and plan["capa_edad"][c]["pendiente"] > 0.9 for c in ("atp", "wta"))
 
 
 def test_validar_rechaza_lo_que_no_debe_registrarse(tmp_path):
