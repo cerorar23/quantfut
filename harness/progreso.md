@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 19-nov-2026 · Auditoría del parley: errores corregidos y parley por probabilidad en sombra (`fix/parley-auditoria-20261119`)
+- **Causa de tantos perdidos:** el diseño, no las probabilidades. Con cuota objetivo fija y p de mercado, el boleto acierta ≈ 1/cuota: 8 de 42 ganados, todos dentro de lo prometido (8,20 y 12,10: 0 de 20, esperado ≈ 2). El artefacto «aprobado» es `metodo: mercado` en las 15 categorías.
+- **Decisión del titular: corregir y rediseñar en sombra.** `parley_prob` elige primero la probabilidad (2/3/4 patas, p ≥ 0,60/0,45/0,33) en mercados que cumplen lo prometido. Se sella como otra estrategia (`parley_probabilidad`, ámbitos `sombra*`) y no se publica. Sustituye al v2 solo con 30 días que cumplan (`parley_v2_datos comparar`).
+- **Errores:** el CHECK de ámbito impedía sellar `nba_dia` (37 fallos; las pruebas simulan la base, por eso ahora una prueba cruza el código con el SQL). La API ya no enseña el same-game ni la sombra, y la web cuenta solo `publicado`. El tenis ITF/UTR y los dobles quedan fuera porque no se pueden liquidar. Un aplazado pasa a nulo solo si se observó así ≥ 48 h después.
+- **Arnés:** en un worktree sin `.venv`, `harness_check.sh` cae en el alias `python3` de Windows y se cuelga; y el Python del `.venv` principal no puede crear temporales (PermissionError). Se corrió con el Python del sistema.
+- Detalle: `docs/parley_auditoria_20261119.md`.
 ## 19-nov-2026 · Límite del ajuste de goles 0,020 en la línea de alta probabilidad (`quantfut-worker:d270094a`)
 
 - **Decisión clave:** el titular aprobó subirlo a 0,020 tras la medición (PR #514). Se aplicó con un límite PROPIO de la alta probabilidad (`MAX_RESIDUO_AJUSTE_ALTA`) y no cambiando la constante global: `ajuste_goles` también lo usan la escalera (y el parley), la primera mitad y las pruebas históricas, que no se midieron con 0,02. Subir lo no medido habría ampliado el cambio más allá de lo aprobado; el parámetro opcional `max_residuo` lo permite sin tocar esas rutas.

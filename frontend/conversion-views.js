@@ -276,7 +276,9 @@ export function createConversionViews({ esc, realNumber, realPercent, realDate, 
     const tickets = ultimo?.tickets ?? [];
     const bloqueados = tickets.filter(t => t.locked).length;
 
-    const crono = [...dias].reverse().flatMap(d => [...(d.tickets ?? [])].filter(t => !t.locked && t.outcome));
+    // Solo cuentan los parlays publicados: un `solo_referencia` no es apuesta y su cuota es el producto de patas sueltas
+    // que ninguna casa paga (auditoría 19-nov-2026; mismo criterio que `resumen_publico_v2` del servidor).
+    const crono = [...dias].reverse().flatMap(d => [...(d.tickets ?? [])].filter(t => !t.locked && t.outcome && t.estado === 'publicado'));
     const ganados = crono.filter(t => t.outcome === 'ganado').length;
     const n = crono.length;
 

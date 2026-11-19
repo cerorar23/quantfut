@@ -178,3 +178,20 @@ def test_respeta_cooldown_tope_diario_429_y_carpeta_solo_lectura(tmp_path):
                           call=lambda u, k: (200, json.dumps({"events": [_evento(winner=1)]}).encode()),
                           clock=lambda: NOW) as r:
         assert r.resolver("Matteo Martineau", "Hugo Gaston", INICIO, "h2h", "home", now=NOW) == "win"
+
+
+def test_aplazado_solo_es_nulo_si_se_observo_asi_48_h_despues(tmp_path):
+    """Auditoría 19-nov-2026: un aplazado esperaba para siempre; un recibo viejo no basta para anularlo."""
+    aplazado = _evento(tipo="postponed", desc="Postponed", winner=None)
+    temprano = tmp_path / "temprano"
+    _crear_equivalencias(temprano, "2026-11-11", INICIO + timedelta(hours=3), [aplazado])
+    with tr.RespaldoTenis("", raiz=tmp_path / "r1", eq_raiz=temprano, solo_archivo=True,
+                          clock=lambda: INICIO + timedelta(days=4)) as r:
+        assert r.resolver("Matteo Martineau", "Hugo Gaston", INICIO, "h2h", "home",
+                          now=INICIO + timedelta(days=4)) is None
+    tarde = tmp_path / "tarde"
+    _crear_equivalencias(tarde, "2026-11-11", INICIO + tr.APLAZADO_NULO + timedelta(minutes=1), [aplazado])
+    with tr.RespaldoTenis("", raiz=tmp_path / "r2", eq_raiz=tarde, solo_archivo=True,
+                          clock=lambda: INICIO + timedelta(days=4)) as r:
+        assert r.resolver("Matteo Martineau", "Hugo Gaston", INICIO, "h2h", "home",
+                          now=INICIO + timedelta(days=4)) == "void"
