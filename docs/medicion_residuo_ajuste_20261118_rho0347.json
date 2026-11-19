@@ -1,0 +1,430 @@
+{
+  "dataset_sha256": "d5cbc3151164dcc19e7304bba45ad2445d1e99a2ce97ddd5e92ea05c2f8ca79d",
+  "filas": 14305,
+  "rho": -0.0347,
+  "conteos": {
+    "partidos": 14216,
+    "sin_convergencia": 0,
+    "valueerror": 0
+  },
+  "residuo": {
+    "mediana": 0.007229545710669777,
+    "p75": 0.011963657941990086,
+    "p90": 0.016571781698517765,
+    "p95": 0.019924741415535234,
+    "max": 0.1674239730280663,
+    "pct_por_encima_de_0.01": 33.9
+  },
+  "por_grupo": {
+    "A": {
+      "n": 70185,
+      "partidos": 9392,
+      "brecha_pts": 0.8443947505104872,
+      "se_pts": 0.17191956952208262,
+      "real": 80.33197976775665,
+      "prometido": 79.48758501724615
+    },
+    "B": {
+      "n": 25424,
+      "partidos": 2792,
+      "brecha_pts": 1.1533084686188027,
+      "se_pts": 0.2908340447765161,
+      "real": 81.02580239144116,
+      "prometido": 79.87249392282237
+    },
+    "C": {
+      "n": 12609,
+      "partidos": 1336,
+      "brecha_pts": 1.2358072681138241,
+      "se_pts": 0.4317365927683393,
+      "real": 81.21976366087715,
+      "prometido": 79.98395639276333
+    },
+    "D": {
+      "n": 6005,
+      "partidos": 634,
+      "brecha_pts": 0.8489981425716111,
+      "se_pts": 0.6164208204201872,
+      "real": 80.81598667776852,
+      "prometido": 79.96698853519692
+    },
+    "E": {
+      "n": 572,
+      "partidos": 62,
+      "brecha_pts": 0.1657300343010397,
+      "se_pts": 1.9928202261354067,
+      "real": 80.5944055944056,
+      "prometido": 80.42867556010455
+    }
+  },
+  "decision": {
+    "evaluaciones": [
+      {
+        "limite": 0.015,
+        "incremento": {
+          "n": 25424,
+          "partidos": 2792,
+          "brecha_pts": 1.1533084686188027,
+          "se_pts": 0.2908340447765161,
+          "real": 81.02580239144116,
+          "prometido": 79.87249392282237
+        },
+        "base": {
+          "n": 70185,
+          "partidos": 9392,
+          "brecha_pts": 0.8443947505104872,
+          "se_pts": 0.17191956952208262,
+          "real": 80.33197976775665,
+          "prometido": 79.48758501724615
+        },
+        "diferencia_vs_base": {
+          "diff_pts": 0.30891371810831547,
+          "ic95": [
+            -0.3431819683335021,
+            0.9423386714419295
+          ]
+        },
+        "cond1_brecha_conjunta": true,
+        "cond2_tramos": true,
+        "cond3_no_peor_que_base": true,
+        "partidos_suficientes": true,
+        "tramos_que_fallan": [],
+        "acepta": true
+      },
+      {
+        "limite": 0.02,
+        "incremento": {
+          "n": 38033,
+          "partidos": 4128,
+          "brecha_pts": 1.1806591210215247,
+          "se_pts": 0.2413921109371266,
+          "real": 81.09010596061316,
+          "prometido": 79.90944683959162
+        },
+        "base": {
+          "n": 70185,
+          "partidos": 9392,
+          "brecha_pts": 0.8443947505104872,
+          "se_pts": 0.17191956952208262,
+          "real": 80.33197976775665,
+          "prometido": 79.48758501724615
+        },
+        "diferencia_vs_base": {
+          "diff_pts": 0.3362643705110375,
+          "ic95": [
+            -0.2601035564061944,
+            0.9387845022324313
+          ]
+        },
+        "cond1_brecha_conjunta": true,
+        "cond2_tramos": true,
+        "cond3_no_peor_que_base": true,
+        "partidos_suficientes": true,
+        "tramos_que_fallan": [],
+        "acepta": true
+      },
+      {
+        "limite": 0.03,
+        "incremento": {
+          "n": 44038,
+          "partidos": 4762,
+          "brecha_pts": 1.1354339932774915,
+          "se_pts": 0.22476805575915249,
+          "real": 81.05272719015396,
+          "prometido": 79.91729319687647
+        },
+        "base": {
+          "n": 70185,
+          "partidos": 9392,
+          "brecha_pts": 0.8443947505104872,
+          "se_pts": 0.17191956952208262,
+          "real": 80.33197976775665,
+          "prometido": 79.48758501724615
+        },
+        "diferencia_vs_base": {
+          "diff_pts": 0.2910392427670043,
+          "ic95": [
+            -0.2706560233329471,
+            0.8116958464054431
+          ]
+        },
+        "cond1_brecha_conjunta": true,
+        "cond2_tramos": false,
+        "cond3_no_peor_que_base": true,
+        "partidos_suficientes": true,
+        "tramos_que_fallan": [
+          {
+            "mercado": "totals over 1.5",
+            "tramo": "0.67-0.72",
+            "n": 1061,
+            "partidos": 1061,
+            "brecha_pts": -3.379930028136958,
+            "se_pts": 1.4532384692230704,
+            "real": 66.25824693685203,
+            "prometido": 69.63817696498899,
+            "decide": true,
+            "pasa": false
+          }
+        ],
+        "acepta": false
+      }
+    ],
+    "limite_propuesto": 0.02
+  },
+  "por_grupo_y_banda": {
+    "0.62-0.80": {
+      "A": {
+        "n": 35093,
+        "partidos": 9342,
+        "brecha_pts": 0.8913141436276294,
+        "se_pts": 0.2557988597828782,
+        "real": 72.30216852363719,
+        "prometido": 71.41085438000955
+      },
+      "B": {
+        "n": 12472,
+        "partidos": 2786,
+        "brecha_pts": 1.1644476543925502,
+        "se_pts": 0.44053820814919487,
+        "real": 73.38838999358563,
+        "prometido": 72.22394233919309
+      },
+      "C": {
+        "n": 6160,
+        "partidos": 1330,
+        "brecha_pts": 1.6591677879797677,
+        "se_pts": 0.6452765395595393,
+        "real": 74.20454545454545,
+        "prometido": 72.54537766656568
+      },
+      "D": {
+        "n": 2943,
+        "partidos": 632,
+        "brecha_pts": 0.7663727829326556,
+        "se_pts": 0.9209300951877629,
+        "real": 73.32653754672104,
+        "prometido": 72.56016476378838
+      },
+      "E": {
+        "n": 256,
+        "partidos": 60,
+        "brecha_pts": 1.3111588516868833,
+        "se_pts": 3.1245458080709945,
+        "real": 73.4375,
+        "prometido": 72.12634114831312
+      }
+    },
+    "0.80-0.95": {
+      "A": {
+        "n": 35092,
+        "partidos": 9392,
+        "brecha_pts": 0.7974740203537601,
+        "se_pts": 0.20495667965187897,
+        "real": 88.3620198335803,
+        "prometido": 87.56454581322654
+      },
+      "B": {
+        "n": 12952,
+        "partidos": 2792,
+        "brecha_pts": 1.1425821001065903,
+        "se_pts": 0.34422640752057226,
+        "real": 88.38017294626313,
+        "prometido": 87.23759084615654
+      },
+      "C": {
+        "n": 6449,
+        "partidos": 1336,
+        "brecha_pts": 0.8314188664431444,
+        "se_pts": 0.5125170666496015,
+        "real": 87.9206078461777,
+        "prometido": 87.08918897973457
+      },
+      "D": {
+        "n": 3062,
+        "partidos": 634,
+        "brecha_pts": 0.9284123925446499,
+        "se_pts": 0.7482300291600479,
+        "real": 88.0143696930111,
+        "prometido": 87.08595730046646
+      },
+      "E": {
+        "n": 316,
+        "partidos": 62,
+        "brecha_pts": -0.762212298771036,
+        "se_pts": 2.6233514109329557,
+        "real": 86.39240506329115,
+        "prometido": 87.15461736206215
+      }
+    }
+  },
+  "por_mercado_incremento_0.02": {
+    "btts yes": {
+      "n": 306,
+      "partidos": 306,
+      "brecha_pts": 0.6256055992288051,
+      "se_pts": 2.7207592962445726,
+      "real": 65.0326797385621,
+      "prometido": 64.40707413933328
+    },
+    "spreads +1": {
+      "n": 5884,
+      "partidos": 3888,
+      "brecha_pts": 1.634108003789856,
+      "se_pts": 0.41893338415933634,
+      "real": 82.15499660095173,
+      "prometido": 80.52088859716187
+    },
+    "spreads +1.5": {
+      "n": 7777,
+      "partidos": 3954,
+      "brecha_pts": 1.6856857755598114,
+      "se_pts": 0.36842635330275975,
+      "real": 84.65989456088467,
+      "prometido": 82.97420878532485
+    },
+    "spreads +2": {
+      "n": 4485,
+      "partidos": 3603,
+      "brecha_pts": 1.4516215273905582,
+      "se_pts": 0.409834092326083,
+      "real": 91.30434782608695,
+      "prometido": 89.8527262986964
+    },
+    "spreads -1": {
+      "n": 55,
+      "partidos": 55,
+      "brecha_pts": 3.5377373866588164,
+      "se_pts": 5.990104986845462,
+      "real": 76.36363636363637,
+      "prometido": 72.82589897697757
+    },
+    "team_totals_away": {
+      "n": 3556,
+      "partidos": 3556,
+      "brecha_pts": 1.9765381857006759,
+      "se_pts": 0.7196285612855403,
+      "real": 74.83127109111362,
+      "prometido": 72.85473290541293
+    },
+    "team_totals_home": {
+      "n": 3890,
+      "partidos": 3890,
+      "brecha_pts": 0.9484399985052896,
+      "se_pts": 0.67988198848549,
+      "real": 75.83547557840618,
+      "prometido": 74.88703557990087
+    },
+    "totals over 1.5": {
+      "n": 3988,
+      "partidos": 3988,
+      "brecha_pts": 0.33120284738607964,
+      "se_pts": 0.6763736479461645,
+      "real": 75.12537612838516,
+      "prometido": 74.79417328099908
+    },
+    "totals over 2.5": {
+      "n": 349,
+      "partidos": 349,
+      "brecha_pts": -0.37865052263972965,
+      "se_pts": 2.530953192555386,
+      "real": 65.61604584527221,
+      "prometido": 65.99469636791196
+    },
+    "totals under 3.5": {
+      "n": 3656,
+      "partidos": 3656,
+      "brecha_pts": 0.5341019653421128,
+      "se_pts": 0.7141096551002476,
+      "real": 74.28884026258206,
+      "prometido": 73.75473829723994
+    },
+    "totals under 4.5": {
+      "n": 4087,
+      "partidos": 4087,
+      "brecha_pts": 0.34828457749063246,
+      "se_pts": 0.5270303502145322,
+      "real": 86.49376070467335,
+      "prometido": 86.14547612718272
+    }
+  },
+  "por_liga_incremento_0.02": {
+    "de.bundesliga": {
+      "n": 6285,
+      "partidos": 654,
+      "brecha_pts": 0.8480146742593573,
+      "se_pts": 0.6429569690092423,
+      "real": 80.22275258552108,
+      "prometido": 79.37473791126173
+    },
+    "es.laliga": {
+      "n": 5516,
+      "partidos": 635,
+      "brecha_pts": 1.882799887780091,
+      "se_pts": 0.6010505288067709,
+      "real": 82.59608411892675,
+      "prometido": 80.71328423114666
+    },
+    "fr.ligue_1": {
+      "n": 4911,
+      "partidos": 532,
+      "brecha_pts": 0.7707127607992723,
+      "se_pts": 0.6482095708928436,
+      "real": 80.73712074933822,
+      "prometido": 79.96640798853895
+    },
+    "gb.premier_league": {
+      "n": 6313,
+      "partidos": 666,
+      "brecha_pts": 0.21984051213104835,
+      "se_pts": 0.6123937157219769,
+      "real": 79.9461428797719,
+      "prometido": 79.72630236764087
+    },
+    "it.serie_a": {
+      "n": 7441,
+      "partidos": 812,
+      "brecha_pts": 2.3131164604793777,
+      "se_pts": 0.5369166348323304,
+      "real": 82.15293643327509,
+      "prometido": 79.83981997279572
+    },
+    "nl.eredivisie": {
+      "n": 3582,
+      "partidos": 385,
+      "brecha_pts": 0.33832725286041476,
+      "se_pts": 0.798058178421448,
+      "real": 79.84366275823562,
+      "prometido": 79.50533550537521
+    },
+    "pt.primeira": {
+      "n": 3985,
+      "partidos": 444,
+      "brecha_pts": 1.403287482447933,
+      "se_pts": 0.6946451012947037,
+      "real": 81.75658720200752,
+      "prometido": 80.35329971955959
+    }
+  },
+  "partidos_con_pick": {
+    "0.01": {
+      "linea_80": 70.9,
+      "linea_ampliada": 100.0
+    },
+    "0.015": {
+      "linea_80": 87.2,
+      "linea_ampliada": 100.0
+    },
+    "0.02": {
+      "linea_80": 95.6,
+      "linea_ampliada": 100.0
+    },
+    "0.03": {
+      "linea_80": 99.6,
+      "linea_ampliada": 100.0
+    },
+    "sin_limite": {
+      "linea_80": 100.0,
+      "linea_ampliada": 100.0
+    }
+  }
+}
