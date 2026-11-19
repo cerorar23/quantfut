@@ -6,8 +6,8 @@ import 'live_api.dart';
 import 'market_catalog.dart' show PublishedRecord;
 import 'market_hub.dart';
 import 'published_history.dart';
+import 'qf_controls.dart';
 import 'sport_contract.dart';
-import 'qf_theme.dart';
 import 'sport_images.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
@@ -17,14 +17,35 @@ import 'sports_quotes.dart';
 /// anterior al «-» (`games_total-3` → `games_total`).
 String marketFamily(SportMarket m) => m.family ?? m.market ?? m.id.split('-').first;
 
+/// Orden de los mercados de un partido ya calificado, igual en todos los deportes y que en fútbol (`orderSettledRows`):
+/// acertados primero, de mayor a menor cuota; luego los pendientes o devueltos; al final los fallados. Sin ningún
+/// resultado `win` o `loss` devuelve la lista como llegó (el orden por probabilidad de cada pantalla).
+List<SportMarket> orderSettledMarkets(
+  List<SportMarket> markets, {
+  required double? Function(SportMarket) price,
+}) {
+  if (!markets.any((m) => m.outcome == 'win' || m.outcome == 'loss')) return markets;
+  int rank(SportMarket m) => switch (m.outcome) { 'win' => 0, 'loss' => 2, _ => 1 };
+  double odds(SportMarket m) => price(m) ?? double.negativeInfinity;
+  return [...markets]
+    ..sort((a, b) {
+      final byRank = rank(a).compareTo(rank(b));
+      if (byRank != 0) return byRank;
+      final byOdds = odds(b).compareTo(odds(a));
+      return byOdds != 0 ? byOdds : b.probability.compareTo(a.probability);
+    });
+}
+
 /// Aciertos y resueltos por familia. Solo cuentan los `eligible` (sellados antes del inicio)
 /// con resultado `win` o `loss`; `push` y sin resultado no cuentan. Toda familia con algún
 /// mercado aparece, aunque no tenga resueltos todavía.
 Map<String, ({int won, int resolved})> hitRateByFamily(
-  List<SportEvent> events,
-) {
+  List<SportEvent> events, {
+  DateTime? since,
+}) {
   final out = <String, ({int won, int resolved})>{};
   for (final e in events) {
+    if (since != null && e.start.toLocal().isBefore(since)) continue;
     for (final m in e.markets) {
       final key = marketFamily(m);
       var (:won, :resolved) = out[key] ?? (won: 0, resolved: 0);
@@ -157,7 +178,7 @@ List<FamilyPicks> familyPicks(
 
 /// Mercados de NBA y tenis con el mismo diseño que los de fútbol: radar y una tarjeta por familia
 /// (anillo de acierto, publicados n/m); tocar una familia abre sus pronósticos de hoy y anteriores.
-class SportMarkets extends StatelessWidget {
+class SportMarkets extends StatefulWidget {
   const SportMarkets({
     super.key,
     required this.api,
@@ -180,14 +201,35 @@ class SportMarkets extends StatelessWidget {
   final Future<void> Function()? onRetry;
 
   @override
+  State<SportMarkets> createState() => _SportMarketsState();
+}
+
+class _SportMarketsState extends State<SportMarkets> {
+  int _tabIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
-    final retry = onRetry ?? () async {};
-    if (!feed.ready) return SportFeedError(onRetry: retry);
+    final retry = widget.onRetry ?? () async {};
+    if (!widget.feed.ready) return SportFeedError(onRetry: retry);
     final l10n = context.l10n;
-    final families = familyPicks(l10n, sport, feed, quotes);
-    final accent = sportCatalog.spec(sport).accent;
+    final families = familyPicks(l10n, widget.sport, widget.feed, widget.quotes);
+    final accent = sportCatalog.spec(widget.sport).accent;
     final won = families.fold<int>(0, (s, f) => s + f.won);
     final resolved = families.fold<int>(0, (s, f) => s + f.resolved);
+
+    List<Widget> familyAvatars(FamilyPicks f) {
+      final avatars = <Widget>[];
+      for (final (e, _) in f.open) {
+        if (avatars.length >= 4) break;
+        final nba = widget.sport == kNba;
+        final (first, second) = nba ? (e.away, e.home) : (e.home, e.away);
+        avatars.add(eventAvatar(widget.api, widget.images, e, first, size: 26));
+        if (avatars.length >= 4) break;
+        avatars.add(eventAvatar(widget.api, widget.images, e, second, size: 26));
+      }
+      return avatars;
+    }
+
     final tiles = [
       for (final f in families)
         MarketTileData(
@@ -198,8 +240,33 @@ class SportMarkets extends StatelessWidget {
           icon: marketLook(f.family).$2,
           percent: f.percentValue,
           record: PublishedRecord(f.resolved, f.won),
+          todayAvatars: familyAvatars(f),
         ),
     ];
+
+    List<String>? tabLabels;
+    bool Function(MarketTileData)? filter;
+    if (widget.sport == kNba) {
+      tabLabels = [
+        l10n.marketsTabGame.toUpperCase(),
+        l10n.marketsTabPlayers.toUpperCase(),
+      ];
+      filter = (t) {
+        final isPlayer = nbaPlayerFamilies.contains(t.id);
+        return _tabIndex == 0 ? !isPlayer : isPlayer;
+      };
+    } else if (widget.sport == kTennis) {
+      tabLabels = [
+        l10n.marketsTabGame.toUpperCase(),
+        l10n.marketsTabGames.toUpperCase(),
+      ];
+      filter = (t) {
+        final isGames = tennisGamesFamilies.contains(t.id);
+        return _tabIndex == 0 ? !isGames : isGames;
+      };
+    }
+    final visibleTiles = filter == null ? tiles : tiles.where(filter).toList();
+
     return RefreshIndicator(
       onRefresh: retry,
       child: ListView(
@@ -219,22 +286,30 @@ class SportMarkets extends StatelessWidget {
                       : l10n.sfRangeNote,
                   overall: PublishedRecord(resolved, won),
                 ),
+                if (tabLabels != null) ...[
+                  const SizedBox(height: 12),
+                  QfTabs(
+                    labels: tabLabels,
+                    index: _tabIndex,
+                    onChanged: (i) => setState(() => _tabIndex = i),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 MarketTilesGrid(
                   clock: clock,
-                  tiles: tiles,
+                  tiles: visibleTiles,
                   onOpen: (t) {
                     final f = families.firstWhere((x) => x.family == t.id);
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => SportMarketDetailScreen(
-                          api: api,
-                          sport: sport,
+                          api: widget.api,
+                          sport: widget.sport,
                           picks: f,
                           color: t.color,
-                          images: images,
-                          quotes: quotes,
-                          onOpenEvent: onOpenEvent,
+                          images: widget.images,
+                          quotes: widget.quotes,
+                          onOpenEvent: widget.onOpenEvent,
                         ),
                       ),
                     );
@@ -243,19 +318,6 @@ class SportMarkets extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.historyWebSince,
-            key: const ValueKey('sport-range-note'),
-            style: const TextStyle(fontSize: 11, color: QfColors.muted),
-          ),
-          if (sport == kTennis) ...[
-            const SizedBox(height: 6),
-            Text(
-              l10n.imageCredits,
-              style: const TextStyle(color: QfColors.muted, fontSize: 11),
-            ),
-          ],
         ],
       ),
     );
@@ -348,8 +410,14 @@ class SportMarketDetailScreen extends StatelessWidget {
       }
       history.add(MarketPickCard(color: color, data: _pick(context, p)));
     }
+    final subtitle = sport == kNba
+        ? 'NBA · ${nbaPlayerFamilies.contains(picks.family) ? l10n.marketsTabPlayers.toUpperCase() : l10n.marketsTabGame.toUpperCase()}'
+        : sport == kTennis
+        ? '${l10n.sportTennis.toUpperCase()} · ${tennisGamesFamilies.contains(picks.family) ? l10n.marketsTabGames.toUpperCase() : l10n.marketsTabGame.toUpperCase()}'
+        : null;
     return MarketScaffold(
       title: picks.title,
+      subtitle: subtitle,
       color: color,
       today: PublishedRecord(todays.length, todayWon),
       overall: PublishedRecord(picks.resolved, picks.won),

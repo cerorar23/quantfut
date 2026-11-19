@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
@@ -160,12 +161,30 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// La tira arranca en AYER cuando el día elegido es hoy: es la vista de los pronósticos del día anterior.
+  DateTime get _stripStart {
+    final s = widget.selected, n = DateTime.now();
+    final today = DateTime(n.year, n.month, n.day);
+    return DateTime(s.year, s.month, s.day) == today ? DateTime(n.year, n.month, n.day - 1) : s;
+  }
+
+  /// Un día anterior al que se está viendo pide su agenda al servidor; los demás saltan dentro de la lista.
+  void _onDay(DateTime date, Map<String, int> counts, double viewport) {
+    final s = widget.selected;
+    if (DateTime(date.year, date.month, date.day).isBefore(DateTime(s.year, s.month, s.day))) {
+      widget.onPickDate(date);
+      return;
+    }
+    _jump(date, counts, viewport);
+  }
+
   Future<void> _pick() async {
     final today = DateTime.now();
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
     final date = await showDatePicker(
       context: context,
-      initialDate: widget.selected.isBefore(today) ? today : widget.selected,
-      firstDate: DateTime(today.year, today.month, today.day),
+      initialDate: widget.selected.isBefore(yesterday) ? yesterday : widget.selected,
+      firstDate: yesterday,
       lastDate: today.add(const Duration(days: 365)),
     );
     if (date != null && mounted) widget.onPickDate(date);
@@ -212,12 +231,38 @@ class _HomeTabState extends State<HomeTab> {
       return team.isEmpty ? {'nombre': pick[key] ?? ''} : team;
     }
 
+    final localName = '${pick['local'] ?? ''}';
+    final awayName = '${pick['visitante'] ?? ''}';
+    final league = '${jsonMap(match?['liga'])['nombre'] ?? ''}';
+    final ko = dateValue(match?['kickoff_utc'])?.toLocal();
+    final metaStr = [
+      if (league.isNotEmpty) league,
+      if (ko != null) '${localDate(DateFormat.MMMEd, ko)} ${localDate(DateFormat.Hm, ko)}',
+    ].join(' · ');
+
+    final probs = <(String, double)>[];
+    final probMap = jsonMap(match?['probabilities']);
+    if (probMap['home'] is num && probMap['away'] is num) {
+      final h = (probMap['home'] as num).toDouble();
+      final a = (probMap['away'] as num).toDouble();
+      final d = (probMap['draw'] as num?)?.toDouble();
+      if (d != null) {
+        probs.addAll([('1', h), ('X', d), ('2', a)]);
+      } else {
+        probs.addAll([('1', h), ('2', a)]);
+      }
+    }
+
     return HomeHero(
       key: const ValueKey('home-hero'),
       sport: kFootball,
-      left: TeamCrest(team: side('local'), api: widget.api, size: 66),
-      right: TeamCrest(team: side('visitante'), api: widget.api, size: 66),
-      title: '${pick['local'] ?? ''} · ${pick['visitante'] ?? ''}',
+      left: TeamCrest(team: side('local'), api: widget.api, size: 58),
+      right: TeamCrest(team: side('visitante'), api: widget.api, size: 58),
+      homeName: localName,
+      awayName: awayName,
+      meta: metaStr.isEmpty ? null : metaStr,
+      probabilities: probs.isEmpty ? null : probs,
+      title: '$localName · $awayName',
       probability: realPercent(pick['prob']),
       pick: pickText(pick),
       kicker: context.l10n.homeFeatured,
@@ -281,10 +326,10 @@ class _HomeTabState extends State<HomeTab> {
                     delegate: _Pinned(
                       height: _stripHeight,
                       child: DayStrip(
-                        start: widget.selected,
+                        start: _stripStart,
                         active: _current,
                         counts: counts,
-                        onDay: (date) => _jump(date, counts, box.maxHeight),
+                        onDay: (date) => _onDay(date, counts, box.maxHeight),
                         onPick: _pick,
                         searching: _searching,
                         onSearch: _toggleSearch,
@@ -357,7 +402,7 @@ class _HomeTabState extends State<HomeTab> {
               key: const ValueKey('home-banner'),
               text: widget.banner,
               icon: Icons.campaign_outlined,
-              color: liveGold,
+              color: QfColors.cyan,
               closeLabel: l10n.homeBannerClose,
               onClose: () => setState(() => _bannerClosed = true),
             ),
@@ -365,7 +410,7 @@ class _HomeTabState extends State<HomeTab> {
             _Notice(
               text: l10n.maintenanceNotice,
               icon: Icons.build_circle_outlined,
-              color: liveGold,
+              color: QfColors.cyan,
             ),
           if (_hero(context) case final hero?) ...[
             hero,
@@ -375,24 +420,30 @@ class _HomeTabState extends State<HomeTab> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: _CoinsCard(
-                    value: coins == null ? '—' : '$coins',
-                    label: l10n.rewardsMyCoins,
-                    onTap: widget.onOpenCoins,
-                  ),
-                ),
                 if (real is num && total > 0) ...[
-                  const SizedBox(width: 12),
                   Expanded(
                     child: _HitCard(
                       percent: real.toDouble(),
-                      label: l10n.picksTrustTitle,
+                      label: l10n.homeHitTitle,
                       detail: l10n.picksTrustDetail(hits, total),
                       onTap: () => widget.onOpenPredictions('high'),
                     ),
                   ),
+                  const SizedBox(width: 8),
                 ],
+                Expanded(
+                  child: _CoinsCard(
+                    coins: coins,
+                    value: coins == null ? '—' : '$coins',
+                    label: l10n.rewardsMyCoins,
+                    subtitle: coins != null
+                        ? (coins! >= 40
+                            ? l10n.homeCoinsUnlocks(coins! ~/ 40)
+                            : l10n.rewardsMissing(40 - coins!))
+                        : '—',
+                    onTap: widget.onOpenCoins,
+                  ),
+                ),
               ],
             ),
           ),
@@ -404,7 +455,7 @@ class _HomeTabState extends State<HomeTab> {
                   l10n.homeTicketsTitle,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Gilroy ExtraBold',
+                    fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
                     fontSize: 18,
                   ),
                 ),
@@ -473,7 +524,7 @@ class _HomeTabState extends State<HomeTab> {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Gilroy Bold',
+                  fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
               ),
@@ -494,20 +545,26 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 6),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     liveText(
                       realPercent(pick['prob']),
                       size: 13,
-                      color: liveCyan,
+                      color: QfColors.cyan,
                       bold: true,
                     ),
-                    const Spacer(),
-                    Text(
-                      '@ ${decimalText(pick['ref_price'] ?? pick['price'])}',
-                      style: const TextStyle(
-                        fontFamily: qfMono,
-                        fontSize: 13,
-                        color: QfColors.text,
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '@ ${decimalText(pick['ref_price'] ?? pick['price'])}',
+                          style: const TextStyle(
+                            fontFamily: qfMono,
+                            fontSize: 13,
+                            color: QfColors.text,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -602,25 +659,30 @@ class _Notice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [color.withValues(alpha: .22), color.withValues(alpha: .08)],
+    padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+    decoration: ShapeDecoration(
+      color: color.withValues(alpha: .08),
+      shape: CutCornerBorder(
+        cut: 8,
+        side: BorderSide(color: color.withValues(alpha: .35)),
       ),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: color.withValues(alpha: .4)),
     ),
     child: Row(
       children: [
-        Icon(icon, color: color),
+        Icon(icon, color: color, size: 20),
         const SizedBox(width: 10),
-        Expanded(child: liveText(text, size: 13)),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(color: color, fontSize: 13),
+          ),
+        ),
         if (onClose != null)
           IconButton(
             tooltip: closeLabel,
             visualDensity: VisualDensity.compact,
             onPressed: onClose,
-            icon: const Icon(Icons.close, size: 18, color: liveMuted),
+            icon: const Icon(Icons.close, size: 18, color: QfColors.muted),
           ),
       ],
     ),
@@ -631,57 +693,59 @@ class _CoinsCard extends StatelessWidget {
   const _CoinsCard({
     required this.value,
     required this.label,
+    required this.subtitle,
     required this.onTap,
+    this.coins,
   });
 
-  final String value, label;
+  final String value, label, subtitle;
+  final int? coins;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: livePanel,
-    shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      key: const ValueKey('home-coins'),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: liveGold.withValues(alpha: .16),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.toll, color: liveGold),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  liveText(label, size: 11, color: liveMuted),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      value,
-                      style: const TextStyle(
-                        color: liveGold,
-                        fontFamily: 'Gilroy ExtraBold',
-                        fontSize: 22,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget build(BuildContext context) => QfCard(
+    key: const ValueKey('home-coins'),
+    cut: 8,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    onTap: onTap,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 1.4,
+            color: QfColors.text2,
+          ),
         ),
-      ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontFamily: qfMono,
+              fontWeight: FontWeight.w700,
+              fontSize: 24,
+              color: QfColors.yellow,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11, color: QfColors.muted),
+        ),
+      ],
     ),
   );
 }
@@ -699,65 +763,49 @@ class _HitCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: livePanel,
-    shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      key: const ValueKey('home-hit'),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 42,
-              height: 42,
-              child: CircularProgressIndicator(
-                value: (percent / 100).clamp(0, 1),
-                strokeWidth: 5,
-                color: liveGreen,
-                backgroundColor: const Color(0xff243447),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: liveMuted, fontSize: 11),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      percentText(percent, 1),
-                      style: const TextStyle(
-                        color: liveGreen,
-                        fontFamily: 'Gilroy ExtraBold',
-                        fontSize: 22,
-                      ),
-                    ),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      detail,
-                      maxLines: 1,
-                      style: const TextStyle(color: liveMuted, fontSize: 10),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget build(BuildContext context) => QfCard(
+    key: const ValueKey('home-hit'),
+    cut: 8,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    onTap: onTap,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 1.4,
+            color: QfColors.text2,
+          ),
         ),
-      ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            percentText(percent, 1),
+            style: const TextStyle(
+              fontFamily: qfMono,
+              fontWeight: FontWeight.w700,
+              fontSize: 24,
+              color: QfColors.green,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          detail,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11, color: QfColors.muted),
+        ),
+      ],
     ),
   );
 }
@@ -781,24 +829,21 @@ class _TicketCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.transparent,
-    shape: const CutCornerBorder(),
+    shape: const CutCornerBorder(cut: 8),
     clipBehavior: Clip.antiAlias,
     child: Ink(
       decoration: ShapeDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: .16), livePanel],
-        ),
+        color: QfColors.surface,
         shape: CutCornerBorder(
+          cut: 8,
           side: BorderSide(color: color.withValues(alpha: .35)),
         ),
       ),
       child: InkWell(
-        customBorder: const CutCornerBorder(),
+        customBorder: const CutCornerBorder(cut: 8),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -813,14 +858,16 @@ class _TicketCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: color,
-                        fontFamily: 'Gilroy Bold',
+                        fontFamily: qfDisplay,
+                        fontWeight: FontWeight.w700,
                         fontSize: 11,
+                        letterSpacing: 1.0,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               ...children,
             ],
           ),

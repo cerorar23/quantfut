@@ -112,6 +112,10 @@ export function ordenLiquidado(lista, { resultado, cuota, prob }) {
 // ese mercado entre los publicados; si es una revisión posterior al inicio no cuenta como pronóstico previo y no se sustituye por otro.
 // Solo si el servidor no mandó el campo (fuente antigua o mercados aún sin cargar) se aplica la misma regla a lo que hay en pantalla.
 export function featuredSportMarket(event) {
+  if (event.destacado_vip) return null;      // el destacado de este partido es VIP (cupo de /control/cupos): no se sustituye por otro
+  return destacadoPublicado(event);
+}
+function destacadoPublicado(event) {
   const markets = event.markets.filter(m => !m.revised);
   if (event.destacado !== undefined) {
     const id = typeof event.destacado === 'string' ? event.destacado : event.destacado?.id;
@@ -166,9 +170,53 @@ export async function loadNbaMarkets(event, fetcher = fetch) {
 
 export function withNbaMarkets(event, entry) {
   if (event.sport !== 'nba' || !event.v2 || !entry) return event;
-  return { ...event, markets_status: entry.status, markets: entry.status === 'ready' ? entry.markets : [],
+  return conAcceso({ ...event, markets_status: entry.status, markets: entry.status === 'ready' ? entry.markets : [],
     projections: entry.status === 'ready' ? entry.projections : [],
-    ...(entry.status === 'ready' && entry.destacado !== undefined ? { destacado: entry.destacado } : {}) };
+    ...(entry.status === 'ready' && entry.destacado !== undefined ? { destacado: entry.destacado } : {}) }, event.acceso);
+}
+
+// ── Cupos de gratis por deporte (menú /control/cupos; llegan en `acceso.cupos` de /cliente/v1/config) ─────────────────────
+// Sin VIP, cada deporte abre el destacado en N partidos del día (los de mayor probabilidad) y M mercados por partido (los de
+// mayor probabilidad; el destacado abierto cuenta como uno). Un número ausente = sin límite. Lo que queda fuera se RETIRA de
+// `markets` (ninguna vista lo pinta ni lo usa en sus cálculos) y se anuncia en `vip_markets` solo con su mercado, sin
+// selección, probabilidad ni cuota. Un partido de un día ya pasado se ve entero, como en fútbol.
+const diaLocal = value => { const d = new Date(value); return Number.isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+const numeroCupo = value => (Number.isInteger(value) && value >= 0 ? value : null);
+
+export function conAcceso(event, acceso) {
+  const { vip_markets: _v, destacado_vip: _d, acceso: _a, ...limpio } = event;
+  if (!acceso) return limpio;
+  const feat = destacadoPublicado(limpio);
+  const abiertos = new Set(feat && acceso.destacado ? [feat] : []);
+  const resto = limpio.markets.filter(m => m !== feat).sort((a, b) => (b.probability || 0) - (a.probability || 0) || String(a.id).localeCompare(String(b.id)));
+  const libres = acceso.mercados == null ? resto.length : Math.max(acceso.mercados - abiertos.size, 0);
+  resto.slice(0, libres).forEach(m => abiertos.add(m));
+  const vip = limpio.markets.filter(m => !abiertos.has(m));
+  if (!vip.length) return { ...limpio, acceso };
+  return { ...limpio, acceso, markets: limpio.markets.filter(m => abiertos.has(m)), destacado_vip: Boolean(feat) && !abiertos.has(feat),
+    vip_markets: vip.map(m => ({ id: m.id, market: m.market, label: m.label, locked: true })) };
+}
+
+export function conCupos(events, cupo, plus, now = new Date()) {
+  const destacados = numeroCupo(cupo?.destacados_gratis_dia), mercados = numeroCupo(cupo?.mercados_gratis_partido);
+  if (plus || (destacados == null && mercados == null)) return events.map(e => conAcceso(e, null));
+  const hoy = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const vigente = e => { const d = new Date(e.start); return !Number.isNaN(d.getTime()) && d.getTime() >= hoy; };
+  const abiertosPorDia = new Map();
+  if (destacados != null) {
+    const porDia = new Map();
+    for (const e of events) {
+      const feat = vigente(e) ? destacadoPublicado(e) : null;
+      if (feat) porDia.set(diaLocal(e.start), [...(porDia.get(diaLocal(e.start)) || []), { e, p: feat.probability || 0 }]);
+    }
+    for (const [dia, lista] of porDia) {
+      lista.sort((a, b) => b.p - a.p || String(a.e.id).localeCompare(String(b.e.id)));
+      abiertosPorDia.set(dia, new Set(lista.slice(0, destacados).map(x => x.e)));
+    }
+  }
+  return events.map(e => (vigente(e)
+    ? conAcceso(e, { destacado: destacados == null || Boolean(abiertosPorDia.get(diaLocal(e.start))?.has(e)), mercados })
+    : conAcceso(e, null)));
 }
 
 async function loadNba(fetcher, now) {
@@ -533,5 +581,5 @@ export async function loadPartidoContrato(sport, id, lang = 'es', fetcher = fetc
 export function withDetalle(event, entry) {
   if (!event?.generico || !entry) return event;
   if (entry.status !== 'ready') return { ...event, markets_status: entry.status };
-  return { ...event, ...entry.event, markets_status: 'ready' };
+  return conAcceso({ ...event, ...entry.event, markets_status: 'ready' }, event.acceso);
 }

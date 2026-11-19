@@ -416,6 +416,122 @@
   margin-inline: auto;
 }
 
+.qf-section-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 14px;
+  align-items: start;
+}
+
+.content:has(> .qf-section-layout) { padding-top: 14px; }
+.qf-section-layout > * { min-width: 0; }
+.qf-section-layout .qf-section-aside { display: grid; gap: 12px; }
+.qf-section-layout .qf-section-aside > * { min-width: 0; margin: 0; }
+.qf-section-layout :is(.cv-hero, .cv-section, .cv-cta, .cv-legal, .cv-hist-kpis) {
+  max-width: none;
+}
+.qf-section-layout :is(.cv-hero, .win-plans-hero) {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(110deg, color-mix(in srgb, var(--cyan) 9%, var(--panel)), var(--panel) 60%);
+  padding: 16px 18px;
+}
+.qf-section-layout .cv-hero { grid-template-columns: minmax(0, 1fr) minmax(125px, 28%); gap: 18px; }
+.qf-section-layout .cv-hero-copy { display: block; min-width: 0; }
+.qf-section-layout .cv-hero h1,
+.qf-section-layout .win-plans-hero h1 {
+  font: 800 clamp(22px, 2.2vw, 28px)/1.08 var(--font-display);
+  margin: 6px 0 8px;
+  text-transform: uppercase;
+}
+.qf-section-layout .cv-hero-proof {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: end;
+}
+.qf-section-layout .cv-hist-ringbox { align-self: end; width: min(100%, 116px); }
+.qf-section-layout .cv-big { font: 800 clamp(26px, 3vw, 40px)/1 var(--font-mono); }
+.qf-section-layout .cv-hist-kpis { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.qf-section-layout .cv-card-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 315px), 1fr)); align-items: start; }
+.qf-section-layout .cv-card-grid > * { min-width: 0; overflow-wrap: anywhere; }
+.qf-section-layout .cv-card-grid .cv-lock { grid-template-columns: auto minmax(0, 1fr); }
+.qf-section-layout .cv-card-grid .cv-lock-side { grid-column: 2; text-align: start; justify-items: start; }
+.qf-section-aside :is(.cv-section, .win-plans-section, .account-section, .cv-summary-chart) {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.qf-section-layout :is(.cv-section-head h2, .win-plans-h2) { font-size: 18px; text-align: start; }
+.qf-section-aside :is(.cv-steps, .cv-hist-charts) { grid-template-columns: minmax(0, 1fr); }
+.qf-section-aside .cv-bigfacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.qf-section-aside .cv-row { grid-template-columns: minmax(0, 1fr) auto; }
+.qf-section-aside .cv-row .cyber-progress { grid-column: 1 / -1; grid-row: 2; }
+.qf-section-aside .cv-row small { grid-column: 1 / -1; }
+.qf-section-aside .cv-hist-card { padding: 12px; }
+.qf-section-aside .cv-hist-sports li { grid-template-columns: minmax(68px, auto) minmax(0, 1fr) auto; }
+.qf-section-aside .cv-hist-sports i { display: none; }
+
+.win-plans.qf-section-layout { max-width: none; gap: 14px; }
+.qf-section-layout .win-plans-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  text-align: start;
+  margin-top: 0;
+}
+.qf-section-layout .win-plans-trust { justify-content: start; }
+.qf-section-layout .win-plans-hero > div > p { margin-inline: 0; }
+.qf-section-main .win-plans-section { margin-block: 12px; }
+.qf-section-layout .win-plans-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  max-width: none;
+  gap: 10px;
+}
+.qf-section-layout .win-plans-card { min-width: 0; }
+.qf-section-layout .win-plans-final { flex-direction: column; align-items: flex-start; }
+.qf-plan-monthly { display: grid; gap: 4px; justify-items: end; flex: none; }
+.qf-plan-monthly strong { font: 800 clamp(26px, 3vw, 40px)/1 var(--font-mono); color: var(--green); }
+.qf-plan-monthly small { color: var(--muted); }
+
+.qf-account .account-profile-header {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.qf-account .account-profile-header h1 { font: 800 22px var(--font-display); }
+.qf-account .account-profile-avatar { border-radius: 14px; color: var(--green); font: 800 24px var(--font-display); }
+.qf-account .member-account-layout { gap: 14px; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); }
+.qf-account .account-metrics { grid-template-columns: repeat(auto-fit, minmax(min(100%, 125px), 1fr)); }
+.qf-account .qf-section-aside h2 { margin: 0; font: 800 18px var(--font-display); }
+.qf-account .qf-section-aside p { margin: 8px 0 0; }
+.qf-account .qf-section-aside button { min-height: 44px; }
+
+@media (max-width: 980px) {
+  .qf-section-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .qf-account .member-account-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .top-layout:has(.qf-section-layout) .header-main { height: auto; }
+}
+
+@media (max-width: 650px) {
+  .qf-section-layout .cv-hero { grid-template-columns: minmax(0, 1fr); }
+  .qf-section-layout .cv-hero-proof { text-align: start; }
+  .qf-section-layout .cv-hist-ringbox { align-self: start; }
+  .qf-section-layout .win-plans-hero { flex-direction: column; align-items: flex-start; }
+  .qf-plan-monthly { justify-items: start; }
+}
+
 /* ------------------------------------------------------------------------
  * #historial (historial-views.js). Gráficas SVG con color por clase: la CSP no
  * admite `style=""`. El color nunca es la única señal (glifo ✓/✗ y texto).
@@ -573,7 +689,23 @@
 /* Banner de mantenimiento/aviso y canales oficiales + selector de idioma desde /web/config. */
 .qf-banner { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: center; padding: 10px 18px; background: color-mix(in srgb, var(--accent, #22c55e) 12%, transparent); border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.45; text-align: center; }
 .qf-banner strong { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
-.qf-pie-extra { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.qf-pie-extra { margin-top: 12px; display: flex; flex-flow: row wrap; justify-content: space-between; gap: 6px 24px; }
+/* Pie en columnas (acomodo): marca + tres grupos de enlaces; el aviso +18 queda debajo, separado por una línea. */
+.qf-pie-cols { display: grid; grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 24px 32px; padding-bottom: 22px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+.qf-pie-cols nav { flex-direction: column; align-items: flex-start; gap: 0; }
+.qf-pie-titulo { margin-bottom: 6px; font-family: var(--font-display); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--text); }
+.qf-pie-cols a, .qf-pie-cols .qf-pie-prefs { text-decoration: none; }
+.qf-pie-cols a:hover, .qf-pie-cols a:focus-visible, .qf-pie-cols .qf-pie-prefs:hover, .qf-pie-cols .qf-pie-prefs:focus-visible { color: var(--text); text-decoration: underline; }
+.qf-pie-marca { display: grid; grid-template-columns: auto 1fr; align-items: center; align-content: start; gap: 10px 12px; }
+.qf-pie-marca strong { font-size: 18px; color: var(--text); }
+.qf-pie-marca > span:last-child { grid-column: 1 / -1; max-width: 30ch; }
+.qf-pie-aviso { display: flex; align-items: center; gap: 12px; }
+.qf-pie-aviso .qf-pie-18 { flex: none; margin-right: 0; }
+@media (max-width: 760px) {
+  .qf-pie-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qf-pie-marca { grid-column: 1 / -1; }
+  .qf-pie-aviso { align-items: flex-start; }
+}
 .qf-redes, .qf-lang-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
 .qf-redes-label { font-size: 12px; font-weight: 600; opacity: .78; }
 .qf-lang-bar a[aria-current="page"] { font-weight: 700; text-decoration: none; }
@@ -628,3 +760,170 @@
 .qf-info .vc-tabla { overflow-x:auto }
 .qf-info .vc-nota { color:var(--muted);font-size:14px }
 .qf-info pre.vc-cli { background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:13px }
+
+/*
+ * Checkout (#checkout, membership.js). Solo acomodo sobre los componentes
+ * anteriores (checkout-details, order-summary, primary-button, badge) con los
+ * tokens de styles.css. El formulario de tarjeta es el de Whop en tema oscuro.
+ */
+.co { max-width: 1080px; margin: 0 auto; }
+.co .membership-heading .eyebrow { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.co-lock { flex: none; vertical-align: -2px; }
+.co .membership-layout { grid-template-columns: minmax(0, 1fr) 340px; }
+
+.co-steps { gap: 0; max-width: 560px; margin-inline: auto; }
+.co-steps li { flex: 1; justify-content: center; position: relative; }
+.co-steps li + li::before {
+  content: ""; position: absolute; top: 13px; right: calc(50% + 60px); left: calc(-50% + 60px);
+  height: 1px; background: var(--border);
+}
+.co-steps li.done + li::before { background: var(--green); }
+.co-steps b {
+  display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%;
+  border: 1px solid var(--border); font: 600 11px/1 var(--font-mono, ui-monospace, monospace);
+}
+.co-steps .done b { background: var(--green); border-color: var(--green); color: var(--bg); }
+.co-steps .current b { border-color: var(--green); color: var(--green); }
+.co-steps .current span { font-weight: 600; }
+
+.co-identity { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.co-identity > div { flex: 1; min-width: 180px; }
+.co-identity .eyebrow { margin: 0; color: var(--muted); }
+.co-identity h2 { margin: 2px 0; font-size: 17px; }
+.co-identity p { margin: 0; overflow-wrap: anywhere; }
+.co-avatar {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, transparent);
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  color: var(--green); font-weight: 700; font-size: 18px;
+}
+
+.co-pay-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.co-pay-head .eyebrow { margin: 0; color: var(--muted); }
+.co-pay-head h2 { margin: 4px 0 0; }
+.co-secure {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, transparent);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  color: var(--green); font: 600 11px/1.2 var(--font-mono, ui-monospace, monospace);
+}
+
+.co-recap {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg);
+}
+.co-recap strong { display: block; font-size: 14px; }
+.co-recap small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.co-recap b { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.co-pay-button { min-height: 52px; margin-top: 14px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.co-pay-button:disabled { opacity: .7; cursor: wait; }
+
+/* #111113 es el fondo del formulario oscuro de Whop: el marco lo continúa para que no se vea una caja dentro de otra. */
+.co-frame { border: 1px solid var(--border); border-radius: 12px; background: #111113; padding: clamp(10px, 2vw, 18px); overflow: hidden; }
+.co-frame .whop-mount { margin: 0; position: relative; }
+.co-frame .whop-mount:empty::before {
+  content: "Cargando el formulario seguro…"; position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--muted); font-size: 12px;
+}
+
+.co-trust { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.co-trust li { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
+.co-trust li > span, .co-list li::before { color: var(--green); font-weight: 700; }
+.co-trust strong { display: block; font-size: 12px; line-height: 1.4; }
+.co-trust small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+.co-summary .order-total { padding-top: 16px; border-top: 1px solid var(--line); }
+.co-summary .order-total span { font-weight: 600; }
+.co-includes { margin: 4px 0 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.co-includes .eyebrow { color: var(--muted); font-size: 10px; margin: 0 0 10px; }
+.co-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; font-size: 12px; line-height: 1.45; }
+.co-list li { display: flex; gap: 8px; }
+.co-list li::before { content: "✓"; flex: none; }
+
+.co-paid { text-align: center; padding: 12px 0; }
+.co-paid .checkout-actions { justify-content: center; }
+.co-paid-mark {
+  display: inline-grid; place-items: center; width: 56px; height: 56px; margin-bottom: 14px; border-radius: 50%;
+  background: color-mix(in srgb, var(--green) 16%, transparent);
+  border: 1px solid var(--green); color: var(--green); font-size: 26px;
+}
+.co .checkout-actions { justify-content: space-between; }
+
+@media (max-width: 1100px) { .co .membership-layout { grid-template-columns: minmax(0, 1fr) 300px; } }
+@media (max-width: 900px) {
+  .co .membership-layout { grid-template-columns: 1fr; }
+  .co-trust { grid-template-columns: 1fr; }
+  .co-steps li + li::before { display: none; }
+  .co-steps b { margin: 0 auto; }
+}
+
+/* Reto escalera: escalones en filas compactas (pendiente abierto, liquidado plegado) */
+.cv-pasos { display: grid; gap: 6px; margin-top: 10px; }
+.cv-paso { --paso-color: var(--yellow); border: 1px solid var(--line); border-left: 3px solid var(--paso-color); background: color-mix(in srgb, var(--cyber-void-700) 55%, transparent); }
+.cv-paso.win { --paso-color: var(--green); }
+.cv-paso.loss { --paso-color: var(--magenta); }
+.cv-paso > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 6px 10px; }
+.cv-paso > summary::-webkit-details-marker { display: none; }
+.cv-paso > summary:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.cv-paso-ic { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font: 700 12px var(--font-mono); color: var(--cyber-void-900); background: var(--paso-color); }
+.cv-paso-main { display: grid; gap: 1px; min-width: 0; }
+.cv-paso-main strong { font-size: 14px; line-height: 1.25; }
+.cv-paso-main small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.cv-paso-main small i { font-style: normal; opacity: 0.7; }
+.cv-paso-cuota { display: grid; justify-items: end; gap: 0; text-align: right; }
+.cv-paso-cuota strong { font: 700 17px var(--font-mono); font-variant-numeric: tabular-nums; }
+.cv-paso-cuota small { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.cv-paso-meta { margin: 0; padding: 0 10px 6px 40px; color: var(--muted); font: 600 11px/1.5 var(--font-mono); letter-spacing: 0.03em; }
+.cv-paso-meta.cv-prob { margin-top: 0; padding-bottom: 8px; }
+.cv-paso:not([open]) > summary::after { content: none; }
+
+/* Retos aún sin escalón: una tarjeta con una línea por reto */
+.cv-espera { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cv-espera li { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-left: 3px solid var(--yellow); font-size: 13px; }
+.cv-espera-fila { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: baseline; }
+.cv-espera li small { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.cv-espera-fila span { color: var(--muted); font-size: 12px; }
+.cv-espera-fila b { font: 700 13px var(--font-mono); }
+
+.qf-section-layout .cv-card-grid .cv-reto { padding: 12px 14px; }
+.qf-section-layout .cv-card-grid .cv-reto h3 { font-size: 16px; margin: 3px 0 2px; }
+.qf-section-layout .cv-card-grid .cv-reto .cv-ticket-odds strong { font-size: 22px; white-space: nowrap; }
+.qf-section-layout .cv-card-grid .cv-reto-head > div:first-child { min-width: 0; }
+.qf-section-layout .cv-card-grid .cv-reto .cv-ticket-meta { margin: 6px 0 0; font-size: 12px; line-height: 1.4; }
+.qf-section-layout .cv-card-grid .cv-reto-espera .cv-ticket-meta { margin-bottom: 8px; }
+.cv-pasos-mas > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; padding: 0 10px; color: var(--cyan); font: 600 12px var(--font-mono); letter-spacing: 0.04em; }
+.cv-pasos-mas > summary:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.cv-pasos-mas > .cv-pasos { margin-top: 0; }
+
+/* Parley: patas y parleys del historial compactos */
+.cv-tk .cv-legs { padding: 0 10px 10px; gap: 4px; }
+.cv-tk .cv-leg, .cv-card-grid .cv-ticket .cv-leg { grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; padding: 6px 8px; }
+.cv-tk .cv-leg strong, .cv-card-grid .cv-ticket .cv-leg strong { font-size: 13px; line-height: 1.25; }
+.cv-tk .cv-leg small, .cv-card-grid .cv-ticket .cv-leg small { font-size: 11px; line-height: 1.3; }
+.cv-tk .cv-leg-price strong, .cv-card-grid .cv-ticket .cv-leg-price strong { font-size: 15px; }
+.cv-tk .cv-leg-res, .cv-card-grid .cv-ticket .cv-leg-res { width: 22px; height: 22px; }
+.cv-day .cv-pasos { padding: 0 10px 10px; margin-top: 0; }
+.cv-section > .cv-pasos-mas { margin-top: 8px; }
+.qf-section-layout .cv-card-grid .cv-ticket { padding: 12px 14px; }
+.qf-section-layout .cv-card-grid .cv-ticket h3 { font-size: 16px; margin: 3px 0 2px; }
+.qf-section-layout .cv-card-grid .cv-ticket .cv-ticket-odds strong { font-size: 22px; white-space: nowrap; }
+.qf-section-layout .cv-card-grid .cv-ticket .cv-ticket-meta { margin: 4px 0 8px; font-size: 12px; line-height: 1.4; }
+
+.cv-leg .badge { display: inline-block; margin: 0 4px 0 0; padding: 0 5px; font-size: 10px; line-height: 1.5; vertical-align: 1px; }
+.qf-section-layout .cv-card-grid .cv-lock { padding: 12px 14px; gap: 6px 12px; }
+.qf-section-layout .cv-card-grid .cv-lock .cv-ghost { display: none; }
+.qf-section-layout .cv-card-grid .cv-lock-icon { width: 34px; height: 34px; }
+.qf-section-layout .cv-card-grid .cv-lock-icon .cv-icon { width: 18px; height: 18px; }
+.qf-section-layout .cv-card-grid .cv-lock h3 { font-size: 16px; margin: 3px 0 2px; }
+.qf-section-layout .cv-card-grid .cv-lock-side strong { font-size: 20px; }
+
+/* Parley del día: cada combinada se pliega; el estado, la cuota y la probabilidad quedan a la vista */
+.cv-tk-d > summary { list-style: none; cursor: pointer; display: block; }
+.cv-tk-d > summary::-webkit-details-marker { display: none; }
+.cv-tk-d > summary:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.cv-tk-toggle { display: flex; align-items: center; min-height: 44px; color: var(--cyan); font: 600 12px var(--font-mono); letter-spacing: 0.04em; }
+.cv-tk-d .cv-tk-ocultar, .cv-tk-d[open] .cv-tk-ver { display: none; }
+.cv-tk-d[open] .cv-tk-ocultar { display: inline; }
+.cv-tk-d[open] .cv-tk-toggle { min-height: 36px; }
+.cv-tk-d > .cv-legs { margin-top: 2px; }
+.cv-tk .cv-leg-price, .cv-card-grid .cv-ticket .cv-leg-price { grid-column: auto; text-align: right; }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_locale.dart';
-import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
 import 'qf_shapes.dart';
@@ -104,8 +103,7 @@ String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
   };
 }
 
-/// Tira de siete días con el mes y el botón de calendario completo. Los días con partidos
-/// llevan un punto; el activo va relleno.
+/// Tira de 5 días CyberCore: contador por día del deporte elegido; HOY resaltado.
 class DayStrip extends StatelessWidget {
   const DayStrip({
     super.key,
@@ -131,14 +129,14 @@ class DayStrip extends StatelessWidget {
     final now = DateTime.now();
     final first = DateTime(start.year, start.month, start.day);
     final days = [
-      for (var i = 0; i < 7; i++)
+      for (var i = 0; i < 5; i++)
         DateTime(first.year, first.month, first.day + i),
     ];
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 6, 8, 8),
       decoration: const BoxDecoration(
-        color: liveBg,
-        border: Border(bottom: BorderSide(color: Color(0xff1a2a3b))),
+        color: QfColors.bg,
+        border: Border(bottom: BorderSide(color: QfColors.divider)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -155,9 +153,11 @@ class DayStrip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Gilroy Bold',
-                    fontSize: 15,
+                    color: QfColors.text,
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -168,7 +168,7 @@ class DayStrip extends StatelessWidget {
                 onPressed: onSearch,
                 icon: Icon(
                   searching ? Icons.search_off : Icons.search,
-                  color: searching ? liveGreen : liveMuted,
+                  color: searching ? QfColors.green : QfColors.muted,
                 ),
               ),
               IconButton(
@@ -176,23 +176,27 @@ class DayStrip extends StatelessWidget {
                 tooltip: l10n.calendarPickDate,
                 visualDensity: VisualDensity.compact,
                 onPressed: onPick,
-                icon: const Icon(Icons.calendar_month, color: liveCyan),
+                icon: const Icon(Icons.calendar_month, color: QfColors.cyan),
               ),
             ],
           ),
+          const SizedBox(height: 4),
           Row(
             children: [
-              for (final date in days)
+              for (var i = 0; i < days.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
                 Expanded(
                   child: _DayTile(
-                    key: ValueKey('day-${dateKey(date)}'),
-                    date: date,
-                    active: dateKey(date) == active,
-                    today: dateKey(date) == dateKey(now),
-                    matches: counts[dateKey(date)] ?? 0,
-                    onTap: () => onDay(date),
+                    key: ValueKey('day-${dateKey(days[i])}'),
+                    date: days[i],
+                    active: dateKey(days[i]) == active,
+                    today: dateKey(days[i]) == dateKey(now),
+                    yesterday: dateKey(days[i]) == dateKey(DateTime(now.year, now.month, now.day - 1)),
+                    matches: counts[dateKey(days[i])] ?? 0,
+                    onTap: () => onDay(days[i]),
                   ),
                 ),
+              ],
             ],
           ),
         ],
@@ -207,75 +211,82 @@ class _DayTile extends StatelessWidget {
     required this.date,
     required this.active,
     required this.today,
+    this.yesterday = false,
     required this.matches,
     required this.onTap,
   });
 
   final DateTime date;
-  final bool active, today;
+  final bool active, today, yesterday;
   final int matches;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final label = toBeginningOfSentenceCase(localDate(DateFormat.E, date));
+    final l10n = context.l10n;
+    final dayLabel = today
+        ? l10n.homeToday.toUpperCase()
+        : yesterday
+        ? l10n.commonYesterday.toUpperCase()
+        : toBeginningOfSentenceCase(localDate(DateFormat.E, date)).toUpperCase();
+    final text = '$dayLabel ${date.day}';
+
     return Semantics(
       button: true,
       selected: active,
-      label: '$label ${date.day}',
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: active ? liveGreen : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
+      label: '$text, $matches',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
               color: active
-                  ? liveGreen
-                  : today
-                  ? liveCyan.withValues(alpha: .6)
+                  ? QfColors.cyan.withValues(alpha: .1)
                   : Colors.transparent,
+              border: Border.all(
+                color: active
+                    ? QfColors.cyan
+                    : today
+                        ? QfColors.cyan.withValues(alpha: .5)
+                        : QfColors.divider,
+                width: 1,
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.clip,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: active ? liveBg : liveMuted,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontFamily: qfMono,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 11,
+                      color: active
+                          ? QfColors.cyan
+                          : today
+                              ? QfColors.cyan.withValues(alpha: .85)
+                              : QfColors.muted,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${date.day}',
-                style: TextStyle(
-                  fontFamily: 'Gilroy ExtraBold',
-                  fontSize: 18,
-                  color: active ? liveBg : Colors.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: matches == 0
-                      ? Colors.transparent
-                      : active
-                      ? liveBg
-                      : liveGreen,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
+                if (matches > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '$matches',
+                    style: TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 9,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      color: active ? QfColors.cyan : QfColors.text2,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -297,30 +308,32 @@ class DayHeader extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 4,
-            height: 18,
-            decoration: BoxDecoration(
-              color: liveGreen,
-              borderRadius: BorderRadius.circular(4),
-            ),
+            width: 3,
+            height: 16,
+            color: QfColors.cyan,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               dayLabel(l10n, day.day, DateTime.now()),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Gilroy ExtraBold',
-                fontSize: 16,
+                color: QfColors.text,
+                fontFamily: qfDisplay,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                letterSpacing: 1.0,
               ),
             ),
           ),
-          liveText(
+          Text(
             l10n.calendarMatchesCount(day.matches.length),
-            size: 12,
-            color: liveMuted,
+            style: const TextStyle(
+              fontFamily: qfMono,
+              fontSize: 11,
+              color: QfColors.text2,
+            ),
           ),
         ],
       ),
@@ -328,7 +341,8 @@ class DayHeader extends StatelessWidget {
   }
 }
 
-/// Fila de un partido: hora, equipos, resultado más probable y, si lo hay, el pronóstico.
+/// Fila de un partido: hora, equipos con escudos solapados de 30 dp, liga,
+/// y a la derecha % verde / candado VIP / «desde HH:MM».
 class MatchRow extends StatelessWidget {
   const MatchRow({
     super.key,
@@ -370,147 +384,207 @@ class MatchRow extends StatelessWidget {
         top == null && unlock != null && unlock.isAfter(DateTime.now());
     final public = picks.where((p) => p['locked'] != true).toList();
     final league = '${jsonMap(match['liga'])['nombre'] ?? ''}';
+    final finished = match['marcador'] is List;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: livePanel,
-        shape: const CutCornerBorder(side: BorderSide(color: QfColors.border)),
+        color: QfColors.surface,
+        shape: const CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.border)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onOpen,
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        league,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: liveMuted, fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
+                    // Columna 1: Hora en Mono 12
                     SizedBox(
-                      width: 54,
+                      width: 48,
                       child: Text(
                         ko == null ? '—' : localDate(DateFormat.Hm, ko),
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Gilroy ExtraBold',
-                          fontSize: 16,
+                          color: QfColors.muted,
+                          fontFamily: qfMono,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
+
+                    // Columna 2: Escudos solapados 30 dp + Nombres + Liga
                     Expanded(
-                      child: Column(
+                      child: Row(
                         children: [
-                          for (final team in [local, away])
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  TeamCrest(team: team, api: api, size: 32),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      '${team['nombre'] ?? ''}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Gilroy Bold',
-                                        fontSize: 13,
-                                      ),
+                          SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: TeamCrest(team: local, api: api, size: 30),
+                          ),
+                          Transform.translate(
+                            offset: const Offset(-6, 0),
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: TeamCrest(team: away, api: api, size: 30),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${local['nombre'] ?? ''} – ${away['nombre'] ?? ''}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: QfColors.text,
+                                    fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                if (league.isNotEmpty)
+                                  Text(
+                                    league,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: QfColors.text2,
+                                      fontSize: 11,
                                     ),
                                   ),
-                                ],
-                              ),
+                              ],
                             ),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 84,
-                      child: pending
-                          ? Align(
-                              alignment: Alignment.centerRight,
-                              child: Icon(
-                                Icons.lock_clock,
-                                semanticLabel: l10n.homeForecastPending,
-                                color: liveGold,
-                              ),
-                            )
-                          : top == null
-                          ? const SizedBox.shrink()
-                          : _Likely(
-                              label: switch (top.$1) {
-                                'home' => l10n.probBarHome,
-                                'draw' => l10n.probBarDraw,
-                                _ => l10n.probBarAway,
-                              },
-                              value: top.$2,
-                              probabilities: probabilities,
+
+                    const SizedBox(width: 8),
+
+                    // Columna 3: Insignia a la derecha
+                    if (finished)
+                      Text(
+                        (match['marcador'] as List).join(' – '),
+                        style: const TextStyle(
+                          fontFamily: qfMono,
+                          fontSize: 13,
+                          color: QfColors.text2,
+                        ),
+                      )
+                    else if (pending)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.lock_clock,
+                            size: 14,
+                            color: QfColors.yellow,
+                            semanticLabel: l10n.homeForecastPending,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'desde ${localDate(DateFormat.Hm, unlock)}',
+                            style: const TextStyle(
+                              fontFamily: qfMono,
+                              fontSize: 11,
+                              color: QfColors.text2,
                             ),
-                    ),
-                    const Icon(Icons.chevron_right, color: liveMuted, size: 20),
+                          ),
+                        ],
+                      )
+                    else if (public.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: QfColors.green.withValues(alpha: .4)),
+                          color: QfColors.green.withValues(alpha: .09),
+                        ),
+                        child: Text(
+                          realPercent(public.first['prob']),
+                          style: const TextStyle(
+                            fontFamily: qfMono,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: QfColors.green,
+                          ),
+                        ),
+                      )
+                    else if (picks.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: QfColors.yellow.withValues(alpha: .4)),
+                          color: QfColors.yellow.withValues(alpha: .08),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock, size: 12, color: QfColors.yellow),
+                            SizedBox(width: 4),
+                            Text(
+                              'VIP',
+                              style: TextStyle(
+                                fontFamily: qfMono,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: QfColors.yellow,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (top != null)
+                      _Likely(
+                        label: switch (top.$1) {
+                          'home' => l10n.probBarHome,
+                          'draw' => l10n.probBarDraw,
+                          _ => l10n.probBarAway,
+                        },
+                        value: top.$2,
+                        probabilities: probabilities,
+                      )
+                    else
+                      const SizedBox.shrink(),
                   ],
                 ),
-                if (match['marcador'] is List)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: liveText(
-                      l10n.resultLabel((match['marcador'] as List).join(' – ')),
-                      color: liveMuted,
-                      size: 12,
-                    ),
-                  )
-                else if (match['estado'] != 'finished' &&
-                    awaitingResult(match['kickoff_utc']))
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: liveText(
-                      l10n.matchAwaitingResult,
-                      color: liveMuted,
-                      size: 12,
-                    ),
-                  ),
                 if (pending) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _PickTag(
                     text: l10n.homeForecastAt(
                       '${localDate(DateFormat.MMMEd, unlock)}, ${localDate(DateFormat.Hm, unlock)}',
-                      // México es UTC-6 todo el año; la hora sale del propio dato del servidor.
                       localDate(
                         DateFormat.Hm,
                         unlock.toUtc().subtract(const Duration(hours: 6)),
                       ),
                     ),
-                    color: liveGold,
+                    color: QfColors.yellow,
                     icon: Icons.lock_clock,
                   ),
-                ] else if (public.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _PickTag(
-                    text:
-                        '${pickText(public.first, home: local['nombre'], away: away['nombre'])} @ ${decimalText(public.first['ref_price'] ?? public.first['price'])}',
-                    color: liveGreen,
-                    icon: Icons.verified_outlined,
+                ] else if (match['marcador'] is List) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: liveText(
+                      l10n.resultLabel((match['marcador'] as List).join(' – ')),
+                      color: QfColors.muted,
+                      size: 12,
+                    ),
                   ),
-                ] else if (picks.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _PickTag(
-                    text: l10n.vipPickLabel,
-                    color: liveGold,
-                    icon: Icons.lock_outline,
+                ] else if (match['estado'] != 'finished' &&
+                    awaitingResult(match['kickoff_utc'])) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: liveText(
+                      l10n.matchAwaitingResult,
+                      color: QfColors.muted,
+                      size: 12,
+                    ),
                   ),
                 ],
               ],
@@ -534,57 +608,23 @@ class _Likely extends StatelessWidget {
   final JsonMap probabilities;
 
   @override
-  Widget build(BuildContext context) {
-    int flex(String k) {
-      final v = probabilities[k];
-      return v is num && v.isFinite ? (v * 100).round().clamp(1, 100) : 1;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          decoration: BoxDecoration(
-            color: liveGreen.withValues(alpha: .15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              '$label ${realPercent(value)}',
-              maxLines: 1,
-              style: const TextStyle(
-                color: liveGreen,
-                fontFamily: 'Gilroy Bold',
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: Row(
-            children: [
-              Expanded(
-                flex: flex('home'),
-                child: Container(height: 4, color: liveGreen),
-              ),
-              Expanded(
-                flex: flex('draw'),
-                child: Container(height: 4, color: liveMuted),
-              ),
-              Expanded(
-                flex: flex('away'),
-                child: Container(height: 4, color: liveCyan),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      border: Border.all(color: QfColors.green.withValues(alpha: .4)),
+      color: QfColors.green.withValues(alpha: .09),
+    ),
+    child: Text(
+      '$label ${realPercent(value)}',
+      maxLines: 1,
+      style: const TextStyle(
+        color: QfColors.green,
+        fontFamily: qfMono,
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+      ),
+    ),
+  );
 }
 
 class _PickTag extends StatelessWidget {
@@ -597,9 +637,12 @@ class _PickTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
+    decoration: ShapeDecoration(
       color: color.withValues(alpha: .1),
-      borderRadius: BorderRadius.circular(10),
+      shape: CutCornerBorder(
+        cut: 6,
+        side: BorderSide(color: color.withValues(alpha: .3)),
+      ),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

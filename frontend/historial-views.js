@@ -67,22 +67,13 @@ export function calibrar(rows) {
   return { n: con.length, prometido, real, diff, ee, estado };
 }
 
-// Aciertos reales menos esperados, acumulados: cada pronóstico suma (1 si acierta, 0 si falla)
-// menos la probabilidad con que se publicó. La franja es el margen de azar al 95 % (±2 desviaciones
-// típicas de la suma de Bernoulli con esas mismas probabilidades): dentro de ella, lo ocurrido es
-// compatible con lo prometido; fuera, no lo es, para bien o para mal.
-export function desvio(rows) {
-  const con = ordenar(rows).filter(probValida);
-  const curva = [0], banda = [0];
-  let acumulado = 0, varianza = 0;
-  for (const r of con) {
-    const p = probValida(r);
-    acumulado += (r.outcome === 'win' ? 1 : 0) - p;
-    varianza += p * (1 - p);
-    curva.push(acumulado); banda.push(2 * Math.sqrt(varianza));
-  }
-  const margen = banda[banda.length - 1];
-  return { n: con.length, diferencia: acumulado, margen, estado: Math.abs(acumulado) <= margen ? 'dentro' : acumulado > 0 ? 'encima' : 'debajo', curva, banda };
+// Aciertos menos fallos, acumulados: cada pronóstico liquidado suma 1 si acierta y resta 1 si falla.
+// Cuenta todos los liquidados (no hace falta probabilidad publicada). No es dinero: no mira la cuota.
+export function neto(rows) {
+  const curva = [0];
+  let acumulado = 0;
+  for (const r of ordenar(rows)) { acumulado += r.outcome === 'win' ? 1 : -1; curva.push(acumulado); }
+  return { n: curva.length - 1, diferencia: acumulado, curva };
 }
 
 export function resumir(rows) {
@@ -90,7 +81,7 @@ export function resumir(rows) {
   const aciertos = lista.filter(r => r.outcome === 'win').length;
   const n = lista.length;
   return { n, aciertos, fallos: n - aciertos, acierto: n ? aciertos / n : null, intervalo: wilson(aciertos, n),
-    desde: n ? lista[0].start : null, hasta: n ? lista[n - 1].start : null, rachas: rachas(lista), beneficio: beneficio(lista), calibracion: calibrar(lista), desvio: desvio(lista) };
+    desde: n ? lista[0].start : null, hasta: n ? lista[n - 1].start : null, rachas: rachas(lista), beneficio: beneficio(lista), calibracion: calibrar(lista), neto: neto(lista) };
 }
 
 export function porDeporte(rows) {
@@ -133,21 +124,20 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
   };
 
   // -------- gráficas SVG (sin estilos en línea: la CSP no los admite; el color va por clases)
-  function desvioSvg(d) {
-    const { curva, banda } = d;
-    if (curva.length < 3) return '<p class="cv-hist-nota">Aún no hay suficientes pronósticos con probabilidad publicada para dibujar la curva.</p>';
+  function netoSvg(d) {
+    const { curva } = d;
+    if (curva.length < 3) return '<p class="cv-hist-nota">Aún no hay suficientes pronósticos liquidados para dibujar la curva.</p>';
     const W = 640, H = 230, L = 46, R = 16, T = 18, B = 26;
-    const min = Math.min(...curva, ...banda.map(b => -b)), max = Math.max(...curva, ...banda);
+    const min = Math.min(...curva), max = Math.max(...curva);
     const span = max - min || 1;
     const x = i => L + (i / (curva.length - 1)) * (W - L - R);
     const y = v => T + (1 - (v - min) / span) * (H - T - B);
-    const arriba = banda.map((b, i) => `${x(i).toFixed(1)},${y(b).toFixed(1)}`);
-    const abajo = banda.map((b, i) => `${x(i).toFixed(1)},${y(-b).toFixed(1)}`).reverse();
     const puntos = curva.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
     const fin = curva[curva.length - 1];
-    const marcas = [...new Set([max, 0, min])].map(v => `<g><line class="cv-hist-grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="cv-hist-axis" x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${v === 0 ? '0' : signo(v) + num(Math.abs(v), 1)}</text></g>`).join('');
-    const etiqueta = `Aciertos reales frente a esperados: ${signo(fin)}${num(Math.abs(fin), 1)} tras ${curva.length - 1} pronósticos, con un margen de azar de ±${num(d.margen, 1)}. ${d.estado === 'dentro' ? 'Dentro del margen: compatible con lo prometido.' : d.estado === 'encima' ? 'Por encima del margen.' : 'Por debajo del margen.'}`;
-    return `<svg class="cv-hist-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(etiqueta)}">${marcas}<polygon class="cv-hist-band" points="${[...arriba, ...abajo].join(' ')}"/><polyline class="cv-hist-line ${fin >= 0 ? 'win' : 'loss'}" points="${puntos}" fill="none"/><circle class="cv-hist-end ${fin >= 0 ? 'win' : 'loss'}" cx="${x(curva.length - 1).toFixed(1)}" cy="${y(fin).toFixed(1)}" r="5"/><text class="cv-hist-axis" x="${L}" y="${H - 6}">Primer pronóstico</text><text class="cv-hist-axis" x="${W - R}" y="${H - 6}" text-anchor="end">Último (${curva.length - 1})</text></svg>`;
+    // Una marca pegada al 0 (p. ej. −1 de los primeros pronósticos) se omite: sus etiquetas se pisarían.
+    const marcas = [...new Set([max, 0, min])].filter(v => v === 0 || Math.abs(y(v) - y(0)) >= 14).map(v => `<g><line class="cv-hist-grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="cv-hist-axis" x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${v === 0 ? '0' : signo(v) + num(Math.abs(v))}</text></g>`).join('');
+    const etiqueta = `Aciertos menos fallos, acumulados: ${signo(fin)}${num(Math.abs(fin))} tras ${num(d.n)} pronósticos liquidados.`;
+    return `<svg class="cv-hist-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(etiqueta)}">${marcas}<polyline class="cv-hist-line ${fin >= 0 ? 'win' : 'loss'}" points="${puntos}" fill="none"/><circle class="cv-hist-end ${fin >= 0 ? 'win' : 'loss'}" cx="${x(curva.length - 1).toFixed(1)}" cy="${y(fin).toFixed(1)}" r="5"/><text class="cv-hist-axis" x="${L}" y="${H - 6}">Primer pronóstico</text><text class="cv-hist-axis" x="${W - R}" y="${H - 6}" text-anchor="end">Último (${curva.length - 1})</text></svg>`;
   }
 
   function diasSvg(dias) {
@@ -211,10 +201,10 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
   function graficas(r, rows) {
     const dias = porDia(rows, dia);
     const deportes = porDeporte(rows);
-    const d = r.desvio;
+    const d = r.neto;
     return `<section class="cv-section" aria-label="Gráficas de rendimiento"><div class="cv-section-head"><p class="eyebrow">EL RENDIMIENTO, A SIMPLE VISTA</p><h2>Lo que pasó, sin adornos</h2></div>
       <div class="cv-hist-charts">
-        <article class="cyber-card cv-hist-card cv-hist-wide"><h3>Aciertos reales frente a esperados</h3>${desvioSvg(d)}</article>
+        <article class="cyber-card cv-hist-card cv-hist-wide"><h3>Aciertos menos fallos, acumulados</h3><p class="cv-hist-sub">Cada acierto suma 1 y cada fallo resta 1. Cuenta resultados, no dinero.</p>${netoSvg(d)}</article>
         <article class="cyber-card cv-hist-card"><h3>Acierto por día</h3><p class="cv-hist-sub">Verde: acertados. Magenta: fallados. Encima, el porcentaje del día.</p>${diasSvg(dias)}</article>
         <article class="cyber-card cv-hist-card"><h3>Por deporte</h3><p class="cv-hist-sub">Cada motor tiene su propia muestra: míralas por separado.</p>${deportesBloque(deportes)}${forma(rows)}</article>
       </div></section>`;
@@ -287,7 +277,7 @@ export function createHistorialViews({ esc, state, fmtOdds, realTime, localDay, 
       return `${cabecera}${estado(cargando ? 'Consultando resultados…' : 'Sin resultados disponibles', cargando ? 'Un momento: cargamos el historial.' : 'El historial aparece cuando los resultados están confirmados.', !cargando)}`;
     }
     const r = resumir(lista_);
-    return `${hero(r)}${kpis(r, lista_)}${graficas(r, lista_)}${lista(lista_)}${sello()}${cierre(r)}`;
+    return `<div class="qf-section-layout"><div class="qf-section-main">${hero(r)}${kpis(r, lista_)}${lista(lista_)}${cierre(r)}</div><aside class="qf-section-aside">${graficas(r, lista_)}${sello()}</aside></div>`;
   }
 
   return { historyView, PAGINA };

@@ -4,6 +4,8 @@ import '../l10n/app_locale.dart';
 import '../l10n/pick_labels.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
 // Los identificadores de categoría son los que envía el servidor (en español);
 // no son texto visible: se traducen con `groupLabel`.
@@ -50,6 +52,21 @@ Widget _groupTitle(String? group, String text, double size, TextStyle style) =>
   _ => (liveGold, levelLabel('moderada')),
 };
 
+/// Orden de los mercados abiertos de un partido ya jugado, igual que en la web: acertados primero, de mayor a menor
+/// cuota; luego los pendientes o devueltos; al final los fallados. Sin ningún resultado liquidado deja el orden del
+/// servidor (probabilidad).
+List<JsonMap> orderSettledRows(List<JsonMap> rows) {
+  if (!rows.any((r) => r['resultado'] == 'win' || r['resultado'] == 'loss')) return rows;
+  int rank(JsonMap r) => switch (r['resultado']) { 'win' => 0, 'loss' => 2, _ => 1 };
+  double num0(Object? v, double fallback) => v is num && v.isFinite ? v.toDouble() : fallback;
+  return [...rows]..sort((a, b) {
+      final byRank = rank(a).compareTo(rank(b));
+      if (byRank != 0) return byRank;
+      final byOdds = num0(b['cuota'], double.negativeInfinity).compareTo(num0(a['cuota'], double.negativeInfinity));
+      return byOdds != 0 ? byOdds : num0(b['prob'], 0).compareTo(num0(a['prob'], 0));
+    });
+}
+
 /// Mercados del partido (pestaña Pronósticos): los que el usuario puede ver, con su
 /// probabilidad y cuota, y los demás como candado que solo dice la categoría.
 /// Todo lo manda el servidor (`ficha.mercados`); sin eso no se dibuja nada.
@@ -73,7 +90,8 @@ class MatchMarkets extends StatelessWidget {
       for (final r in (data['filas'] as List? ?? const [])) jsonMap(r),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
-    final open = rows.where((r) => r['locked'] != true).toList();
+    final open = orderSettledRows(rows.where((r) => r['locked'] != true).toList());
+    final settled = open.any((r) => r['resultado'] == 'win' || r['resultado'] == 'loss');
     final locked = rows.where((r) => r['locked'] == true).toList();
     // Una fila por categoría con el número de mercados, en el orden que manda el servidor.
     final groups = <String, int>{};
@@ -95,6 +113,10 @@ class MatchMarkets extends StatelessWidget {
             ),
           ],
         ),
+        if (settled) ...[
+          const SizedBox(height: 4),
+          liveText(l10n.mmOrderSettled, size: 11, color: liveMuted),
+        ],
         const SizedBox(height: 10),
         for (final r in open) _OpenRow(row: r, home: home, away: away),
         if (locked.isNotEmpty) ...[
@@ -131,12 +153,14 @@ class _OpenRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xff0f1925),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: chance ? liveGold : color.withValues(alpha: .28),
-          width: chance ? 1.4 : 1,
+      decoration: ShapeDecoration(
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 8,
+          border: BorderSide(
+            color: chance ? QfColors.yellow : color.withValues(alpha: .28),
+            width: chance ? 1.4 : 1,
+          ),
         ),
       ),
       child: Column(
@@ -158,6 +182,9 @@ class _OpenRow extends StatelessWidget {
                 ),
               ),
               if (chance) _tag(l10n.mmChance, liveGold),
+              if (row['resultado'] == 'win') _tag(l10n.mmResultWin, liveGreen),
+              if (row['resultado'] == 'loss') _tag(l10n.mmResultLoss, liveGold),
+              if (row['resultado'] == 'push') _tag(l10n.mmResultPush, liveMuted),
             ],
           ),
           const SizedBox(height: 6),
@@ -275,10 +302,12 @@ class _LockedRow extends StatelessWidget {
       onTap: onVip,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xff0c131c),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white10),
+        decoration: const ShapeDecoration(
+          color: QfColors.surface,
+          shape: CutCornerBorder(
+            cut: 8,
+            border: BorderSide(color: QfColors.border),
+          ),
         ),
         child: Row(
           children: [
@@ -319,10 +348,12 @@ class _Scores extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xff0c131c),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white10),
+          decoration: const ShapeDecoration(
+            color: QfColors.surface,
+            shape: CutCornerBorder(
+              cut: 8,
+              border: BorderSide(color: QfColors.border),
+            ),
           ),
           child: Row(
             children: [

@@ -67,6 +67,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Se a conta existir, você receberá instruções por e-mail.';
 
   @override
+  String get accessFreeToStart => 'GRÁTIS PARA COMEÇAR';
+
+  @override
   String get accessGenericError =>
       'Não foi possível concluir o acesso. Tente novamente.';
 
@@ -101,6 +104,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get accessLinkPassword => 'Senha anterior';
+
+  @override
+  String get accessNoCard => 'SEM CARTÃO';
 
   @override
   String get accessOtherAccount => 'Usar outra conta';
@@ -188,8 +194,40 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alertsAdvantageEmpty => 'Sem vantagens registradas.';
 
   @override
+  String get alertsBackTrainingDesc => 'Já treina com o grupo';
+
+  @override
+  String get alertsBadgeApplied => 'APLICADO';
+
+  @override
+  String get alertsBadgeDoubt => 'DÚVIDA';
+
+  @override
+  String get alertsBadgeDuty => 'SELEÇÃO';
+
+  @override
+  String get alertsBadgeInjury => 'LESÃO';
+
+  @override
+  String get alertsBadgeNone => 'SEM ALERTAS';
+
+  @override
+  String get alertsBadgePending => 'PENDENTE';
+
+  @override
+  String get alertsBadgeReturns => 'VOLTANDO';
+
+  @override
+  String get alertsBadgeSuspension => 'SUSPENSÃO';
+
+  @override
   String alertsChecked(String when) {
     return 'Verificado $when';
+  }
+
+  @override
+  String alertsCheckedFooter(String when) {
+    return 'VERIFICADO $when · atualizado a cada hora';
   }
 
   @override
@@ -202,8 +240,66 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alertsDoubt => 'Dúvida';
 
   @override
+  String alertsDutyReturns(String when) {
+    return 'Na seleção · volta no $when';
+  }
+
+  @override
+  String alertsEarlyMonth(String month) {
+    return 'início de $month';
+  }
+
+  @override
+  String alertsLastElevenVs(String rival, String date) {
+    return 'último onze, vs $rival · $date';
+  }
+
+  @override
+  String alertsLateMonth(String month) {
+    return 'fim de $month';
+  }
+
+  @override
+  String get alertsLineupsKicker => '// ESCALAÇÕES';
+
+  @override
+  String get alertsLineupsTitle => 'ÚLTIMO ONZE CONHECIDO';
+
+  @override
+  String alertsMidMonth(String month) {
+    return 'meados de $month';
+  }
+
+  @override
+  String alertsNbaReportSummary(num count, num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jogadores no relatório',
+      one: '1 jogador no relatório',
+    );
+    return '$_temp0 · $minutes min de ausências';
+  }
+
+  @override
+  String get alertsNoAlertsBody =>
+      'Não há desfalques ou dúvidas registradas para esta partida.';
+
+  @override
+  String get alertsNoAlertsTitle => 'SEM ALERTAS';
+
+  @override
   String get alertsNoCheck =>
       'Ainda não há verificação de desfalques para esta partida. Se a liga não tem esse dado, isso não significa que não haja lesionados.';
+
+  @override
+  String get alertsNoLineupDesc =>
+      'A escalação é confirmada uma hora antes do jogo e aparecerá aqui com fotos.';
+
+  @override
+  String alertsNoLineupSaved(String team) {
+    return '$team · sem escalação salva';
+  }
 
   @override
   String get alertsNote =>
@@ -237,6 +333,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alertsReasonUnknown => 'Motivo não informado';
 
   @override
+  String alertsReturnsWhen(String when) {
+    return 'Volta no $when';
+  }
+
+  @override
   String get alertsSource => 'Fonte: API-Football';
 
   @override
@@ -258,6 +359,211 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get alertsSuspended => 'Suspenso';
+
+  @override
+  String get alertsTennisNoIssues => 'Sem ocorrências nos últimos 7 dias';
+
+  @override
+  String get anAveragesLast10 => '// Médias · Últimos 10';
+
+  @override
+  String get anBttsShort => 'AMBAS MARCAM';
+
+  @override
+  String anDrawsCount(int count) {
+    return '$count EMPATES';
+  }
+
+  @override
+  String anGoalsDiff(int gf, int gc) {
+    return '$gf GM · $gc GS';
+  }
+
+  @override
+  String get anGoalsPerMatchShort => 'GOLOS / JOGO';
+
+  @override
+  String anH2hMatchCount(int n) {
+    return '// $n JOGOS';
+  }
+
+  @override
+  String get anHowTheyArrive => 'Como chegam';
+
+  @override
+  String get anLast5Matches => '// ÚLTIMOS 5 JOGOS';
+
+  @override
+  String get anLastMatch => 'ÚLTIMO';
+
+  @override
+  String anLeagueRound(String league, String round) {
+    return '// $league · JORNADA $round';
+  }
+
+  @override
+  String get anMetricBtts => 'AMBAS MARCAM';
+
+  @override
+  String get anMetricCleanSheet => 'JOGO SEM SOFRER';
+
+  @override
+  String get anMetricCorners => 'CANTOS';
+
+  @override
+  String get anMetricGoalsAgainst => 'GOLOS SOFRIDOS';
+
+  @override
+  String get anMetricGoalsFor => 'GOLOS MARCADOS';
+
+  @override
+  String get anMetricOver25 => 'MAIS DE 2,5 GOLOS';
+
+  @override
+  String get anMetricShots => 'REMATES';
+
+  @override
+  String get anMetricShotsOnTarget => 'REMATES À BALIZA';
+
+  @override
+  String get anMetricXgAgainst => 'xG CONTRA';
+
+  @override
+  String get anMetricXgFor => 'xG A FAVOR';
+
+  @override
+  String get anNavForm => 'Forma';
+
+  @override
+  String get anNavH2h => 'Confronto direto';
+
+  @override
+  String get anNavStandings => 'Tabela';
+
+  @override
+  String get anNavSummary => 'Resumo';
+
+  @override
+  String get anNoForm => 'Forma não disponível';
+
+  @override
+  String get anNoH2h => 'Sem confrontos diretos registados';
+
+  @override
+  String get anNoStandings => 'Tabela não disponível';
+
+  @override
+  String get anOver25Short => 'MAIS DE 2,5';
+
+  @override
+  String get anPlayoff => 'PLAY-OFF';
+
+  @override
+  String anPointsOutOf(int points) {
+    return '$points PTS DE 15';
+  }
+
+  @override
+  String get anPromotion => 'PROMOÇÃO';
+
+  @override
+  String get anRadarAttack => 'ATAQUE';
+
+  @override
+  String get anRadarCorners => 'CANTOS';
+
+  @override
+  String get anRadarCreation => 'CRIAÇÃO';
+
+  @override
+  String get anRadarDefense => 'DEFESA';
+
+  @override
+  String get anRadarFinishing => 'FINALIZAÇÃO';
+
+  @override
+  String get anRelegation => 'DESPROMOÇÃO';
+
+  @override
+  String get anScopeAll => 'TODOS';
+
+  @override
+  String get anScopeHomeAway => 'CASA · FORA';
+
+  @override
+  String get anScopeHomeAwayCaption => 'EM CASA · FORA';
+
+  @override
+  String get anScopeLast10Caption => 'ÚLTIMOS 10 · 10';
+
+  @override
+  String anSeenFrom(String team) {
+    return 'Do ponto de vista de $team';
+  }
+
+  @override
+  String anStandingsCalloutAhead(
+    String teamA,
+    int posA,
+    int ptsA,
+    int diff,
+    String teamB,
+    int posB,
+    int ptsB,
+  ) {
+    return '$teamA $posA.º · $ptsA pts · +$diff sobre $teamB ($posB.º, $ptsB pts)';
+  }
+
+  @override
+  String anStandingsCalloutTied(String teamA, String teamB, int pts) {
+    return '$teamA e $teamB empatados com $pts pts';
+  }
+
+  @override
+  String get anStandingsTitle => 'Classificação';
+
+  @override
+  String anStreakLosses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count DERROTAS SEGUIDAS',
+      one: '1 DERROTA',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String anStreakUnbeaten(int count) {
+    return '$count SEM PERDER';
+  }
+
+  @override
+  String anStreakWins(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count VITÓRIAS SEGUIDAS',
+      one: '1 VITÓRIA',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get anVenueAway => 'FORA';
+
+  @override
+  String get anVenueHome => 'CASA';
+
+  @override
+  String anViewAllMatches(int n) {
+    return 'VER OS $n JOGOS';
+  }
+
+  @override
+  String anWinsTeam(int count, String team) {
+    return '$count VITÓRIAS $team';
+  }
 
   @override
   String get apiGoogleNotVerified =>
@@ -318,7 +624,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get artHeading4 => 'DADOS + SEU CRITÉRIO';
 
   @override
+  String get artLost => 'PERDIDO';
+
+  @override
   String get artNba => 'NBA';
+
+  @override
+  String get artNotCertainty => 'NÃO É UMA CERTEZA';
+
+  @override
+  String get artProbability => 'PROBABILIDADE';
+
+  @override
+  String get artRegisteredRate => 'ACERTO REGISTRADO';
 
   @override
   String get artStats => 'ESTATÍSTICAS';
@@ -327,7 +645,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get artTagline => 'ANALISE. COMPARE. EXPLORE.';
 
   @override
+  String get artTennis => 'TÊNIS';
+
+  @override
   String get artTransparency => 'TRANSPARÊNCIA';
+
+  @override
+  String get artWon => 'GANHO';
 
   @override
   String get bannerAwaiting =>
@@ -431,6 +755,15 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get detailFeaturedPickFree => 'PICK EM DESTAQUE · GRÁTIS';
+
+  @override
+  String get detailFeaturedPickUnlocked => 'PICK EM DESTAQUE · DESBLOQUEADO';
+
+  @override
+  String get detailFeaturedPickVip => 'PICK EM DESTAQUE · VIP';
+
+  @override
   String get detailFormationPending => 'Formação pendente';
 
   @override
@@ -444,6 +777,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get detailLineupsPending => 'Escalações ainda não confirmadas.';
+
+  @override
+  String get detailLockedWithCoinsOrVip => 'com moedas ou VIP';
+
+  @override
+  String get detailModelMarkets => 'MERCADOS DO MODELO';
 
   @override
   String get detailNoFeatured =>
@@ -474,6 +813,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailNoStarters => 'Sem titulares confirmados.';
 
   @override
+  String detailOddAtPublish(String odd) {
+    return 'odd ao publicar $odd';
+  }
+
+  @override
   String get detailReferee => 'Árbitro';
 
   @override
@@ -489,7 +833,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get detailTabPredictions => 'Prognósticos';
 
   @override
+  String get detailTabProps => 'Props';
+
+  @override
   String get detailTabStats => 'Análise';
+
+  @override
+  String detailUnlockAll(Object cost) {
+    return 'DESBLOQUEAR TUDO · $cost';
+  }
 
   @override
   String get detailVipPickNotice => 'Este jogo tem um prognóstico VIP';
@@ -748,16 +1100,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get forecastSourceMarket => 'ODDS DO MERCADO';
 
   @override
-  String get forecastSourceModel => 'MODELO PRÓPRIO';
+  String get forecastSourceModel => 'MODELO ALGORÍTMICO';
 
   @override
-  String get forecastTitle => 'ANÁLISE ESTATÍSTICA';
+  String get forecastTitle => 'MODELO ALGORÍTMICO';
 
   @override
   String get forecastUnlocked => 'DESBLOQUEADO';
 
   @override
-  String get forecastVerdictTitle => '💡  PARECER DO MODELO';
+  String get forecastVerdictTitle => '💡  RESUMO DO PALPITE';
 
   @override
   String get formatScheduleUnavailable => 'Horário não disponível';
@@ -838,6 +1190,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get guideHead6 => 'É informação e entretenimento';
 
   @override
+  String get guideNext => 'Seguinte';
+
+  @override
+  String get guidePrevious => 'Anterior';
+
+  @override
+  String get guideRespRule1 => 'Apenas com dinheiro que possas perder';
+
+  @override
+  String get guideRespRule2 => 'Apenas se fores maior de idade';
+
+  @override
+  String get guideRespRule3 => 'Se deixar de ser um passatempo, pede ajuda';
+
+  @override
   String get guideSubtitle => 'Aprenda a ler os dados antes de decidir.';
 
   @override
@@ -862,13 +1229,44 @@ class AppLocalizationsPt extends AppLocalizations {
   String get guideTopic6 => 'RESPONSABILIDADE';
 
   @override
+  String guideTopicCount(int count) {
+    return '$count temas';
+  }
+
+  @override
+  String get h2hDrawBadge => 'EMP';
+
+  @override
+  String get h2hDraws => 'EMPATES';
+
+  @override
+  String get h2hFirstDuelRow => 'Primeiro confronto direto';
+
+  @override
+  String get h2hRecentMatches => 'ÚLTIMOS CONFRONTOS';
+
+  @override
   String get historyWebSince => 'Histórico da web desde 26/10/2026';
+
+  @override
+  String get homeAgendaTitle => 'Agenda';
 
   @override
   String get homeBannerClose => 'Fechar aviso';
 
   @override
   String get homeByDate => 'Jogos por data e horário';
+
+  @override
+  String homeCoinsUnlocks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Suficiente para $count desbloqueios',
+      one: 'Suficiente para 1 desbloqueio',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get homeFeatured => 'Destaque do dia';
@@ -884,6 +1282,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get homeForecastPending => 'Prognóstico pendente';
+
+  @override
+  String get homeHitTitle => 'Taxa de acerto · 30 dias';
 
   @override
   String get homeMenuTooltip => 'Menu';
@@ -931,6 +1332,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get homeTomorrow => 'Amanhã';
 
   @override
+  String get homeViewFreePick => 'Ver palpite grátis';
+
+  @override
   String get imageCredits =>
       'Fotos: Wikimedia Commons (CC BY-SA). Autores na ficha de cada jogo.';
 
@@ -939,6 +1343,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get inboxEmpty => 'Você ainda não tem avisos.';
+
+  @override
+  String get inboxEmptySubtitle =>
+      'Aqui verás os novos prognósticos, as ausências e os resultados dos teus desportos.';
 
   @override
   String get inboxMatch => 'Jogo';
@@ -952,6 +1360,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxTitle => 'Avisos';
 
   @override
+  String inboxUnread(int count) {
+    return '$count não lidos';
+  }
+
+  @override
   String ladderActiveCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -961,6 +1374,9 @@ class AppLocalizationsPt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ladderActiveReto => 'Escada · Desafio ativo';
 
   @override
   String get ladderBalance => 'saldo atual';
@@ -1028,6 +1444,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Falta escolher o próximo degrau; pode levar dias. O desafio continua vivo.';
 
   @override
+  String get ladderOddsAccumulated => 'Cota acumulada';
+
+  @override
   String ladderRemaining(int remaining) {
     String _temp0 = intl.Intl.pluralLogic(
       remaining,
@@ -1039,6 +1458,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get ladderRestartHint => 'Se um degrau falhar, a escada recomeça.';
+
+  @override
   String get ladderShowSteps => 'Ver degraus';
 
   @override
@@ -1046,6 +1468,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get ladderStatusToPick => 'A escolher';
+
+  @override
+  String ladderStepOf(int current, int goal) {
+    return 'Degrau $current de $goal';
+  }
+
+  @override
+  String get ladderStepProb => 'Prob. deste degrau';
 
   @override
   String ladderTitle(Object id, int steps) {
@@ -1062,6 +1492,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String ladderWonOf(int won, int goal) {
     return '$won de $goal ganhos';
   }
+
+  @override
+  String get languageChangeLater =>
+      'Você poderá alterá-lo depois no seu Perfil.';
+
+  @override
+  String get languageDetected => 'DETECTADO';
 
   @override
   String get languageFirstBadge => 'Configuração de idioma';
@@ -1361,12 +1798,24 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get mmOrderSettled => 'Acertos primeiro, da maior para a menor cota';
+
+  @override
   String mmProb(int value) {
     return '$value% prob.';
   }
 
   @override
   String get mmPublishedOdds => 'odd publicada';
+
+  @override
+  String get mmResultLoss => 'Falhou';
+
+  @override
+  String get mmResultPush => 'Devolução';
+
+  @override
+  String get mmResultWin => 'Acertou';
 
   @override
   String get mmScoresTitle => 'Placares mais prováveis';
@@ -1415,6 +1864,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get moreStoreError => 'Não foi possível abrir a loja de aplicativos.';
 
   @override
+  String get moreVipSubtitle => 'Todos os prognósticos, sem moedas';
+
+  @override
   String get navCoins => 'Coins';
 
   @override
@@ -1424,10 +1876,265 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navMarkets => 'Mercados';
 
   @override
+  String get navPicks => 'Picks';
+
+  @override
   String get navPredictions => 'Prognósticos';
 
   @override
   String get navProfile => 'Perfil';
+
+  @override
+  String get nbaAvailFootnote =>
+      'Os minutos de desfalque somam os minutos médios dos jogadores que constam no relatório. Se um time não enviar o relatório, será avisado aqui.';
+
+  @override
+  String get nbaAvailKicker => '// RELATÓRIO OFICIAL DE LESÕES';
+
+  @override
+  String get nbaAvailTitle => 'DISPONIBILIDADE';
+
+  @override
+  String nbaAwayRecord(String record) {
+    return 'VISITANTE · $record';
+  }
+
+  @override
+  String get nbaBackToBackYesterday => 'BACK-TO-BACK · JOGOU ONTEM';
+
+  @override
+  String nbaCompDom(String team, int n, int total) {
+    return '$team melhor em $n de $total';
+  }
+
+  @override
+  String nbaCompTied(int n, int total) {
+    return 'Métricas empatadas ($n de $total)';
+  }
+
+  @override
+  String get nbaCompTitle => 'COMPARAÇÃO';
+
+  @override
+  String get nbaConfEast => 'Leste';
+
+  @override
+  String nbaConfStandingsKicker(String conf, int n) {
+    return '// CONFERÊNCIA $conf · $n TIMES';
+  }
+
+  @override
+  String get nbaConfWest => 'Oeste';
+
+  @override
+  String get nbaFactorAwayForm => 'Forte fora de casa';
+
+  @override
+  String get nbaFactorHomeForm => 'Forte em casa';
+
+  @override
+  String get nbaFactorRecordBest => 'Melhor campanha';
+
+  @override
+  String get nbaFactorRecordTied => 'Campanha empatada';
+
+  @override
+  String get nbaFactorRestAdvantage => 'Mais descanso';
+
+  @override
+  String get nbaFactorRestTied => 'Mesmo descanso';
+
+  @override
+  String get nbaFactorStreakBest => 'Melhor sequência';
+
+  @override
+  String get nbaFactorStreakTied => 'Sequência igual';
+
+  @override
+  String get nbaFormLast6 => '// ÚLTIMOS 6 JOGOS';
+
+  @override
+  String nbaH2hLastN(int n) {
+    return '// ÚLTIMOS $n JOGOS';
+  }
+
+  @override
+  String nbaHomeRecord(String record) {
+    return 'MANDANTE · $record';
+  }
+
+  @override
+  String nbaInjuriesBadgeBajasDudas(int bajas, int dudas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      bajas,
+      locale: localeName,
+      other: '$bajas desfalques',
+      one: '$bajas desfalque',
+    );
+    return '$_temp0 · $dudas em dúvida';
+  }
+
+  @override
+  String nbaInjuriesBadgeBajasOnly(int bajas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      bajas,
+      locale: localeName,
+      other: '$bajas desfalques',
+      one: '$bajas desfalque',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nbaInjuriesBadgeDudasOnly(int dudas) {
+    return '$dudas em dúvida';
+  }
+
+  @override
+  String get nbaInjuriesClean =>
+      'Sem suspensões ou desfalques por lesão no relatório oficial.';
+
+  @override
+  String get nbaInjuriesFullRoster => 'Elenco completo';
+
+  @override
+  String nbaInjuriesImpactMinutes(String team) {
+    return 'Minutos · $team';
+  }
+
+  @override
+  String nbaInjuriesImpactPoints(String team) {
+    return 'Pontos · $team';
+  }
+
+  @override
+  String get nbaInjuriesImpactTitle =>
+      'Impacto estimado no modelo por desfalques';
+
+  @override
+  String get nbaInjuriesNoReason => 'Sem motivo informado';
+
+  @override
+  String get nbaInjuriesNotYetSubmitted =>
+      'Relatório ainda não enviado à liga pela equipe (Not Yet Submitted).';
+
+  @override
+  String get nbaInjuriesPdfLink => 'Boletim oficial NBA (PDF)';
+
+  @override
+  String get nbaInjuriesSub =>
+      'Relatório oficial de disponibilidade emitido pela NBA antes do jogo.';
+
+  @override
+  String get nbaInjuriesTitle => 'Lesões e suspensões';
+
+  @override
+  String get nbaInjuryStatusAvailable => 'Disponível';
+
+  @override
+  String get nbaInjuryStatusDoubtful => 'Pouco provável';
+
+  @override
+  String get nbaInjuryStatusOut => 'Lesionado';
+
+  @override
+  String get nbaInjuryStatusProbable => 'Provável';
+
+  @override
+  String get nbaInjuryStatusQuestionable => 'Em dúvida';
+
+  @override
+  String get nbaInjuryStatusSuspended => 'Suspenso';
+
+  @override
+  String nbaLastSeason(String record) {
+    return 'Temp. passada $record';
+  }
+
+  @override
+  String get nbaLegendOut => 'FORA (11–15)';
+
+  @override
+  String get nbaLegendPlayIn => 'PLAY-IN (7–10)';
+
+  @override
+  String get nbaLegendPlayoffs => 'PLAYOFFS DIRETOS (1–6)';
+
+  @override
+  String get nbaMarginLoss => 'MARGEM NA DERROTA';
+
+  @override
+  String get nbaMarginWin => 'MARGEM NA VITÓRIA';
+
+  @override
+  String get nbaMatchFactors => 'FATORES DO JOGO';
+
+  @override
+  String get nbaMetricAwayHome => 'VISITANTE · MANDANTE';
+
+  @override
+  String get nbaMetricDiff => 'SALDO';
+
+  @override
+  String get nbaMetricLast6 => 'ÚLTIMOS 6';
+
+  @override
+  String get nbaMetricPointsAgainst => 'PONTOS CONTRA';
+
+  @override
+  String get nbaMetricPointsFor => 'PONTOS A FAVOR';
+
+  @override
+  String get nbaMetricRecord => 'CAMPANHA';
+
+  @override
+  String get nbaMetricRestDays => 'DESCANSO (DIAS)';
+
+  @override
+  String nbaMinutesMissing(int minutes) {
+    return '$minutes min de desfalque';
+  }
+
+  @override
+  String get nbaNavAvail => 'Disponibilidade';
+
+  @override
+  String get nbaNavComp => 'Comparação';
+
+  @override
+  String get nbaNavProb => 'Probabilidade';
+
+  @override
+  String get nbaNoH2h => 'Sem confrontos diretos registrados nesta temporada';
+
+  @override
+  String get nbaNoStats => 'Estatísticas da NBA indisponíveis';
+
+  @override
+  String nbaPlayedYesterday(String team) {
+    return '$team jogou ontem (back-to-back)';
+  }
+
+  @override
+  String nbaPtsAvg(String pf, String pa) {
+    return '$pf – $pa pts';
+  }
+
+  @override
+  String nbaRankOf(int rank, int total) {
+    return '$rank.º de $total';
+  }
+
+  @override
+  String nbaRestedDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'DESCANSO DE $count DIAS',
+      one: 'DESCANSO DE 1 DIA',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get nbaSealHeading => 'QUANDO O PALPITE É ADICIONADO';
@@ -1449,6 +2156,48 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get nbaSealPendingTitle => 'Palpite pendente';
+
+  @override
+  String nbaSeasonKicker(String season) {
+    return '// TEMPORADA $season';
+  }
+
+  @override
+  String nbaStandingsCallout(
+    String teamA,
+    int diff,
+    String teamB,
+    String conf,
+  ) {
+    return '$teamA está $diff posições acima de $teamB no $conf.';
+  }
+
+  @override
+  String nbaStandingsCalloutTied(String teamA, String teamB, String conf) {
+    return '$teamA e $teamB estão empatados no $conf.';
+  }
+
+  @override
+  String nbaStreakLabel(String text) {
+    return 'SEQUÊNCIA: $text';
+  }
+
+  @override
+  String nbaStreakSummary(String teamA, int countA, String teamB, int countB) {
+    return '$teamA com $countA seguidas · $teamB $countB';
+  }
+
+  @override
+  String get nbaTotalPtsPerGame => 'PONTOS TOTAIS POR JOGO';
+
+  @override
+  String get nbaViewAllH2h => 'VER TODOS NO H2H';
+
+  @override
+  String get nbaWinProbTitle => 'PROBABILIDADE DE VITÓRIA';
+
+  @override
+  String get nbaWinsLabel => 'VITÓRIAS';
 
   @override
   String noteExpectedAverage(String value) {
@@ -1488,6 +2237,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get parleyCombOddsLabel => 'Cota combinada';
+
+  @override
   String parleyDayCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1496,6 +2248,11 @@ class AppLocalizationsPt extends AppLocalizations {
       one: '$count múltipla',
     );
     return '$_temp0';
+  }
+
+  @override
+  String parleyDaySelections(int count) {
+    return 'Parley do dia · $count seleções';
   }
 
   @override
@@ -1543,6 +2300,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get parleyJointProbLabel => 'Prob. conjunta';
+
+  @override
   String get parleyLoadError => 'Não foi possível carregar a Múltipla.';
 
   @override
@@ -1555,6 +2315,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get parleyNoneTitle => 'Hoje não há múltiplas';
+
+  @override
+  String get parleyNotCertaintyHint =>
+      'Uma probabilidade não é uma certeza: a cada 3 parleys como este, espera-se acertar 1.';
 
   @override
   String parleyOddsBetween(String min, String max) {
@@ -1710,6 +2474,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get picksTrustMonthTitle => 'Acerto deste mês';
+
+  @override
   String picksTrustPromised(String percent) {
     return 'Prometido: $percent';
   }
@@ -1777,6 +2544,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get prefsTitle => 'Privacidade e preferências';
+
+  @override
+  String get privacyBullet1 => 'Assinaturas com Google Play ou App Store';
+
+  @override
+  String get privacyBullet2 =>
+      'Medição de uso, diagnóstico e anúncios (Meta): ativados';
+
+  @override
+  String get privacyReadAndAdjust => 'Ler política · ajustar preferências';
 
   @override
   String get privacyUpdateBody =>
@@ -1950,6 +2727,26 @@ class AppLocalizationsPt extends AppLocalizations {
   String get propStatThrees => 'triplos';
 
   @override
+  String get propsEmptyFilter => 'Não há props disponíveis nesta categoria.';
+
+  @override
+  String get propsFilterAssists => 'ASSIST.';
+
+  @override
+  String get propsFilterPoints => 'PONTOS';
+
+  @override
+  String get propsFilterRebounds => 'REBOTES';
+
+  @override
+  String get propsFilterThrees => 'TRIPLOS';
+
+  @override
+  String propsLastFive(int count) {
+    return '$count dos últimos 5';
+  }
+
+  @override
   String quoteBookAt(String book, String time) {
     return '$book · $time';
   }
@@ -1960,6 +2757,18 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get quoteReference =>
       'Cotação de referência da captura usada ao selar a previsão';
+
+  @override
+  String get radarAttack => 'ATAQUE';
+
+  @override
+  String get radarCreation => 'CRIAÇÃO';
+
+  @override
+  String get radarDefense => 'DEFESA';
+
+  @override
+  String get radarFinishing => 'FINALIZAÇÃO';
 
   @override
   String resultLabel(String score) {
@@ -2074,6 +2883,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get rewardsInviterCode => 'Código de quem convidou você';
 
   @override
+  String get rewardsLedgerBalance => 'Saldo';
+
+  @override
+  String get rewardsLedgerEarlier => 'Anteriores';
+
+  @override
+  String get rewardsLedgerEarned => 'Ganhas';
+
+  @override
   String get rewardsLedgerEmpty => 'Ainda não há movimentações.';
 
   @override
@@ -2081,6 +2899,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get rewardsLedgerMore => 'Ver mais';
+
+  @override
+  String get rewardsLedgerSpent => 'Gastas';
 
   @override
   String get rewardsLedgerTitle => 'Minhas movimentações';
@@ -2416,6 +3237,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Inicie sessão em Perfil para usar suas moedas.';
 
   @override
+  String shellUnlockAction(Object cost) {
+    return 'Desbloquear · $cost';
+  }
+
+  @override
   String shellUnlockBody(Object cost) {
     return '$cost moedas serão descontadas do seu saldo. O acesso corresponde a este prognóstico.';
   }
@@ -2468,6 +3294,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sportFamilyOthers => 'Outros';
+
+  @override
+  String get sportFeaturedVip => 'Destaque reservado para VIP';
 
   @override
   String get sportFootball => 'Futebol';
@@ -2561,7 +3390,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sportTennis => 'Tênis';
 
   @override
+  String get sportVipBadge => 'VIP';
+
+  @override
   String get sportVipCall => 'Conheça os planos para ver mais análises.';
+
+  @override
+  String sportVipMarkets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Mais $count mercados com VIP',
+      one: 'Mais 1 mercado com VIP',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get startupFailed =>
@@ -2752,6 +3595,237 @@ class AppLocalizationsPt extends AppLocalizations {
   String get streamParley => 'Múltipla';
 
   @override
+  String tenAgeYears(int age, String country) {
+    return '$age ANOS · $country';
+  }
+
+  @override
+  String get tenFormIndex => 'ÍNDICE DE FORMA';
+
+  @override
+  String get tenFormKicker => '// ÚLTIMAS PARTIDAS';
+
+  @override
+  String tenGapLeader(String player, int diff, String circuit) {
+    return '$player está $diff posições acima no ranking $circuit.';
+  }
+
+  @override
+  String tenGapTied(String playerA, String playerB, String circuit) {
+    return '$playerA e $playerB têm a mesma posição no ranking $circuit.';
+  }
+
+  @override
+  String get tenH2hFirstDuel => 'PRIMEIRO DUELO';
+
+  @override
+  String tenH2hFirstDuelDesc(String surface) {
+    return 'Eles nunca se enfrentaram. Sem histórico direto, o modelo se baseia na forma recente e no desempenho em $surface.';
+  }
+
+  @override
+  String tenLastMatchesCount(int count) {
+    return 'ÚLTIMOS $count';
+  }
+
+  @override
+  String tenModelGamesExpectedApprox(String line) {
+    return '≈ $line';
+  }
+
+  @override
+  String tenModelGamesExpectedCaption(
+    String line1,
+    int p1,
+    String line2,
+    int p2,
+    String expected,
+  ) {
+    return 'Com $line1 games o modelo dá $p1 %; com $line2, $p2 %: espera uma partida de cerca de $expected games.';
+  }
+
+  @override
+  String get tenModelGamesExpectedLabel => 'GAMES ESPERADOS';
+
+  @override
+  String tenModelGamesExpectedSimple(String expected) {
+    return 'O modelo espera uma partida de cerca de $expected games.';
+  }
+
+  @override
+  String tenModelHandicap(String player) {
+    return 'HANDICAP DE GAMES · $player';
+  }
+
+  @override
+  String tenModelIn2Sets(int pct) {
+    return '$pct% em 2 sets';
+  }
+
+  @override
+  String tenModelIn3Sets(int pct) {
+    return '$pct% em 3 sets';
+  }
+
+  @override
+  String get tenModelKicker => '// O QUE O MODELO ESPERA';
+
+  @override
+  String get tenModelMatchDuration => 'DURAÇÃO DA PARTIDA';
+
+  @override
+  String get tenModelSet1 => 'SET 1';
+
+  @override
+  String get tenModelSet2 => 'SET 2';
+
+  @override
+  String get tenModelSet3 => 'SET 3';
+
+  @override
+  String get tenModelSet3Footnote =>
+      'O 3.º set só é jogado se houver empate em 1–1.';
+
+  @override
+  String get tenModelSets => 'SETS';
+
+  @override
+  String get tenModelTiebreak => 'HAVERÁ TIE-BREAK';
+
+  @override
+  String get tenModelTitle => 'MODELO';
+
+  @override
+  String get tenModelTotalGames =>
+      'TOTAL DE GAMES · PROBABILIDADE DE «MAIS DE»';
+
+  @override
+  String tenModelWinsEachSet(String player) {
+    return '$player VENCE CADA SET';
+  }
+
+  @override
+  String get tenNavModel => 'Modelo';
+
+  @override
+  String get tenNavProb => 'Probabilidade';
+
+  @override
+  String get tenNavSurface => 'Superfície';
+
+  @override
+  String get tenNoStats => 'Estatísticas de tênis não disponíveis';
+
+  @override
+  String tenRankNumber(int rank) {
+    return 'N.º $rank';
+  }
+
+  @override
+  String tenRankPts(String rank, String pts) {
+    return '$rank · $pts pts';
+  }
+
+  @override
+  String get tenRoundFinal => 'Final';
+
+  @override
+  String get tenRoundQ16 => 'Dezesseis-avos';
+
+  @override
+  String get tenRoundQualFinal => 'Final da qualificação';
+
+  @override
+  String get tenRoundQuarterfinals => 'Quartas';
+
+  @override
+  String get tenRoundR128 => 'Rodada de 128';
+
+  @override
+  String get tenRoundR16 => 'Oitavas';
+
+  @override
+  String get tenRoundR32 => 'Rodada de 32';
+
+  @override
+  String get tenRoundR64 => 'Rodada de 64';
+
+  @override
+  String get tenRoundSemifinals => 'Semifinal';
+
+  @override
+  String tenSurfaceCareer(String surface) {
+    return '$surface · CARREIRA';
+  }
+
+  @override
+  String get tenSurfaceClay => 'SAIBRO';
+
+  @override
+  String get tenSurfaceGrass => 'GRAMA';
+
+  @override
+  String get tenSurfaceHard => 'PISTA RÁPIDA';
+
+  @override
+  String get tenSurfaceKicker => '// DESEMPENHO POR SUPERFÍCIE';
+
+  @override
+  String tenSurfaceSeason(String surface) {
+    return '$surface · ESTA TEMPORADA';
+  }
+
+  @override
+  String get tenSurfaceTitle => 'SUPERFÍCIE';
+
+  @override
+  String get tenSurfaceToday => 'HOJE';
+
+  @override
+  String tenThreeSets(int pct) {
+    return '$pct% a 3 sets';
+  }
+
+  @override
+  String tenTiebreakPct(int pct) {
+    return '$pct% com tie-break';
+  }
+
+  @override
+  String get tenWinProbTitle => 'PROBABILIDADE DE VITÓRIA';
+
+  @override
+  String get tileAllSurfaces => 'todas as superfícies';
+
+  @override
+  String get tileAttackDefense => 'Ataque contra defesa rival';
+
+  @override
+  String get tileAttackDefenseCaption =>
+      'Pontos da equipe e pontos que o rival sofre';
+
+  @override
+  String get tileBreak => 'Quebras conquistadas';
+
+  @override
+  String get tileBtts => 'Ambos marcam';
+
+  @override
+  String get tileBttsCaption =>
+      'Jogos em que ambos marcaram: mandante · visitante';
+
+  @override
+  String get tileConcedes => 'Gols que o rival sofre';
+
+  @override
+  String get tileDraws => 'Empates';
+
+  @override
+  String tileDrawsCaption(String league) {
+    return 'Em casa e fora · liga $league %';
+  }
+
+  @override
   String tileFairOdds(String value) {
     return 'Odd justa $value';
   }
@@ -2768,10 +3842,48 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileFavoriteNA => 'Probabilidades não disponíveis';
 
   @override
+  String get tileFormCaption => 'Pontos: mandante · visitante';
+
+  @override
+  String tileFormLabel(int n) {
+    return 'Forma (últ. $n)';
+  }
+
+  @override
+  String get tileGoalsMatch => 'Gols por jogo';
+
+  @override
+  String get tileGoalsMatchCaption =>
+      'Totais nos seus jogos: mandante · visitante';
+
+  @override
   String get tileGoalsNA => 'Histórico insuficiente';
 
   @override
   String get tileGoalsTrend => 'Tendência de gols';
+
+  @override
+  String get tileH2h => 'Confronto direto';
+
+  @override
+  String get tileH2hTotal => 'Total médio dos confrontos';
+
+  @override
+  String get tileHold => 'Games de saque ganhos';
+
+  @override
+  String get tileHomeAway => 'Vitórias casa / fora';
+
+  @override
+  String tileMatchesCount(int n) {
+    return '$n jogos';
+  }
+
+  @override
+  String get tileOut => 'Desfalques confirmados';
+
+  @override
+  String get tileOutCaption => 'Jogadores descartados: mandante · visitante';
 
   @override
   String get tileOver25Model => 'Mais de 2,5 segundo o modelo';
@@ -2780,7 +3892,70 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tileOver25Recent => 'Mais de 2,5 nos últimos jogos';
 
   @override
+  String get tilePace => 'Ritmo projetado';
+
+  @override
+  String get tilePaceCaption => 'Posses esperadas no jogo';
+
+  @override
+  String get tilePerMatch => 'Por jogo';
+
+  @override
+  String get tilePointDiff => 'Saldo de pontos por jogo';
+
+  @override
+  String get tilePointDiffCaption =>
+      'Pontos feitos menos sofridos: mandante · visitante';
+
+  @override
+  String get tilePointsFor => 'Pontos por jogo';
+
+  @override
+  String get tilePointsForCaption =>
+      'Marcados nesta temporada: mandante · visitante';
+
+  @override
   String get tileProbability => 'Probabilidade';
+
+  @override
+  String get tileProjMargin => 'Margem projetada';
+
+  @override
+  String get tileProjTeamPoints => 'Pontos projetados';
+
+  @override
+  String get tileProjTotal => 'Total projetado';
+
+  @override
+  String get tileRank => 'Ranking';
+
+  @override
+  String get tileRecordCaption => 'Retrospecto: mandante · visitante';
+
+  @override
+  String get tileRest => 'Descanso';
+
+  @override
+  String get tileRestCaption => 'Dias de descanso: mandante · visitante';
+
+  @override
+  String get tileScores => 'Jogos com gol';
+
+  @override
+  String get tileScoresCaption => 'Da equipe, nos últimos jogos';
+
+  @override
+  String get tileSplitCaption => 'Mandante em casa · visitante fora';
+
+  @override
+  String get tileSurfaceWins => 'Vitórias na superfície';
+
+  @override
+  String get tileThreeSets => 'Jogos de três sets';
+
+  @override
+  String get tileTrendCaption =>
+      'Jogos com mais de 2,5 gols: mandante · visitante';
 
   @override
   String get tileXg => 'xG projetado';
@@ -2792,6 +3967,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tileXgNA => 'Disponível em mercados de gols';
+
+  @override
+  String get tileXgd => 'Dif. de xG';
+
+  @override
+  String get tileXgdCaption => 'Por jogo: mandante · visitante';
 
   @override
   String get titleAsianHandicap => 'Handicap asiático';
@@ -2820,6 +4001,82 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tooltipVip => 'VIP';
 
   @override
+  String unlockActionCost(int cost) {
+    return 'DESBLOQUEAR · $cost MOEDAS';
+  }
+
+  @override
+  String get unlockBalanceHeader => 'SEU SALDO';
+
+  @override
+  String get unlockBullet1 => 'O palpite, sua probabilidade e a cotação';
+
+  @override
+  String get unlockBullet2 => 'Análise, confronto direto e alertas do jogo';
+
+  @override
+  String get unlockBullet3 => 'Permanece aberto para esta partida';
+
+  @override
+  String get unlockCoinsUnit => 'MOEDAS';
+
+  @override
+  String get unlockCostHeader => 'CUSTO';
+
+  @override
+  String unlockEarnAction(int count) {
+    return 'GANHAR $count MOEDAS';
+  }
+
+  @override
+  String get unlockFooterTerms =>
+      'As moedas são ganhas dentro do app. Nenhum dinheiro é cobrado.';
+
+  @override
+  String get unlockMissingSub => 'Ganhe moedas em poucos minutos ou seja VIP';
+
+  @override
+  String unlockMissingTitle(int count) {
+    return 'FALTAM $count MOEDAS';
+  }
+
+  @override
+  String unlockNeedHave(int need, int have) {
+    return 'Precisa de $need · tem $have';
+  }
+
+  @override
+  String unlockRemainingCoins(int count) {
+    return 'Você ficará com $count moedas';
+  }
+
+  @override
+  String get unlockSheetSub => 'Abre instantaneamente';
+
+  @override
+  String get unlockSheetTitle => 'DESBLOQUEAR PALPITE';
+
+  @override
+  String get unlockShortcutAttendance => 'PRESENÇA';
+
+  @override
+  String get unlockShortcutOffers => 'OFERTAS';
+
+  @override
+  String get unlockShortcutVideo => 'VER UM VÍDEO';
+
+  @override
+  String get unlockVipSubNoPrice => 'Sem gastar moedas';
+
+  @override
+  String unlockVipSubPrice(String price) {
+    return 'Sem gastar moedas · a partir de $price por mês';
+  }
+
+  @override
+  String get unlockVipTitle => 'Ou desbloqueie tudo com VIP';
+
+  @override
   String get updateLater => 'Mais tarde';
 
   @override
@@ -2832,11 +4089,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String get updateRequired => 'Atualize o QuantFut para continuar.';
 
   @override
+  String get updateRequiredTitle => 'Atualize para continuar';
+
+  @override
   String get updateStoreError =>
       'Não foi possível abrir a loja. Tente novamente.';
 
   @override
   String get updateTitle => 'Atualização disponível';
+
+  @override
+  String get updateVersion => 'VERSÃO';
+
+  @override
+  String get vip7Days => '7 DIAS';
 
   @override
   String get vipAccessButton => 'Acesso VIP';
@@ -2878,6 +4144,30 @@ class AppLocalizationsPt extends AppLocalizations {
   String get vipBenefit4Title => 'Odds e análise da partida';
 
   @override
+  String get vipBenefitAlertsSub => 'Desfalques e dúvidas antes do jogo';
+
+  @override
+  String get vipBenefitAlertsTitle => 'Análise, H2H e alertas';
+
+  @override
+  String get vipBenefitAllPicksSub => 'Sem gastar moedas, nos três esportes';
+
+  @override
+  String get vipBenefitAllPicksTitle => 'Todos os picks do dia';
+
+  @override
+  String get vipBenefitCombosSub => 'Com probabilidade conjunta e cotação';
+
+  @override
+  String get vipBenefitCombosTitle => 'Escada e Parley completos';
+
+  @override
+  String get vipBenefitPropsSub => 'Probabilidade, cotação e casa de apostas';
+
+  @override
+  String get vipBenefitPropsTitle => 'Props de jogadores da NBA';
+
+  @override
   String get vipBenefitSportsBody =>
       'Os mesmos selos e o mesmo histórico, sem assinatura';
 
@@ -2888,11 +4178,65 @@ class AppLocalizationsPt extends AppLocalizations {
   String get vipBestPrice => '★ MELHOR PREÇO';
 
   @override
+  String get vipCancelAnytime => 'Cancele quando quiser';
+
+  @override
   String get vipCheckAccess => 'Verificar meu acesso';
 
   @override
   String get vipCheckSignIn =>
       'Inicie sessão em Perfil para verificar seu acesso.';
+
+  @override
+  String get vipChoosePlan => 'ESCOLHA SEU PLANO';
+
+  @override
+  String get vipCompareFreeHeader => 'GRÁTIS';
+
+  @override
+  String get vipCompareHide => 'OCULTAR COMPARAÇÃO';
+
+  @override
+  String get vipCompareRow1Free => '10% do dia';
+
+  @override
+  String get vipCompareRow1Label => 'Picks de alta probabilidade';
+
+  @override
+  String get vipCompareRow1Vip => 'Todos';
+
+  @override
+  String get vipCompareRow2Free => 'Parcial';
+
+  @override
+  String get vipCompareRow2Label => 'Escada e Parley';
+
+  @override
+  String get vipCompareRow2Vip => 'Completos';
+
+  @override
+  String get vipCompareRow3Label => 'Props de jogadores da NBA';
+
+  @override
+  String get vipCompareRow4Label => 'Análise, H2H e alertas';
+
+  @override
+  String get vipCompareRow5Label => 'Histórico de acertos';
+
+  @override
+  String get vipCompareRow6Free => '40 por pick';
+
+  @override
+  String get vipCompareRow6Label => 'Desbloqueio com moedas';
+
+  @override
+  String get vipCompareRow6Vip => 'Não é necessário';
+
+  @override
+  String get vipCompareToggle => 'VER GRÁTIS VS VIP';
+
+  @override
+  String get vipCompareVipHeader => 'VIP';
 
   @override
   String vipDays(int days) {
@@ -2906,10 +4250,80 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get vipDisclaimer =>
+      'Os prognósticos são probabilidades de um modelo estatístico: qualquer partida pode terminar diferente. Uma probabilidade não é uma certeza.';
+
+  @override
+  String vipEquivMonth(String price) {
+    return 'Equivale a $price por mês';
+  }
+
+  @override
+  String vipEquivMonthDay(String month, String day) {
+    return '$month por mês · $day por dia';
+  }
+
+  @override
+  String get vipFaq1A =>
+      'Pelo Google Play › Pagamentos e assinaturas (ou Ajustes › Apple ID no iOS). O VIP permanece ativo até o final do período pago.';
+
+  @override
+  String get vipFaq1Q => 'Como cancelo?';
+
+  @override
+  String get vipFaq2A =>
+      'Não. São probabilidades de um modelo estatístico; qualquer partida pode terminar diferente. Por isso o histórico é público.';
+
+  @override
+  String get vipFaq2Q => 'Os prognósticos sempre acertam?';
+
+  @override
+  String get vipFaq3A =>
+      'Mostram a cotação divulgada por uma casa de apostas como referência. No aplicativo não se aposta nem se movimenta dinheiro.';
+
+  @override
+  String get vipFaq3Q => 'Vocês mostram cotações ou dinheiro?';
+
+  @override
+  String get vipFaq4A =>
+      'Faça login com a mesma conta e toque em «Restaurar compras».';
+
+  @override
+  String get vipFaq4Q => 'Como uso o VIP em outro dispositivo?';
+
+  @override
+  String get vipFaq5A =>
+      'Os disponíveis na sua conta Google Play ou App Store: cartão, saldo ou cobrança via operadora.';
+
+  @override
+  String get vipFaq5Q => 'Quais métodos de pagamento posso usar?';
+
+  @override
+  String get vipFaqTitle => 'PERGUNTAS FREQUENTES';
+
+  @override
   String get vipFreeAccess => 'Sua conta tem acesso gratuito.';
 
   @override
   String get vipGranted => 'Pronto! Seu acesso VIP está ativo.';
+
+  @override
+  String get vipHeaderTitle => 'ACESSO VIP';
+
+  @override
+  String get vipHeroHighlight => 'DESBLOQUEADOS.';
+
+  @override
+  String vipHeroSub(int count) {
+    return '$count picks de futebol, NBA e tênis, cada um selado antes da partida.';
+  }
+
+  @override
+  String get vipHeroSubGeneric =>
+      'Picks de futebol, NBA e tênis, cada um selado antes da partida.';
+
+  @override
+  String get vipHeroTitle => 'TODOS OS PROGNÓSTICOS DE HOJE, ';
 
   @override
   String get vipHistoryNote =>
@@ -2921,6 +4335,17 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get vipLinked => '🔒  Seu acesso VIP fica vinculado à sua conta';
+
+  @override
+  String vipLostCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count erros',
+      one: '1 erro',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get vipManage =>
@@ -2954,6 +4379,17 @@ class AppLocalizationsPt extends AppLocalizations {
       'Pagamento pendente. Você terá acesso assim que a loja confirmar.';
 
   @override
+  String get vipPerMonth => 'por mês';
+
+  @override
+  String vipPerMonths(int count) {
+    return 'a cada $count meses';
+  }
+
+  @override
+  String get vipPerYear => 'por ano';
+
+  @override
   String get vipPickLabel => 'Prognóstico VIP';
 
   @override
@@ -2964,11 +4400,36 @@ class AppLocalizationsPt extends AppLocalizations {
   String get vipPricesNote => 'Preços do catálogo do servidor.';
 
   @override
+  String get vipPrivacyPolicy => 'Política de privacidade';
+
+  @override
   String get vipPurchasesPending =>
       'Compras em preparação: ainda nada é cobrado pelo app.';
 
   @override
+  String vipRenewalPhrase(String price, String period, String store) {
+    return 'Renova por $price $period. Cancele quando quiser no $store › Assinaturas.';
+  }
+
+  @override
   String get vipRestore => 'Restaurar compras';
+
+  @override
+  String vipSavingsBadge(int pct) {
+    return 'ECONOMIZE $pct%';
+  }
+
+  @override
+  String get vipSealAppStore => 'PAGAMENTO VIA APP STORE';
+
+  @override
+  String get vipSealCancel => 'CANCELE QUANDO QUISER';
+
+  @override
+  String get vipSealGooglePlay => 'PAGAMENTO VIA GOOGLE PLAY';
+
+  @override
+  String get vipSealSealed => 'SELADO ANTES DO JOGO';
 
   @override
   String get vipSportsNote =>
@@ -2978,8 +4439,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get vipSportsTitle => 'Acerto registrado por esporte';
 
   @override
+  String vipStartCta(String plan, String price) {
+    return 'INICIAR VIP $plan · $price';
+  }
+
+  @override
+  String get vipStoreAppStore => 'App Store';
+
+  @override
   String get vipStoreFailed =>
       'Não foi possível confirmar a compra. Tentaremos de novo quando você reabrir o app.';
+
+  @override
+  String get vipStoreGooglePlay => 'Google Play';
 
   @override
   String get vipStoreTerms =>
@@ -2994,6 +4466,23 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get vipVerifying => 'Verificando a compra com a loja…';
+
+  @override
+  String get vipWhatYouUnlock => 'O QUE VOCÊ DESBLOQUEIA';
+
+  @override
+  String vipWonCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count acertos',
+      one: '1 acerto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vipYesterday => 'ONTEM';
 
   @override
   String get welcome1Body =>
@@ -3034,6 +4523,33 @@ class AppLocalizationsPt extends AppLocalizations {
   String welcomeGoTo(int number) {
     return 'Ir para a boas-vindas $number';
   }
+
+  @override
+  String get welcomeHistoryMatch1 => 'Mallorca – Córdoba · Mais de 1,5';
+
+  @override
+  String get welcomeHistoryMatch2 => 'Fritz – Musetti · Vitória de Fritz';
+
+  @override
+  String get welcomeHistoryMatch3 => 'Heat – Lakers · Mais de 220,5';
+
+  @override
+  String get welcomeMarket1 => 'ESCANTEIOS';
+
+  @override
+  String get welcomeMarket2 => 'HANDICAP ASIÁTICO';
+
+  @override
+  String get welcomeMarket3 => 'DUPLA HIPÓTESE';
+
+  @override
+  String get welcomeMarket4 => 'PROPS DE JOGADORES NBA';
+
+  @override
+  String get welcomeMarket5 => 'TOTAL DE JOGOS · TÊNIS';
+
+  @override
+  String get welcomeMarket6 => 'AMBAS MARCAM';
 
   @override
   String get welcomeNext => 'Próximo';

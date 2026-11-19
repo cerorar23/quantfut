@@ -235,28 +235,30 @@ test('escalera 6 targets (2.0 a 20.0): objetivos de cobro, freeroll y hasta 6 es
   assert.doesNotMatch(view, /cv-legal/);
 });
 
-test('agruparHistorialPorDia junta varios parlays del mismo dia en una sola fila y limita a 10', () => {
+test('agruparHistorialPorDia conserva todos los parlays visibles de las siete fechas más recientes', () => {
   const dias = [
     { dia: '2026-11-07', tickets: [{ id: 1, cuota_total: 1.87, outcome: 'perdido' }] },
     { dia: '2026-11-07', tickets: [{ id: 2, cuota_total: 1.94, outcome: 'perdido' }] },
     { dia: '2026-11-07', tickets: [{ id: 3, cuota_total: 1.73, outcome: 'ganado' }] },
     { dia: '2026-11-06', tickets: [{ id: 4, cuota_total: 2.10, outcome: 'ganado' }, { id: 5, cuota_total: 3.10, outcome: 'perdido' }] },
   ];
-  const agrupado = agruparHistorialPorDia(dias, 10);
+  const agrupado = agruparHistorialPorDia(dias);
   assert.equal(agrupado.length, 2);
   assert.equal(agrupado[0].dia, '2026-11-07');
   assert.equal(agrupado[0].tickets.length, 3);
   assert.equal(agrupado[1].dia, '2026-11-06');
   assert.equal(agrupado[1].tickets.length, 2);
 
-  // Probar tope de 10
-  const muchos = Array.from({ length: 15 }, (_, i) => ({
-    dia: `2026-11-${String(i + 1).padStart(2, '0')}`,
-    tickets: [{ id: i + 1, cuota_total: 2.0, outcome: 'ganado' }],
+  const muchos = Array.from({ length: 8 }, (_, i) => ({
+    dia: `2026-11-${10 + i}`,
+    tickets: i === 7 ? Array.from({ length: 12 }, (_, id) => ({ id })) : [{ id: 12 + i }],
   }));
-  const limitado = agruparHistorialPorDia(muchos, 10);
-  const totalTickets = limitado.reduce((acc, d) => acc + d.tickets.length, 0);
-  assert.equal(totalTickets, 10);
+  muchos.push({ dia: '2026-11-18', tickets: [{ locked: true }] });
+  const limitado = agruparHistorialPorDia(muchos);
+  assert.deepEqual(limitado.map(d => d.dia), [
+    '2026-11-17', '2026-11-16', '2026-11-15', '2026-11-14', '2026-11-13', '2026-11-12', '2026-11-11',
+  ]);
+  assert.equal(limitado[0].tickets.length, 12);
 });
 
 test('parley v2.1 agrupa tickets del mismo dia en una sola fila en el historial', () => {
@@ -298,6 +300,25 @@ test('parley v2.1 agrupa tickets del mismo dia en una sola fila en el historial'
   assert.match(view, /1\.87 ✗/);
   assert.match(view, /1\.94 ✗/);
   assert.match(view, /1\.73 ✓/);
+});
+
+test('el historial agrupa el parley de un partido por la fecha local de inicio', () => {
+  const inicioLocal = new Date(2026, 10, 16, 18, 30).toISOString();
+  const partido = { id: 1, patas: [{ kickoff_utc: inicioLocal }] };
+  const diario17 = { id: 2, patas: [{ kickoff_utc: inicioLocal }] };
+  const diario16 = { id: 3 };
+  const partidoSinHora = { id: 4, patas: [{ kickoff_utc: null }] };
+  const dias = [
+    { dia: '2026-11-17', ambito: 'partido', tickets: [partido, partidoSinHora] },
+    { dia: '2026-11-17', ambito: 'diario', tickets: [diario17] },
+    { dia: '2026-11-16', ambito: 'diario', tickets: [diario16] },
+  ];
+  const grupos = agruparHistorialPorDia(dias);
+
+  assert.deepEqual(grupos.map(({ dia, tickets }) => [dia, tickets.map(t => t.id)]), [
+    ['2026-11-17', [4, 2]],
+    ['2026-11-16', [1, 3]],
+  ]);
 });
 
 test('escalera por objetivo de cobro: describe objetivos y no promete un porcentaje del reto entero', () => {
@@ -377,4 +398,33 @@ test('escalera activa oculta escalones nulos o aplazados y renumera los visibles
   assert.match(view, /Escalón 1 · nba/);
   assert.match(view, /Más de 210,5 puntos/);
   assert.match(view, /Esperando su primer escalón sellado/);
+});
+
+test('escalera y parley: la cifra grande y la curva cuentan aciertos menos fallos, con la ganancia real al lado', () => {
+  const paso = (outcome, h) => ({ paso: 1, outcome, kickoff_utc: `2026-11-01T${h}:00:00Z`, price: 1.3, prob: 0.8, texto: 'X', local: 'A', visitante: 'B' });
+  const escalera = { status: 'ready', data: {
+    activo: true, reglas: { cuota_min: 1.25, cuota_max: 2.1, stake: '10.00', longitudes: [3] }, actuales: [],
+    historial: [
+      { reto_id: 1, estado: 'completado', ganados: 3, pasos_objetivo: 3, retirado: '0.00', ganancia: '9.00', inicio: '2026-11-01T09:00:00Z', pasos: [paso('win', '10'), paso('win', '11'), paso('win', '12')] },
+      { reto_id: 2, estado: 'fallido', ganados: 1, pasos_objetivo: 3, retirado: '0.00', ganancia: '-10.00', inicio: '2026-11-01T09:00:00Z', pasos: [paso('win', '13'), paso('void', '14'), paso('loss', '15')] },
+    ],
+    resumen: { cerrados: 2, completados: 1, ganancia: '-1.00', invertido: '20.00', roi: -5, tasa_completados: 50 }, por_longitud: {}, serie: [{ acumulado: '9.00', reto_id: 1 }, { acumulado: '-1.00', reto_id: 2 }],
+  } };
+  const pata = outcome => ({ texto: 'X', local: 'A', visitante: 'B', kickoff_utc: '2026-11-01T19:00:00Z', price: 1.5, prob: 0.6, outcome });
+  const ticket = (outcome, patas, estado = 'publicado') => ({ escalon: 1, target: 2.1, estado, outcome, cuota_total: 2.1, n_patas: patas.length, patas });
+  const parley = { status: 'ready', data: { reglas: {}, dias: [], resumen: {}, v2: { activo: true, reglas: { targets: [2.1] }, dias: [
+    { dia: '2026-11-02', tickets: [ticket('perdido', [pata('win'), pata('win'), pata('loss')])] },
+    // Un `solo_referencia` no es apuesta: no suma patas ni parlays (auditoría 19-nov-2026).
+    { dia: '2026-11-01', tickets: [ticket('perdido', [pata('win'), pata('push'), pata('loss')]), ticket('ganado', [pata('win'), pata('win')], 'solo_referencia')] },
+  ] } } };
+  const views = createConversionViews(helpers({ parley, escalera }));
+  const e = views.escaleraView();
+  assert.match(e, /cv-big[^>]*cyber-text-glow--green">\+3</, '4 escalones acertados − 1 fallado; el nulo no cuenta');
+  assert.match(e, /escalones acertados menos fallados/);
+  assert.match(e, /ganancia -1[.,]00 u sobre 20 u invertidas/, 'la ganancia real sigue a la vista');
+  assert.match(e, /Cuenta escalones, no dinero/);
+  const p = views.parleyView();
+  assert.match(p, /cv-big[^>]*cyber-text-glow--green">\+1</, '3 patas acertadas − 2 falladas; la devuelta no cuenta');
+  assert.match(p, /ganancia -2[.,]00 u sobre 2 u/, 'dos parlays perdidos: la pérdida real sigue a la vista');
+  assert.match(p, /Cuenta patas, no dinero/);
 });

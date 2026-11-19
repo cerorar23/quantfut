@@ -748,6 +748,14 @@ frente al modelo base a T-60 y evidencia en varias ligas.
 
 ## Parley del día (desde 2026-10-11, apagado hasta el visto bueno)
 
+> **Vigente desde el 6-nov-2026: parley v2.1** (`publish/parley_v2.py`, lote propio en `parley_v2_datos`). Son cuatro
+> cuotas objetivo (2,10 · 3,10 · 8,20 · 12,10) con la probabilidad del consenso de casas; lo de abajo describe el
+> parley legado. **Auditoría del 19-nov-2026** (`docs/parley_auditoria_20261119.md`): 8 de 42 ganados, todos dentro
+> de lo prometido. El diseño por cuota objetivo acierta ≈ 1/cuota, así que 8,20 y 12,10 pierden 9 de cada 10.
+> Corre en sombra el parley por probabilidad mínima (`publish/parley_prob.py`): 2, 3 y 4 patas con p conjunta
+> ≥ 0,60, 0,45 y 0,33. Sustituirá al v2 si 30 días de sombra cumplen lo prometido. La API no enseña el
+> same-game NBA ni la sombra.
+
 Pestaña "Parley" y ruta pública `GET /parley`. Cada día (de 08:00 a 08:00
 UTC, la jornada americana entera) se arman de 1 a 5 parlays, uno por escalón
 de cuota total: ≈2,0 (1,90-2,20), ≈2,5 (2,20-2,70), ≈3,0 (2,70-3,40), ≈4,0

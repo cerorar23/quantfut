@@ -63,7 +63,8 @@ class SportPredictions extends StatelessWidget {
     for (final list in byDay.values) {
       list.sort((a, b) => b.$2.probability.compareTo(a.$2.probability));
     }
-    final rates = hitRateByFamily(feed.events).values;
+    final monthStart = DateTime(clock.year, clock.month);
+    final rates = hitRateByFamily(feed.events, since: monthStart).values;
     final won = rates.fold<int>(0, (s, r) => s + r.won);
     final resolved = rates.fold<int>(0, (s, r) => s + r.resolved);
     final items = <Widget>[
@@ -86,14 +87,6 @@ class SportPredictions extends StatelessWidget {
             onOpen: () => onOpen(e),
           ),
       ],
-      if (sport == kTennis)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            context.l10n.imageCredits,
-            style: const TextStyle(color: QfColors.muted, fontSize: 11),
-          ),
-        ),
     ];
     return RefreshIndicator(
       onRefresh: retry,
@@ -127,10 +120,10 @@ class _HitRateCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    l10n.picksTrustTitle,
+                    l10n.picksTrustMonthTitle,
                     style: const TextStyle(
                       color: QfColors.text,
-                      fontFamily: 'Gilroy Bold',
+                      fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
                   ),
@@ -156,12 +149,6 @@ class _HitRateCard extends StatelessWidget {
                 fontSize: 12,
                 color: QfColors.text2,
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.sportHitWindow(resolved),
-              key: const ValueKey('sport-hit-window'),
-              style: const TextStyle(fontSize: 11, color: QfColors.muted),
             ),
           ],
         ),
@@ -190,7 +177,7 @@ class _DayHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: QfColors.text,
-              fontFamily: 'Gilroy ExtraBold',
+              fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
               fontSize: 16,
             ),
           ),
@@ -251,7 +238,7 @@ class _PickCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: QfColors.success,
-                      fontFamily: 'Gilroy Bold',
+                      fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
                   ),

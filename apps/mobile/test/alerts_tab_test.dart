@@ -100,8 +100,8 @@ void main() {
     expect(find.text('Bajas de Sporting CP'), findsOneWidget);
     expect(find.text('Bajas de RC Lens'), findsOneWidget);
     expect(find.text('Lesión muscular'), findsNWidgets(2));
-    expect(find.text('Duda'), findsOneWidget);
-    expect(find.text('No disponible'), findsNWidgets(2));
+    expect(find.text('DUDA'), findsOneWidget);
+    expect(find.text('LESIÓN'), findsNWidgets(2));
     expect(find.text('1 baja · 0 dudas'), findsOneWidget); // Lens
     expect(find.text('1 baja · 1 duda'), findsOneWidget); // Sporting
   });

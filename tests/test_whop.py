@@ -62,7 +62,7 @@ def test_webhook_rechaza_firma_mala_y_procesa_la_buena(monkeypatch):
     client = _client(monkeypatch)
     seen = []
     monkeypatch.setattr(whop, "handle_event",
-                        lambda wid, ev: seen.append((wid, ev["type"])) or {"estado": "concedido"})
+                        lambda wid, ev, modo="live": seen.append((wid, ev["type"])) or {"estado": "concedido"})
     body = json.dumps({"type": "payment.succeeded", "data": {}}).encode()
     bad = client.post("/webhooks/whop", content=body, headers={**sign(body), "webhook-signature": "v1,xx"})
     assert bad.status_code == 400 and seen == []
@@ -224,6 +224,7 @@ def test_checkout_lo_crea_el_servidor_y_el_purchase_comparte_event_id(pool, monk
     url, body, headers = http.calls[0]
     assert url.endswith("/checkout_configurations") and headers["Authorization"] == "Bearer clave"
     assert body["plan_id"] == plan_id and body["metadata"]["qf_account_id"] == str(acc["account_id"])
+    assert body["redirect_url"].endswith("/?checkout=1")  # sin esto Whop deja al comprador en su página
     assert out["event_id"] == f"purchase:{out['checkout_id']}"
     whop.handle_event(*_evento("payment.succeeded", {
         **_pago(plan_id, acc["account_id"], "pay_" + uuid.uuid4().hex[:8]),
@@ -356,3 +357,37 @@ def test_purchase_web_lleva_ciudad_estado_zip_y_telefono_cifrados():
     assert {"ct", "st", "zp", "ph", "em", "country", "external_id", "fn"} <= set(event["user_data"])
     assert not any(k.startswith("_") for k in event["custom_data"])
     assert event["user_data"]["ph"] == [hashlib.sha256(b"528112345678").hexdigest()]
+
+
+def test_headers_fijan_version_de_api(monkeypatch):
+    # Sin versión, Whop usa la más nueva y exige variant_id: el checkout por plan_id falla con 400.
+    monkeypatch.delenv("WHOP_API_VERSION_DATE", raising=False)
+    assert whop._headers("apik_x")["Api-Version-Date"] == whop.API_VERSION_DATE
+    monkeypatch.setenv("WHOP_API_VERSION_DATE", "2026-06-08")
+    assert whop._headers("apik_x")["Api-Version-Date"] == "2026-06-08"
+
+
+
+def test_lectores_aceptan_la_forma_anidada_de_la_api_actual():
+    # Pago real del sandbox (2026-11-16): plan y membresía anidados, total como número.
+    pago = {"plan": {"id": "plan_x"}, "membership": {"id": "mem_y"}, "total": 33.99}
+    assert whop._plan_id(pago) == "plan_x" and whop._membership_id(pago) == "mem_y"
+    assert whop._plan_id({"plan_id": "plan_z"}) == "plan_z" and whop._membership_id({}) is None
+    # Versión 2026-11-14-1 (la del webhook del sandbox): variant_id plano y total como objeto.
+    nuevo = {"variant_id": "plan_v", "membership_id": "mem_n", "total": {"amount": "33.99", "currency": "usd"}}
+    assert whop._plan_id(nuevo) == "plan_v" and whop._membership_id(nuevo) == "mem_n" and whop._cents(nuevo["total"]) == 3399
+    assert whop._cents(33.99) == 3399 and whop._cents({"amount": "14.99"}) == 1499 and whop._cents(None) is None
+
+
+
+def test_reembolso_acepta_el_pago_anidado_de_la_version_actual():
+    # Cuerpo real de refund.created del sandbox (2026-11-17): `payment: {id}` y sin `payment_id`.
+    class _C:
+        def execute(self, sql, params=()):
+            self.params = params
+            class _R:
+                def fetchone(_): return None
+            return _R()
+    c = _C()
+    whop.apply_refund(c, {"id": "rf_x", "status": "succeeded", "payment": {"id": "pay_anidado"}})
+    assert c.params == ("pay_anidado",)

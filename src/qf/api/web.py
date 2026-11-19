@@ -17,8 +17,8 @@ router = APIRouter(include_in_schema=False)
 FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
 IMAGES_DIR = FRONTEND_DIR / "imagenes"
 _IMAGE_FOLDERS = {"nba", "tenis", "futbol"}
-_IMAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}\.(png|jpg)$", re.IGNORECASE)
-_IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg"}
+_IMAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,79}\.(png|jpg|webp)$", re.IGNORECASE)
+_IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
 
 
 @router.get("/web/deportes/tenis")
@@ -50,6 +50,32 @@ def tennis_event_stats(event_id: str, response: Response):
     return data
 
 
+@router.get("/web/deportes/tenis/analisis/{event_id}")
+def tennis_event_analysis(event_id: str, response: Response):
+    """Casillas según el mercado y resumen redactado del destacado de un partido de tenis (app CyberCore)."""
+    from . import analisis_tenis
+    from .tenis_publico import public_data
+    response.headers["Cache-Control"] = "no-store"
+    evento = None
+    if event_id.isdigit() and len(event_id) <= 12:
+        evento = next((e for e in public_data().get("events") or [] if str(e.get("id")) == event_id), None)
+    data = analisis_tenis.para_evento(evento) if evento else None
+    if data is None:
+        raise HTTPException(404, "Sin análisis para este partido")
+    return data
+
+
+@router.get("/web/deportes/nba/analisis/{event_id}")
+def nba_event_analysis(event_id: str, response: Response):
+    """Casillas según el mercado y resumen redactado del destacado de un partido de NBA (app CyberCore)."""
+    from . import analisis_nba
+    response.headers["Cache-Control"] = "no-store"
+    data = analisis_nba.para_partido(event_id) if event_id.isdigit() and len(event_id) <= 9 else None
+    if data is None:
+        raise HTTPException(404, "Sin análisis para este partido")
+    return data
+
+
 @router.get("/web/deportes/nba/estadisticas/{event_id}")
 def nba_event_stats(event_id: str, response: Response):
     from .nba_estadisticas import public_event
@@ -68,6 +94,11 @@ def sports_script() -> FileResponse:
 @router.get("/sports-window.js")
 def sports_window_script() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "sports-window.js", media_type="text/javascript")
+
+
+@router.get("/window-i18n.js")
+def forecast_window_translations() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "window-i18n.js", media_type="text/javascript")
 
 
 @router.get("/sport-images.js")

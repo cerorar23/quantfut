@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from tenis.modelo import capa_edad as ce
 from tenis.modelo import datos as dm
 from tenis.modelo import evaluacion as ev
 from tenis.modelo import hiperparametros as hp
@@ -31,6 +32,7 @@ from tenis.modelo.union import unir
 
 SALIDA = Path(r"C:\Users\huye\Documents\apuesta proyec\data\tennis\rediseno_20261104\modelo_s3")
 EVAL_DEFECTO, HASTA_DEFECTO, SEMILLA = (2019, 2024), 2024, 20261105
+DESDE_CAPA_EDAD = 2013     # la capa de edad se ajusta con las temporadas DESDE_CAPA_EDAD..T−1 (la edad escasea antes)
 COLS_PRED = ["partido_key", "circuito", "temporada", "corte_utc", "pi_lado1", "prior_ranking_1", "prior_ranking_2",
              "prior_ranking", "historia_corta", "fatiga_desconocida", "rho", "var_rho", "fatiga_1", "fatiga_2", "S_hat"]
 
@@ -45,7 +47,7 @@ def sha_df(df: pd.DataFrame) -> str:
     return hashlib.sha256(buf.getvalue().encode("utf-8")).hexdigest()
 
 
-def correr_circuito(d, cfg: dict, obs, eval_rango: tuple[int, int] = EVAL_DEFECTO) -> pd.DataFrame:
+def correr_circuito(d, cfg: dict, obs, eval_rango: tuple[int, int] = EVAL_DEFECTO, edades: pd.DataFrame | None = None) -> pd.DataFrame:
     psi = Psi.desde_dict(cfg["psi_r"])
     tabs = tabla.construir_todas(tuple(cfg["lbar"]), psi.sigma_eps, psi.rho_eps)
     tabs_c = tabla.construir_todas((cfg["lbar_comun"],) * 4, psi.sigma_eps, psi.rho_eps)
@@ -75,6 +77,14 @@ def correr_circuito(d, cfg: dict, obs, eval_rango: tuple[int, int] = EVAL_DEFECT
     for col, base in (("pi_recal", "pi_lado1"), ("p_elo_cal", "p_elo")):
         f[col], bs = rc.por_temporada(f.temporada, f[base], f.y1, f.liquida & f[base].notna(), range(eval_rango[0], eval_rango[1] + 1), 2012)
         cfg.setdefault("_pendientes_recal", {})[col] = bs
+    # Capa de edad (17-nov): segunda etapa sobre π, ajustada solo con temporadas anteriores a cada evaluada.
+    if edades is not None:
+        f["edad_dif"] = ce.diferencia_edad(p.partido_key.map(edades.edad_1).to_numpy(), p.partido_key.map(edades.edad_2).to_numpy())
+        f["pi_edad"], capas = ce.por_temporada(f.temporada, f.pi_lado1, f.edad_dif, f.y1, f.liquida & f.pi_lado1.notna(),
+                                               range(eval_rango[0], eval_rango[1] + 1), DESDE_CAPA_EDAD)
+        cfg["_capas_edad"] = {t: (c.como_dict() if c else None) for t, c in capas.items()}
+        sel = f.liquida & f.pi_lado1.notna() & (f.temporada >= DESDE_CAPA_EDAD) & (f.temporada <= eval_rango[1])
+        cfg["_capa_edad_final"] = ce.ajustar(f.pi_lado1[sel], f.edad_dif[sel], f.y1[sel], DESDE_CAPA_EDAD, eval_rango[1]).como_dict()
     return f
 
 
@@ -92,6 +102,15 @@ def evaluar(f: pd.DataFrame, cfg: dict, rng, reps: int, eval_rango: tuple[int, i
         else:
             out["comparaciones"][nombre] = ev.por_origen(s.temporada, y, pi, s[ref], rng, reps)
     out["calibracion"] = {c: ev.calibracion(y, s[c].to_numpy(), rng, reps) for c in ("pi_lado1", "p_elo_cal")}
+    if "pi_edad" in s and s.pi_edad.notna().all():
+        out["metricas"]["pi_edad"] = ev.metricas(y, s.pi_edad.to_numpy())
+        out["comparaciones"]["edad_vs_recal"] = ev.por_origen(s.temporada, y, s.pi_edad, s.pi_recal, rng, reps)
+        out["comparaciones"]["edad_vs_elo_recalibrado"] = ev.por_origen(s.temporada, y, s.pi_edad, s.p_elo_cal, rng, reps)
+        out["calibracion"]["pi_edad"] = ev.calibracion(y, s.pi_edad.to_numpy(), rng, reps)
+        con = s.edad_dif.notna().to_numpy()
+        out["capa_edad_por_conocimiento"] = {
+            nombre: ev.dif_bootstrap(y[m], s.pi_edad.to_numpy()[m], s.pi_recal.to_numpy()[m], rng, reps)
+            for nombre, m in (("con_edad", con), ("sin_edad", ~con)) if m.sum() >= 50}
     if s.pi_var_ch.notna().all():
         out["variante_challenger"] = {"calibracion": ev.calibracion(y, s.pi_var_ch.to_numpy(), rng, reps),
                                       "vs_principal": ev.por_origen(s.temporada, y, s.pi_var_ch, pi, rng, reps)["combinado"]}
@@ -148,7 +167,13 @@ def compuertas(r: dict) -> dict:
     cal = r["calibracion"]["pi_lado1"]
     rec = r["comparaciones"]["recal_menos_sin_capa"]["combinado"]
     bri = [v["brier"] for v in r["por_temporada_brier"].values() if v["n"] >= 500] + [r["metricas"]["pi_lado1"]["brier"]]
-    return {"G_linea_base": {"pasa": lb["hi"] <= 0.002, "objetivo_dif_negativa": lb["dif_logloss"] < 0, **lb},
+    g_edad = {}
+    if "edad_vs_recal" in r["comparaciones"]:
+        ed = r["comparaciones"]["edad_vs_recal"]["combinado"]
+        malas = [t["temporada"] for t in r["comparaciones"]["edad_vs_recal"]["por_temporada"] if t["dif_logloss"] > 0]
+        # Regla (17-nov): se activa si el IC95 de Δ log-loss frente a la capa de pendiente EXCLUYE 0 por debajo.
+        g_edad = {"G_capa_edad": {"capa_activa": ed["hi"] < 0, "temporadas_que_empeoran": malas, **ed}}
+    return g_edad | {"G_linea_base": {"pasa": lb["hi"] <= 0.002, "objetivo_dif_negativa": lb["dif_logloss"] < 0, **lb},
             "G_calibracion": {"pasa": bool(cal["pend_lo"] <= 1 <= cal["pend_hi"] and abs(cal["pendiente"] - 1) <= 0.10
                                            and cal["int_lo"] <= 0 <= cal["int_hi"]), **cal},
             "G_recalibracion": {"capa_activa": rec["hi"] < 0, **rec},
@@ -182,6 +207,7 @@ def main():
     ap.add_argument("--reps", type=int, default=ev.REPS)
     ap.add_argument("--circuitos", nargs="+", default=["atp", "wta"])
     ap.add_argument("--dir", default=str(SALIDA), help="carpeta con hiperparametros.json y de salida")
+    ap.add_argument("--export", default=str(dm.RUTA_EXPORT), help="carpeta de la exportación PIT (por omisión la de referencia)")
     ap.add_argument("--hasta", type=int, default=HASTA_DEFECTO, help="año máximo a cargar del histórico")
     ap.add_argument("--eval_min", type=int, default=EVAL_DEFECTO[0], help="año inicial a evaluar")
     ap.add_argument("--eval_max", type=int, default=EVAL_DEFECTO[1], help="año final a evaluar")
@@ -189,27 +215,32 @@ def main():
     salida = Path(a.dir)
     eval_rango = (a.eval_min, a.eval_max)
     hpj = hp.leer(salida / "hiperparametros.json")
-    p, e = dm.cargar_export(hasta=a.hasta)
-    stats = pd.read_parquet(dm.RUTA_EXPORT / "estadisticas_saque.parquet",
+    export = Path(a.export)
+    p, e = dm.cargar_export(export, hasta=a.hasta)
+    stats = pd.read_parquet(export / "estadisticas_saque.parquet",
                             columns=["partido_key", "lado", "puntos_saque", "puntos_saque_ganados", "visible_desde"])
+    edades = pd.read_parquet(export / "partidos.parquet", columns=["partido_key", "edad_1", "edad_2"],
+                             filters=[("temporada", "<=", int(a.hasta))]).drop_duplicates("partido_key").set_index("partido_key")
     rng = np.random.default_rng(SEMILLA)
     informe, preds, filas = {"sha256_hiperparametros": hp.huella(hpj), "reps": a.reps, "eval_rango": eval_rango, "hasta": a.hasta, "circuitos": {}}, [], []
     for c in a.circuitos:
         cfg = hpj["circuitos"][c]
         d = dm.preparar(p, e, c, a.hasta)
-        f = correr_circuito(d, cfg, observaciones(d, stats), eval_rango)
+        f = correr_circuito(d, cfg, observaciones(d, stats), eval_rango, edades)
         t = f.temporada.to_numpy()
         pr = f[(t >= eval_rango[0]) & (t <= eval_rango[1]) & f.pi_lado1.notna()][COLS_PRED].reset_index(drop=True)
         r = evaluar(f, cfg, rng, a.reps, eval_rango)
         r["compuertas"] = compuertas(r)
         r["no_fuga"] = no_fuga(f)
         r["pendientes_recal"] = cfg.get("_pendientes_recal")
+        r["capa_edad_por_temporada"] = cfg.get("_capas_edad")
+        r["capa_edad_final"] = cfg.get("_capa_edad_final")
         r["union_muestra"] = muestra_union(f, cfg, rng, eval_rango=eval_rango)
         r[f"omitidos_{eval_rango[0]}_{eval_rango[1]}"] = f[(t >= eval_rango[0]) & (t <= eval_rango[1])].motivo.value_counts(dropna=False).rename(
             index=lambda k: k or "pronosticado").to_dict()
         r["sha256_predicciones"] = sha_df(pr)
         if a.repetir:
-            r["sha256_segunda_corrida"] = sha_df(correr_circuito(d, cfg, observaciones(d, stats), eval_rango)
+            r["sha256_segunda_corrida"] = sha_df(correr_circuito(d, cfg, observaciones(d, stats), eval_rango, edades)
                                                  .pipe(lambda g: g[(g.temporada >= eval_rango[0]) & (g.temporada <= eval_rango[1])
                                                                    & g.pi_lado1.notna()][COLS_PRED].reset_index(drop=True)))
         informe["circuitos"][c] = r

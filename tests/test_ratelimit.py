@@ -103,3 +103,23 @@ def test_escudos_tienen_contador_propio_y_no_gastan_el_limite_general(monkeypatc
     assert clave_escudo.startswith("escudos:") and not clave_escudo.startswith("ip:")
     assert limite_escudo >= 10 * limite_web
     assert clave_web.startswith("ip:") and limite_web == main.settings.rate_limit_default_per_minute
+
+
+def test_estaticos_frontend_no_agotan_el_cupo_general(monkeypatch):
+    """Archivos .js, .css y estáticos del frontend no deben consumir el cupo de la API."""
+    from fastapi.testclient import TestClient
+
+    from qf.api import main
+
+    vistos: list[tuple[str, int]] = []
+    monkeypatch.setattr(main.ratelimit, "rate_limited", lambda _r, key, limit: vistos.append((key, limit)) or False)
+    client = TestClient(main.app)
+    client.get("/app.js")
+    client.get("/styles.css")
+    client.get("/")
+    (clave_js, limite_js), (clave_css, limite_css), (clave_web, limite_web) = vistos[-3:]
+    assert clave_js.startswith("escudos:") and not clave_js.startswith("ip:")
+    assert clave_css.startswith("escudos:") and not clave_css.startswith("ip:")
+    assert limite_js >= 10 * limite_web
+    assert limite_css >= 10 * limite_web
+    assert clave_web.startswith("ip:") and limite_web == main.settings.rate_limit_default_per_minute

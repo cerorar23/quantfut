@@ -271,15 +271,43 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             jug_ids = [r[0] for r in filas_jug]
             lados_pron = {}
             equipos_jug = {}
+            nba_ids = {}
             if jug_ids:
                 eq_filas = db.execute(
-                    "SELECT DISTINCT ON (t.entidad_id) t.entidad_id, t.valor::bigint "
-                    "FROM nba.dato t JOIN nba.metrica mt ON mt.metrica_id = t.metrica_id AND mt.nombre = 'equipo_del_jugador' "
-                    "JOIN nba.entidad e ON e.entidad_id = t.partido_id "
-                    "WHERE t.entidad_id = ANY(%s) AND e.fecha_juego_et <= %s "
-                    "ORDER BY t.entidad_id, e.fecha_juego_et DESC, t.dato_id DESC",
-                    (jug_ids, fecha)).fetchall()
-                equipos_jug = dict(eq_filas)
+                    "SELECT j.entidad_id, "
+                    "       COALESCE( "
+                    "           (SELECT t.valor::bigint FROM nba.dato t "
+                    "            JOIN nba.metrica mt ON mt.metrica_id = t.metrica_id AND mt.nombre = 'equipo_del_jugador' "
+                    "            JOIN nba.entidad e ON e.entidad_id = t.partido_id "
+                    "            WHERE t.entidad_id = j.entidad_id AND e.fecha_juego_et <= %s "
+                    "            ORDER BY e.fecha_juego_et DESC, t.dato_id DESC LIMIT 1), "
+                    "           (SELECT t.valor::bigint FROM nba.dato t "
+                    "            JOIN nba.metrica mt ON mt.metrica_id = t.metrica_id AND mt.nombre = 'equipo_del_jugador' "
+                    "            JOIN nba.entidad e ON e.entidad_id = t.partido_id "
+                    "            JOIN nba.entidad o ON o.entidad_id = t.entidad_id "
+                    "            WHERE (o.atributos->>'nombre_norm' = j.atributos->>'nombre_norm' OR lower(o.nombre) = lower(j.nombre)) "
+                    "              AND e.fecha_juego_et <= %s "
+                    "            ORDER BY e.fecha_juego_et DESC, t.dato_id DESC LIMIT 1) "
+                    "       ) "
+                    "FROM nba.entidad j WHERE j.entidad_id = ANY(%s)",
+                    (fecha, fecha, jug_ids)).fetchall()
+                equipos_jug = {r[0]: r[1] for r in eq_filas if r[1] is not None}
+
+                fotos_filas = db.execute(
+                    "SELECT j.entidad_id, "
+                    "       COALESCE( "
+                    "           (SELECT o.id_en_fuente FROM nba.entidad o "
+                    "            WHERE o.tipo = 'jugador' AND o.fuente = 'nba_oficial' "
+                    "              AND (o.canonica_id = j.entidad_id OR o.entidad_id = j.entidad_id) "
+                    "              AND o.id_en_fuente ~ '^[0-9]{1,8}$' LIMIT 1), "
+                    "           (SELECT o.id_en_fuente FROM nba.entidad o "
+                    "            WHERE o.tipo = 'jugador' AND o.fuente = 'nba_oficial' "
+                    "              AND (o.atributos->>'nombre_norm' = j.atributos->>'nombre_norm' OR lower(o.nombre) = lower(j.nombre)) "
+                    "              AND o.id_en_fuente ~ '^[0-9]{1,8}$' LIMIT 1) "
+                    "       ) "
+                    "FROM nba.entidad j WHERE j.entidad_id = ANY(%s)",
+                    (jug_ids,)).fetchall()
+                nba_ids = {r[0]: int(r[1]) for r in fotos_filas if r[1] and r[1].isdigit()}
 
                 lados_filas = db.execute(
                     "SELECT DISTINCT ON (entidad_id) entidad_id, escenarios->>'lado' "
@@ -292,10 +320,10 @@ def crear_app(dsn: str | None = None) -> FastAPI:
             for jid, jnombre, jid_fuente, jestado, jmotivo, _ in filas_jug:
                 lado = lados_pron.get(jid)
                 eq_id = equipos_jug.get(jid)
-                es_local = (lado == 'local') if lado else (eq_id == id_local) if eq_id else None
+                es_local = (lado == 'local') if lado else (eq_id == id_local) if eq_id == id_local else (False if eq_id == id_visitante else None)
                 item = {
                     "id": jid,
-                    "nba_id": int(jid_fuente) if (jid_fuente and jid_fuente.isdigit()) else None,
+                    "nba_id": nba_ids.get(jid),
                     "nombre": jnombre,
                     "estado": jestado,
                     "motivo": jmotivo or "Sin motivo detallado"

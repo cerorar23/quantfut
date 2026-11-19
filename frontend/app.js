@@ -1,14 +1,16 @@
 import { loadPublicData, isPublicationActive, probabilityLabel, expectedHitRate, lockedPicksHtml, lockedParleyHtml, sessionFetch } from './public-data.js?v=54fa60ae0082';
 import { loadAgenda, loadFicha, loadForecastHome, loadForecastMatch, localDay, featuredMarket } from './fichas-data.js?v=real-20261029';
-import { createMembershipUI } from './membership.js?v=preferencias-20261108';
+import { createMembershipUI } from './membership.js?v=secciones-20261117';
 import { routeFromLocation, cleanUrl, historyEntry, deporteBoot } from './rutas.js?v=generica-20261113';
 import { fijarDeportes, normalizarDeportes, deportesNavegacion, urlCatalogo, fijarPaginaDeporte, normalizarPantallas, pantallaResuelta, datosAviso, nombreDeporte, nombreFamilia } from './rutas.js?v=generica-20261113';
-import { createRealViews } from './real-views.js?v=generica-20261113b';
-import { loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=generica-20261113';
-import { createSportWindow } from './sports-window.js?v=generica-20261113';
+import { createRealViews } from './real-views.js?v=secciones-20261117';
+import { conCupos, loadSportWeb, loadResults, loadFootballFeatured, loadImages, loadTennisStats, loadNbaStats, loadNbaAvailability, loadNbaMarkets, loadTennisQuotes, applyTennisQuotes, featuredModelMarket, nbaCode, ordenLiquidado, loadPartidoContrato, esDeporteGenerico } from './sports-data.js?v=cupos-20261116';
+import { createSportWindow } from './sports-window.js?v=pronosticos-ventana-20261117';
 import { imageMarkup, installImageFallback } from './sport-images.js?v=imagenes-20261028b';
 import { authHeaders } from './cuenta-api.js?v=b298f1c04385';
-import { createConversionViews } from './conversion-views.js?v=20261110v17';
+import { createConversionViews } from './conversion-views.js?v=parley-auditoria-20261119';
+
+import { windowLocale, windowSelection, windowText } from './window-i18n.js?v=20261117';
 
 // Fuentes reales: no se incluyen equipos, cuotas ni resultados simulados.
 const now = new Date();
@@ -94,6 +96,9 @@ function pageLang() {
   if (p === '/pt' || p.startsWith('/pt/')) return 'pt';
   return 'es';
 }
+
+const t = text => windowText(text, pageLang());
+const selectionText = text => windowSelection(text, pageLang());
 
 function webFooterExtraMarkup() {
   if (!webConfig) return '';
@@ -187,8 +192,8 @@ function applyWebConfigToDom() {
     }
   }
   const navs = pie.querySelectorAll('nav');
-  if (navs[0] && ui.footer_sports) navs[0].setAttribute('aria-label', ui.footer_sports);
-  if (navs[1] && ui.footer_info) navs[1].setAttribute('aria-label', ui.footer_info);
+  if (navs[0] && ui.footer_sports) { navs[0].setAttribute('aria-label', ui.footer_sports); const t = navs[0].querySelector('.qf-pie-titulo'); if (t) t.textContent = ui.footer_sports; }
+  if (navs[1] && ui.footer_info) { navs[1].setAttribute('aria-label', ui.footer_info); const t = navs[1].querySelector('.qf-pie-titulo'); if (t) t.textContent = ui.footer_info; }
   const prefsBtn = pie.querySelector('.qf-pie-prefs');
   if (prefsBtn && ui.footer_prefs) prefsBtn.textContent = ui.footer_prefs;
   if (lang === 'en' || lang === 'pt') {
@@ -252,6 +257,7 @@ function loadDeportesCatalogo() {
   fetch(urlCatalogo(pageLang()), { headers: { Accept: 'application/json' } })
     .then(r => (r.ok ? r.json() : null))
     .then(data => {
+      webCupos = data?.acceso?.cupos && typeof data.acceso.cupos === 'object' ? data.acceso.cupos : null;
       webPantallas = normalizarPantallas(data);   // ausente, inválida o sin secciones visibles: null (el orden de hoy)
       const lista = normalizarDeportes(data);
       if (!lista) { if (webPantallas) rerenderIfIdle(); return; }   // fallo, sin `deportes` o inválido: se conserva lo que hay
@@ -325,7 +331,7 @@ const state = {
   sportEvent: '',
   sportMarket: 'partido',
   homeSearch: '',
-  homeStatus: 'proximos',
+  homeStatus: 'todos',
   homeLeague: 'Todas',
   homeSort: 'hora',
   pickLeague: 'Todas',
@@ -378,7 +384,21 @@ const sportsCache = new Map();
 let resultsCache = null;
 let imagesCache = null;
 let realGeneration = 0;
+// Cupos de gratis por deporte (`acceso.cupos` de /cliente/v1/config, menú /control/cupos). null = aún sin cargar: todo como llega.
+let webCupos = null;
+const cuposMemo = new WeakMap();
+// Lo que ven las vistas: los eventos del deporte con el cupo aplicado (`conCupos` retira lo que es VIP para quien no tiene plan).
 function ensureSport(sport) {
+  const entry = ensureSportRaw(sport);
+  if (entry.status !== 'ready') return entry;
+  const plus = Boolean(state.session?.plus), cupo = webCupos?.[sport] || null;
+  const hit = cuposMemo.get(entry);
+  if (hit && hit.cupo === cupo && hit.plus === plus) return hit.value;
+  const value = { ...entry, events: conCupos(entry.events, cupo, plus) };
+  cuposMemo.set(entry, { cupo, plus, value });
+  return value;
+}
+function ensureSportRaw(sport) {
   if(sportsCache.has(sport))return sportsCache.get(sport);
   const entry={status:'loading',events:[]},generation=realGeneration;
   sportsCache.set(sport,entry);
@@ -499,8 +519,8 @@ const app = document.getElementById('app');
 installImageFallback(app);
 const esc = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const fold = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const dateFmt = (date, options = {}) => new Intl.DateTimeFormat('es-MX', options).format(date);
-const dayLabel = offset => offset === 0 ? 'Hoy' : offset === -1 ? 'Ayer' : offset === 1 ? 'Mañana' : dateFmt(addDays(offset), { weekday: 'short', day: 'numeric' });
+const dateFmt = (date, options = {}) => new Intl.DateTimeFormat(windowLocale(pageLang()), options).format(date);
+const dayLabel = offset => offset === 0 ? t('Hoy') : offset === -1 ? t('Ayer') : offset === 1 ? t('Mañana') : dateFmt(addDays(offset), { weekday: 'short', day: 'numeric' });
 const timeLabel = date => dateFmt(date, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const stamp = date => `${dateFmt(date, { day: 'numeric', month: 'short' })} · ${timeLabel(date)}`;
 const kickoffLabel = fx => `${dayLabel(fx.day)} · ${timeLabel(fx.kickoff)}`;
@@ -515,7 +535,7 @@ const fmtEdge = edge => edge == null ? '—' : `${edge >= 0 ? '+' : '−'}${Math
 const edgeClass = edge => edge == null ? '' : edge >= SOFT_MIN_EDGE ? 'pos' : edge >= 0 ? 'near' : 'neg';
 const clvValue = item => item.price / item.closePrice - 1;
 const minutesAgo = date => Math.max(1, Math.round((now - date) / 60e3));
-const realNumber = (value, digits = 0) => value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('es-MX', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+const realNumber = (value, digits = 0) => value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString(windowLocale(pageLang()), { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const realPercent = (value, digits = 1) => value == null || !Number.isFinite(Number(value)) ? '—' : `${Number(value) > 0 ? '+' : ''}${realNumber(value, digits)}%`;
 const realDate = value => {
   const date = new Date(value);
@@ -551,10 +571,10 @@ function badge(text, kind = '') { return `<span class="badge ${kind}">${text}</s
 
 // Estado de un mercado: el servidor solo manda `resultado` cuando el partido terminó y la fila está abierta.
 function marketState(resultado) {
-  if (resultado === 'win') return badge('Acertó', 'good');
-  if (resultado === 'loss') return badge('Falló', 'warn');
-  if (resultado === 'push') return badge('Devolución', 'muted');
-  return badge('Pendiente', 'muted');
+  if (resultado === 'win') return badge(t('Acertó'), 'good');
+  if (resultado === 'loss') return badge(t('Falló'), 'warn');
+  if (resultado === 'push') return badge(t('Devolución'), 'muted');
+  return badge(t('Pendiente'), 'muted');
 }
 const statusBadge = status => badge(STATUS[status].label, STATUS[status].kind);
 const teamMark = (name, away = false, large = false) => `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${name.charAt(0)}</span>`;
@@ -593,30 +613,31 @@ function openMatch(id, tab = 'resumen') {
   navigate('partido');
 }
 
-const sportActive = id => state.sport === id || (id === 'futbol' && state.sport === 'todos' && state.route === 'partidos');
+const isMatchWindow = () => state.route === 'picks' || state.route === 'partidos';
+const sportActive = id => state.sport === id || (id === 'futbol' && state.sport === 'todos' && isMatchWindow());
 
 function sportNavMarkup() {
-  return `<nav class="sport-nav" aria-label="Deporte">${sportList().map(({id,label,slug})=>`<a href="/${slug}/" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`;
+  return `<nav class="sport-nav" aria-label="${t("Deporte")}">${sportList().map(({id,label,slug})=>`<a href="/${slug}/" data-sport="${id}" class="${sportActive(id)?'active':''}" ${sportActive(id)?'aria-current="page"':''}>${t(label)}</a>`).join('')}</nav>`;
 }
 
 function navMarkup() {
   const groups = [...new Set(nav.map(item => item.group))];
-  return groups.map(group => `<div class="top-nav-group" role="group" aria-label="${group.charAt(0)}${group.slice(1).toLowerCase()}"><span class="top-nav-label" aria-hidden="true">${group}</span>${nav.filter(item => item.group === group && ['inicio','picks','historial','alta','parley','escalera','planes'].includes(item.route)).map(item => {
+  return groups.map(group => `<div class="top-nav-group" role="group" aria-label="${t(group)}"><span class="top-nav-label" aria-hidden="true">${t(group)}</span>${nav.filter(item => item.group === group && ['inicio','picks','historial','alta','parley','escalera','planes'].includes(item.route)).map(item => {
     const active = state.route === item.route;
-    return `<button type="button" class="top-link ${active ? 'active' : ''}" data-route="${item.route}" ${active ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${item.icon}</span><span>${item.label}</span></button>`;
+    return `<button type="button" class="top-link ${active ? 'active' : ''}" data-route="${item.route}" ${active ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${item.icon}</span><span>${t(item.label)}</span></button>`;
   }).join('')}</div>`).join('');
 }
 
 function mobileNavMarkup() {
   const primary = nav.filter(item => MOBILE_PRIMARY.includes(item.route));
   const extra = nav.filter(item => !MOBILE_PRIMARY.includes(item.route));
-  const link = item => `<button type="button" class="mobile-nav-link ${state.route === item.route ? 'active' : ''}" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><small>${item.short}</small></button>`;
-  const drawer = state.mobileMenuOpen ? `<div class="mobile-menu-layer"><button type="button" class="mobile-menu-backdrop" data-action="close-menu" aria-label="Cerrar menú adicional"></button><div id="mobile-extra-menu" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="Más secciones"><div class="mobile-drawer-head"><div><p class="eyebrow">QUANTFUT / EXPLORAR</p><h2>Más secciones</h2></div><button type="button" class="mobile-drawer-close" data-action="close-menu" aria-label="Cerrar menú">×</button></div>${extra.map(item => `<button type="button" class="mobile-drawer-link" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><span>${item.label}</span><span aria-hidden="true">↗</span></button>`).join('')}<p>Las cuentas y los pronósticos se consultan en el servidor.</p></div></div>` : '';
-  return `<nav class="mobile-bottom-nav" aria-label="Navegación móvil">${primary.map(link).join('')}<button type="button" class="mobile-nav-link mobile-more ${extra.some(item => item.route === state.route) ? 'active' : ''}" data-action="toggle-menu" aria-expanded="${state.mobileMenuOpen}"><span aria-hidden="true">☰</span><small>Más</small></button></nav>${drawer}`;
+  const link = item => `<button type="button" class="mobile-nav-link ${state.route === item.route ? 'active' : ''}" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><small>${t(item.short)}</small></button>`;
+  const drawer = state.mobileMenuOpen ? `<div class="mobile-menu-layer"><button type="button" class="mobile-menu-backdrop" data-action="close-menu" aria-label="Cerrar menú adicional"></button><div id="mobile-extra-menu" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="${t("Más secciones")}"><div class="mobile-drawer-head"><div><p class="eyebrow">QUANTFUT / ${t('EXPLORAR')}</p><h2>${t("Más secciones")}</h2></div><button type="button" class="mobile-drawer-close" data-action="close-menu" aria-label="${t("Cerrar menú")}">×</button></div>${extra.map(item => `<button type="button" class="mobile-drawer-link" data-route="${item.route}" ${state.route === item.route ? 'aria-current="page"' : ''}><span aria-hidden="true">${item.icon}</span><span>${t(item.label)}</span><span aria-hidden="true">↗</span></button>`).join('')}<p>Las cuentas y los pronósticos se consultan en el servidor.</p></div></div>` : '';
+  return `<nav class="mobile-bottom-nav" aria-label="${t("Navegación móvil")}">${primary.map(link).join('')}<button type="button" class="mobile-nav-link mobile-more ${extra.some(item => item.route === state.route) ? 'active' : ''}" data-action="toggle-menu" aria-expanded="${state.mobileMenuOpen}"><span aria-hidden="true">☰</span><small>${t("Más")}</small></button></nav>${drawer}`;
 }
 
 function oddsToggle(extraClass = '') {
-  return `<div class="segmented odds-toggle ${extraClass}" role="group" aria-label="Formato de cuota">${[['dec', 'Decimal'], ['us', 'Americana']].map(([value, label]) => `<button type="button" data-odds="${value}" class="${state.oddsFormat === value ? 'selected' : ''}" aria-pressed="${state.oddsFormat === value}">${label}</button>`).join('')}</div>`;
+  return `<div class="segmented odds-toggle ${extraClass}" role="group" aria-label="${t("Formato de cuota")}">${[['dec', 'Decimal'], ['us', 'Americana']].map(([value, label]) => `<button type="button" data-odds="${value}" class="${state.oddsFormat === value ? 'selected' : ''}" aria-pressed="${state.oddsFormat === value}">${t(label)}</button>`).join('')}</div>`;
 }
 
 function dayRail() {
@@ -1039,8 +1060,9 @@ function ensureAgenda(offset) {
   const entry = { status: 'loading', data: null };
   agendaCache.set(offset, entry);
   loadAgenda(addDays(offset, 12)).then(result => {
+    if (agendaCache.get(offset) !== entry) return;
     agendaCache.set(offset, result);
-    if (['partidos', 'inicio'].includes(state.route)) rerenderIfIdle();
+    if (isMatchWindow() || state.route === 'inicio') rerenderIfIdle();
   });
   return entry;
 }
@@ -1050,19 +1072,20 @@ function ensureFicha(id) {
   const entry = { status: 'loading', data: null };
   fichaCache.set(id, entry);
   loadFicha(id).then(result => {
+    if (fichaCache.get(id) !== entry) return;
     fichaCache.set(id, result);
-    if (state.route === 'partidos' && state.statsMatch === id) rerenderIfIdle();
+    if (isMatchWindow() && state.statsMatch === id) rerenderIfIdle();
   });
   return entry;
 }
 
 // Escudo servido desde /web/escudos cuando ya se descargó; si no, la inicial.
 const realMark = (name, away = false, large = false, src = null) => (src
-  ? `<img class="${large ? 'large-crest' : 'crest'}" src="${esc(src)}" alt="" loading="lazy" decoding="async">`
+  ? imageMarkup(src, name, esc, large ? 'large-crest' : 'crest')
   : `<span class="${large ? 'large-team-mark' : 'team-mark'} ${away ? 'away' : ''}" aria-hidden="true">${esc(String(name || '?').charAt(0))}</span>`);
 const rachaDots = (racha, title = 'Del más reciente al más antiguo') => racha
-  ? `<span class="racha" title="${title}">${[...racha].map(r => `<i class="r-${esc(r)}" aria-label="${RES_LABEL[r] || r}">${esc(r)}</i>`).join('')}</span>`
-  : '<span class="racha empty">sin partidos previos</span>';
+  ? `<span class="racha" title="${esc(t(title))}">${[...racha].map(r => `<i class="r-${esc(r)}" aria-label="${esc(t(RES_LABEL[r] || r))}">${esc(r)}</i>`).join('')}</span>`
+  : `<span class="racha empty">${t("sin partidos previos")}</span>`;
 const posLabel = pos => (pos ? `${pos}º` : '');
 const kickoffOf = p => new Date(p.kickoff_utc);
 
@@ -1089,7 +1112,7 @@ function agendaItem(p) {
   const st = estadoPartido(p);
   const team = (t, away) => `<span>${realMark(t.nombre, away, false, t.escudo)}<span class="team-name">${esc(t.nombre)}</span>${t.posicion ? `<small class="st-pos">${posLabel(t.posicion)}</small>` : ''}</span>`;
   const active = state.statsMatch === p.match_id;
-  return `<button type="button" class="desk-match ${active ? 'active' : ''}" data-stats-match="${esc(p.match_id)}" aria-pressed="${active}"><span class="desk-when"><span class="desk-time">${esc(st.main)}</span>${st.tag ? `<small class="tag ${st.kind}">${st.tag}</small>` : ''}</span><span class="desk-teams">${team(p.local)}${team(p.visitante, true)}</span></button>`;
+  return `<button type="button" class="desk-match ${active ? 'active' : ''}" data-stats-match="${esc(p.match_id)}" aria-pressed="${active}"><span class="desk-when"><span class="desk-time">${esc(st.main)}</span>${st.tag ? `<small class="tag ${st.kind}">${t(st.tag)}</small>` : ''}</span><span class="desk-teams">${team(p.local)}${team(p.visitante, true)}</span></button>`;
 }
 
 // ---- pestañas de la ficha
@@ -1101,15 +1124,15 @@ function compareRows(a, b, rows) {
     if (va == null && vb == null) return '';
     const top = Math.max(Number(va) || 0, Number(vb) || 0) || 1;
     const fmt = v => (v == null ? '—' : `${realNumber(v, digits)}${suffix}`);
-    return `<div class="cmp-row"><span class="cmp-val">${fmt(va)}</span><span class="cmp-bar home"><i data-width="${((Number(va) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-label">${label}</span><span class="cmp-bar away"><i data-width="${((Number(vb) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-val">${fmt(vb)}</span></div>`;
+    return `<div class="cmp-row"><span class="cmp-val">${fmt(va)}</span><span class="cmp-bar home"><i data-width="${((Number(va) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-label">${t(label)}</span><span class="cmp-bar away"><i data-width="${((Number(vb) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-val">${fmt(vb)}</span></div>`;
   }).join('');
 }
 
 function averagesPanel(f) {
   const split = state.statsSplit === 'lado';
-  const a = split ? f.local.promedios.casa : f.local.promedios.todos;
-  const b = split ? f.visitante.promedios.fuera : f.visitante.promedios.todos;
-  const toggle = `<div class="segmented" role="group" aria-label="Qué partidos promediar">${[['todos', 'Todos'], ['lado', 'Local en casa · visitante fuera']].map(([id, label]) => `<button type="button" data-stats-split="${id}" class="${(state.statsSplit || 'todos') === id ? 'selected' : ''}" aria-pressed="${(state.statsSplit || 'todos') === id}">${label}</button>`).join('')}</div>`;
+  const a = f.local.promedios?.[split ? 'casa' : 'todos'];
+  const b = f.visitante.promedios?.[split ? 'fuera' : 'todos'];
+  const toggle = `<div class="segmented" role="group" aria-label="Qué partidos promediar">${[['todos', 'Todos'], ['lado', 'Local en casa · visitante fuera']].map(([id, label]) => `<button type="button" data-stats-split="${id}" class="${(state.statsSplit || 'todos') === id ? 'selected' : ''}" aria-pressed="${(state.statsSplit || 'todos') === id}">${t(label)}</button>`).join('')}</div>`;
   const body = a?.n || b?.n
     ? `<div class="cmp-head"><strong>${esc(f.local.nombre)}</strong><small>${a?.n || 0} partidos · ${b?.n || 0} partidos</small><strong>${esc(f.visitante.nombre)}</strong></div>${compareRows(a, b, AVG_ROWS)}`
     : '<p class="body-copy muted">No hay partidos de estos equipos en los últimos 9 meses en la base.</p>';
@@ -1117,14 +1140,14 @@ function averagesPanel(f) {
 }
 
 function formStrip(team, away = false) {
-  const r = team.forma.resumen;
+  const r = team.forma?.resumen || {};
   const pos = team.clasificacion;
   return `<div class="form-strip"><div class="form-strip-team">${realMark(team.nombre, away, false, team.escudo)}<div><strong>${esc(team.nombre)}</strong><small>${pos ? `${posLabel(pos.posicion)} en ${esc(pos.liga)}${pos.grupo ? ` · ${esc(pos.grupo)}` : ''} · ${realNumber(pos.puntos)} pts` : 'Sin clasificación cargada'}</small></div></div>${rachaDots(r.racha)}<small class="form-strip-sum">${r.n ? `${r.G}G ${r.E}E ${r.P}P · ${r.gf}-${r.gc} goles` : ''}</small></div>`;
 }
 
 function h2hSummary(h, f) {
-  const r = h.resumen;
-  if (!r.n) return '<p class="body-copy muted">No hay cruces entre estos equipos en la base.</p>';
+  const r = h?.resumen;
+  if (!r?.n) return `<p class="body-copy muted">${t('No hay cruces entre estos equipos en la base.')}</p>`;
   const pct = v => Math.round(v / r.n * 100);
   const bar = [pct(r.victorias_local), 0, pct(r.victorias_visitante)];
   bar[1] = 100 - bar[0] - bar[2];
@@ -1132,13 +1155,13 @@ function h2hSummary(h, f) {
 }
 
 function formList(team) {
-  const games = team.forma.partidos;
-  if (!games.length) return '<p class="body-copy muted">Sin partidos previos en la base.</p>';
+  const games = team.forma?.partidos;
+  if (!games?.length) return `<p class="body-copy muted">${t('Sin partidos previos en la base.')}</p>`;
   return `<ol class="form-list">${games.map(g => `<li><span class="res r-${esc(g.res)}" aria-label="${RES_LABEL[g.res]}">${esc(g.res)}</span><div><strong class="with-crest">${g.local ? 'vs' : 'en'} ${g.rival_escudo ? realMark(g.rival, false, false, g.rival_escudo) : ''}${esc(g.rival)}</strong><small>${realDate(g.fecha)} · ${esc(g.competicion)} · ${g.local ? 'Casa' : 'Fuera'}</small></div><span class="num">${g.gf}-${g.gc}${g.xg?.[0] != null ? `<small>xG ${realNumber(g.xg[0], 1)}-${realNumber(g.xg[1], 1)}</small>` : ''}</span></li>`).join('')}</ol>`;
 }
 
 function h2hList(h, f) {
-  if (!h.partidos.length) return '';
+  if (!h?.partidos?.length) return '';
   return `<ol class="form-list">${h.partidos.map(g => {
     const [casa, fuera] = g.local ? [f.local.nombre, f.visitante.nombre] : [f.visitante.nombre, f.local.nombre];
     return `<li><span class="res r-${esc(g.res)}" aria-label="${RES_LABEL[g.res]} para ${esc(f.local.nombre)}">${esc(g.res)}</span><div><strong>${esc(casa)} ${esc(g.marcador)} ${esc(fuera)}</strong><small>${realDate(g.fecha)} · ${esc(g.competicion)}</small></div></li>`;
@@ -1148,16 +1171,16 @@ function h2hList(h, f) {
 function statsPanel(f) {
   const s = f.partido.estadisticas;
   if (!s || !s.home || !Object.keys(s.home).length) {
-    return `<section class="panel"><p class="eyebrow">ESTADÍSTICAS DEL PARTIDO</p><h2>${f.partido.estado === 'finished' ? 'Sin estadísticas para este partido' : 'Se publican al terminar'}</h2><p class="body-copy muted">Posesión, tiros, córners, tarjetas y xG se guardan al cerrar el partido. Mientras tanto, mira los promedios de la pestaña Resumen.</p></section>`;
+    return `<section class="panel"><p class="eyebrow">${t("ESTADÍSTICAS DEL PARTIDO")}</p><h2>${t(f.partido.estado === 'finished' ? 'Sin estadísticas para este partido' : 'Se publican al terminar')}</h2><p class="body-copy muted">${t('Posesión, tiros, córners, tarjetas y xG se guardan al cerrar el partido. Mientras tanto, mira los promedios de la pestaña Resumen.')}</p></section>`;
   }
   const rows = STAT_ROWS.map(([key, label, fmt]) => {
     const a = s.home[key];
-    const b = s.away[key];
+    const b = s.away?.[key];
     if (a == null && b == null) return '';
     const top = Math.max(Number(a) || 0, Number(b) || 0) || 1;
-    return `<div class="cmp-row"><span class="cmp-val">${a == null ? '—' : fmt(a)}</span><span class="cmp-bar home"><i data-width="${((Number(a) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-label">${label}</span><span class="cmp-bar away"><i data-width="${((Number(b) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-val">${b == null ? '—' : fmt(b)}</span></div>`;
+    return `<div class="cmp-row"><span class="cmp-val">${a == null ? '—' : fmt(a)}</span><span class="cmp-bar home"><i data-width="${((Number(a) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-label">${t(label)}</span><span class="cmp-bar away"><i data-width="${((Number(b) || 0) / top * 100).toFixed(1)}"></i></span><span class="cmp-val">${b == null ? '—' : fmt(b)}</span></div>`;
   }).join('');
-  return `<section class="panel"><p class="eyebrow">ESTADÍSTICAS DEL PARTIDO</p><h2>${esc(f.local.nombre)} ${f.partido.marcador ? `${f.partido.marcador[0]}–${f.partido.marcador[1]}` : 'vs'} ${esc(f.visitante.nombre)}</h2><div class="cmp-head"><strong>${esc(f.local.nombre)}</strong><small>${f.partido.descanso ? `Descanso ${f.partido.descanso[0]}–${f.partido.descanso[1]}` : ''}</small><strong>${esc(f.visitante.nombre)}</strong></div>${rows}</section>`;
+  return `<section class="panel"><p class="eyebrow">${t("ESTADÍSTICAS DEL PARTIDO")}</p><h2>${esc(f.local.nombre)} ${f.partido.marcador ? `${f.partido.marcador[0]}–${f.partido.marcador[1]}` : 'vs'} ${esc(f.visitante.nombre)}</h2><div class="cmp-head"><strong>${esc(f.local.nombre)}</strong><small>${f.partido.descanso ? `${t('Descanso')} ${f.partido.descanso[0]}–${f.partido.descanso[1]}` : ''}</small><strong>${esc(f.visitante.nombre)}</strong></div>${rows}</section>`;
 }
 
 // El proveedor describe la zona en inglés ('Promotion - Champions League (League phase)').
@@ -1170,31 +1193,31 @@ const zonaTabla = text => text
 
 function tablePanel(f) {
   const rows = f.tabla;
-  if (!rows) return `<section class="panel"><p class="eyebrow">CLASIFICACIÓN</p><h2>Competición de eliminatorias</h2><p class="body-copy muted">En copas se muestra el puesto de cada equipo en su liga.</p>${formStrip(f.local)}${formStrip(f.visitante, true)}</section>`;
-  if (!rows.length) return '<section class="panel"><p class="eyebrow">CLASIFICACIÓN</p><h2>Tabla no disponible todavía</h2><p class="body-copy muted">La clasificación se actualiza dos veces al día.</p></section>';
+  if (!rows) return `<section class="panel"><p class="eyebrow">${t("CLASIFICACIÓN")}</p><h2>Competición de eliminatorias</h2><p class="body-copy muted">En copas se muestra el puesto de cada equipo en su liga.</p>${formStrip(f.local)}${formStrip(f.visitante, true)}</section>`;
+  if (!rows.length) return `<section class="panel"><p class="eyebrow">${t("CLASIFICACIÓN")}</p><h2>Tabla no disponible todavía</h2><p class="body-copy muted">La clasificación se actualiza dos veces al día.</p></section>`;
   const ids = new Set([f.local.id, f.visitante.id]);
   const groups = [...new Set(rows.map(r => r.grupo))];
-  return groups.map(g => `<section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">CLASIFICACIÓN${g ? ` · ${esc(g.toUpperCase())}` : ''}</p><h2>${esc(f.partido.liga.nombre)}</h2></div>${badge(`Actualizada ${realDate(rows[0].updated_at)}`, 'muted')}</div><div class="table-wrap" tabindex="0" role="region" aria-label="Clasificación, desplazable horizontalmente"><table class="standings"><thead><tr><th scope="col">#</th><th scope="col">Equipo</th><th scope="col" class="num">PJ</th><th scope="col" class="num">G</th><th scope="col" class="num">E</th><th scope="col" class="num">P</th><th scope="col" class="num">Goles</th><th scope="col" class="num">DG</th><th scope="col" class="num">Pts</th><th scope="col">Forma</th></tr></thead><tbody>${rows.filter(r => r.grupo === g).map(r => `<tr class="${ids.has(r.team_id) ? 'is-best' : ''}"><td>${r.posicion}</td><td><strong class="with-crest">${r.escudo ? realMark(r.equipo, false, false, r.escudo) : ''}${esc(r.equipo)}</strong>${r.descripcion ? `<small>${esc(zonaTabla(r.descripcion))}</small>` : ''}</td><td class="num">${r.jugados}</td><td class="num">${r.ganados}</td><td class="num">${r.empatados}</td><td class="num">${r.perdidos}</td><td class="num">${r.goles_favor}:${r.goles_contra}</td><td class="num">${r.goles_favor - r.goles_contra > 0 ? '+' : ''}${r.goles_favor - r.goles_contra}</td><td class="num"><strong>${r.puntos}</strong></td><td>${r.forma ? rachaDots(r.forma.replace(/W/g, 'G').replace(/D/g, 'E').replace(/L/g, 'P'), 'Últimos partidos de liga') : ''}</td></tr>`).join('')}</tbody></table></div></section>`).join('');
+  return groups.map(g => `<section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">CLASIFICACIÓN${g ? ` · ${esc(g.toUpperCase())}` : ''}</p><h2>${esc(f.partido.liga.nombre)}</h2></div>${badge(`Actualizada ${realDate(rows[0].updated_at)}`, 'muted')}</div><div class="table-wrap" tabindex="0" role="region" aria-label="Clasificación, desplazable horizontalmente"><table class="standings"><thead><tr><th scope="col">#</th><th scope="col">${t("Equipo")}</th><th scope="col" class="num">PJ</th><th scope="col" class="num">G</th><th scope="col" class="num">E</th><th scope="col" class="num">P</th><th scope="col" class="num">${t("Goles")}</th><th scope="col" class="num">DG</th><th scope="col" class="num">Pts</th><th scope="col">${t("Forma")}</th></tr></thead><tbody>${rows.filter(r => r.grupo === g).map(r => `<tr class="${ids.has(r.team_id) ? 'is-best' : ''}"><td>${r.posicion}</td><td><strong class="with-crest">${r.escudo ? realMark(r.equipo, false, false, r.escudo) : ''}${esc(r.equipo)}</strong>${r.descripcion ? `<small>${esc(zonaTabla(r.descripcion))}</small>` : ''}</td><td class="num">${r.jugados}</td><td class="num">${r.ganados}</td><td class="num">${r.empatados}</td><td class="num">${r.perdidos}</td><td class="num">${r.goles_favor}:${r.goles_contra}</td><td class="num">${r.goles_favor - r.goles_contra > 0 ? '+' : ''}${r.goles_favor - r.goles_contra}</td><td class="num"><strong>${r.puntos}</strong></td><td>${r.forma ? rachaDots(r.forma.replace(/W/g, 'G').replace(/D/g, 'E').replace(/L/g, 'P'), 'Últimos partidos de liga') : ''}</td></tr>`).join('')}</tbody></table></div></section>`).join('');
 }
 
 function lineupsPanel(f) {
   const side = (key, team) => {
-    const l = f.alineaciones[key];
+    const l = f.alineaciones?.[key];
     const out = f.bajas?.[key] || [];
     const last = !l ? team.ultimo_once : null;
     const lineup = l || last;
-    const xi = `${!l ? '<p class="body-copy muted">XI sin confirmar. Se publica entre 60 y 20 minutos antes del inicio.</p>' : ''}${last ? `<p class="eyebrow">Última alineación registrada · ${realDate(last.fecha)}</p><p class="win-sub">Corresponde al partido anterior, no es el once confirmado de hoy.</p>` : ''}${lineup ? `<p class="lineup-formation">${esc(lineup.formacion || 'Formación sin datos')}</p><ol class="lineup has-photos">${(lineup.titulares || []).map(p => `<li><span>${esc(p.number ?? p.numero ?? '')}</span>${imageMarkup(p.foto, p.name ?? p.nombre ?? '', esc)}<strong>${esc(p.name ?? p.nombre ?? '')}</strong><small>${esc(p.pos ?? '')}</small></li>`).join('')}</ol>` : ''}`;
-    const bajas = f.bajas ? (out.length ? `<ul class="bajas">${out.map(b => `<li><strong>${esc(b.jugador)}</strong><small>${esc(BAJA_LABEL[b.tipo] || b.tipo)}${b.motivo ? ` · ${esc(b.motivo)}` : ''}</small></li>`).join('')}</ul>` : '<p class="body-copy muted">Sin bajas reportadas.</p>') : '<p class="body-copy muted">Bajas aún no comprobadas.</p>';
-    return `<section class="panel"><p class="eyebrow">${esc(team.nombre.toUpperCase())}</p><h2>Alineación</h2>${xi}<h3 class="sub-h">Bajas y dudas</h3>${bajas}</section>`;
+    const xi = `${!l ? `<p class="body-copy muted">${t('XI sin confirmar. Se publica entre 60 y 20 minutos antes del inicio.')}</p>` : ''}${last ? `<p class="eyebrow">${t('Última alineación registrada')} · ${realDate(last.fecha)}</p><p class="win-sub"> ${t('Corresponde al partido anterior, no es el once confirmado de hoy.')}</p>` : ''}${lineup ? `<p class="lineup-formation">${esc(lineup.formacion || t('Formación sin datos'))}</p><ol class="lineup has-photos">${(lineup.titulares || []).map(p => `<li><span>${esc(p.number ?? p.numero ?? '')}</span>${imageMarkup(p.foto, p.name ?? p.nombre ?? '', esc)}<strong>${esc(p.name ?? p.nombre ?? '')}</strong><small>${esc(p.pos ?? '')}</small></li>`).join('')}</ol>` : ''}`;
+    const bajas = f.bajas ? (out.length ? `<ul class="bajas">${out.map(b => `<li><strong>${esc(b.jugador)}</strong><small>${esc(BAJA_LABEL[b.tipo] || b.tipo)}${b.motivo ? ` · ${esc(b.motivo)}` : ''}</small></li>`).join('')}</ul>` : `<p class="body-copy muted">${t("Sin bajas reportadas.")}</p>`) : `<p class="body-copy muted">${t("Bajas aún no comprobadas.")}</p>`;
+    return `<section class="panel"><p class="eyebrow">${esc(team.nombre.toUpperCase())}</p><h2>${t("Alineación")}</h2>${xi}<h3 class="sub-h">${t("Bajas y dudas")}</h3>${bajas}</section>`;
   };
   return `<div class="analysis-grid even">${side('home', f.local)}${side('away', f.visitante)}</div>`;
 }
 
 function fichaPanels(f) {
   return {
-    resumen: () => `<div class="stack">${averagesPanel(f)}<div class="analysis-grid even"><section class="panel"><p class="eyebrow">RACHA · ÚLTIMOS 5</p><h2>Momento de forma</h2>${formStrip(f.local)}${formStrip(f.visitante, true)}</section><section class="panel"><p class="eyebrow">CARA A CARA</p><h2>Historial directo</h2>${h2hSummary(f.cara_a_cara, f)}<button type="button" class="text-link" data-stats-tab="h2h">Ver los cruces ↗</button></section></div></div>`,
-    forma: () => `<div class="analysis-grid even"><section class="panel"><p class="eyebrow">${esc(f.local.nombre.toUpperCase())}</p><h2>Últimos partidos</h2>${formList(f.local)}</section><section class="panel"><p class="eyebrow">${esc(f.visitante.nombre.toUpperCase())}</p><h2>Últimos partidos</h2>${formList(f.visitante)}</section></div>`,
-    h2h: () => `<section class="panel"><p class="eyebrow">CARA A CARA</p><h2>${esc(f.local.nombre)} vs ${esc(f.visitante.nombre)}</h2>${h2hSummary(f.cara_a_cara, f)}${h2hList(f.cara_a_cara, f)}</section>`,
+    resumen: () => `<div class="stack">${averagesPanel(f)}<div class="analysis-grid even"><section class="panel"><p class="eyebrow">${t("RACHA · ÚLTIMOS 5")}</p><h2>${t("Momento de forma")}</h2>${formStrip(f.local)}${formStrip(f.visitante, true)}</section><section class="panel"><p class="eyebrow">${t("CARA A CARA")}</p><h2>${t("Historial directo")}</h2>${h2hSummary(f.cara_a_cara, f)}<button type="button" class="text-link" data-stats-tab="h2h">${t("Ver los cruces ↗")}</button></section></div></div>`,
+    forma: () => `<div class="analysis-grid even"><section class="panel"><p class="eyebrow">${esc(f.local.nombre.toUpperCase())}</p><h2>${t("Últimos partidos")}</h2>${formList(f.local)}</section><section class="panel"><p class="eyebrow">${esc(f.visitante.nombre.toUpperCase())}</p><h2>${t("Últimos partidos")}</h2>${formList(f.visitante)}</section></div>`,
+    h2h: () => `<section class="panel"><p class="eyebrow">${t("CARA A CARA")}</p><h2>${esc(f.local.nombre)} vs ${esc(f.visitante.nombre)}</h2>${h2hSummary(f.cara_a_cara, f)}${h2hList(f.cara_a_cara, f)}</section>`,
     estadisticas: () => statsPanel(f),
     tabla: () => tablePanel(f),
     alineaciones: () => lineupsPanel(f),
@@ -1203,7 +1226,7 @@ function fichaPanels(f) {
 
 function fichaMarkup(entry) {
   if (!entry || entry.status === 'loading') return '<div class="panel loading-panel"><p class="eyebrow">FICHA</p><h2>Cargando datos del partido…</h2></div>';
-  if (entry.status !== 'ready') return `<div class="empty-state"><span class="empty-symbol">◇</span><h3>No se pudo cargar la ficha</h3><p>El servidor no respondió. <button type="button" class="text-link" data-action="retry-ficha">Reintentar ↻</button></p></div>`;
+  if (entry.status !== 'ready') return `<div class="empty-state"><span class="empty-symbol">◇</span><h3>No se pudo cargar la ficha</h3><p>${t('El servidor no respondió.')} <button type="button" class="text-link" data-action="retry-ficha">Reintentar ↻</button></p></div>`;
   const f = entry.data;
   const p = f.partido;
   const st = estadoPartido(p);
@@ -1230,13 +1253,13 @@ function statsView() {
     .map(([id, name]) => [name, list.filter(p => p.liga.id === id)]);
   let side;
   if (agenda.status === 'loading') side = '<p class="rail-empty">Cargando partidos…</p>';
-  else if (agenda.status !== 'ready') side = '<p class="rail-empty">No se pudo cargar la agenda. <button type="button" class="text-link" data-action="retry-agenda">Reintentar ↻</button></p>';
+  else if (agenda.status !== 'ready') side = `<p class="rail-empty">${t('No se pudo cargar la agenda.')} <button type="button" class="text-link" data-action="retry-agenda">${t('Reintentar ↻')}</button></p>`;
   else if (!list.length) side = '<p class="rail-empty">No hay partidos de las ligas seguidas este día.</p>';
   else side = byLeague.map(([name, games]) => `<p class="desk-league">${esc(name)}</p>${games.map(agendaItem).join('')}`).join('');
   const main = state.statsMatch ? fichaMarkup(ensureFicha(state.statsMatch))
     : agenda.status === 'loading' ? '' : '<div class="empty-state"><span class="empty-symbol">◷</span><h3>Sin partidos este día</h3><p>Prueba con otro día en el selector de la izquierda.</p></div>';
   return `<div class="view-title compact"><div><p class="eyebrow">PARTIDOS / DATOS REALES</p><h1>Partidos y estadísticas</h1><p class="lead">Forma, cara a cara, promedios, clasificación y alineaciones de las ligas que sigue QuantFut. Información para analizar, no pronósticos.</p></div>${badge('Datos reales', 'accent')}</div>
-    <div class="chip-row filter-chips scroll" role="group" aria-label="Competición"><button type="button" class="chip ${state.statsLeague === 'Todas' ? 'selected' : ''}" data-stats-league="Todas" aria-pressed="${state.statsLeague === 'Todas'}">Todas <b>${all.length}</b></button>${leagues.map(([id, name]) => `<button type="button" class="chip ${state.statsLeague === id ? 'selected' : ''}" data-stats-league="${esc(id)}" aria-pressed="${state.statsLeague === id}">${esc(name)} <b>${all.filter(p => p.liga.id === id).length}</b></button>`).join('')}</div>
+    <div class="chip-row filter-chips scroll" role="group" aria-label="Competición"><button type="button" class="chip ${state.statsLeague === 'Todas' ? 'selected' : ''}" data-stats-league="Todas" aria-pressed="${state.statsLeague === 'Todas'}">${t('Todas')} <b>${all.length}</b></button>${leagues.map(([id, name]) => `<button type="button" class="chip ${state.statsLeague === id ? 'selected' : ''}" data-stats-league="${esc(id)}" aria-pressed="${state.statsLeague === id}">${esc(name)} <b>${all.filter(p => p.liga.id === id).length}</b></button>`).join('')}</div>
     <div class="desk stats-desk">
       <aside class="desk-side" aria-label="Partidos del día">
         <div class="side-head"><span>PARTIDOS</span><b>${list.length}</b></div>
@@ -1253,30 +1276,30 @@ function statsView() {
 const WIN_TABS = [['resumen', 'Resumen'], ['forma', 'Forma'], ['h2h', 'Cara a cara'], ['estadisticas', 'Estadísticas'], ['tabla', 'Tabla'], ['alineaciones', 'Alineaciones']];
 let winResetScroll = false;
 
-const winCrest = team => (team.escudo
-  ? `<img class="win-crest" src="${esc(team.escudo)}" alt="" loading="lazy" decoding="async">`
-  : `<span class="win-crest is-initial" aria-hidden="true">${esc(String(team.nombre || '?').charAt(0))}</span>`);
+const winCrest = team => imageMarkup(team.escudo, team.nombre, esc, 'win-crest');
 
 function winRow(p) {
   const st = estadoPartido(p);
   const active = state.statsMatch === p.match_id;
-  return `<button type="button" class="win-row" data-stats-match="${esc(p.match_id)}" aria-pressed="${active}" ${active ? 'aria-current="true"' : ''}><span class="win-when"><b>${esc(st.main)}</b>${st.tag ? `<small>${st.tag}</small>` : ''}</span><span class="win-names"><span>${winCrest(p.local)}<span>${esc(p.local.nombre)}</span></span><span>${winCrest(p.visitante)}<span>${esc(p.visitante.nombre)}</span></span></span></button>`;
+  return `<button type="button" class="win-row" data-stats-match="${esc(p.match_id)}" aria-pressed="${active}" ${active ? 'aria-current="true"' : ''}><span class="win-when"><b>${esc(st.main)}</b>${st.tag ? `<small>${t(st.tag)}</small>` : ''}</span><span class="win-names"><span>${winCrest(p.local)}<span>${esc(p.local.nombre)}</span></span><span>${winCrest(p.visitante)}<span>${esc(p.visitante.nombre)}</span></span></span></button>`;
 }
 
 function winTeam(team, detail, away) {
   const pts = detail?.clasificacion ? ` · ${realNumber(detail.clasificacion.puntos)} pts` : '';
-  return `<div class="win-team ${away ? 'is-away' : ''}">${winCrest(team)}<div><strong>${esc(team.nombre)}</strong><small>${team.posicion ? posLabel(team.posicion) : away ? 'Visitante' : 'Local'}${pts}</small>${rachaDots(team.racha)}</div></div>`;
+  return `<div class="win-team ${away ? 'is-away' : ''}">${winCrest({ ...team, escudo: detail?.escudo || team.escudo })}<div><strong>${esc(team.nombre)}</strong><small>${team.posicion ? posLabel(team.posicion) : t(away ? 'Visitante' : 'Local')}${pts}</small>${rachaDots(team.racha)}</div></div>`;
 }
 
 function winForecast(game, entry) {
-  if (entry.status === 'loading') return '<div class="panel loading-panel"><p class="eyebrow">PRONÓSTICO</p><h2>Consultando pronósticos…</h2></div>';
-  if (entry.status !== 'ready') return '<div class="empty-state"><h3>No se pudo consultar el pronóstico</h3><p>El servidor no respondió. <button type="button" class="text-link" data-action="retry-real">Reintentar ↻</button></p></div>';
+  if (entry.status === 'loading') return `<div class="panel loading-panel"><p class="eyebrow">${t("PRONÓSTICO")}</p><h2>${t("Consultando pronósticos…")}</h2></div>`;
+  if (entry.status !== 'ready') return `<div class="empty-state"><h3>${t("No se pudo consultar el pronóstico")}</h3><p>${t('El servidor no respondió.')} <button type="button" class="text-link" data-action="retry-real">${t("Reintentar ↻")}</button></p></div>`;
   const { ficha, picks } = entry.data;
   const feat = featuredMarket(ficha.mercados);
   const sealed = feat?.pick_key ? picks.find(p => p.pick_key === feat.pick_key && p.chain_sha256) : null;
   const card = feat
-    ? `<p class="eyebrow">PRONÓSTICO DESTACADO${sealed ? ` · LOTE ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(feat.seleccion)}</h2><p class="win-sub">${esc(feat.titulo || feat.grupo)} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : feat.cuota_tipo === 'casa' ? 'Cuota de la casa' : 'Cuota del modelo'}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || feat.casa || 'Casa registrada') : feat.cuota_tipo === 'casa' ? esc(feat.casa || 'Casa') : '1 ÷ probabilidad'}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="Probabilidad del pronóstico destacado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${marketState(feat.resultado)}</p>${sealed ? `<details class="win-reg"><summary>Registro del pronóstico</summary><p>Casa: ${esc(sealed.ref_book || 'No disponible')} · Cuota capturada ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>La cuota corresponde a la captura registrada y puede haber cambiado.</p></details>` : ''}`
-    : `<p class="eyebrow">PRONÓSTICO DESTACADO</p><h2>Hoy no hay un pronóstico con probabilidad alta en este partido</h2>`;
+    ? `<p class="eyebrow">${t('PRONÓSTICO DESTACADO')}${sealed ? ` · ${t('LOTE')} ${esc(sealed.batch_date)}` : ''}</p><div class="win-pick-grid"><div><h2>${esc(selectionText(feat.seleccion))}</h2><p class="win-sub">${esc(t(feat.titulo || feat.grupo))} · ${esc(game.liga.nombre)} · ${esc(game.local.nombre)} vs ${esc(game.visitante.nombre)}</p></div><div class="win-odd"><small>${t(feat.cuota_tipo === 'publicada' ? 'Cuota publicada' : feat.cuota_tipo === 'casa' ? 'Cuota de la casa' : 'Cuota del modelo')}</small><strong>${fmtOdds(feat.cuota)}</strong><em>${feat.cuota_tipo === 'publicada' ? esc(sealed?.ref_book || feat.casa || t('Casa registrada')) : feat.cuota_tipo === 'casa' ? esc(feat.casa || t('Casa')) : t('1 ÷ probabilidad')}</em></div></div><div class="win-prob"><b>${fmtPct(feat.prob)}</b><div class="cyber-progress cyber-progress--green" data-value="${(feat.prob * 100).toFixed(1)}" role="progressbar" aria-label="${t("Probabilidad del pronóstico destacado")}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${(feat.prob * 100).toFixed(1)}"><div class="cyber-progress__bar"></div></div></div><p class="win-sub">${marketState(feat.resultado)}</p>${sealed ? `<details class="win-reg"><summary>${t("Registro del pronóstico")}</summary><p>${t('Casa')}: ${esc(sealed.ref_book || t('No disponible'))} · ${t('Cuota capturada')} ${realDate(sealed.odds_as_of)} ${realTime(sealed.odds_as_of)}.</p><code>${esc(sealed.chain_sha256)}</code><p>${t('La cuota corresponde a la captura registrada y puede haber cambiado.')}</p></details>` : ''}`
+    : ficha.mercados?.destacado?.locked === true
+      ? `<p class="eyebrow">${t("PRONÓSTICO DESTACADO")}</p><h2>${t("Destacado reservado para VIP")}</h2><p class="win-sub">${t("El pronóstico destacado de este partido es para cuentas VIP.")}</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">${t("Acceso VIP ↗")}</button>`
+      : `<p class="eyebrow">${t("PRONÓSTICO DESTACADO")}</p><h2>${t("Hoy no hay un pronóstico con probabilidad alta en este partido")}</h2>`;
   const rows = ficha.mercados?.filas || [];
   const groups = [...new Set(rows.map(r => r.grupo))];
   const fam = groups.includes(state.winFam) ? state.winFam : 'Todos';
@@ -1285,19 +1308,19 @@ function winForecast(game, entry) {
   const shown = [...ordenLiquidado(delGrupo.filter(r => r.locked !== true), { resultado: r => r.resultado, cuota: r => r.cuota, prob: r => r.prob }), ...delGrupo.filter(r => r.locked === true)];
   const locked = rows.filter(r => r.locked === true).length;
   const line = r => (r.locked
-    ? `<tr class="win-lock"><td>${esc(r.grupo)}</td><td>Contenido reservado</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`
-    : `<tr${r.destacado ? ' class="win-feat"' : ''}><td>${esc(r.titulo || r.grupo)}</td><td>${esc(r.seleccion)}${r.destacado ? '<small class="win-cell-note">Pronóstico destacado</small>' : ''}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? `${fmtOdds(r.cuota)}<small class="win-cell-note">${r.cuota_tipo === 'publicada' ? esc(r.casa || 'Registrada') : r.cuota_tipo === 'casa' ? esc(r.casa || 'Casa') : 'Del modelo'}</small>` : '—'}</td><td>${marketState(r.resultado)}</td></tr>`);
+    ? `<tr class="win-lock"><td>${esc(t(r.grupo))}</td><td>${t("Contenido reservado")}</td><td class="n" aria-hidden="true">••</td><td class="n" aria-hidden="true">••</td><td>${badge('VIP', 'warn')}</td></tr>`
+    : `<tr${r.destacado ? ' class="win-feat"' : ''}><td>${esc(t(r.titulo || r.grupo))}</td><td>${esc(selectionText(r.seleccion))}${r.destacado ? `<small class="win-cell-note">${t("Pronóstico destacado")}</small>` : ''}</td><td class="n">${typeof r.prob === 'number' ? fmtPct(r.prob) : '—'}</td><td class="n">${typeof r.cuota === 'number' ? `${fmtOdds(r.cuota)}<small class="win-cell-note">${r.cuota_tipo === 'publicada' ? esc(r.casa || t('Casa registrada')) : r.cuota_tipo === 'casa' ? esc(r.casa || t('Casa')) : 'Del modelo'}</small>` : '—'}</td><td>${marketState(r.resultado)}</td></tr>`);
   const market = rows.length
-    ? `<section aria-label="Mercados"><div class="win-mk-head"><h3>Mercados</h3><div class="win-chips" role="group" aria-label="Familia de mercado">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(g)}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="Mercados del partido"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">Mercado</th><th scope="col">Selección</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">Cuota</th><th scope="col">Estado</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">Acceso VIP ↗</button></div>` : ''}</section>`
-    : '<p class="win-sub">No hay mercados disponibles para este encuentro.</p>';
-  return `<article class="win-pick cyber-card" aria-label="Pronóstico destacado">${card}</article>${market}`;
+    ? `<section aria-label="${t("Mercados")}"><div class="win-mk-head"><h3>${t("Mercados")}</h3><div class="win-chips" role="group" aria-label="${t("Familia de mercado")}">${['Todos', ...groups].map(g => `<button type="button" class="chip ${fam === g ? 'selected' : ''}" data-win-fam="${esc(g)}" aria-pressed="${fam === g}">${esc(t(g))}</button>`).join('')}</div></div><div class="win-table" tabindex="0" role="region" aria-label="${t("Mercados del partido")}"><table class="cyber-table cyber-table--compact"><thead><tr><th scope="col">${t("Mercado")}</th><th scope="col">${t("Selección")}</th><th scope="col" class="n">Prob.</th><th scope="col" class="n">${t("Cuota")}</th><th scope="col">${t("Estado")}</th></tr></thead><tbody>${shown.map(line).join('')}</tbody></table></div>${locked ? `<div class="win-vipbar"><p><strong>${locked} mercados con plan VIP</strong>Para ver todos los mercados necesitas un plan VIP contratado.</p><button type="button" class="cyber-btn cyber-btn--green cyber-btn--sm" data-route="planes">${t("Acceso VIP ↗")}</button></div>` : ''}</section>`
+    : `<p class="win-sub">${t("No hay mercados disponibles para este encuentro.")}</p>`;
+  return `<article class="win-pick cyber-card" aria-label="${t("Pronóstico destacado")}">${card}</article>${market}`;
 }
 
 function winStats(entry) {
-  if (!entry || entry.status === 'loading') return '<div class="panel loading-panel"><p class="eyebrow">ESTADÍSTICAS</p><h2>Cargando datos del partido…</h2></div>';
-  if (entry.status !== 'ready') return '<div class="empty-state"><h3>No se pudo cargar la ficha</h3><p>El servidor no respondió. <button type="button" class="text-link" data-action="retry-ficha">Reintentar ↻</button></p></div>';
+  if (!entry || entry.status === 'loading') return `<div class="panel loading-panel"><p class="eyebrow">${t("ESTADÍSTICAS")}</p><h2>${t("Cargando datos del partido…")}</h2></div>`;
+  if (entry.status !== 'ready') return `<div class="empty-state"><h3>${t("No se pudo cargar la ficha")}</h3><p>${t('El servidor no respondió.')} <button type="button" class="text-link" data-action="retry-ficha">${t("Reintentar ↻")}</button></p></div>`;
   const tab = WIN_TABS.some(([id]) => id === state.statsTab) ? state.statsTab : 'resumen';
-  return `<div class="win-tabs-wrap"><div class="cyber-tabs cyber-tabs--pills cyber-tabs--scrollable" role="tablist" aria-label="Secciones de estadísticas">${WIN_TABS.map(([id, label]) => `<button type="button" role="tab" id="win-tab-${id}" aria-controls="win-stats-panel" aria-selected="${tab === id}" class="cyber-tab ${tab === id ? 'cyber-tab--active' : ''}" data-stats-tab="${id}">${label}</button>`).join('')}</div></div><div id="win-stats-panel" role="tabpanel" aria-labelledby="win-tab-${tab}" class="win-panel">${fichaPanels(entry.data)[tab]()}</div>`;
+  return `<div class="win-tabs-wrap"><div class="cyber-tabs cyber-tabs--pills cyber-tabs--scrollable" role="tablist" aria-label="${t("Secciones de estadísticas")}">${WIN_TABS.map(([id, label]) => `<button type="button" role="tab" id="win-tab-${id}" aria-controls="win-stats-panel" aria-selected="${tab === id}" class="cyber-tab ${tab === id ? 'cyber-tab--active' : ''}" data-stats-tab="${id}">${t(label)}</button>`).join('')}</div></div><div id="win-stats-panel" role="tabpanel" aria-labelledby="win-tab-${tab}" class="win-panel">${fichaPanels(entry.data)[tab]()}</div>`;
 }
 
 function windowView() {
@@ -1314,24 +1337,28 @@ function windowView() {
   state.realMatch = state.statsMatch || '';
   state.winList = list.map(p => p.match_id);
   const game = list.find(p => p.match_id === state.statsMatch);
-  const dayIndex = STATS_DAYS.indexOf(state.statsDay);
+  if (state.route === 'picks' && game && winResetScroll) {
+    state.statsTab = game.estado === 'finished' ? 'estadisticas' : 'resumen';
+  }
+  const dateOptions = state.route === 'picks' ? [-3, -2, ...STATS_DAYS] : STATS_DAYS;
+  const dayIndex = dateOptions.indexOf(state.statsDay);
   const index = state.winList.indexOf(state.statsMatch);
   const byLeague = leagues.filter(([id]) => state.statsLeague === 'Todas' || id === state.statsLeague).map(([id, name]) => [name, list.filter(p => p.liga.id === id)]);
   let rail;
-  if (agenda.status === 'loading') rail = '<p class="rail-empty">Cargando partidos…</p>';
-  else if (agenda.status !== 'ready') rail = '<p class="rail-empty">No se pudo cargar la agenda. <button type="button" class="text-link" data-action="retry-agenda">Reintentar ↻</button></p>';
-  else if (!list.length) rail = '<p class="rail-empty">No hay partidos de las ligas seguidas este día.</p>';
+  if (agenda.status === 'loading') rail = `<p class="rail-empty">${t("Cargando partidos…")}</p>`;
+  else if (agenda.status !== 'ready') rail = `<p class="rail-empty">${t('No se pudo cargar la agenda.')} <button type="button" class="text-link" data-action="retry-agenda">${t("Reintentar ↻")}</button></p>`;
+  else if (!list.length) rail = `<p class="rail-empty">${t('No hay partidos de las ligas seguidas este día.')}</p>`;
   else rail = byLeague.map(([name, games]) => `<h3 class="win-league">${esc(name)}</h3>${games.map(winRow).join('')}`).join('');
   const ficha = game ? ensureFicha(game.match_id) : null;
   const detail = ficha?.status === 'ready' ? ficha.data : null;
   const st = game ? estadoPartido(game) : null;
   const bar = game
-    ? `<div class="win-picker"><button type="button" data-win-step="-1" aria-label="Partido anterior" ${index <= 0 ? 'disabled' : ''}>‹</button><label class="win-select"><span class="sr-only">Elegir partido</span><select id="win-select">${list.map(p => `<option value="${esc(p.match_id)}" ${p.match_id === state.statsMatch ? 'selected' : ''}>${esc(estadoPartido(p).main)} · ${esc(p.local.nombre)} vs ${esc(p.visitante.nombre)}</option>`).join('')}</select></label><button type="button" data-win-step="1" aria-label="Partido siguiente" ${index >= list.length - 1 ? 'disabled' : ''}>›</button></div>${winTeam(game.local, detail?.local)}<span class="win-vs ${game.marcador ? 'score' : ''}">${game.marcador ? `${game.marcador[0]} – ${game.marcador[1]}` : 'VS'}</span>${winTeam(game.visitante, detail?.visitante, true)}<div class="win-meta"><span>${esc(game.liga.nombre)} · ${dateFmt(kickoffOf(game), { weekday: 'short', day: 'numeric', month: 'short' })} ${timeLabel(kickoffOf(game))}</span>${badge(st.tag || 'Programado', st.kind || 'muted')}</div>`
+    ? `<div class="win-picker"><button type="button" data-win-step="-1" aria-label="${t("Partido anterior")}" ${index <= 0 ? 'disabled' : ''}>‹</button><label class="win-select"><span class="sr-only">${t("Elegir partido")}</span><select id="win-select">${list.map(p => `<option value="${esc(p.match_id)}" ${p.match_id === state.statsMatch ? 'selected' : ''}>${esc(estadoPartido(p).main)} · ${esc(p.local.nombre)} vs ${esc(p.visitante.nombre)}</option>`).join('')}</select></label><button type="button" data-win-step="1" aria-label="${t("Partido siguiente")}" ${index >= list.length - 1 ? 'disabled' : ''}>›</button></div>${winTeam(game.local, detail?.local)}<span class="win-vs ${game.marcador ? 'score' : ''}">${game.marcador ? `${game.marcador[0]} – ${game.marcador[1]}` : 'VS'}</span>${winTeam(game.visitante, detail?.visitante, true)}<div class="win-meta"><span>${esc(game.liga.nombre)} · ${dateFmt(kickoffOf(game), { weekday: 'short', day: 'numeric', month: 'short' })} ${timeLabel(kickoffOf(game))}</span>${badge(t(st.tag || 'Programado'), st.kind || 'muted')}</div>`
     : '';
   const body = game
-    ? `<div class="win-switch" role="tablist" aria-label="Vista del partido"><button type="button" role="tab" aria-selected="${state.winPane === 'pron'}" data-win-pane="pron">Pronóstico</button><button type="button" role="tab" aria-selected="${state.winPane === 'stats'}" data-win-pane="stats">Estadísticas</button></div><div class="win-split"><div class="win-pane" id="win-pane-pron" aria-label="Pronóstico">${winForecast(game, ensureRealMatch(game.match_id))}</div><div class="win-pane" id="win-pane-stats" aria-label="Estadísticas">${winStats(ficha)}</div></div>`
-    : `<div class="empty-state"><span class="empty-symbol">◷</span><h3>${agenda.status === 'loading' ? 'Cargando partidos…' : 'Sin partidos este día'}</h3><p>${agenda.status === 'loading' ? 'Consultando la agenda del servidor.' : 'Prueba con otro día o con otra competición.'}</p></div>`;
-  return `<div class="win" data-pane="${state.winPane}"><div class="win-strip" role="toolbar" aria-label="Fecha y competición"><div class="win-day"><button type="button" data-stats-day="${STATS_DAYS[dayIndex - 1] ?? ''}" aria-label="Día anterior" ${dayIndex <= 0 ? 'disabled' : ''}>‹</button><strong>${realDayLabel(state.statsDay)}</strong><button type="button" data-stats-day="${STATS_DAYS[dayIndex + 1] ?? ''}" aria-label="Día siguiente" ${dayIndex >= STATS_DAYS.length - 1 ? 'disabled' : ''}>›</button></div><div class="win-chips" role="group" aria-label="Competición"><button type="button" class="chip ${state.statsLeague === 'Todas' ? 'selected' : ''}" data-stats-league="Todas" aria-pressed="${state.statsLeague === 'Todas'}">Todas <b>${all.length}</b></button>${leagues.map(([id, name]) => `<button type="button" class="chip ${state.statsLeague === id ? 'selected' : ''}" data-stats-league="${esc(id)}" aria-pressed="${state.statsLeague === id}">${esc(name)} <b>${all.filter(p => p.liga.id === id).length}</b></button>`).join('')}</div></div><div class="win-work"><aside class="win-rail" aria-label="Partidos del día">${rail}</aside><section class="win-main" aria-label="Partido seleccionado"><div class="win-matchbar">${bar}</div>${body}</section></div></div>`;
+    ? `<div class="win-switch" role="tablist" aria-label="${t("Vista del partido")}"><button type="button" role="tab" aria-selected="${state.winPane === 'pron'}" data-win-pane="pron">${t("Pronóstico")}</button><button type="button" role="tab" aria-selected="${state.winPane === 'stats'}" data-win-pane="stats">${t("Estadísticas")}</button></div><div class="win-split"><div class="win-pane" id="win-pane-pron" aria-label="${t("Pronóstico")}">${winForecast(game, ensureRealMatch(game.match_id))}</div><div class="win-pane" id="win-pane-stats" aria-label="${t("Estadísticas")}">${winStats(ficha)}</div></div>`
+    : `<div class="empty-state"><span class="empty-symbol">◷</span><h3>${t(agenda.status === 'loading' ? 'Cargando partidos…' : agenda.status === 'error' ? 'No se pudo cargar la agenda.' : 'Sin partidos este día')}</h3><p>${t(agenda.status === 'loading' ? 'Consultando la agenda del servidor.' : agenda.status === 'error' ? 'El servidor no respondió.' : 'Prueba con otro día o con otra competición.')}</p>${agenda.status === 'error' ? `<button type="button" class="text-link" data-action="retry-agenda">${t('Reintentar ↻')}</button>` : ''}</div>`;
+  return `<div class="win" data-pane="${state.winPane}"><div class="win-strip" role="toolbar" aria-label="${t("Fecha y competición")}"><div class="win-day"><button type="button" data-stats-day="${dateOptions[dayIndex - 1] ?? ''}" aria-label="${t("Día anterior")}" ${dayIndex <= 0 ? 'disabled' : ''}>‹</button><strong>${realDayLabel(state.statsDay)}</strong><button type="button" data-stats-day="${dateOptions[dayIndex + 1] ?? ''}" aria-label="${t("Día siguiente")}" ${dayIndex >= dateOptions.length - 1 ? 'disabled' : ''}>›</button></div><div class="win-chips" role="group" aria-label="${t("Competición")}"><button type="button" class="chip ${state.statsLeague === 'Todas' ? 'selected' : ''}" data-stats-league="Todas" aria-pressed="${state.statsLeague === 'Todas'}">${t('Todas')} <b>${all.length}</b></button>${leagues.map(([id, name]) => `<button type="button" class="chip ${state.statsLeague === id ? 'selected' : ''}" data-stats-league="${esc(id)}" aria-pressed="${state.statsLeague === id}">${esc(name)} <b>${all.filter(p => p.liga.id === id).length}</b></button>`).join('')}</div></div><div class="win-work"><aside class="win-rail" aria-label="${t("Partidos del día")}">${rail}</aside><section class="win-main" aria-label="${t("Partido seleccionado")}"><div class="win-matchbar">${bar}</div>${body}</section></div></div>`;
 }
 
 // Portada: lo real primero, con enlace a la ficha.
@@ -1343,12 +1370,34 @@ const membershipUI = createMembershipUI({
   },
 });
 
+function predictionsView() {
+  return `<h1 class="sr-only">${t('Pronósticos')}</h1>${windowView()}`;
+}
+
+function setupPredictionControls() {
+  if (state.route !== 'picks') return;
+  const strip = app.querySelector('.win-strip');
+  strip?.insertAdjacentHTML('beforeend', `<div class="win-picks-actions">
+    <button type="button" class="text-link" data-action="refresh-public">${t('Actualizar ↻')}</button>
+    <button type="button" class="text-link" data-route="historial">${t('Ver historial verificable ↗')}</button>
+  </div>`);
+
+  for (const tab of app.querySelectorAll('.win [role="tab"][aria-selected]')) {
+    tab.tabIndex = tab.getAttribute('aria-selected') === 'true' ? 0 : -1;
+    if (!tab.dataset.winPane) continue;
+    tab.id = `win-view-${tab.dataset.winPane}`;
+    const panel = app.querySelector(`#win-pane-${tab.dataset.winPane}`);
+    if (!panel) continue;
+    tab.setAttribute('aria-controls', panel.id);
+  }
+}
+
 const realViews = createRealViews({ state, esc, sportList, badge, ensureHome:ensureRealHome, ensureMatch:ensureRealMatch,
   addDays, localDay, dayLabel, timeLabel, realDate, realTime, fmtOdds, fmtPct, liveEvidence, livePicks, dayRail,
-  ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview() });
+  ensureSport, ensureResults, ensureImages, ensureNbaMarkets, nbaCode, plansPreview:()=>membershipUI.plansPreview(), planDesde:()=>membershipUI.priceFrom(), cv:conversionViews.bloques });
 
 const sportWindow = createSportWindow({ state, esc, badge, fmtPct, fmtOdds, realDate, realTime, dateFmt, addDays, localDay, dayLabel, ensureSport, ensureTennisStats, ensureNbaStats, ensureNbaAvailability, ensureNbaMarkets, featuredModelMarket, ensureImages, nbaCode,
-  ensureDetalle, generico: datosDeporteGenerico, aviso: bloque => datosAviso(bloque, pageLang()) });
+  t, selectionText, ensureDetalle, generico: datosDeporteGenerico, aviso: bloque => datosAviso(bloque, pageLang()) });
 
 function modalMarkup() {
   if (!state.modal) return '';
@@ -1449,18 +1498,22 @@ function applyCybercoreTheme(root) {
 // Pie global: enlaces REALES (<a href>) a las páginas de confianza y a lo legal. Las páginas las sirve el servidor
 // (paginas.py), no la SPA, así que el clic navega de verdad; el manejador de clics solo intercepta botones y a[data-sport].
 function siteFooter() {
-  return `<footer class="qf-pie" aria-label="Información del sitio"><p><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p><nav aria-label="Pronósticos por deporte"><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav>${webFooterExtraMarkup()}</footer>`;
+  // Pie en columnas: marca, pronósticos por deporte, información y legal; debajo, el aviso +18 y los canales/idiomas.
+  // El primer <p> es el aviso y los dos primeros <nav> son deportes e información: applyWebConfig los localiza por ese orden.
+  const lema = { en: 'Forecasts with probabilities and a verifiable record.', pt: 'Prognósticos com probabilidade e registro verificável.' }[pageLang()] || 'Pronósticos con probabilidad y registro verificable.';
+  return `<footer class="qf-pie" aria-label="Información del sitio"><div class="qf-pie-cols"><div class="qf-pie-marca"><span class="brand-mark" aria-hidden="true">Q<span>.</span></span><strong>QuantFut</strong><span>${lema}</span></div><nav aria-label="Pronósticos por deporte"><strong class="qf-pie-titulo">Pronósticos</strong><a href="/futbol/">Pronósticos de fútbol</a><a href="/nba/">Pronósticos NBA</a><a href="/tenis/">Pronósticos de tenis</a></nav><nav aria-label="Información"><strong class="qf-pie-titulo">Información</strong><a href="/metodologia/">Metodología</a><a href="/juego-responsable/">Juego responsable</a><a href="/sobre-nosotros/">Sobre nosotros</a></nav><nav aria-label="Legal"><strong class="qf-pie-titulo">Legal</strong><a href="/legal/terminos">Términos</a><a href="/legal/privacidad">Privacidad</a><button type="button" class="qf-pie-prefs" data-membership-action="ads-preferences">Preferencias de medición</button></nav></div><p class="qf-pie-aviso"><span class="qf-pie-18" aria-label="Solo mayores de 18 años">+18</span>QuantFut es un servicio de información estadística, no una casa de apuestas. Los pronósticos tienen fines exclusivamente informativos y de entretenimiento: una probabilidad estimada no garantiza un resultado.</p>${webFooterExtraMarkup()}</footer>`;
 }
 
 function render() {
   if(state.mobileMenuOpen && window.matchMedia('(min-width:761px)').matches)state.mobileMenuOpen=false;
-  const views = { info: () => '<article class="qf-info"></article>', inicio: realViews.home, partidos: windowView, mercados: windowView, picks: realViews.picks, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
+  const views = { info: () => '<article class="qf-info"></article>', inicio: realViews.home, partidos: windowView, mercados: windowView, picks: predictionsView, analisis: realViews.detail, alta: altaView, escalera: escaleraView, parley: parleyView, partido: windowView, historial: realViews.history, planes: plansView, cuenta: accountView, paquetes: membershipUI.packagesView, acceso: membershipUI.authView, checkout: membershipUI.checkoutView };
   const overlay = state.mobileMenuOpen || Boolean(state.modal) || Boolean(state.drawer);
   const winScroll = [...app.querySelectorAll('.win-pane')].map(pane => pane.scrollTop);
   // La sección que el servidor sirvió conserva su título (más descriptivo), también al volver a ella con «atrás»; las demás, el corto.
   document.title = document.documentElement.dataset.ruta === state.route ? SERVER_TITLE : `${routeTitle[state.route]} · QuantFut`;
-  app.innerHTML = `<div class="app-shell top-layout ${state.route === 'partidos' ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut, ir a inicio"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>Pronósticos reales <small>· Registros verificables</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● DATOS REALES</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${state.session ? 'Mi cuenta' : 'Entrar'} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="Navegación principal">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div>${siteFooter()}</div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
+  app.innerHTML = `<div class="app-shell top-layout ${isMatchWindow() ? 'is-win' : ''} ${state.route === 'picks' ? 'is-win-picks' : ''}"><header class="site-header"><div class="header-main"><button type="button" class="header-brand" data-route="inicio" aria-label="QuantFut · ${t('Inicio')}"><span class="brand-mark">Q<span>.</span></span><span class="brand-text"><strong>QuantFut</strong><small>SPORTS INTELLIGENCE</small></span></button>${sportNavMarkup()}<span class="header-status"><span class="side-live-dot"></span><span>${t('Pronósticos reales')} <small>· ${t('Registros verificables')}</small></span></span><div class="top-actions">${oddsToggle('top-odds')}<span class="demo-flag">● ${t('DATOS REALES')}</span><button type="button" class="account-button" data-route="${state.session ? 'cuenta' : 'acceso'}">${t(state.session ? 'Mi cuenta' : 'Entrar')} <span aria-hidden="true">↗</span></button></div></div><nav class="top-nav" aria-label="${t("Navegación principal")}">${navMarkup()}</nav></header><div class="main-shell"><main id="main-content" class="content ${state.route === 'mercados' ? 'content-wide' : ''}" tabindex="-1">${views[state.route]()}</main></div>${siteFooter()}</div>${mobileNavMarkup()}${drawerMarkup()}${modalMarkup()}`;
   if (INFO_NODE) app.querySelector('.qf-info')?.replaceChildren(INFO_NODE);
+  setupPredictionControls();
   applyCybercoreTheme(app);
   conversionViews.applyMeters(app);
   membershipUI.afterRender();
@@ -1527,7 +1580,21 @@ app.addEventListener('click', event => {
   const data = button.dataset;
   if (membershipUI.handleClick(button)) return;
   if (data.scrollTo) { app.querySelector(`#${CSS.escape(data.scrollTo)}`)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'}); return; }
-  if (data.sport) { const fromHeader=Boolean(button.closest('.sport-nav'));state.sport=data.sport; state.homeSearch=''; if(fromHeader&&state.route==='partidos'){state.winDay=0;state.winDayPinned=false;state.winEvent='';state.winLastEvent=null;state.winPane='pron';render();app.querySelector(`.sport-nav [data-sport="${data.sport}"]`)?.focus();return;} if(!['inicio','picks'].includes(state.route))navigate('picks');else rerenderKeepingFocus(`[data-sport="${data.sport}"]`);if(fromHeader)app.querySelector('#pronosticos-hoy')?.scrollIntoView({block:'start',behavior:'instant'}); return; }
+  if (data.sport) {
+    const fromHeader = Boolean(button.closest('.sport-nav'));
+    state.sport = data.sport;
+    state.homeSearch = '';
+    if (fromHeader && isMatchWindow()) {
+      Object.assign(state, { statsDay: 0, statsLeague: 'Todas', statsMatch: null, statsTab: 'resumen',
+        winDay: 0, winDayPinned: false, winEvent: '', winLastEvent: null, winPane: 'pron', winSportTab: 'resumen' });
+      rerenderKeepingFocus('.sport-nav [data-sport="'+CSS.escape(data.sport)+'"]');
+      return;
+    }
+    if (state.route !== 'inicio' && state.route !== 'picks') navigate('picks');
+    else rerenderKeepingFocus('[data-sport="'+CSS.escape(data.sport)+'"]');
+    if (fromHeader) app.querySelector('#pronosticos-hoy')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    return;
+  }
   if (data.resultSport) {state.resultSport=data.resultSport;state.resultLimit=30;rerenderKeepingFocus(`[data-result-sport="${data.resultSport}"]`);return;}
   if (data.resultOutcome) {state.resultOutcome=data.resultOutcome;state.resultLimit=30;rerenderKeepingFocus(`[data-result-outcome="${data.resultOutcome}"]`);return;}
   if (data.resultMore) {state.resultLimit=(state.resultLimit||30)+30;rerenderKeepingFocus('[data-result-more]');return;}
@@ -1564,7 +1631,7 @@ app.addEventListener('click', event => {
   if (data.winStep) { const next = state.winList[state.winList.indexOf(state.statsMatch) + Number(data.winStep)]; if (next) { state.statsMatch = next; rerenderKeepingFocus(`[data-win-step="${data.winStep}"]`); } return; }
   if (data.action === 'retry-real') { realMatchCache.delete(state.statsMatch); render(); return; }
   if (data.statsMatch) { state.statsMatch = data.statsMatch; rerenderKeepingFocus(`[data-stats-match="${CSS.escape(data.statsMatch)}"]`); return; }
-  if (data.statsDay !== undefined && data.statsDay !== '') { state.statsDay = Number(data.statsDay); state.statsMatch = null; rerenderKeepingFocus('.stats-desk .day-stepper strong'); return; }
+  if (data.statsDay !== undefined && data.statsDay !== '') { state.statsDay = Number(data.statsDay); state.statsMatch = null; rerenderKeepingFocus('.win-day button:not(:disabled), .stats-desk .day-stepper button:not(:disabled)'); return; }
   if (data.statsLeague) { state.statsLeague = data.statsLeague; state.statsMatch = null; rerenderKeepingFocus(`[data-stats-league="${CSS.escape(data.statsLeague)}"]`); return; }
   if (data.statsTab) { state.statsTab = data.statsTab; rerenderKeepingFocus(`[data-stats-tab="${data.statsTab}"][role="tab"]`); return; }
   if (data.statsSplit) { state.statsSplit = data.statsSplit; rerenderKeepingFocus(`[data-stats-split="${data.statsSplit}"]`); return; }
@@ -1679,7 +1746,16 @@ window.addEventListener('keydown', event => {
   if (state.mobileMenuOpen) {
     if (event.key === 'Escape') { state.mobileMenuOpen = false; render(); app.querySelector('.mobile-more')?.focus(); }
     else if (event.key === 'Tab') trapFocus(event, '.mobile-drawer');
+    return;
   }
+  if (state.route !== 'picks' || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)
+    || !event.target.matches?.('.win [role="tab"]')) return;
+  const tabs = [...event.target.closest('[role="tablist"]').querySelectorAll('[role="tab"]')];
+  const current = tabs.indexOf(event.target);
+  const index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+    : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  event.preventDefault();
+  tabs[index].click();
 });
 
 fijarPaginaDeporte(document.documentElement.dataset, location);   // /{slug}/ de un deporte nuevo: se reconoce antes de que llegue el catálogo
@@ -1714,7 +1790,7 @@ async function refreshPublicData({ silent = false } = {}) {
   const request = ++publicRequest;
   if (!silent || !publicData) {
     publicData = null;
-    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); sportsCache.clear(); detalleCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaAvailabilityCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
+    if(request>1){ realGeneration++; realHomeCache.clear(); realMatchCache.clear(); agendaCache.clear(); fichaCache.clear(); sportsCache.clear(); detalleCache.clear(); tennisStatsCache.clear(); nbaStatsCache.clear(); nbaAvailabilityCache.clear(); nbaMarketsCache.clear(); resultsCache=null; if(imagesCache?.status==='error')imagesCache=null; }
     render();
   }
   const result = await loadPublicData(publicFetch);

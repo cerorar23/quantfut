@@ -6,16 +6,21 @@ import '../l10n/app_locale.dart';
 import 'home_sport.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'match_shell.dart';
 import 'qf_shapes.dart';
 import 'qf_theme.dart';
 import 'quote_label.dart';
 import 'screen_definition.dart';
 import 'sport_contract.dart';
 import 'sport_detail_tabs.dart';
+import 'sport_forecast.dart';
 import 'sport_images.dart';
+import 'sport_markets.dart' show orderSettledMarkets;
+import 'sport_props.dart';
 import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sport_vip_notice.dart';
 import 'sports_quotes.dart';
 
 /// Abre la ficha del partido como hoja inferior (misma forma que la de fútbol).
@@ -26,6 +31,7 @@ Future<void> showSportDetail(
   required ImageCatalog images,
   QuotesOverlay quotes = QuotesOverlay.empty,
   VoidCallback? onVip,
+  VoidCallback? onUnlock,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -38,7 +44,14 @@ Future<void> showSportDetail(
       // Un deporte del catálogo sin pantalla propia (llegó por el contrato) usa la ficha genérica.
       child: event.generic
           ? GenericSportDetail(api: api, event: event, images: images, onVip: onVip)
-          : SportDetail(api: api, event: event, images: images, quotes: quotes),
+          : SportDetail(
+              api: api,
+              event: event,
+              images: images,
+              quotes: quotes,
+              onVip: onVip,
+              onUnlock: onUnlock,
+            ),
     ),
   ),
 );
@@ -50,6 +63,8 @@ class SportDetail extends StatefulWidget {
     required this.event,
     required this.images,
     this.quotes = QuotesOverlay.empty,
+    this.onVip,
+    this.onUnlock,
   });
   final QuantFutApi api;
   final SportEvent event;
@@ -57,6 +72,8 @@ class SportDetail extends StatefulWidget {
 
   /// Cuotas de referencia del deporte; vacías si no llegaron.
   final QuotesOverlay quotes;
+  final VoidCallback? onVip;
+  final VoidCallback? onUnlock;
   @override
   State<SportDetail> createState() => _SportDetailState();
 }
@@ -65,15 +82,46 @@ class _SportDetailState extends State<SportDetail> {
   int tab = 0;
   late final Future<JsonMap?> stats;
 
+  /// Casillas y resumen del destacado (`/web/deportes/{tenis,nba}/analisis/{id}`); null en los deportes sin él.
+  late final Future<JsonMap?>? analysis;
+  Future<JsonMap?>? _availability;
+  Future<JsonMap?> get availability => _availability ??= _loadAvailability();
+
   @override
   void initState() {
     super.initState();
     stats = _loadStats();
+    analysis = e.generic ? null : _loadAnalysis();
+  }
+
+  /// Cualquier fallo (404 incluido) es «sin análisis»: se queda la tarjeta compacta de siempre.
+  Future<JsonMap?> _loadAnalysis() async {
+    try {
+      final r = await widget.api.request(
+        '/web/deportes/${nba ? 'nba' : 'tenis'}/analisis/${Uri.encodeComponent(e.id)}',
+      );
+      return r is Map<String, dynamic> ? r : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   SportEvent get e => widget.event;
   bool get nba => e.sport == kNba;
   Color get accent => sportCatalog.spec(e.sport).accent;
+
+  /// Disponibilidad oficial NBA (lesiones, suspensiones y PDF de la liga).
+  Future<JsonMap?> _loadAvailability() async {
+    if (!nba) return null;
+    try {
+      final path =
+          '/nba/v1/partido/${Uri.encodeComponent(e.id)}/disponibilidad';
+      final r = await widget.api.request(path);
+      return r is Map<String, dynamic> ? r : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Estadísticas públicas del partido; cualquier fallo (404 incluido) es «no hay».
   Future<JsonMap?> _loadStats() async {
@@ -91,107 +139,116 @@ class _SportDetailState extends State<SportDetail> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final labels = [
-      l10n.detailTabPredictions,
-      l10n.detailTabStats,
-      l10n.detailTabH2h,
-      l10n.detailTabAlerts,
-    ];
-    return Material(
-      color: QfColors.bg,
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              tooltip: l10n.commonClose,
-              onPressed: () => Navigator.maybePop(context),
-              icon: const Icon(Icons.close, color: QfColors.text2),
-            ),
+    final labels = nba
+        ? [
+            l10n.detailTabPredictions,
+            l10n.detailTabProps,
+            l10n.detailTabStats,
+            l10n.detailTabH2h,
+            l10n.detailTabAlerts,
+          ]
+        : [
+            l10n.detailTabPredictions,
+            l10n.detailTabStats,
+            l10n.detailTabH2h,
+            l10n.detailTabAlerts,
+          ];
+
+    Widget body() {
+      if (nba) {
+        return switch (tab) {
+          0 => _Predictions(
+            api: widget.api,
+            event: e,
+            images: widget.images,
+            accent: accent,
+            quotes: widget.quotes,
+            analysis: analysis,
+            onVip: widget.onVip,
           ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              children: [
-                _Header(api: widget.api, event: e, images: widget.images),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    for (var i = 0; i < labels.length; i++)
-                      Expanded(
-                        child: _TabButton(
-                          label: labels[i],
-                          selected: tab == i,
-                          color: QfColors.primary,
-                          onTap: () => setState(() => tab = i),
-                        ),
-                      ),
-                  ],
-                ),
-                const Divider(height: 1, color: QfColors.border),
-                const SizedBox(height: 16),
-                switch (tab) {
-                  0 => _Predictions(
-                    api: widget.api,
-                    event: e,
-                    images: widget.images,
-                    accent: accent,
-                    quotes: widget.quotes,
-                  ),
-                  1 => SportAnalysis(stats: stats, event: e),
-                  2 => SportH2h(stats: stats, event: e),
-                  _ => SportAlerts(event: e),
-                },
-              ],
-            ),
+          1 => SportPropsTab(
+            api: widget.api,
+            event: e,
+            images: widget.images,
+            quotes: widget.quotes,
+            onVip: widget.onVip,
+            onUnlock: widget.onUnlock,
           ),
-        ],
+          2 => SportAnalysis(
+            stats: stats,
+            event: e,
+            api: widget.api,
+            images: widget.images,
+            onH2h: () => setState(() => tab = 3),
+          ),
+          3 => SportH2h(
+            stats: stats,
+            event: e,
+            api: widget.api,
+            images: widget.images,
+          ),
+          _ => SportAlerts(
+            event: e,
+            availability: availability,
+            api: widget.api,
+            images: widget.images,
+          ),
+        };
+      }
+      return switch (tab) {
+        0 => _Predictions(
+          api: widget.api,
+          event: e,
+          images: widget.images,
+          accent: accent,
+          quotes: widget.quotes,
+          analysis: analysis,
+          onVip: widget.onVip,
+        ),
+        1 => SportAnalysis(
+          stats: stats,
+          event: e,
+          api: widget.api,
+          images: widget.images,
+          onH2h: () => setState(() => tab = 2),
+        ),
+        2 => SportH2h(
+          stats: stats,
+          event: e,
+          api: widget.api,
+          images: widget.images,
+        ),
+        _ => SportAlerts(
+          event: e,
+          availability: availability,
+          api: widget.api,
+          images: widget.images,
+        ),
+      };
+    }
+
+    return MatchShell(
+      header: MatchTopBar(
+        league: e.league,
+        when: kickoffText(e.start),
+        onClose: () => Navigator.maybePop(context),
       ),
+      hero: _Header(api: widget.api, event: e, images: widget.images),
+      tabs: MatchTabs(
+        labels: labels,
+        index: tab,
+        onChanged: (i) => setState(() => tab = i),
+      ),
+      body: body(),
+      bottomBar: widget.onVip != null || widget.onUnlock != null
+          ? MatchBottomBar(
+              cost: 40,
+              onUnlock: widget.onUnlock,
+              onVip: widget.onVip,
+            )
+          : null,
     );
   }
-}
-
-class _TabButton extends StatelessWidget {
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Semantics(
-    selected: selected,
-    button: true,
-    child: InkWell(
-      onTap: onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: selected ? color : QfColors.text2,
-                ),
-              ),
-            ),
-            Container(height: 3, color: selected ? color : Colors.transparent),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 // ---- Cabecera --------------------------------------------------------------------------
@@ -246,92 +303,124 @@ class _Header extends StatelessWidget {
         if (p != null) credits.add((name, p));
       }
     }
-    Widget side(String name) => Expanded(
-      child: Column(
+    final score = event.score;
+
+    String? bigProb;
+    String? bigLabel;
+    List<MatchProbabilityPart>? probParts;
+    if (pHome != null) {
+      if (nba) {
+        final favHome = pHome >= 0.5;
+        final favLabel = favHome ? homeLabel : awayLabel;
+        final p = favHome ? pHome : (1 - pHome);
+        bigProb = '${(p * 100).round()}%';
+        bigLabel = l10n.selHomeWins(favLabel);
+        probParts = [
+          MatchProbabilityPart(
+            label: awayLabel,
+            percent: (1 - pHome) * 100,
+            color: (1 - pHome) >= pHome ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+          MatchProbabilityPart(
+            label: homeLabel,
+            percent: pHome * 100,
+            color: pHome >= (1 - pHome) ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+        ];
+      } else {
+        final favHome = pHome >= 0.5;
+        final favSurname = _surname(favHome ? event.home : event.away);
+        final p = favHome ? pHome : (1 - pHome);
+        bigProb = '${(p * 100).round()}%';
+        bigLabel = l10n.selHomeWins(favSurname);
+        probParts = [
+          MatchProbabilityPart(
+            label: _surname(event.home).toUpperCase(),
+            percent: pHome * 100,
+            color: pHome >= (1 - pHome) ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+          MatchProbabilityPart(
+            label: _surname(event.away).toUpperCase(),
+            percent: (1 - pHome) * 100,
+            color: (1 - pHome) >= pHome ? QfColors.cyan : const Color(0xFF747D99),
+          ),
+        ];
+      }
+    }
+
+    Widget? centerExtra;
+    if (nba) {
+      centerExtra = Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          eventAvatar(api, images, event, name, size: nba ? 48 : 56),
-          const SizedBox(height: 6),
           Text(
-            name,
+            '$awayLabel @ $homeLabel',
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontFamily: qfDisplay,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: QfColors.text,
+              fontFamily: qfMono,
+              fontSize: 13,
+              color: QfColors.text2,
             ),
           ),
-        ],
-      ),
-    );
-    final score = event.score;
-    return QfCard(
-      accent: accent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              QfBadge(event.league, color: accent),
-              if (!nba && surface != null && _surfaceLabel(l10n, surface) != null)
-                QfBadge(_surfaceLabel(l10n, surface)!, color: QfColors.text2),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              side(nba ? event.away : event.home),
-              Padding(
-                padding: const EdgeInsets.only(top: 14, left: 6, right: 6),
-                child: Text(
-                  nba ? '$awayLabel @ $homeLabel' : (score ?? ''),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: qfMono,
-                    fontSize: 13,
-                    color: QfColors.text2,
-                  ),
-                ),
-              ),
-              side(nba ? event.home : event.away),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            kickoffText(event.start),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: QfColors.text2),
-          ),
-          if (nba && score != null) ...[
+          if (score != null) ...[
             const SizedBox(height: 4),
             Text(
               score,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontFamily: qfMono, color: QfColors.text),
+              style: const TextStyle(
+                fontFamily: qfMono,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: QfColors.text,
+              ),
             ),
-          ],
-          if (pHome != null) ...[
-            const SizedBox(height: 12),
-            ProbabilityBar(
-              parts: nba
-                  ? [(awayLabel, 1 - pHome), (homeLabel, pHome)]
-                  : [
-                      (_surname(event.home), pHome),
-                      (_surname(event.away), 1 - pHome),
-                    ],
-            ),
-          ],
-          for (final (name, photo) in credits) ...[
-            const SizedBox(height: 8),
-            _Credit(name: name, photo: photo),
           ],
         ],
+      );
+    } else if (score != null) {
+      centerExtra = Text(
+        score,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontFamily: qfMono,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: QfColors.text,
+        ),
+      );
+    }
+
+    final badges = [
+      QfBadge(event.league, color: accent),
+      if (!nba && surface != null && _surfaceLabel(l10n, surface) != null)
+        QfBadge(_surfaceLabel(l10n, surface)!.toUpperCase(), color: QfColors.text2),
+    ];
+
+    final sideAName = nba ? awayLabel : event.home;
+    final sideBName = nba ? homeLabel : event.away;
+
+    return MatchHero(
+      sideA: MatchHeroSide(
+        name: sideAName,
+        image: eventAvatar(api, images, event, nba ? event.away : event.home, size: 58),
+        sub: nba
+            ? (event.availability?['away_record'] as String? ?? 'VISITANTE')
+            : (event.surface != null ? _surfaceLabel(l10n, event.surface!) : null),
       ),
+      sideB: MatchHeroSide(
+        name: sideBName,
+        image: eventAvatar(api, images, event, nba ? event.home : event.away, size: 58),
+        sub: nba ? (event.availability?['home_record'] as String? ?? 'LOCAL') : null,
+      ),
+      bigProb: bigProb,
+      bigLabel: bigLabel,
+      centerExtra: centerExtra,
+      probs: probParts,
+      badges: badges,
+      credits: [
+        for (final (name, photo) in credits)
+          _Credit(name: name, photo: photo),
+      ],
     );
   }
 }
@@ -369,12 +458,16 @@ class _Predictions extends StatelessWidget {
     required this.images,
     required this.accent,
     required this.quotes,
+    this.analysis,
+    this.onVip,
   });
+  final VoidCallback? onVip;
   final QuantFutApi api;
   final SportEvent event;
   final ImageCatalog images;
   final Color accent;
   final QuotesOverlay quotes;
+  final Future<JsonMap?>? analysis;
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +477,7 @@ class _Predictions extends StatelessWidget {
       for (final m in event.markets)
         if (m.eligible) m,
     ];
-    if (all.isEmpty) {
+    if (all.isEmpty && event.vipCount == 0) {
       return event.sport == kNba && event.markets.isEmpty
           ? _SealCard(event: event, accent: accent)
           : SportNote(l10n.detailNoPicks);
@@ -394,28 +487,41 @@ class _Predictions extends StatelessWidget {
         : (m.market == 'winner' || (m.market == null && m.id == 'winner'))
         ? 0
         : 1;
-    final ordered = [...all]
-      ..sort((a, b) {
-        final r = rank(a).compareTo(rank(b));
-        return r != 0 ? r : b.probability.compareTo(a.probability);
-      });
+    final ordered = orderSettledMarkets(
+      [...all]
+        ..sort((a, b) {
+          final r = rank(a).compareTo(rank(b));
+          return r != 0 ? r : b.probability.compareTo(a.probability);
+        }),
+      price: (m) => quoteFor(event, m, quotes)?.price ?? m.price,
+    );
     final featured = featuredMarket(event);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (featured != null) ...[
-          QfCard(
-            accent: accent,
-            child: _MarketRow(
-              api: api,
-              market: featured,
-              quote: quoteFor(event, featured, quotes),
-              l10n: l10n,
-              big: true,
-            ),
+          _FeaturedSlot(
+            api: api,
+            event: event,
+            market: featured,
+            quote: quoteFor(event, featured, quotes),
+            l10n: l10n,
+            analysis: analysis,
           ),
           const SizedBox(height: 12),
         ],
+        SportVipNotice(event: event),
+        Text(
+          l10n.detailModelMarkets,
+          style: const TextStyle(
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            letterSpacing: 1.4,
+            color: QfColors.text,
+          ),
+        ),
+        const SizedBox(height: 8),
         for (final m in ordered)
           if (!identical(m, featured))
             Padding(
@@ -423,15 +529,20 @@ class _Predictions extends StatelessWidget {
               child: QfCard(
                 child: _MarketRow(
                   api: api,
+                  event: event,
+                  images: images,
                   market: m,
                   quote: quoteFor(event, m, quotes),
                   l10n: l10n,
                 ),
               ),
             ),
+        for (final f in event.vipFamilies.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SportLockedFamilyRow(family: f.key, count: f.value, onVip: onVip),
+          ),
         const SizedBox(height: 4),
-        const QuoteReferenceCaption(),
-        const SizedBox(height: 8),
         SealLine(seal: event.seal, publishedAt: event.sealedAt),
       ],
     );
@@ -483,16 +594,151 @@ class _SealCard extends StatelessWidget {
   }
 }
 
+/// El destacado: la tarjeta de análisis (tenis) si el servidor mandó casillas para ESE mercado; si no, la compacta.
+class _FeaturedSlot extends StatelessWidget {
+  const _FeaturedSlot({
+    required this.api,
+    required this.event,
+    required this.market,
+    required this.quote,
+    required this.l10n,
+    required this.analysis,
+  });
+
+  final QuantFutApi api;
+  final SportEvent event;
+  final SportMarket market;
+  final SportQuote? quote;
+  final AppLocalizations l10n;
+  final Future<JsonMap?>? analysis;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = _FeaturedCard(
+      api: api,
+      event: event,
+      market: market,
+      quote: quote,
+      l10n: l10n,
+    );
+    final pending = analysis;
+    if (pending == null) return compact;
+    return FutureBuilder<JsonMap?>(
+      future: pending,
+      builder: (context, snap) {
+        final data = snap.data;
+        if (data == null || '${data['mercado_id']}' != market.id) {
+          return compact;
+        }
+        return SportForecastPanel(
+          nba: event.sport == kNba,
+          analisis: data,
+          pickText: sportPickText(l10n, market),
+          probability: market.probability,
+          quote: QuoteLabel(quote: quote),
+          home: event.home,
+          away: event.away,
+        );
+      },
+    );
+  }
+}
+
+class _FeaturedCard extends StatelessWidget {
+  const _FeaturedCard({
+    required this.api,
+    required this.event,
+    required this.market,
+    required this.quote,
+    required this.l10n,
+  });
+
+  final QuantFutApi api;
+  final SportEvent event;
+  final SportMarket market;
+  final SportQuote? quote;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = market;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: const ShapeDecoration(
+        color: Color.fromRGBO(5, 255, 161, 0.06),
+        shape: CutCornerBorder(
+          cut: 10,
+          side: BorderSide(
+            color: Color.fromRGBO(5, 255, 161, 0.4),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.detailFeaturedPickFree,
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 1.4,
+                    color: QfColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  sportPickText(l10n, m),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    color: QfColors.text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                QuoteLabel(quote: quote),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            realPercent(m.probability),
+            style: const TextStyle(
+              fontFamily: qfMono,
+              fontWeight: FontWeight.w700,
+              fontSize: 30,
+              color: QfColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MarketRow extends StatelessWidget {
   const _MarketRow({
     required this.api,
     required this.market,
     required this.quote,
     required this.l10n,
+    this.event,
+    this.images,
     this.big = false,
     this.title,
   });
   final QuantFutApi api;
+  final SportEvent? event;
+  final ImageCatalog? images;
   final SportMarket market;
 
   /// Título de la familia ya resuelto (deportes del catálogo sin pantalla propia); null = el de siempre.
@@ -501,20 +747,54 @@ class _MarketRow extends StatelessWidget {
   final AppLocalizations l10n;
   final bool big;
 
+  Widget _teamLogo(String name, double size) {
+    final ev = event;
+    if (ev != null && ev.sport == kNba) {
+      final code = nbaTricode(name);
+      final path = code == null ? null : (images?.nbaLogo(code) ?? '/web/imagenes/nba/${code.toUpperCase()}.png');
+      return QfAvatar(url: serverImageUrl(api, path), name: name, size: size, shape: AvatarShape.contain);
+    }
+    return QfAvatar(
+      url: serverImageUrl(api, images?.tennisPhoto(name)?.path),
+      name: name,
+      size: size,
+      shape: AvatarShape.circle,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final m = market;
     final won = m.outcome == 'win', lost = m.outcome == 'loss';
     final id = m.playerId;
+    final ev = event;
     return Row(
       children: [
         if (m.player != null && id != null) ...[
           QfAvatar(
-            url: serverImageUrl(api, nbaPlayerPhoto(id)),
+            url: serverImageUrl(api, nbaPlayerPhoto(m.photoId ?? '')),
             name: m.player!,
             size: 36,
             shape: AvatarShape.circle,
           ),
+          const SizedBox(width: 10),
+        ] else if (ev != null && ev.home.isNotEmpty) ...[
+          if (m.market == 'winner' || m.id == 'winner')
+            _teamLogo(m.selection, 30)
+          else
+            SizedBox(
+              width: 44,
+              height: 30,
+              child: Stack(
+                children: [
+                  _teamLogo(ev.home, 28),
+                  Positioned(
+                    left: 16,
+                    child: _teamLogo(ev.away, 28),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(width: 10),
         ],
         Expanded(
@@ -646,7 +926,8 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
               builder: (context, snap) {
                 final done = snap.connectionState == ConnectionState.done;
                 final detail = snap.data;
-                final event = detail?.event ?? e;
+                // El detalle trae TODOS los mercados: pasan por el mismo acceso que el partido tenía en la cartelera.
+                final event = detail == null ? e : applyAccess(detail.event, e.access);
                 return ListView(
                   key: ValueKey('generic-detail-${e.sport}-${e.id}'),
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -684,12 +965,16 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
       case 'pronostico':
         final featured = featuredMarket(event);
         if (eligible.isEmpty) {
+          if (event.featuredVip || event.vipCount > 0) return [SportVipNotice(event: event)];
           return loading ? const [] : [SportNote(l10n.detailNoPicks), const SizedBox(height: 12)];
         }
-        final principals = [
-          for (final m in eligible)
-            if (m.principal && !identical(m, featured)) m,
-        ];
+        final principals = orderSettledMarkets(
+          [
+            for (final m in eligible)
+              if (m.principal && !identical(m, featured)) m,
+          ],
+          price: (m) => quoteFor(event, m, QuotesOverlay.empty)?.price ?? m.price,
+        );
         return [
           if (featured != null) ...[
             QfCard(
@@ -705,6 +990,7 @@ class _GenericSportDetailState extends State<GenericSportDetail> {
             ),
             const SizedBox(height: 12),
           ],
+          SportVipNotice(event: event),
           for (final m in principals)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

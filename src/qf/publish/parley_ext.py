@@ -58,6 +58,16 @@ _MERCADO = {
     "tenis": {"h2h": "h2h", "spreads": "handicap_games", "totals": "total_games"},
     "nba": {"h2h": "h2h", "spreads": "spreads", "totals": "totals"},
 }
+# Circuitos de tenis que se pueden liquidar. ITF, UTR, equipos y dobles quedan fuera: PropLine no los califica y
+# SportsAPIPro casi nunca los trae (auditoría 19-nov-2026: 19 patas sin resultado, todas de esos circuitos).
+TENIS_CIRCUITOS = ("ATP", "WTA", "Challenger")
+
+
+def tenis_liquidable(e: dict) -> bool:
+    torneo = (e.get("tournament") or "").lower()
+    return (e.get("tour") or "").strip() in TENIS_CIRCUITOS and "doubles" not in torneo and "dobles" not in torneo
+
+
 # Props de jugador medidos (docs/parley_topes_medicion_20261106.md): 2 temporadas, 7-8 casas.
 PROPS = ("player_points", "player_rebounds", "player_assists", "player_threes")
 
@@ -169,6 +179,8 @@ def opciones(eventos: dict[str, list[dict]], now: datetime) -> list[Opcion]:
         for e in lista:
             if not e.get("_received_at"):
                 continue                      # sin recepción real no hay procedencia
+            if deporte == "tenis" and not tenis_liquidable(e):
+                continue
             recibida = _tiempo(e["_received_at"])
             if recibida > now:
                 continue

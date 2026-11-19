@@ -3,343 +3,886 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../l10n/app_locale.dart';
+import 'qf_shapes.dart';
 import 'qf_theme.dart';
 
-/// Original offline illustrations. Shapes are decorative, not real statistics.
-class WelcomeArt extends StatefulWidget {
+/// Ilustraciones de la pantalla de bienvenida (CyberCore v3).
+/// Basadas en pantallas/Bienvenida.dc.html y capturas/Bienvenida.png.
+class WelcomeArt extends StatelessWidget {
   const WelcomeArt({
     super.key,
     required this.index,
     required this.accent,
     required this.active,
   });
+
   final int index;
   final Color accent;
   final bool active;
-  @override
-  State<WelcomeArt> createState() => _WelcomeArtState();
-}
 
-class _WelcomeArtState extends State<WelcomeArt>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final _animation = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2800),
-  );
-  bool _resumed = true;
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _resumed =
-        WidgetsBinding.instance.lifecycleState == null ||
-        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+  Widget build(BuildContext context) {
+    return Center(
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+          width: 340,
+          height: 280,
+          child: _buildArt(context),
+        ),
+      ),
+    );
   }
 
-  void _sync() {
-    if (widget.active && _resumed && !MediaQuery.disableAnimationsOf(context)) {
-      if (!_animation.isAnimating) _animation.repeat(reverse: true);
-    } else {
-      _animation.stop();
+  Widget _buildArt(BuildContext context) {
+    switch (index) {
+      case 0:
+        return const _Slide0Art();
+      case 1:
+        return const _Slide1Art();
+      case 2:
+        return const _Slide2Art();
+      case 3:
+        return const _Slide3Art();
+      case 4:
+      default:
+        return const _Slide4Art();
     }
   }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _sync();
-  }
-
-  @override
-  void didUpdateWidget(WelcomeArt oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _sync();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _resumed = state == AppLifecycleState.resumed;
-    _sync();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _animation.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => RepaintBoundary(
-    child: AnimatedBuilder(
-      animation: _animation,
-      builder: (context, _) => CustomPaint(
-        painter: _ArtPainter(
-          widget.index,
-          widget.accent,
-          MediaQuery.disableAnimationsOf(context) ? .5 : _animation.value,
-          context.l10n,
-        ),
-      ),
-    ),
-  );
 }
 
-class _ArtPainter extends CustomPainter {
-  _ArtPainter(this.index, this.accent, this.phase, this.l10n);
-  final AppLocalizations l10n;
-  final int index;
-  final Color accent;
-  final double phase;
-  static const ink = QfColors.text, track = QfColors.border, muted = QfColors.muted;
+// ---------------------------------------------------------------------------
+// Diapositiva 0: Tres tarjetas con deportes (Fútbol, NBA elevada, Tenis) + barra
+// ---------------------------------------------------------------------------
+class _Slide0Art extends StatelessWidget {
+  const _Slide0Art();
 
-  /// Texto dibujado. Si la traducción es más larga que el espacio disponible
-  /// (borde de la tarjeta menos margen), reduce el cuerpo para que no se corte.
-  void text(
-    Canvas c,
-    String value,
-    Offset at, {
-    double size = 9,
-    Color color = ink,
-    double? maxWidth,
-  }) {
-    TextPainter build(double fontSize) => TextPainter(
-      text: TextSpan(
-        text: value,
-        style: TextStyle(
-          fontFamily: 'Gilroy Bold',
-          fontSize: fontSize,
-          color: color,
-          letterSpacing: .7,
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Tarjeta izquierda (Fútbol): rotada -6 grados
+        Positioned(
+          left: 10,
+          top: 36,
+          child: Transform.rotate(
+            angle: -6 * math.pi / 180,
+            child: Container(
+              width: 104,
+              height: 150,
+              decoration: const ShapeDecoration(
+                color: QfColors.surface,
+                shape: CutCornerBorder(
+                  cut: 10,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.sports_soccer, size: 52, color: QfColors.text),
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.artFootball.toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      letterSpacing: 1.4,
+                      color: QfColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final room = maxWidth ?? (232 - at.dx - 14);
-    var p = build(size);
-    if (p.width > room && room > 20) p = build(size * room / p.width);
-    p.paint(c, at);
+        // Tarjeta derecha (Tenis): rotada +6 grados
+        Positioned(
+          right: 10,
+          top: 36,
+          child: Transform.rotate(
+            angle: 6 * math.pi / 180,
+            child: Container(
+              width: 104,
+              height: 150,
+              decoration: const ShapeDecoration(
+                color: QfColors.surface,
+                shape: CutCornerBorder(
+                  cut: 10,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.sports_tennis, size: 52, color: QfColors.text),
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.artTennis.toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      letterSpacing: 1.4,
+                      color: QfColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Tarjeta central (NBA): elevada, sombra cian, cian brillante
+        Positioned(
+          top: 14,
+          child: Container(
+            width: 118,
+            height: 174,
+            decoration: ShapeDecoration(
+              color: QfColors.surface2,
+              shadows: [
+                BoxShadow(
+                  color: QfColors.cyan.withValues(alpha: 0.32),
+                  blurRadius: 36,
+                  spreadRadius: 2,
+                ),
+              ],
+              shape: const CutCornerBorder(
+                cut: 10,
+                side: BorderSide(color: QfColors.cyan, width: 1.2),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.sports_basketball, size: 62, color: QfColors.cyan),
+                const SizedBox(height: 10),
+                Text(
+                  l10n.artNba.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    letterSpacing: 1.4,
+                    color: QfColors.cyan,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Barra inferior de tres segmentos (58 cian, 24 pizarra, 18 atenuado)
+        Positioned(
+          left: 30,
+          right: 30,
+          bottom: 24,
+          child: SizedBox(
+            height: 8,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 58,
+                  child: Container(color: QfColors.cyan),
+                ),
+                const SizedBox(width: 3),
+                Expanded(
+                  flex: 24,
+                  child: Container(color: QfColors.slate),
+                ),
+                const SizedBox(width: 3),
+                Expanded(
+                  flex: 18,
+                  child: Container(color: QfColors.chrome),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Diapositiva 1: Mini radar pentagonal de 5 ejes + pestañas (Forma, Cara a cara, Estadísticas)
+// ---------------------------------------------------------------------------
+class _Slide1Art extends StatelessWidget {
+  const _Slide1Art();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 320,
+          height: 190,
+          child: CustomPaint(
+            painter: _RadarPainter(
+              labels: [
+                l10n.radarAttack.toUpperCase(),
+                l10n.radarCreation.toUpperCase(),
+                l10n.radarFinishing.toUpperCase(),
+                l10n.artCorners.toUpperCase(),
+                l10n.radarDefense.toUpperCase(),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: const ShapeDecoration(
+                color: QfColors.chipActiveBg,
+                shape: CutCornerBorder(
+                  cut: 6,
+                  side: BorderSide(color: QfColors.borderStrong),
+                ),
+              ),
+              child: Text(
+                l10n.artForm.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: qfDisplay,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 1.1,
+                  color: QfColors.cyan,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: const ShapeDecoration(
+                color: QfColors.surface,
+                shape: CutCornerBorder(
+                  cut: 6,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: Text(
+                l10n.artHeadToHead.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: qfDisplay,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 1.1,
+                  color: QfColors.muted,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: const ShapeDecoration(
+                color: QfColors.surface,
+                shape: CutCornerBorder(
+                  cut: 6,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: Text(
+                l10n.artStats.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: qfDisplay,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 1.1,
+                  color: QfColors.muted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RadarPainter extends CustomPainter {
+  const _RadarPainter({required this.labels});
+
+  final List<String> labels;
+
+  static const _valsA = [0.78, 0.70, 0.62, 0.58, 0.82];
+  static const _valsB = [0.62, 0.74, 0.72, 0.70, 0.45];
+
+  Offset _point(Offset center, double r, int k) {
+    final angle = (-90 + 72 * k) * math.pi / 180;
+    return Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
   }
 
-  void line(Canvas c, Offset a, Offset b, Color color, [double width = 4]) =>
-      c.drawLine(
-        a,
-        b,
-        Paint()
-          ..color = color
-          ..strokeWidth = width
-          ..strokeCap = StrokeCap.round,
-      );
-  void icon(Canvas c, IconData value, Offset at, Color color, double size) {
-    final p = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(value.codePoint),
-        style: TextStyle(
-          fontFamily: value.fontFamily,
-          package: value.fontPackage,
-          fontSize: size,
-          color: color,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    p.paint(c, at);
+  Path _poly(Offset center, double maxR, List<double> vals) {
+    final path = Path();
+    for (var k = 0; k < 5; k++) {
+      final p = _point(center, maxR * vals[k], k);
+      if (k == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+    path.close();
+    return path;
   }
 
   @override
-  void paint(Canvas c, Size size) {
-    c.save();
-    c.scale(size.width / 260, size.height / 260);
-    c.drawCircle(
-      const Offset(130, 130),
-      120,
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2 + 4);
+    const maxR = 64.0;
+
+    // 4 anillos concéntricos
+    final ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = QfColors.cyan.withValues(alpha: 0.16);
+    for (final fraction in [0.25, 0.5, 0.75, 1.0]) {
+      canvas.drawPath(_poly(center, maxR, List.filled(5, fraction)), ringPaint);
+    }
+
+    // 5 radios desde el centro
+    final axisPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = QfColors.cyan.withValues(alpha: 0.2);
+    for (var k = 0; k < 5; k++) {
+      canvas.drawLine(center, _point(center, maxR, k), axisPaint);
+    }
+
+    // Polígono Equipo B (pizarra suave con trazo discontinuo simulado)
+    final pathB = _poly(center, maxR, _valsB);
+    canvas.drawPath(
+      pathB,
       Paint()
-        ..shader = RadialGradient(
-          colors: [accent.withValues(alpha: .13), accent.withValues(alpha: 0)],
-        ).createShader(const Rect.fromLTWH(10, 10, 240, 240)),
+        ..style = PaintingStyle.fill
+        ..color = QfColors.chrome.withValues(alpha: 0.14),
     );
-    c.translate(0, -math.sin(phase * math.pi) * 5);
-    final card = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(28, 28, 204, 204),
-      const Radius.circular(16),
-    );
-    c.drawRRect(card, Paint()..color = QfColors.surface2);
-    c.drawRRect(
-      card,
+    canvas.drawPath(
+      pathB,
       Paint()
-        ..color = QfColors.border
-        ..style = PaintingStyle.stroke,
-    );
-    final headings = [
-      l10n.artHeading0,
-      l10n.artHeading1,
-      l10n.artHeading2,
-      l10n.artHeading3,
-      l10n.artHeading4,
-    ];
-    text(c, headings[index], const Offset(48, 47), color: accent);
-    if (index == 0) {
-      final bounce = math.sin(phase * math.pi) * 13;
-      for (var i = 0; i < 3; i++) {
-        c.drawOval(
-          Rect.fromCenter(
-            center: const Offset(130, 151),
-            width: 160 - i * 24,
-            height: 58 - i * 12,
-          ),
-          Paint()
-            ..color = track
-            ..style = PaintingStyle.stroke,
-        );
-      }
-      ball(c, Offset(91, 111 - bounce), false);
-      ball(c, Offset(170, 115 + bounce * .3), true);
-      text(c, l10n.artFootball, const Offset(67, 186), color: accent);
-      text(
-        c,
-        l10n.artNba,
-        const Offset(160, 186),
-        color: QfColors.nba,
-      );
-    } else if (index == 1) {
-      final rect = Rect.fromCircle(center: const Offset(130, 116), radius: 40);
-      final p = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 8
-        ..strokeCap = StrokeCap.round;
-      c.drawArc(rect, math.pi * .75, math.pi * 1.5, false, p..color = track);
-      c.drawArc(
-        rect,
-        math.pi * .75,
-        math.pi * (1 + phase * .3),
-        false,
-        p..color = accent,
-      );
-      icon(c, Icons.insights_rounded, const Offset(111, 98), ink, 38);
-      final labels = [l10n.artForm, l10n.artHeadToHead, l10n.artStats];
-      for (var i = 0; i < 3; i++) {
-        final y = 176.0 + i * 18;
-        text(c, labels[i], Offset(48, y - 5), size: 7, color: muted);
-        line(c, Offset(140, y), Offset(209, y), track, 3);
-        line(c, Offset(140, y), Offset(163 + i * 8 + phase * 10, y), accent, 3);
-      }
-    } else if (index == 2 || index == 3) {
-      const markets = [
-        Icons.sports_soccer,
-        Icons.flag_rounded,
-        Icons.sports_basketball,
-      ];
-      const results = [
-        Icons.check_rounded,
-        Icons.close_rounded,
-        Icons.schedule_rounded,
-      ];
-      final labels = [l10n.artGoals, l10n.artCorners, l10n.artNba];
-      const colors = [QfColors.football, QfColors.success, QfColors.nba];
-      for (var i = 0; i < 3; i++) {
-        final y = 90.0 + i * 39;
-        c.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(41, y - 5, 178, 33),
-            const Radius.circular(9),
-          ),
-          Paint()..color = track.withValues(alpha: .45),
-        );
-        icon(
-          c,
-          index == 2 ? markets[i] : results[i],
-          Offset(49, y),
-          colors[i],
-          21,
-        );
-        if (index == 2) {
-          text(c, labels[i], Offset(79, y + 4));
-        } else {
-          line(c, Offset(80, y + 8), Offset(119 + phase * 15, y + 8), muted, 4);
-        }
-        line(c, Offset(146, y + 10), Offset(203, y + 10), track, 3);
-        line(
-          c,
-          Offset(146, y + 10),
-          Offset(164 + phase * 14 + i * 5, y + 10),
-          colors[i],
-          3,
-        );
-      }
-      text(
-        c,
-        index == 2 ? l10n.artAnalyzeEach : l10n.artTransparency,
-        const Offset(49, 210),
-        size: 7.5,
-        color: muted,
-      );
-    } else {
-      c.drawCircle(
-        const Offset(130, 132),
-        47,
-        Paint()..color = accent.withValues(alpha: .08),
-      );
-      c.drawCircle(
-        const Offset(130, 132),
-        47,
-        Paint()
-          ..color = accent.withValues(alpha: .3)
-          ..style = PaintingStyle.stroke,
-      );
-      icon(c, Icons.menu_book_rounded, const Offset(104, 106), accent, 52);
-      for (var i = 0; i < 3; i++) {
-        final a = -math.pi / 2 + i * math.pi * 2 / 3 + (phase - .5) * .5;
-        c.drawCircle(
-          Offset(130 + math.cos(a) * 57, 132 + math.sin(a) * 57),
-          4,
-          Paint()..color = i == 1 ? QfColors.primary : accent,
-        );
-      }
-      text(c, l10n.artTagline, const Offset(47, 205), size: 8, color: muted);
-    }
-    c.restore();
-  }
-
-  void ball(Canvas c, Offset center, bool basketball) {
-    c.save();
-    c.translate(center.dx, center.dy);
-    c.rotate((phase - .5) * .2);
-    c.drawCircle(
-      Offset.zero,
-      29,
-      Paint()..color = basketball ? QfColors.nba : ink,
+        ..strokeWidth = 1.6
+        ..color = QfColors.chrome.withValues(alpha: 0.8),
     );
-    if (basketball) {
-      line(c, const Offset(-28, 0), const Offset(28, 0), track, 2);
-      line(c, const Offset(0, -28), const Offset(0, 28), track, 2);
-      c.drawOval(
-        const Rect.fromLTWH(-12, -28, 24, 56),
-        Paint()
-          ..color = track
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
+
+    // Polígono Equipo A (cian brillante)
+    final pathA = _poly(center, maxR, _valsA);
+    canvas.drawPath(
+      pathA,
+      Paint()
+        ..style = PaintingStyle.fill
+        ..color = QfColors.cyan.withValues(alpha: 0.28),
+    );
+    canvas.drawPath(
+      pathA,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..color = QfColors.cyan,
+    );
+
+    // Etiquetas en los vértices
+    for (var k = 0; k < 5; k++) {
+      final p = _point(center, maxR + 14, k);
+      final textSpan = TextSpan(
+        text: labels[k],
+        style: const TextStyle(
+          fontFamily: qfDisplay,
+          fontWeight: FontWeight.w700,
+          fontSize: 9.5,
+          letterSpacing: 1.0,
+          color: QfColors.muted,
+        ),
       );
-    } else {
-      final p = Path();
-      for (var i = 0; i < 5; i++) {
-        final a = -math.pi / 2 + i * math.pi * 2 / 5;
-        final at = Offset(math.cos(a) * 11, math.sin(a) * 11);
-        if (i == 0) {
-          p.moveTo(at.dx, at.dy);
-        } else {
-          p.lineTo(at.dx, at.dy);
-        }
-        line(c, at, at * 2.5, track, 2);
+      final tp = TextPainter(
+        text: textSpan,
+        textAlign: k == 0
+            ? TextAlign.center
+            : (k == 1 || k == 2 ? TextAlign.left : TextAlign.right),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      Offset textOffset;
+      if (k == 0) {
+        textOffset = Offset(p.dx - tp.width / 2, p.dy - tp.height - 2);
+      } else if (k == 1) {
+        textOffset = Offset(p.dx + 2, p.dy - tp.height / 2);
+      } else if (k == 2) {
+        textOffset = Offset(p.dx + 2, p.dy - 2);
+      } else if (k == 3) {
+        textOffset = Offset(p.dx - tp.width - 2, p.dy - 2);
+      } else {
+        textOffset = Offset(p.dx - tp.width - 2, p.dy - tp.height / 2);
       }
-      c.drawPath(p..close(), Paint()..color = track);
+      tp.paint(canvas, textOffset);
     }
-    c.restore();
   }
 
   @override
-  bool shouldRepaint(_ArtPainter old) =>
-      old.l10n.localeName != l10n.localeName ||
-      old.index != index ||
-      old.phase != phase ||
-      old.accent != accent;
+  bool shouldRepaint(covariant _RadarPainter oldDelegate) => false;
+}
+
+// ---------------------------------------------------------------------------
+// Diapositiva 2: 6 fichas de mercado con anillo de porcentaje cónico
+// ---------------------------------------------------------------------------
+class _Slide2Art extends StatelessWidget {
+  const _Slide2Art();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final items = [
+      (l10n.welcomeMarket1, 61, const Color(0xFFFF8A3D)),
+      (l10n.welcomeMarket2, 82, const Color(0xFFA78BFA)),
+      (l10n.welcomeMarket3, 79, const Color(0xFFC6F432)),
+      (l10n.welcomeMarket4, 58, const Color(0xFF4C9DFF)),
+      (l10n.welcomeMarket5, 54, const Color(0xFF2BD99F)),
+      (l10n.welcomeMarket6, 59, const Color(0xFFFFB020)),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 2.4,
+        children: items.map((item) {
+          final label = item.$1;
+          final pct = item.$2;
+          final color = item.$3;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10151F),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+            ),
+            child: Row(
+              children: [
+                // Anillo de porcentaje cónico
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: CustomPaint(
+                    painter: _ConicRingPainter(pct: pct, color: color),
+                    child: Center(
+                      child: Text(
+                        '$pct',
+                        style: const TextStyle(
+                          fontFamily: qfMono,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                          color: QfColors.text,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: qfDisplay,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10.5,
+                      height: 1.15,
+                      letterSpacing: 0.6,
+                      color: QfColors.text,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _ConicRingPainter extends CustomPainter {
+  const _ConicRingPainter({required this.pct, required this.color});
+
+  final int pct;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    const strokeWidth = 3.6;
+
+    // Fondo gris del anillo
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = Colors.white.withValues(alpha: 0.12);
+    canvas.drawCircle(center, radius - strokeWidth / 2, trackPaint);
+
+    // Arco activo
+    final sweepAngle = (pct / 100) * 2 * math.pi;
+    final arcPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      arcPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConicRingPainter oldDelegate) =>
+      oldDelegate.pct != pct || oldDelegate.color != color;
+}
+
+// ---------------------------------------------------------------------------
+// Diapositiva 3: Anillo de acierto 76% + Historial con 3 partidos (✓ / ✗)
+// ---------------------------------------------------------------------------
+class _Slide3Art extends StatelessWidget {
+  const _Slide3Art();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Tarjeta superior: Anillo de acierto + números
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: const ShapeDecoration(
+              color: QfColors.surface,
+              shape: CutCornerBorder(
+                cut: 10,
+                side: BorderSide(color: QfColors.borderStrong),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Anillo de acierto 76% (verde y magenta)
+                SizedBox(
+                  width: 58,
+                  height: 58,
+                  child: CustomPaint(
+                    painter: const _HitRatePainter(pct: 76),
+                    child: const Center(
+                      child: Text(
+                        '76%',
+                        style: TextStyle(
+                          fontFamily: qfMono,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: QfColors.text,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.artRegisteredRate.toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: qfDisplay,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10.5,
+                        letterSpacing: 1.2,
+                        color: Color(0xFF939AB0),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '16 ${l10n.artWon}',
+                      style: const TextStyle(
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: QfColors.green,
+                      ),
+                    ),
+                    Text(
+                      '5 ${l10n.artLost}',
+                      style: const TextStyle(
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: QfColors.danger,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Tarjeta inferior: Historial con 3 partidos
+          Container(
+            decoration: const ShapeDecoration(
+              color: QfColors.surface,
+              shape: CutCornerBorder(
+                cut: 8,
+                side: BorderSide(color: QfColors.border),
+              ),
+            ),
+            child: Column(
+              children: [
+                _historyRow(
+                  match: l10n.welcomeHistoryMatch1,
+                  status: l10n.artWon.toUpperCase(),
+                  won: true,
+                  borderBottom: true,
+                ),
+                _historyRow(
+                  match: l10n.welcomeHistoryMatch2,
+                  status: l10n.artWon.toUpperCase(),
+                  won: true,
+                  borderBottom: true,
+                ),
+                _historyRow(
+                  match: l10n.welcomeHistoryMatch3,
+                  status: l10n.artLost.toUpperCase(),
+                  won: false,
+                  borderBottom: false,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _historyRow({
+    required String match,
+    required String status,
+    required bool won,
+    required bool borderBottom,
+  }) {
+    final color = won ? QfColors.green : QfColors.danger;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        border: borderBottom
+            ? const Border(bottom: BorderSide(color: QfColors.divider))
+            : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              border: Border.all(color: color, width: 1.2),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Icon(
+              won ? Icons.check : Icons.close,
+              size: 14,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              match,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'Exo 2',
+                fontSize: 11.5,
+                color: QfColors.text,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: TextStyle(
+              fontFamily: qfMono,
+              fontWeight: FontWeight.w700,
+              fontSize: 10.5,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HitRatePainter extends CustomPainter {
+  const _HitRatePainter({required this.pct});
+
+  final int pct;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    const strokeWidth = 5.0;
+
+    // Porción fallada (magenta)
+    final failPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = QfColors.danger;
+    canvas.drawCircle(center, radius - strokeWidth / 2, failPaint);
+
+    // Porción ganada (verde)
+    final sweepAngle = (pct / 100) * 2 * math.pi;
+    final winPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = QfColors.green;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      winPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HitRatePainter oldDelegate) => oldDelegate.pct != pct;
+}
+
+// ---------------------------------------------------------------------------
+// Diapositiva 4: Escudo con «NO ES UNA CERTEZA» y barra segmentada
+// ---------------------------------------------------------------------------
+class _Slide4Art extends StatelessWidget {
+  const _Slide4Art();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icono escudo en caja de esquinas cortadas con resplandor cian
+          Container(
+            width: 74,
+            height: 74,
+            decoration: ShapeDecoration(
+              color: QfColors.cyan.withValues(alpha: 0.08),
+              shadows: [
+                BoxShadow(
+                  color: QfColors.cyan.withValues(alpha: 0.28),
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                ),
+              ],
+              shape: const CutCornerBorder(
+                cut: 10,
+                side: BorderSide(color: QfColors.borderStrong, width: 1.2),
+              ),
+            ),
+            child: const Center(
+              child: Icon(Icons.shield_outlined, size: 40, color: QfColors.cyan),
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Tarjeta con probabilidad 62% y advertencia
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const ShapeDecoration(
+              color: QfColors.surface,
+              shape: CutCornerBorder(
+                cut: 12,
+                side: BorderSide(color: QfColors.border),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    const Text(
+                      '62%',
+                      style: TextStyle(
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 28,
+                        color: QfColors.cyan,
+                      ),
+                    ),
+                    Text(
+                      l10n.artProbability.toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: qfDisplay,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10.5,
+                        letterSpacing: 1.4,
+                        color: Color(0xFF939AB0),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 10 segmentos (6 llenos, 4 contorno)
+                SizedBox(
+                  height: 9,
+                  child: Row(
+                    children: List.generate(10, (i) {
+                      final filled = i < 6;
+                      return Expanded(
+                        child: Container(
+                          margin: EdgeInsets.only(right: i < 9 ? 3 : 0),
+                          decoration: BoxDecoration(
+                            color: filled ? QfColors.cyan : Colors.transparent,
+                            border: filled
+                                ? null
+                                : Border.all(color: QfColors.slate, width: 1),
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  l10n.artNotCertainty.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11.5,
+                    letterSpacing: 1.2,
+                    color: QfColors.yellow,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

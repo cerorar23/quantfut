@@ -20,6 +20,8 @@ _bearer = HTTPBearer(auto_error=False)
 router = APIRouter(prefix='/app/v1/firebase', tags=['firebase'],
                    dependencies=[Depends(api.require_enabled)])
 Language = Literal['es', 'en', 'pt', 'fr', 'it', 'de']
+Sport = Literal['futbol', 'nba', 'tenis']
+ALL_SPORTS = ['futbol', 'nba', 'tenis']
 
 
 def fail(error: CuentaError):
@@ -130,28 +132,33 @@ class PreferencesIn(BaseModel):
     push_enabled: bool = False
     # None = no tocar lo guardado (apps antiguas no lo envian). NULL en BD = activo.
     ads_measurement: bool | None = None
+    # Deportes con aviso push. None = no tocar lo guardado (apps antiguas no lo envian). NULL en BD = todos.
+    push_sports: list[Sport] | None = Field(default=None, max_length=3)
 
 
 @router.get('/preferences')
 def preferences(account: dict = Depends(api.current_account)):
     row = query_one('''SELECT language, analytics, diagnostics, push_enabled,
-                              coalesce(ads_measurement, true) AS ads_measurement
-                       FROM firebase_preferences WHERE account_id=%s''', (account['account_id'],))
-    return row or {**PreferencesIn().model_dump(), 'ads_measurement': True}
+                              coalesce(ads_measurement, true) AS ads_measurement,
+                              coalesce(push_sports, %s::text[]) AS push_sports
+                       FROM firebase_preferences WHERE account_id=%s''', (ALL_SPORTS, account['account_id']))
+    return row or {**PreferencesIn().model_dump(), 'ads_measurement': True, 'push_sports': ALL_SPORTS}
 
 
 @router.post('/preferences')
 def save_preferences(body: PreferencesIn, account: dict = Depends(api.current_account)):
+    sports = sorted(set(body.push_sports)) if body.push_sports is not None else None
     with conn() as c:
         c.execute('''INSERT INTO firebase_preferences (account_id, language, analytics, diagnostics,
-                                                       push_enabled, ads_measurement)
-                     VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (account_id) DO UPDATE SET
+                                                       push_enabled, ads_measurement, push_sports)
+                     VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (account_id) DO UPDATE SET
                      language=EXCLUDED.language, analytics=EXCLUDED.analytics, diagnostics=EXCLUDED.diagnostics,
                      push_enabled=EXCLUDED.push_enabled,
                      ads_measurement=coalesce(EXCLUDED.ads_measurement, firebase_preferences.ads_measurement),
+                     push_sports=CASE WHEN %s THEN EXCLUDED.push_sports ELSE firebase_preferences.push_sports END,
                      updated_at=now()''',
                   (account['account_id'], body.language, body.analytics, body.diagnostics,
-                   body.push_enabled, body.ads_measurement))
+                   body.push_enabled, body.ads_measurement, sports, body.push_sports is not None))
         if not body.push_enabled:
             c.execute('UPDATE push_devices SET enabled=false WHERE account_id=%s', (account['account_id'],))
     return body
@@ -200,7 +207,7 @@ def unregister_device(body: InstallationIn, account: dict = Depends(api.current_
 @router.get('/notifications')
 def notifications(account: dict = Depends(api.current_account),
                   before: int | None = Query(None, ge=1), limit: int = Query(30, ge=1, le=100)):
-    rows = query('''SELECT notification_id, title, body, match_id, created_at, expires_at, read_at
+    rows = query('''SELECT notification_id, title, body, match_id, sport, created_at, expires_at, read_at
                     FROM account_notifications WHERE account_id=%s AND expires_at>now()
                     AND (%s::bigint IS NULL OR notification_id<%s)
                     ORDER BY notification_id DESC LIMIT %s''',

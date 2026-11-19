@@ -57,6 +57,21 @@ def comprobar_frescura_capturas(db: Any, max_horas: int = 36) -> dict[str, Any]:
     }
 
 
+def comprobar_calendario(db: Any, max_horas: float = 3.0) -> dict[str, Any]:
+    """El colector de calendario de PropLine corre cada hora: si su último recibo tiene más de `max_horas`, está parado.
+
+    Sin ningún recibo de PropLine (aún no se ha puesto en marcha) no se avisa."""
+    row = db.execute("SELECT max(recibido_en) FROM recibo WHERE fuente = 'propline' AND recurso LIKE '%calendario%'").fetchone()
+    if not row or row[0] is None:
+        return {"estado": "sin_datos"}
+    ultimo = row[0] if row[0].tzinfo else row[0].replace(tzinfo=timezone.utc)
+    horas = (datetime.now(timezone.utc) - ultimo).total_seconds() / 3600.0
+    if horas > max_horas:
+        enviar_alerta("colector_parado", f"El calendario de PropLine lleva {horas:.1f} h sin recibos (> {max_horas:g} h)")
+        return {"estado": "alerta", "horas_antiguedad": round(horas, 1), "ultimo_recibo": ultimo.isoformat()}
+    return {"estado": "ok", "horas_antiguedad": round(horas, 1), "ultimo_recibo": ultimo.isoformat()}
+
+
 def comprobar_tasa_sin_resolver(db: Any) -> dict[str, Any]:
     """Verifica que la tasa de entidades sin resolver en el cuadro principal sea <= 2% (G-identidad)."""
     tot_partidos = db.execute(
@@ -92,18 +107,21 @@ def comprobar_artefacto_activo(db: Any, ruta_artefacto: Path | None = None) -> d
 
     if ruta_artefacto and ruta_artefacto.exists():
         import json
-        datos = json.loads(ruta_artefacto.read_text(encoding="utf-8"))
-        # Si trae sha256_contenido, se calcula sobre el resto
-        if "sha256_contenido" in datos:
+        # Un fichero concreto o una carpeta de artefactos (la imagen lleva varios: el activo y los anteriores).
+        ficheros = sorted(ruta_artefacto.glob("*.json")) if ruta_artefacto.is_dir() else [ruta_artefacto]
+        huellas = []
+        for f in ficheros:
+            try:
+                datos = json.loads(f.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
             copia = dict(datos)
-            copia.pop("sha256_contenido")
-            sha_calc = huella(copia)
-        else:
-            sha_calc = huella(datos)
-
-        if sha_calc != sha_db:
-            enviar_alerta("contrato_roto", f"Huella local {sha_calc} no coincide con artefacto activo {sha_db}")
-            return {"estado": "descuadre_huella", "db": sha_db, "local": sha_calc}
+            copia.pop("sha256_contenido", None)          # la huella se calcula sobre el resto
+            huellas.append(huella(copia))
+        if sha_db not in huellas:
+            local = huellas[0] if huellas else None
+            enviar_alerta("contrato_roto", f"Ningún artefacto local tiene la huella del activo {sha_db}")
+            return {"estado": "descuadre_huella", "db": sha_db, "local": local}
 
     return {
         "estado": "ok",
@@ -120,6 +138,40 @@ def informe_salud_completo(db: Any, ruta_artefacto: Path | None = None) -> dict[
         "fecha_utc": datetime.now(timezone.utc).isoformat(),
         "cadena": comprobar_cadena(db),
         "frescura": comprobar_frescura_capturas(db),
+        "calendario": comprobar_calendario(db),
         "identidad": comprobar_tasa_sin_resolver(db),
         "artefacto": comprobar_artefacto_activo(db, ruta_artefacto),
     }
+
+
+def main(argv=None) -> int:
+    """`python -m tenis.salud`: imprime el informe en JSON; código 1 si algo no está bien (los avisos ya salieron por Telegram)."""
+    import argparse
+    import json
+    import os
+    import re
+    import sys
+
+    import psycopg
+    from tenis import alertas
+
+    ap = argparse.ArgumentParser(description="Salud del motor de tenis v2")
+    ap.add_argument("--dsn", default=os.environ.get("PG_DSN"))
+    ap.add_argument("--esquema", default="tenis")
+    ap.add_argument("--artefactos", type=Path, default=None, help="carpeta (o fichero) de artefactos a comparar con el activo")
+    a = ap.parse_args(argv)
+    if not a.dsn or not re.fullmatch(r"[a-z_][a-z0-9_]*", a.esquema):
+        print("falta --dsn o PG_DSN, o esquema no válido", file=sys.stderr)
+        return 1
+    alertas.cargar_estado()
+    with psycopg.connect(a.dsn, autocommit=True) as db:
+        db.execute(f"SET search_path TO {a.esquema}, public")
+        informe = informe_salud_completo(db, a.artefactos)
+    print(json.dumps(informe, ensure_ascii=False, default=str))
+    bien = all(v.get("estado") in ("ok", "sin_datos") for k, v in informe.items() if isinstance(v, dict))
+    return 0 if bien else 1
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

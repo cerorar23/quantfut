@@ -21,8 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ /app/src/
 COPY apps/tenis/src/ /app/apps/tenis/src/
 COPY apps/tenis/config/ /app/apps/tenis/config/
+# Artefactos congelados (plan §H.2): el motor recalcula su huella al arrancar y no sella si no coincide con la registrada.
+COPY apps/tenis/artefactos/ /app/apps/tenis/artefactos/
 
-ENV PYTHONPATH="/app/src:/app/apps/tenis/src"
+ENV PYTHONPATH="/app/src:/app/apps/tenis/src" \
+    TENIS_ARTEFACTOS_DIR="/app/apps/tenis/artefactos"
 
 # Usuario no root para ejecución segura
 RUN useradd -m -u 1000 qf && chown -R qf:qf /app

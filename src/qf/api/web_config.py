@@ -1438,6 +1438,35 @@ def translate_page_db(page_key: str, target_lang: str, actor: str) -> dict[str, 
     return get_page_or_default(page_key, target_lang, use_cache=False) or {}
 
 
+def get_translation_tasks(
+    *,
+    target_lang: str | None = None,
+    force_all: bool = False,
+) -> list[dict[str, Any]]:
+    """Devuelve la lista ordenada de tareas de traducción pendientes o completas para procesar progresivamente."""
+    overview = build_catalog_overview(seed_if_needed=True)
+    site = overview["settings"]
+    targets = [target_lang] if target_lang in IDIOMAS_SECUNDARIOS else list(site["translation_target_langs"])
+    tasks: list[dict[str, Any]] = []
+    lang_labels = {"en": "Inglés (EN)", "pt": "Portugués (PT)"}
+    for row in overview["rows"]:
+        pk = row["page_key"]
+        for lang in targets:
+            card = row["langs"].get(lang, {})
+            needs = force_all or (not card.get("exists")) or card.get("stale")
+            if not needs:
+                continue
+            reason = "nueva" if not card.get("exists") else ("desactualizada" if card.get("stale") else "regenerar")
+            tasks.append({
+                "page_key": pk,
+                "label": row.get("label") or pk,
+                "target_lang": lang,
+                "lang_name": lang_labels.get(lang, lang.upper()),
+                "reason": reason,
+            })
+    return tasks
+
+
 def translate_pending_batch(
     *,
     target_lang: str | None = None,

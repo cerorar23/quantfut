@@ -80,6 +80,7 @@ SportMarket market(
   String selection = 'Home',
   String? player,
   String? playerId,
+  String? photoId,
   double? line,
 }) => SportMarket(
   id: id,
@@ -91,6 +92,7 @@ SportMarket market(
   market: market,
   player: player,
   playerId: playerId,
+  photoId: photoId,
   line: line,
 );
 
@@ -203,7 +205,8 @@ void main() {
           market: 'player_points',
           selection: 'Jalen Brunson',
           player: 'Jalen Brunson',
-          playerId: '1628973',
+          playerId: '1',
+          photoId: '1628973',
           line: 24.5,
         ),
       ]);
@@ -223,6 +226,8 @@ void main() {
       expect(urls, contains('https://x.test/web/imagenes/nba/NYK.png'));
       expect(urls, contains('https://x.test/web/imagenes/nba/ATL.png'));
       expect(urls, contains('https://x.test/web/imagenes/jugadores/nba/1628973.png'));
+      // El id interno (`playerId`) nunca va al CDN de la NBA: daría una silueta gris.
+      expect(urls, isNot(contains('https://x.test/web/imagenes/jugadores/nba/1.png')));
       expect(find.text('JUGADORES CON PRONÓSTICO'), findsOneWidget);
       expect(find.text('Más de 24,5'), findsWidgets);
       // Sin logo en el catálogo: iniciales, nunca otra imagen.
@@ -233,7 +238,7 @@ void main() {
     }, createHttpClient: (c) => _Client404());
   });
 
-  testWidgets('tenis muestra foto y bandera, y el crédito al pie', (tester) async {
+  testWidgets('tenis muestra foto y bandera, y sin leyenda de créditos', (tester) async {
     await HttpOverrides.runZoned(() async {
       final events = tennisEvents(fixture('tennis_feed.json'));
       final images = ImageCatalog.fromManifest({
@@ -257,12 +262,9 @@ void main() {
       expect(find.text('HW'), findsWidgets);
       // El feed de tenis no trae país: no se inventa bandera.
       expect(find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key as ValueKey).value}'.startsWith('qf-flag-')), findsNothing);
-      // Encabezado del torneo y crédito CC BY-SA al pie.
+      // Encabezado del torneo 
       expect(find.text(events.first.league), findsOneWidget);
-      expect(
-        find.text('Fotos: Wikimedia Commons (CC BY-SA). Autores en la ficha de cada partido.'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Wikimedia'), findsNothing);
     }, createHttpClient: (c) => _Client404());
   });
 

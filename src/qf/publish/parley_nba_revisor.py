@@ -89,7 +89,7 @@ def ejecutar_multipartido(now: datetime, dia: date, ids_evento: list[str], carga
     clave = f"{v2.ESTRATEGIA}|{v2.VERSION}|nba_dia|{dia.isoformat()}"
     if not dry_run and base._existe(clave):
         return {"estado": "ya_elegido", "dia": dia.isoformat()}
-    ops = [o for o in cargar_ops(now, ids_evento)]
+    ops = todas = [o for o in cargar_ops(now, ids_evento)]
     calibracion = None
     if artefacto and artefacto.get("aprobado"):           # abstención por categoría, como el lote diario
         from ..eval.parley_calibracion import Calibrador, filtrar_calibradas
@@ -108,6 +108,7 @@ def ejecutar_multipartido(now: datetime, dia: date, ids_evento: list[str], carga
         if not malos:
             break
         ops = [o for o in ops if base_clave(o) not in malos]
+        todas = [o for o in todas if base_clave(o) not in malos]
     else:
         return {"estado": "abstencion", "motivo": "las patas no superaron la revalidación", "dia": dia.isoformat()}
     resumen = {"estado": "elegido" if plan.tickets else "abstencion", "dia": dia.isoformat(), "partidos": len(ids_evento),
@@ -118,7 +119,8 @@ def ejecutar_multipartido(now: datetime, dia: date, ids_evento: list[str], carga
     lote = base.construir_lote(plan, now, dia, br, None, base._prev(), ambito="nba_dia", evento_id=None)
     if not base._guardar(lote):
         return {"estado": "ya_elegido", "dia": dia.isoformat()}
-    return {**resumen, "chain": lote["chain_sha256"][:16]}
+    return {**resumen, "chain": lote["chain_sha256"][:16],
+            "sombra": base.sellar_sombra(todas, calibracion, now, dia, br, None, "sombra_nba")}
 
 
 def base_clave(o) -> str:

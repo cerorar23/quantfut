@@ -50,6 +50,14 @@ HORIZONTE = timedelta(hours=36)
 # entrada. Por encima, el 1X2 y la línea de goles de Pinnacle no caben en la
 # misma pareja de lambdas y los goles derivados no serían de fiar.
 MAX_RESIDUO_AJUSTE = 0.01
+# Límite de la LÍNEA DE ALTA PROBABILIDAD (normal y ampliada): 0,02 desde el 2026-11-18, decisión del titular tras medirlo
+# (docs/medicion_residuo_ajuste_20261118.md, `eval/alta_prob_residuo.py`; 14.216 partidos de football-data, protocolo fijado antes de
+# calcular). Con 0,01 se perdían los candidatos de goles de ~34 % de los partidos (el 1X2 y la línea de Pinnacle «no caben» en
+# una pareja de lambdas) y la calibración de esos partidos no es peor: grupos de residuo 0,01-0,015 / 0,015-0,02 acertaron +1,15 / +1,24
+# puntos sobre lo prometido, frente a +0,84 con ≤ 0,01. Se rechazó 0,03 por una celda (más de 1,5 goles, 0,67-0,72, −3,38 ± 1,45).
+# Escalera, parley y primera mitad NO se midieron con este límite y siguen con `MAX_RESIDUO_AJUSTE`: cada una necesita su propia
+# medición antes de subirlo (tests/test_alta_prob_reglas.py lo vigila). Repetir con producción cuando el incremento llegue a 300 partidos.
+MAX_RESIDUO_AJUSTE_ALTA = 0.02
 # Las líneas que se calculan. Solo se publican las de
 # MERCADOS_GOLES_HABILITADOS, que pasaron la prueba histórica
 # (eval/alta_prob_calibracion.py). Cambiar esa lista exige repetir la prueba.
@@ -187,14 +195,20 @@ def candidatos_doble(p: dict[str, float]) -> list[Candidato]:
 
 
 def ajuste_goles(p: dict[str, float], linea: float, p_over: float,
-                 rho: float) -> dict | None:
-    """Goles esperados de mercado, o None si el ajuste no reproduce la entrada."""
+                 rho: float, max_residuo: float | None = None) -> dict | None:
+    """
+    Goles esperados de mercado, o None si el ajuste no reproduce la entrada.
+
+    `max_residuo`: límite del error del ajuste; sin él, `MAX_RESIDUO_AJUSTE`. La línea de alta probabilidad pasa
+    `MAX_RESIDUO_AJUSTE_ALTA` (la única medida con ese límite); las demás rutas no lo pasan.
+    """
+    limite = MAX_RESIDUO_AJUSTE if max_residuo is None else max_residuo
     try:
         fit = market_lambdas(p["home"], p["draw"], p["away"], rho=rho,
                              totals={linea: p_over})
     except ValueError:
         return None
-    if not fit.converged or fit.residual > MAX_RESIDUO_AJUSTE:
+    if not fit.converged or fit.residual > limite:
         return None
     return {"lambda": fit.lam, "mu": fit.mu, "rho": rho,
             "linea": linea, "residuo": fit.residual}

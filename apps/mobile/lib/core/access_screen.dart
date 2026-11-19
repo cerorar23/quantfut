@@ -2,11 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../l10n/app_locale.dart';
 import '../l10n/language_picker.dart';
-import '../product/live_widgets.dart';
 import '../product/qf_shapes.dart';
 import '../product/qf_theme.dart';
 import 'access_illustrations.dart';
@@ -49,10 +47,6 @@ class AccessScreen extends StatefulWidget {
 class _AccessScreenState extends State<AccessScreen>
     with TickerProviderStateMixin {
   final _pages = PageController();
-  late final AnimationController _loop = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 6),
-  );
   late final AnimationController _shake = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 420),
@@ -61,7 +55,6 @@ class _AccessScreenState extends State<AccessScreen>
   final _privacyTap = TapGestureRecognizer();
   int _page = 0;
   bool _hint = false;
-  bool _started = false;
 
   @override
   void initState() {
@@ -71,21 +64,8 @@ class _AccessScreenState extends State<AccessScreen>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
-    if (MediaQuery.of(context).disableAnimations) {
-      _loop.value = .8;
-    } else {
-      _loop.repeat();
-    }
-  }
-
-  @override
   void dispose() {
     _pages.dispose();
-    _loop.dispose();
     _shake.dispose();
     _termsTap.dispose();
     _privacyTap.dispose();
@@ -96,7 +76,6 @@ class _AccessScreenState extends State<AccessScreen>
   /// la casilla (nunca un botón apagado sin explicación).
   void _google() {
     if (!widget.consent) {
-      HapticFeedback.lightImpact();
       setState(() => _hint = true);
       if (!MediaQuery.of(context).disableAnimations) _shake.forward(from: 0);
       return;
@@ -125,7 +104,7 @@ class _AccessScreenState extends State<AccessScreen>
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: SizedBox(
                     // Por debajo de este alto el carrusel no cabe: la pantalla se desplaza.
-                    height: math.max(box.maxHeight, linking ? 0 : 700),
+                    height: math.max(box.maxHeight, linking ? 0 : 760),
                     child: Column(
                       children: [
                         _topBar(context),
@@ -145,41 +124,56 @@ class _AccessScreenState extends State<AccessScreen>
     );
   }
 
-  Widget _topBar(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+  Widget _topBar(BuildContext context) => Container(
+    height: 56,
+    padding: const EdgeInsets.only(left: 16, right: 10),
     child: Row(
       children: [
-        const Expanded(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(text: '// ', style: TextStyle(color: QfColors.primary)), // l10n-ignore (marca)
-                TextSpan(text: 'QUANTFUT'), // l10n-ignore (marca)
-              ],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        const Text.rich(
+          TextSpan(
+            text: 'QUANT',
             style: TextStyle(
               fontFamily: qfDisplay,
               fontWeight: FontWeight.w700,
-              fontSize: 20,
-              letterSpacing: 1.2,
+              fontSize: 21,
+              letterSpacing: 1.4,
               color: QfColors.text,
             ),
+            children: [
+              TextSpan(
+                text: 'FUT',
+                style: TextStyle(color: QfColors.cyan),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
+        const Spacer(),
+        OutlinedButton(
           key: const ValueKey('language-button'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: QfColors.text,
+            foregroundColor: QfColors.text2,
             side: const BorderSide(color: QfColors.border),
-            shape: const CutCornerBorder(cut: 8),
+            shape: const CutCornerBorder(cut: 6),
             minimumSize: const Size(48, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
           onPressed: widget.busy ? null : () => showLanguagePicker(context),
-          icon: const Icon(Icons.language_rounded, size: 18),
-          label: Text(appLanguages[AppLocale.instance.code]!),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.language_rounded, size: 16, color: QfColors.text2),
+              const SizedBox(width: 6),
+              Text(
+                AppLocale.instance.code.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: qfMono,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: QfColors.text2,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     ),
@@ -208,61 +202,99 @@ class _AccessScreenState extends State<AccessScreen>
       l10n.accessBody4,
       l10n.accessBody5,
     ];
+
     return Column(
       children: [
         Expanded(
-          child: PageView.builder(
-            key: const ValueKey('access-carousel'),
-            controller: _pages,
-            itemCount: _slides,
-            onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (context, i) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ExcludeSemantics(
-                      child: AccessIllustration(
-                        index: i,
-                        t: i == _page
-                            ? _loop
-                            : const AlwaysStoppedAnimation(.8),
-                      ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Resplandor radial de fondo
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0, -0.3),
+                      radius: 0.65,
+                      colors: [
+                        QfColors.cyan.withValues(alpha: 0.14),
+                        Colors.transparent,
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    kickers[i],
-                    style: const TextStyle(
-                      fontFamily: qfDisplay,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      letterSpacing: .9,
-                      color: QfColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    titles[i],
-                    key: ValueKey('access-title-$i'),
-                    style: const TextStyle(
-                      color: QfColors.text,
-                      fontFamily: qfDisplay,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 26,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  liveText(bodies[i], size: 14, color: QfColors.text2),
-                ],
+                ),
               ),
-            ),
+              PageView.builder(
+                key: const ValueKey('access-carousel'),
+                controller: _pages,
+                itemCount: _slides,
+                onPageChanged: (i) => setState(() => _page = i),
+                itemBuilder: (context, i) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Tres tarjetas decorativas deportivas CyberCore en FittedBox adaptable
+                      const Expanded(
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: _AccessSportsCards(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Textos de la presentación
+                      Text(
+                        kickers[i].toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                          letterSpacing: 1.5,
+                          color: QfColors.cyan,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        titles[i],
+                        key: ValueKey('access-title-$i'),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: QfColors.text,
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 22,
+                          height: 1.08,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        bodies[i],
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Exo 2',
+                          fontSize: 12.5,
+                          color: QfColors.text2,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+        // Puntos indicadores pulsables
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -282,7 +314,7 @@ class _AccessScreenState extends State<AccessScreen>
                             curve: Curves.easeOut,
                           ),
                     child: SizedBox(
-                      width: 44,
+                      width: 30,
                       height: 44,
                       child: Center(
                         child: AnimatedContainer(
@@ -291,7 +323,10 @@ class _AccessScreenState extends State<AccessScreen>
                               : const Duration(milliseconds: 250),
                           width: i == _page ? 24 : 6,
                           height: 6,
-                          color: i == _page ? QfColors.primary : QfColors.border,
+                          decoration: BoxDecoration(
+                            color: i == _page ? QfColors.cyan : const Color(0xFF3A3F55),
+                            borderRadius: BorderRadius.circular(1),
+                          ),
                         ),
                       ),
                     ),
@@ -308,10 +343,20 @@ class _AccessScreenState extends State<AccessScreen>
     final l10n = context.l10n;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: const ShapeDecoration(
         color: QfColors.surface,
-        shape: CutCornerBorder(side: BorderSide(color: QfColors.border)),
+        shadows: [
+          BoxShadow(
+            color: Color(0x1A00F0FF),
+            blurRadius: 40,
+            offset: Offset(0, -10),
+          ),
+        ],
+        shape: CutCornerBorder(
+          cut: 16,
+          side: BorderSide(color: QfColors.borderStrong),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -323,13 +368,30 @@ class _AccessScreenState extends State<AccessScreen>
               style: const TextStyle(
                 fontFamily: qfDisplay,
                 fontWeight: FontWeight.w700,
-                fontSize: 20,
+                fontSize: 21,
+                letterSpacing: 0.6,
                 color: QfColors.text,
               ),
             ),
             const SizedBox(height: 4),
-            liveText(l10n.accessCardBody, size: 13, color: QfColors.text2),
-            const SizedBox(height: 14),
+            Text(
+              l10n.accessCardBody,
+              style: const TextStyle(
+                fontFamily: 'Exo 2',
+                fontSize: 13,
+                color: QfColors.text2,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                QfBadge(l10n.accessFreeToStart.toUpperCase(), color: QfColors.green),
+                QfBadge(l10n.accessNoCard.toUpperCase(), color: QfColors.muted),
+              ],
+            ),
+            const SizedBox(height: 12),
             _googleButton(context),
           ] else
             widget.linkingForm!,
@@ -338,7 +400,10 @@ class _AccessScreenState extends State<AccessScreen>
           if (!widget.docsReady)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: liveText(l10n.accessPreparingDocs, size: 12, color: QfColors.text2),
+              child: Text(
+                l10n.accessPreparingDocs,
+                style: const TextStyle(fontSize: 12, color: QfColors.text2),
+              ),
             ),
           if (widget.error != null)
             Padding(
@@ -348,7 +413,12 @@ class _AccessScreenState extends State<AccessScreen>
                 children: [
                   const Icon(Icons.error_outline, size: 16, color: QfColors.danger),
                   const SizedBox(width: 6),
-                  Expanded(child: liveText(widget.error!, size: 13, color: QfColors.danger)),
+                  Expanded(
+                    child: Text(
+                      widget.error!,
+                      style: const TextStyle(fontSize: 13, color: QfColors.danger),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -361,16 +431,17 @@ class _AccessScreenState extends State<AccessScreen>
   Widget _googleButton(BuildContext context) {
     final l10n = context.l10n;
     return SizedBox(
-      height: 52,
+      height: 54,
       child: OutlinedButton(
         key: const ValueKey('google-button'),
         style: OutlinedButton.styleFrom(
-          backgroundColor: QfColors.text,
-          foregroundColor: QfColors.bg,
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF111111),
           disabledBackgroundColor: QfColors.text2,
           side: BorderSide.none,
-          shape: const CutCornerBorder(cut: 8),
+          shape: const CutCornerBorder(cut: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          elevation: 0,
         ),
         onPressed: widget.busy || !widget.docsReady ? null : _google,
         child: Row(
@@ -380,7 +451,7 @@ class _AccessScreenState extends State<AccessScreen>
               const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.4, color: QfColors.primary),
+                child: CircularProgressIndicator(strokeWidth: 2.4, color: QfColors.bg),
               )
             else
               const GoogleLogo(size: 22),
@@ -391,9 +462,10 @@ class _AccessScreenState extends State<AccessScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontFamily: 'Gilroy Bold',
-                  fontSize: 15,
-                  color: QfColors.bg,
+                  fontFamily: 'Exo 2',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Color(0xFF111111),
                 ),
               ),
             ),
@@ -409,10 +481,11 @@ class _AccessScreenState extends State<AccessScreen>
     final template = l10n.accessConsentRich(termsMark, privacyMark);
     final spans = <InlineSpan>[];
     const link = TextStyle(
-      color: QfColors.primary,
+      color: QfColors.cyan,
       decoration: TextDecoration.underline,
-      decorationColor: QfColors.primary,
-      fontFamily: 'Gilroy Bold',
+      decorationColor: QfColors.cyan,
+      fontFamily: 'Exo 2',
+      fontWeight: FontWeight.w600,
     );
     for (final part in template.split(RegExp('(?=[$termsMark$privacyMark])|(?<=[$termsMark$privacyMark])'))) {
       if (part == termsMark) {
@@ -447,9 +520,9 @@ class _AccessScreenState extends State<AccessScreen>
                   Checkbox(
                     key: const ValueKey('consent'),
                     value: widget.consent,
-                    activeColor: QfColors.primary,
-                    checkColor: QfColors.onPrimary,
-                    side: BorderSide(color: _hint ? QfColors.danger : QfColors.text2, width: 1.6),
+                    activeColor: QfColors.green,
+                    checkColor: QfColors.onGreen,
+                    side: BorderSide(color: _hint ? QfColors.danger : QfColors.muted, width: 1.6),
                     onChanged: widget.busy || !widget.docsReady ? null : (v) => _toggle(v ?? false),
                   ),
                   Expanded(
@@ -490,11 +563,96 @@ class _AccessScreenState extends State<AccessScreen>
   }
 
   Widget _disclaimer(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(28, 10, 28, 12),
+    padding: const EdgeInsets.fromLTRB(28, 8, 28, 12),
     child: Text(
       context.l10n.accessDisclaimer,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: QfColors.muted, fontSize: 11, height: 1.3),
+      style: const TextStyle(
+        fontFamily: 'Exo 2',
+        color: Color(0xFF939AB0),
+        fontSize: 11,
+        height: 1.3,
+      ),
     ),
   );
+}
+
+class _AccessSportsCards extends StatelessWidget {
+  const _AccessSportsCards();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 280,
+      height: 120,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Tarjeta Fútbol (inclinada -5 grados)
+          Transform.rotate(
+            angle: -5 * math.pi / 180,
+            child: Container(
+              width: 78,
+              height: 96,
+              margin: const EdgeInsets.only(top: 10),
+              decoration: const ShapeDecoration(
+                color: QfColors.surface,
+                shape: CutCornerBorder(
+                  cut: 8,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: const Center(
+                child: Icon(Icons.sports_soccer, size: 44, color: QfColors.text),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Tarjeta NBA (elevada, con brillo cian)
+          Container(
+            width: 92,
+            height: 116,
+            decoration: ShapeDecoration(
+              color: QfColors.surface2,
+              shadows: [
+                BoxShadow(
+                  color: QfColors.cyan.withValues(alpha: 0.28),
+                  blurRadius: 30,
+                  spreadRadius: 1,
+                ),
+              ],
+              shape: const CutCornerBorder(
+                cut: 10,
+                side: BorderSide(color: QfColors.cyan, width: 1.2),
+              ),
+            ),
+            child: const Center(
+              child: Icon(Icons.sports_basketball, size: 54, color: QfColors.cyan),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Tarjeta Tenis (inclinada 5 grados)
+          Transform.rotate(
+            angle: 5 * math.pi / 180,
+            child: Container(
+              width: 78,
+              height: 96,
+              margin: const EdgeInsets.only(top: 10),
+              decoration: const ShapeDecoration(
+                color: QfColors.surface,
+                shape: CutCornerBorder(
+                  cut: 8,
+                  side: BorderSide(color: QfColors.border),
+                ),
+              ),
+              child: const Center(
+                child: Icon(Icons.sports_tennis, size: 44, color: QfColors.text),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

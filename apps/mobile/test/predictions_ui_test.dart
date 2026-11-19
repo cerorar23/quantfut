@@ -42,7 +42,15 @@ Map<String, dynamic> report(DateTime today) {
   final tomorrow = today.add(const Duration(days: 1));
   return {
     'estado': 'activa',
-    'historial': {'n': 141, 'aciertos': 114, 'acierto_real': 80.9, 'acierto_prometido': 82.4},
+    'historial': {
+      'n': 612,
+      'aciertos': 512,
+      'acierto_real': 83.7,
+      'por_mes': [
+        {'mes': '${today.toUtc().year}-${today.toUtc().month.toString().padLeft(2, '0')}', 'n': 141, 'aciertos': 114, 'acierto_real': 80.9, 'acierto_prometido': 82.4},
+        {'mes': '2020-01', 'n': 471, 'aciertos': 398, 'acierto_real': 99.0, 'acierto_prometido': 90.0},
+      ],
+    },
     'proximos': [
       pick('Lens', 'Sporting CP', 'Marca Lens', .8, 1.22, iso(today, 18)),
       pick('Galatasaray', 'Barcelona', 'Gana Barcelona', .76, 1.3, iso(today, 20)),
@@ -127,6 +135,9 @@ void main() {
       'Gilroy Bold': 'fonts/Gilroy-Bold.otf',
       'Gilroy ExtraBold': 'fonts/Gilroy-ExtraBold.otf',
       'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
+      'Exo 2': 'fonts/Exo2-Regular.ttf',
+      'Rajdhani': 'fonts/Rajdhani-Bold.ttf',
+      'JetBrains Mono': 'fonts/JetBrainsMono-Bold.ttf',
     }.entries) {
       await (FontLoader(f.key)..addFont(rootBundle.load(f.value))).load();
     }
@@ -210,6 +221,7 @@ void main() {
         ),
         code: 'es',
       );
+      expect(find.text('ACIERTO DE ESTE MES'), findsOneWidget);
       expect(find.text('80,9 %'), findsOneWidget);
       expect(find.text('114 de 141 pronósticos'), findsOneWidget);
       expect(find.text('Prometido: 82,4 %'), findsOneWidget);

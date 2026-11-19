@@ -1,4 +1,4 @@
-// Piezas visuales v3: barra segmentada, de probabilidad, sello y tarjeta con corte.
+// Piezas visuales CyberCore: barra segmentada, de probabilidad, sello, tarjeta con corte y badges.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gobet/l10n/app_locale.dart';
@@ -16,13 +16,13 @@ Widget _host(Widget child) => MaterialApp(
 void main() {
   testWidgets('SegmentedBar pinta filled de total', (tester) async {
     await tester.pumpWidget(
-      _host(const SegmentedBar(total: 6, filled: 3, color: QfColors.nba)),
+      _host(const SegmentedBar(total: 6, filled: 3, color: QfColors.cyan)),
     );
     final segments = find.byKey(const ValueKey('qf-segment'));
     expect(segments, findsNWidgets(6));
     final colored = tester
         .widgetList<DecoratedBox>(segments)
-        .where((b) => (b.decoration as BoxDecoration).color == QfColors.nba);
+        .where((b) => (b.decoration as BoxDecoration).color == QfColors.cyan);
     expect(colored.length, 3);
   });
 
@@ -55,15 +55,65 @@ void main() {
   testWidgets('QfCard es pulsable a 44 dp o más', (tester) async {
     var taps = 0;
     await tester.pumpWidget(
-      _host(QfCard(accent: QfColors.football, onTap: () => taps++, child: const Text('x'))),
+      _host(QfCard(accent: QfColors.green, onTap: () => taps++, child: const Text('x'))),
     );
     expect(tester.getSize(find.byType(InkWell)).height, greaterThanOrEqualTo(44));
     await tester.tap(find.byType(InkWell));
     expect(taps, 1);
   });
 
-  testWidgets('QfBadge pone la etiqueta en mayúsculas', (tester) async {
-    await tester.pumpWidget(_host(const QfBadge('nba', color: QfColors.nba)));
-    expect(find.text('NBA'), findsOneWidget);
+  testWidgets('QfCard soporta strong, glow, cut y padding personalizado', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        const QfCard(
+          strong: true,
+          glow: true,
+          cut: 10,
+          padding: EdgeInsets.all(20),
+          child: Text('Card Content'),
+        ),
+      ),
+    );
+    expect(find.text('Card Content'), findsOneWidget);
+  });
+
+  testWidgets('CutCornerBorder genera path con esquinas biseladas', (tester) async {
+    const border = CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.cyan, width: 1));
+    final path = border.getOuterPath(const Rect.fromLTWH(0, 0, 100, 50));
+    expect(path.contains(const Offset(50, 25)), isTrue);
+    // Esquinas cortadas: arriba-derecha y abajo-izquierda
+    expect(path.contains(const Offset(99, 1)), isFalse);
+    expect(path.contains(const Offset(1, 49)), isFalse);
+    // Esquinas intactas: arriba-izquierda y abajo-derecha
+    expect(path.contains(const Offset(2, 2)), isTrue);
+    expect(path.contains(const Offset(98, 48)), isTrue);
+  });
+
+  testWidgets('QfBadge muestra texto en mayúsculas y estilos según kind', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        Column(
+          children: const [
+            QfBadge.kind(QfBadgeKind.free),
+            QfBadge.kind(QfBadgeKind.won),
+            QfBadge.kind(QfBadgeKind.vip),
+            QfBadge.kind(QfBadgeKind.lost),
+            QfBadge.kind(QfBadgeKind.live),
+          ],
+        ),
+      ),
+    );
+    expect(find.text('GRATIS'), findsOneWidget);
+    expect(find.text('ACERTADO'), findsOneWidget);
+    expect(find.text('VIP'), findsOneWidget);
+    expect(find.text('FALLADO'), findsOneWidget);
+    expect(find.text('EN VIVO'), findsOneWidget);
+  });
+
+  testWidgets('qfSectionTag construye etiqueta visual en mayúsculas', (tester) async {
+    await tester.pumpWidget(
+      _host(qfSectionTag('Estadísticas')),
+    );
+    expect(find.text('// ESTADÍSTICAS'), findsOneWidget);
   });
 }

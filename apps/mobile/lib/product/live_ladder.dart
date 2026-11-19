@@ -7,9 +7,11 @@ import '../l10n/pick_labels.dart';
 import 'ladder_progress.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
-const _track = Color(0xff243447);
-const _tile = Color(0xff0e1b2a);
+const _track = QfColors.track;
+const _tile = QfColors.surface2;
 
 String _multiplierText(double? value) =>
     value == null ? '—' : '×${decimalText(value, 2)}';
@@ -57,117 +59,167 @@ class _LadderChallengeCardState extends State<LadderChallengeCard> {
     final progress =
         '${l10n.ladderWonOf(p.won, p.goal)} · ${l10n.ladderRemaining(p.remaining)}';
     final status = inPlay ? l10n.ladderStatusInPlay : l10n.ladderStatusToPick;
-    return Container(
-      key: ValueKey('ladder-card-$id'),
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: .35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Semantics(
-            container: true,
-            label:
-                '$title. $progress. $status. ${realPercent(p.fraction)}',
-            child: ExcludeSemantics(
-              child: Row(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        key: ValueKey('ladder-card-$id'),
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 16,
+          side: BorderSide(color: accent.withValues(alpha: .35)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  _ProgressRing(fraction: p.fraction),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        liveText(title, size: 15, bold: true),
-                        const SizedBox(height: 2),
-                        liveText(progress, size: 12, color: liveMuted),
-                      ],
+                    child: Text(
+                      l10n.ladderActiveReto.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: qfDisplay,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        letterSpacing: 1.4,
+                        color: QfColors.text,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _StatusChip(label: status, color: accent, inPlay: inPlay),
+                  Text(
+                    l10n
+                        .ladderStepOf(
+                          p.won + (inPlay ? 1 : 0),
+                          p.goal,
+                        )
+                        .toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: qfMono,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: QfColors.cyan,
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _StepBar(goal: p.goal, won: p.won, inPlay: inPlay),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _Tile(
-                  key: ValueKey('ladder-chance-$id'),
-                  value: p.chance == null ? '—' : '≈ ${realPercent(p.chance)}',
-                  label: l10n.ladderChance,
-                  onInfo: () =>
-                      liveNotice(context, l10n.ladderEstimateNote(average)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _Tile(
-                  value: _multiplierText(p.multiplier),
-                  label: l10n.ladderBalance,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                inPlay ? Icons.schedule : Icons.hourglass_empty,
-                size: 16,
-                color: liveMuted,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: liveText(
-                  inPlay ? l10n.ladderNoteInPlay : l10n.ladderNoteToPick,
-                  size: 12,
-                  color: liveMuted,
-                ),
-              ),
-            ],
-          ),
-          if (widget.pending.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...widget.pending,
-          ],
-          if (settled.isNotEmpty) ...[
-            InkWell(
-              key: ValueKey('ladder-toggle-$id'),
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => setState(() => _open = !_open),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: liveText(
-                        _open ? l10n.ladderHideSteps : l10n.ladderShowSteps,
-                        size: 13,
-                        color: liveCyan,
-                        bold: true,
+              const SizedBox(height: 12),
+              Semantics(
+                container: true,
+                label:
+                    '$title. $progress. $status. ${realPercent(p.fraction)}',
+                child: ExcludeSemantics(
+                  child: Row(
+                    children: [
+                      _ProgressRing(fraction: p.fraction),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            liveText(title, size: 15, bold: true),
+                            const SizedBox(height: 2),
+                            liveText(progress, size: 12, color: liveMuted),
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(
-                      _open ? Icons.expand_less : Icons.expand_more,
-                      color: liveCyan,
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      _StatusChip(label: status, color: accent, inPlay: inPlay),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (_open) ...settled.map((s) => _SettledStep(step: s)),
-          ],
-        ],
+              const SizedBox(height: 12),
+              _StepBar(goal: p.goal, won: p.won, inPlay: inPlay),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Tile(
+                      key: ValueKey('ladder-chance-$id'),
+                      title: l10n.ladderStepProb,
+                      value: p.chance == null ? '—' : '≈ ${realPercent(p.chance)}',
+                      label: l10n.ladderChance,
+                      isChance: true,
+                      onInfo: () =>
+                          liveNotice(context, l10n.ladderEstimateNote(average)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _Tile(
+                      title: l10n.ladderOddsAccumulated,
+                      value: _multiplierText(p.multiplier),
+                      label: l10n.ladderBalance,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    inPlay ? Icons.schedule : Icons.hourglass_empty,
+                    size: 16,
+                    color: liveMuted,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: liveText(
+                      inPlay ? l10n.ladderNoteInPlay : l10n.ladderNoteToPick,
+                      size: 12,
+                      color: liveMuted,
+                    ),
+                  ),
+                ],
+              ),
+              if (widget.pending.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                ...widget.pending,
+              ],
+              if (settled.isNotEmpty) ...[
+                InkWell(
+                  key: ValueKey('ladder-toggle-$id'),
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => setState(() => _open = !_open),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: liveText(
+                            _open ? l10n.ladderHideSteps : l10n.ladderShowSteps,
+                            size: 13,
+                            color: liveCyan,
+                            bold: true,
+                          ),
+                        ),
+                        Icon(
+                          _open ? Icons.expand_less : Icons.expand_more,
+                          color: liveCyan,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_open) ...settled.map((s) => _SettledStep(step: s)),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                l10n.ladderRestartHint,
+                style: const TextStyle(
+                  color: QfColors.muted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -193,9 +245,12 @@ class _SettledStep extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
+      decoration: const ShapeDecoration(
         color: _tile,
-        borderRadius: BorderRadius.circular(12),
+        shape: CutCornerBorder(
+          cut: 8,
+          side: BorderSide(color: QfColors.divider),
+        ),
       ),
       child: Row(
         children: [
@@ -239,7 +294,7 @@ class _ProgressRing extends StatelessWidget {
               realPercent(fraction),
               style: const TextStyle(
                 color: Colors.white,
-                fontFamily: 'Gilroy Bold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
             ),
@@ -299,12 +354,20 @@ class _StepBar extends StatelessWidget {
         Expanded(
           child: Container(
             key: ValueKey('ladder-step-$i'),
-            height: 8,
+            height: 10,
             decoration: BoxDecoration(
               color: i < won
-                  ? liveGreen
-                  : (i == won && inPlay ? liveGold : _track),
-              borderRadius: BorderRadius.circular(4),
+                  ? QfColors.green
+                  : (i == won && inPlay ? QfColors.cyan : _track),
+              borderRadius: BorderRadius.circular(2),
+              boxShadow: (i == won && inPlay)
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x9900F0FF),
+                        blurRadius: 10,
+                      ),
+                    ]
+                  : null,
             ),
           ),
         ),
@@ -343,8 +406,8 @@ class _StatusChip extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: color,
-              fontFamily: 'Gilroy Bold',
-              fontSize: 11,
+              fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
+              fontSize: 10.5,
             ),
           ),
         ),
@@ -354,19 +417,31 @@ class _StatusChip extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({super.key, required this.value, required this.label, this.onInfo});
+  const _Tile({
+    super.key,
+    this.title,
+    required this.value,
+    required this.label,
+    this.isChance = false,
+    this.onInfo,
+  });
 
+  final String? title;
   final String value;
   final String label;
+  final bool isChance;
   final VoidCallback? onInfo;
 
   @override
   Widget build(BuildContext context) {
     final body = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
+      decoration: const ShapeDecoration(
         color: _tile,
-        borderRadius: BorderRadius.circular(10),
+        shape: CutCornerBorder(
+          cut: 8,
+          side: BorderSide(color: QfColors.divider),
+        ),
       ),
       child: Row(
         children: [
@@ -374,13 +449,32 @@ class _Tile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  (title ?? label).toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: qfDisplay,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 1.4,
+                    color: QfColors.muted,
+                  ),
+                ),
+                const SizedBox(height: 2),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: liveText(value, size: 17, bold: true),
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontFamily: qfMono,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      color: isChance ? QfColors.cyan : QfColors.text,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 2),
-                liveText(label, size: 11, color: liveMuted),
               ],
             ),
           ),
@@ -391,7 +485,7 @@ class _Tile extends StatelessWidget {
     );
     if (onInfo == null) return body;
     return InkWell(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       onTap: onInfo,
       child: body,
     );
@@ -445,16 +539,18 @@ class _LadderHistoryCardState extends State<LadderHistoryCard> {
     return Container(
       key: const ValueKey('ladder-history'),
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+      decoration: const ShapeDecoration(
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 10,
+          side: BorderSide(color: QfColors.border),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
             onTap: empty ? null : () => setState(() => _open = !_open),
             child: Padding(
               padding: const EdgeInsets.all(14),
@@ -573,14 +669,17 @@ class _HistoryRow extends StatelessWidget {
     return Container(
       key: ValueKey('ladder-history-row-$id'),
       margin: const EdgeInsets.only(top: 6),
-      decoration: BoxDecoration(
+      decoration: const ShapeDecoration(
         color: _tile,
-        borderRadius: BorderRadius.circular(12),
+        shape: CutCornerBorder(
+          cut: 8,
+          side: BorderSide(color: QfColors.divider),
+        ),
       ),
       child: Column(
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             onTap: steps.isEmpty ? null : onTap,
             child: Padding(
               padding: const EdgeInsets.all(10),
@@ -625,7 +724,7 @@ class _HistoryRow extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
               child: Column(
                 children: [
-                  const Divider(height: 1, color: Colors.white12),
+                  const Divider(height: 1, color: QfColors.divider),
                   for (final s in steps) _ClosedStep(step: s),
                 ],
               ),

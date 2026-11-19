@@ -75,6 +75,28 @@ def test_capturar_evento_recorre_las_paginas_y_pide_solo_prepartido_de_las_dos_c
     assert C.capturar_evento(ApiFalsa([[{"a": 1}], None]), {"id": "ev2"}) is None   # una página caída: no se guarda nada a medias
 
 
+def test_calendario_cubre_tres_deportes_y_deduplica_paginas():
+    class Calendario:
+        def __init__(self):
+            self.llamadas = []
+
+        def get(self, ruta, **q):
+            self.llamadas.append(q)
+            return {"data": [{"id": q["sport"]}], "pagination": {"has_more": q["offset"] == 0, "next_offset": 1}}
+
+    api = Calendario()
+    eventos = C.listar_eventos(api, C.DEPORTES, AHORA)
+    assert {e["sport"] for e in eventos} == {"soccer", "basketball", "tennis"}
+    assert {q["date"] for q in api.llamadas} == {"2026-11-02", "2026-11-03"}
+    assert all(q.get("league") == "nba" for q in api.llamadas if q["sport"] == "basketball")
+    assert all("league" not in q for q in api.llamadas if q["sport"] == "soccer")
+
+
+def test_captura_incompleta_no_se_sella(monkeypatch):
+    monkeypatch.setattr(C, "MAX_PAGINAS", 1)
+    assert C.capturar_evento(ApiFalsa([[{"a": 1}], [{"a": 2}]]), {"id": "incompleto"}) is None
+
+
 def test_escribir_captura_deja_cabecera_y_filas_con_nombre_seguro(tmp_path):
     ev = _evento("liga_a/b:c", 2)
     f = C.escribir_captura(tmp_path, ev, AHORA + timedelta(hours=2), AHORA, [120], [{"market_type": "m", "odds_decimal": 2.0}], 1)

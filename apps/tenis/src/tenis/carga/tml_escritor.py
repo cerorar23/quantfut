@@ -1,9 +1,20 @@
 """Escritura de la carga TML en la base: por lotes, ON CONFLICT DO NOTHING, sin UPDATE ni DELETE (evidencia).
 
+Recargar una descarga NO duplica: `recibido_en` forma parte de las claves únicas (cada semana trae una fecha de
+recepción nueva), así que resultado, estadística y ranking se comparan antes con lo ya guardado. Solo se inserta
+lo que no existe o, en resultado y estadística, una NUEVA VERSIÓN cuando el proveedor corrigió el contenido.
+
 Los ids se resuelven con SELECT por lote, nunca por fila. `jugador` no tiene clave natural: se inserta en orden y
 se asocian los ids devueltos en orden ascendente (la identidad se asigna en el orden del SELECT con ORDER BY).
 """
+import json
+
 from psycopg.types.json import Jsonb
+
+
+def _norm(v) -> str:
+    """Forma comparable de un valor (listas/dicts JSON incluidos) para saber si el contenido cambió."""
+    return json.dumps(v, sort_keys=True, default=str)
 
 
 def recibo(cur, r: dict) -> int:
@@ -107,7 +118,23 @@ def partidos(cur, filas: list[dict]) -> dict:
     return {(e, r, a, b): p for (p, e, r, a, b) in cur.fetchall()}
 
 
+RESULTADO_CAMPOS = ("estado", "ganador", "retira", "sets", "sets_completos", "duracion_min")
+ESTADISTICA_CAMPOS = ("aces", "dobles_faltas", "puntos_saque", "primeros_dentro", "primeros_ganados",
+                      "segundos_ganados", "juegos_saque", "bp_salvados", "bp_afrontados")
+
+
+def _cambia(existente: dict, nueva: dict, campos: tuple) -> bool:
+    return any(_norm(existente[c]) != _norm(nueva[c]) for c in campos)
+
+
 def resultados(cur, filas: list[dict]) -> None:
+    if not filas:
+        return
+    cur.execute("SELECT DISTINCT ON (partido_id) partido_id, " + ", ".join(RESULTADO_CAMPOS) + " FROM resultado "
+                "WHERE fuente = 'tml' AND partido_id = ANY(%s) ORDER BY partido_id, recibido_en DESC",
+                ([f["partido_id"] for f in filas],))
+    previos = {r[0]: dict(zip(RESULTADO_CAMPOS, r[1:])) for r in cur.fetchall()}
+    filas = [f for f in filas if f["partido_id"] not in previos or _cambia(previos[f["partido_id"]], f, RESULTADO_CAMPOS)]
     for f in filas:
         if f["sets"] is not None:
             f["sets"] = Jsonb(f["sets"])
@@ -119,6 +146,15 @@ def resultados(cur, filas: list[dict]) -> None:
 
 
 def estadisticas(cur, filas: list[dict]) -> None:
+    if not filas:
+        return
+    cur.execute("SELECT DISTINCT ON (partido_id, lado) partido_id, lado, " + ", ".join(ESTADISTICA_CAMPOS) +
+                " FROM estadistica WHERE fuente = 'tml' AND partido_id = ANY(%s) "
+                "ORDER BY partido_id, lado, recibido_en DESC", ([f["partido_id"] for f in filas],))
+    previos = {(r[0], r[1]): dict(zip(ESTADISTICA_CAMPOS, r[2:])) for r in cur.fetchall()}
+    filas = [f for f in filas
+             if (f["partido_id"], f["lado"]) not in previos
+             or _cambia(previos[(f["partido_id"], f["lado"])], f, ESTADISTICA_CAMPOS)]
     cur.executemany(
         "INSERT INTO estadistica (partido_id, lado, aces, dobles_faltas, puntos_saque, primeros_dentro, "
         "primeros_ganados, segundos_ganados, juegos_saque, bp_salvados, bp_afrontados, fuente, recibo_id, "
@@ -129,11 +165,24 @@ def estadisticas(cur, filas: list[dict]) -> None:
 
 
 def ranking(cur, filas: list[dict]) -> None:
+    if not filas:
+        return
+    cur.execute("SELECT circuito, fecha_publicacion, jugador_id FROM ranking WHERE fuente = 'tml' "
+                "AND jugador_id = ANY(%s) AND fecha_publicacion = ANY(%s)",
+                (list({f["jugador_id"] for f in filas}), list({f["fecha_publicacion"] for f in filas})))
+    previos = {(str(c), d, j) for (c, d, j) in cur.fetchall()}
+    filas = [f for f in filas if (str(f["circuito"]), f["fecha_publicacion"], f["jugador_id"]) not in previos]
     cur.executemany(
         "INSERT INTO ranking (circuito, fecha_publicacion, jugador_id, posicion, puntos, origen, fuente, recibo_id, "
         "recibido_en, visible_desde) VALUES (%(circuito)s, %(fecha_publicacion)s, %(jugador_id)s, %(posicion)s, "
         "%(puntos)s, 'tml_por_partido', 'tml', %(recibo_id)s, %(recibido_en)s, %(visible_desde)s) "
         "ON CONFLICT (circuito, fecha_publicacion, jugador_id, fuente, recibido_en) DO NOTHING", filas)
+
+
+def aserciones_conocidas(cur) -> set:
+    """{(jugador_id, campo, valor)} ya guardados de TML: un valor ya registrado no se vuelve a insertar al recargar."""
+    cur.execute("SELECT DISTINCT jugador_id, campo, valor FROM jugador_asercion WHERE fuente = 'tml'")
+    return set(cur.fetchall())
 
 
 def contar(cur, tabla: str) -> int:

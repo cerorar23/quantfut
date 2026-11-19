@@ -308,7 +308,11 @@ void main() {
     await HttpOverrides.runZoned(() async {
       final api = _Api();
       await pump(tester, nbaEvent(), api: api);
-      expect(api.paths, ['/nba/v1/partido/0022600021/estadisticas']);
+      // Estadísticas y, además, el análisis del destacado (404 aquí: la tarjeta compacta sigue).
+      expect(api.paths, [
+        '/nba/v1/partido/0022600021/estadisticas',
+        '/web/deportes/nba/analisis/0022600021',
+      ]);
       // Pronósticos funciona: ganador, total, jugador con «Más de» y sello.
       expect(find.textContaining('Dallas Mavericks'), findsWidgets);
       expect(find.textContaining('Más de 224,5'), findsOneWidget);
@@ -339,8 +343,9 @@ void main() {
       });
       await pump(tester, nbaEvent(), api: api);
       await openTab(tester, 'Análisis');
+      final l10n = AppLocale.instance.l10n;
       expect(find.text('Dallas Mavericks'), findsWidgets);
-      expect(find.text('Temporada'), findsWidgets);
+      expect(find.text(l10n.nbaMetricRecord), findsWidgets);
       await openTab(tester, 'H2H');
       expect(find.textContaining('Houston Rockets 128'), findsWidgets);
       expect(find.textContaining('Dallas Mavericks 110'), findsWidgets);
@@ -381,7 +386,8 @@ void main() {
       await pump(tester, tennisEvent(), api: api);
       await openTab(tester, 'Análisis');
       expect(find.text('Heather Watson'), findsWidgets);
-      expect(find.text('Ranking'), findsWidgets);
+      expect(find.textContaining('180'), findsWidgets);
+      expect(find.textContaining('ranking'), findsWidgets);
       await openTab(tester, 'H2H');
       expect(find.textContaining('WTA Cincinnati'), findsOneWidget);
       await openTab(tester, 'Alertas');
@@ -432,6 +438,146 @@ void main() {
       expect(find.text('Sin avisos para este partido.'), findsOneWidget);
     }, createHttpClient: (_) => _Client404());
   });
+
+  testWidgets('NBA reporte oficial de lesiones, suspensiones y PDF en Alertas', (
+    tester,
+  ) async {
+    await HttpOverrides.runZoned(() async {
+      final api = _Api({
+        '/nba/v1/partido/0022600021/disponibilidad': {
+          'partido_id': '0022600021',
+          'estado': 'reporte_aplicado',
+          'reporte_url':
+              'https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-13_05PM.pdf',
+          'reporte_timestamp_utc': '2026-11-13T22:30:00Z',
+          'local': {
+            'nombre': 'Dallas Mavericks',
+            'codigo': 'DAL',
+            'reporte_no_enviado': false,
+            'jugadores': [
+              {
+                'id': 1,
+                'nba_id': 1630170,
+                'nombre': 'Devin Vassell',
+                'estado': 'Doubtful',
+                'motivo': 'Injury/Illness - Right Foot; Injury Management',
+              },
+              {
+                'id': 2,
+                'nba_id': 1629640,
+                'nombre': 'Charles Bassey',
+                'estado': 'Questionable',
+                'motivo': 'Injury/Illness - Left Knee; Soreness',
+              },
+            ],
+          },
+          'visitante': {
+            'nombre': 'Houston Rockets',
+            'codigo': 'HOU',
+            'reporte_no_enviado': false,
+            'jugadores': [
+              {
+                'id': 3,
+                'nba_id': 201939,
+                'nombre': 'Stephen Curry',
+                'estado': 'Out',
+                'motivo': 'Injury/Illness - Left Ankle; Sprain',
+              },
+              {
+                'id': 4,
+                'nba_id': 1630541,
+                'nombre': 'Moses Moody',
+                'estado': 'Out',
+                'motivo': 'Suspension - League Suspension',
+              },
+            ],
+          },
+          'metricas_bajas': {
+            'missing_points_home': 4.5,
+            'missing_points_away': 14.2,
+            'missing_minutes_home': 22,
+            'missing_minutes_away': 36,
+          },
+        },
+      });
+      await pump(tester, nbaEvent(), api: api);
+      await openTab(tester, 'Alertas');
+
+      // Cabecera y PDF
+      expect(find.text('LESIONES Y SUSPENSIONES'), findsOneWidget);
+      expect(find.text('Parte oficial NBA (PDF)'), findsOneWidget);
+
+      // Equipos
+      expect(find.text('Houston Rockets'), findsWidgets);
+      expect(find.text('Dallas Mavericks'), findsWidgets);
+
+      // Nombres formateados
+      expect(find.text('S. Curry'), findsOneWidget);
+      expect(find.text('M. Moody'), findsOneWidget);
+      expect(find.text('D. Vassell'), findsOneWidget);
+      expect(find.text('C. Bassey'), findsOneWidget);
+
+      // Estados
+      expect(find.text('Lesionado'), findsOneWidget);
+      expect(find.text('Suspendido'), findsOneWidget);
+      expect(find.text('Poco probable'), findsOneWidget);
+      expect(find.text('En duda'), findsOneWidget);
+
+      // Motivos traducidos
+      expect(find.text('Tobillo izq. · esguince'), findsOneWidget);
+      expect(find.text('Suspensión de la liga'), findsOneWidget);
+      expect(find.text('Pie der. · gestión de carga'), findsOneWidget);
+      expect(find.text('Rodilla izq. · molestias'), findsOneWidget);
+
+      // Impacto
+      expect(
+        find.text('IMPACTO ESTIMADO EN EL MODELO POR BAJAS'),
+        findsOneWidget,
+      );
+    }, createHttpClient: (_) => _Client404());
+  });
+
+  testWidgets(
+    'NBA reporte de lesiones con plantilla completa o no enviada',
+    (tester) async {
+      await HttpOverrides.runZoned(() async {
+        final api = _Api({
+          '/nba/v1/partido/0022600021/disponibilidad': {
+            'partido_id': '0022600021',
+            'estado': 'reporte_aplicado',
+            'local': {
+              'nombre': 'Dallas Mavericks',
+              'codigo': 'DAL',
+              'reporte_no_enviado': false,
+              'jugadores': <Map<String, dynamic>>[],
+            },
+            'visitante': {
+              'nombre': 'Houston Rockets',
+              'codigo': 'HOU',
+              'reporte_no_enviado': true,
+              'jugadores': <Map<String, dynamic>>[],
+            },
+          },
+        });
+        await pump(tester, nbaEvent(), api: api);
+        await openTab(tester, 'Alertas');
+
+        expect(find.text('PLANTILLA COMPLETA'), findsOneWidget);
+        expect(
+          find.text(
+            'Sin suspensiones ni bajas por lesión en el reporte oficial.',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            'Reporte aún no enviado a la liga por el equipo (Not Yet Submitted).',
+          ),
+          findsOneWidget,
+        );
+      }, createHttpClient: (_) => _Client404());
+    },
+  );
 
   testWidgets('cabecera NBA «VIS @ LOC»; sin overlay no hay texto de precio con @', (
     tester,
@@ -525,7 +671,10 @@ void main() {
         ),
         api: api,
       );
-      expect(api.paths, ['/nba/v1/partido/a%20b%2Fc%3Fd/estadisticas']);
+      expect(api.paths, [
+        '/nba/v1/partido/a%20b%2Fc%3Fd/estadisticas',
+        '/web/deportes/nba/analisis/a%20b%2Fc%3Fd',
+      ]);
     }, createHttpClient: (_) => _Client404());
   });
 

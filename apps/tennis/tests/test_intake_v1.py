@@ -152,3 +152,17 @@ def test_postponed_stale_and_cancelled_matches_do_not_trigger_a_refresh(tmp_path
     archive(tmp_path, '266', [fixture(1, '', '2026-10-29', '10:00'), fixture(2, 'Set 1', '2026-10-26', '09:00'), fixture(3, 'Cancelled', '2026-10-28', '09:00')],
             '2026-10-28T00:25:00+00:00', 'a')
     assert circuits_awaiting_results(tmp_path, tmp_path / 'api_tennis', '2026-10-28T14:00:00+00:00') == []
+
+def test_tournament_aliases():
+    rows = [
+        dict(circuit='ATP', period='2026-11-10', tourney_name='ATP Finals', surface='Hard', tourney_level='F',
+             winner_id='a1', winner_name='Player One', loser_id='a2', loser_name='Player Two'),
+        dict(circuit='WTA', period='2026-11-08', tourney_name='WTA Finals', surface='Hard', tourney_level='F',
+             winner_id='w1', winner_name='Player Three', loser_id='w2', loser_name='Player Four'),
+    ]
+    d = Directory(pd.DataFrame(rows), '2026-11-15')
+    atp = d.tournament('ATP', 'Tour Finals Turin', pd.Timestamp('2026-11-15'))
+    assert atp.tourney_name == 'ATP Finals' and atp.surface == 'Hard' and atp.level == 'F'
+
+    wta = d.tournament('WTA', 'WTA Tour Finals', pd.Timestamp('2026-11-15'))
+    assert wta.tourney_name == 'WTA Finals' and wta.surface == 'Hard' and wta.level == 'F'

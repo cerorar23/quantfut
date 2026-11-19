@@ -168,7 +168,7 @@ class _TeamFacts extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Gilroy Bold',
+                  fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
               ),
@@ -209,7 +209,7 @@ class _TeamFacts extends StatelessWidget {
                           '${once['formacion']}',
                           style: const TextStyle(
                             color: liveCyan,
-                            fontFamily: 'Gilroy Bold',
+                            fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                             fontSize: 12,
                           ),
                         ),
@@ -304,7 +304,7 @@ class _ResultRow extends StatelessWidget {
             ),
             child: Text(
               text,
-              style: TextStyle(color: color, fontFamily: 'Gilroy Bold', fontSize: 11),
+              style: TextStyle(color: color, fontFamily: 'Exo 2', fontWeight: FontWeight.w700, fontSize: 11),
             ),
           ),
           const SizedBox(width: 10),

@@ -308,3 +308,40 @@ test('applyTennisQuotes: precio y casa de referencia en el mercado, sin pisar ni
   assert.equal(e.markets.length, 6, 'no crea mercados que no existan');
   assert.doesNotThrow(() => applyTennisQuotes(undefined, quotes) && applyTennisQuotes([{ id: 'z' }], null) && applyTennisQuotes([{ id: '12175299', markets: [] }], quotes));
 });
+
+// ── Cupos de gratis por deporte (menú /control/cupos) ──
+import {conCupos,conAcceso,withDetalle} from './sports-data.js';
+const ahoraCupo=new Date(2026,10,16,10),horaCupo=(d,h=20)=>new Date(2026,10,d,h).toISOString();
+const mk=(id,p)=>({id,market:id,label:`Mercado ${id}`,selection:`Sel ${id}`,probability:p,price:1.5});
+const evCupo=(id,dia,probs,destacado='a')=>({sport:'nba',v2:true,id,start:horaCupo(dia),destacado,markets:Object.entries(probs).map(([k,p])=>mk(k,p))});
+test('con VIP o sin cupo configurado no cambia nada',()=>{
+ const lista=[evCupo('1',16,{a:.8,b:.7})];
+ for(const [cupo,plus] of [[{destacados_gratis_dia:0,mercados_gratis_partido:0},true],[null,false],[{},false]]) {
+  const [e]=conCupos(lista,cupo,plus,ahoraCupo); assert.equal(e.markets.length,2); assert.equal(e.vip_markets,undefined); assert.equal(featuredSportMarket(e).id,'a');
+ }
+});
+test('el destacado va abierto solo en los N partidos del día con mayor probabilidad',()=>{
+ const lista=[evCupo('1',16,{a:.80}),evCupo('2',16,{a:.90}),evCupo('3',16,{a:.85}),evCupo('4',17,{a:.76})];
+ const out=conCupos(lista,{destacados_gratis_dia:2},false,ahoraCupo);
+ assert.deepEqual(out.map(e=>Boolean(e.destacado_vip)),[true,false,false,false]);       // el día 17 tiene su propio cupo
+ assert.equal(featuredSportMarket(out[0]),null); assert.equal(out[0].markets.length,0);
+ assert.deepEqual(out[0].vip_markets,[{id:'a',market:'a',label:'Mercado a',locked:true}]);   // sin selección, probabilidad ni cuota
+});
+test('por partido se abren los M mercados de mayor probabilidad y el destacado abierto cuenta como uno',()=>{
+ const [e]=conCupos([evCupo('1',16,{a:.80,b:.95,c:.60,d:.90})],{mercados_gratis_partido:2},false,ahoraCupo);
+ assert.deepEqual(e.markets.map(m=>m.id),['a','b']); assert.deepEqual(e.vip_markets.map(m=>m.id),['c','d']); assert.equal(e.destacado_vip,false);
+ const [cero]=conCupos([evCupo('1',16,{a:.80,b:.95})],{mercados_gratis_partido:0},false,ahoraCupo);
+ assert.deepEqual(cero.markets.map(m=>m.id),['a']);                    // el destacado tiene su propio cupo
+ const [nada]=conCupos([evCupo('1',16,{a:.80,b:.95})],{destacados_gratis_dia:0,mercados_gratis_partido:1},false,ahoraCupo);
+ assert.deepEqual(nada.markets.map(m=>m.id),['b']); assert.equal(nada.destacado_vip,true);   // un destacado con candado no ocupa plaza
+});
+test('un partido de un día ya pasado se ve entero y el detalle conserva el acceso del evento',()=>{
+ const [ayer,hoy]=conCupos([evCupo('1',15,{a:.8,b:.7}),evCupo('2',16,{a:.8,b:.7,c:.6})],{destacados_gratis_dia:0,mercados_gratis_partido:0},false,ahoraCupo);
+ assert.equal(ayer.markets.length,2); assert.equal(ayer.vip_markets,undefined);
+ assert.equal(hoy.markets.length,0); assert.equal(hoy.vip_markets.length,3);
+ const detalle=withNbaMarkets(hoy,{status:'ready',markets:[mk('a',.8),mk('z',.99)],projections:[],destacado:'a'});
+ assert.equal(detalle.markets.length,0); assert.deepEqual(detalle.vip_markets.map(m=>m.id),['a','z']); assert.equal(detalle.destacado_vip,true);
+ assert.equal(conAcceso(detalle,null).vip_markets,undefined);
+ const gen=withDetalle({...hoy,generico:true},{status:'ready',event:{markets:[mk('a',.8)],destacado:'a'}});
+ assert.equal(gen.destacado_vip,true);
+});

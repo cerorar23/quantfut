@@ -374,3 +374,18 @@ def test_cierre_manual_en_escalera_cierres_es_inmutable_y_no_liquida():
     inf = ed.informe_publico()
     assert all(r["reto_id"] != reto for r in inf["actuales"])
     assert pub["estado"] == "expirado" and pub["ganancia"] == "0.00" and pub["en_juego"] is None
+
+
+def test_eleccion_diaria_y_reemplazo_comparten_candado(monkeypatch):
+    """Retos 23 y 24 (15-nov-2026): el diario y el reemplazo eligieron a la vez el mismo partido."""
+    libre = "SELECT pg_try_advisory_lock(%s) AS ok, pg_advisory_unlock(%s)"
+
+    def dentro(*_a, **_k):
+        return db.query_one(libre, (ed.CANDADO_ELECCION,) * 2)["ok"]
+
+    monkeypatch.setattr(ed, "_select_and_persist", dentro)
+    monkeypatch.setattr(ed, "_reemplazar_nulos", dentro)
+    assert ed.select_and_persist() is False
+    assert ed.reemplazar_nulos() is False
+    assert ed.select_and_persist(dry_run=True) is True      # el ensayo no espera a nadie
+    assert db.query_one(libre, (ed.CANDADO_ELECCION,) * 2)["ok"] is True   # se suelta al terminar

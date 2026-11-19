@@ -22,6 +22,8 @@ void main() {
       'Gilroy Black': 'fonts/Gilroy-Black.ttf',
       'Gilroy Light': 'fonts/Gilroy-Light.ttf',
       'Gilroy Heavy': 'fonts/Gilroy-Heavy.ttf',
+      'Exo 2': 'fonts/Exo2-Regular.ttf',
+      'Rajdhani': 'fonts/Rajdhani-Bold.ttf',
     }.entries) {
       final loader = FontLoader(font.key)..addFont(rootBundle.load(font.value));
       await loader.load();

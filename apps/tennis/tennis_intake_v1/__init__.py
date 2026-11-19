@@ -34,6 +34,18 @@ RESULT_WAIT_MINUTES = 90  # a match is worth asking about this long after its st
 RESULT_GIVE_UP_HOURS = 36  # after this the provider is not going to close it; the public feed flags it
 RESULT_GAP_MINUTES = 110  # at most one results request per circuit about every two hours
 
+TOURNAMENT_ALIASES = {
+    ('ATP', 'tour finals turin'): 'atp finals',
+    ('ATP', 'tour finals'): 'atp finals',
+    ('ATP', 'atp tour finals'): 'atp finals',
+    ('ATP', 'nitto atp finals'): 'atp finals',
+    ('ATP', 'nitto atp finals turin'): 'atp finals',
+    ('WTA', 'wta tour finals'): 'wta finals',
+    ('WTA', 'wta finals'): 'wta finals',
+    ('WTA', 'tour finals'): 'wta finals',
+    ('WTA', 'riyadh finals'): 'wta finals',
+}
+
 
 def norm(s):
     return ' '.join(''.join(c for c in unicodedata.normalize('NFKD', str(s)) if not unicodedata.combining(c)).casefold()
@@ -115,6 +127,7 @@ class Directory:
         """Edition with the same name held closest to `when` in the calendar (within 30 days); latest edition if no date."""
         name = norm(re.sub(r'\s*-\s*Qualification$', '', str(provider_name)))
         name = re.sub(r'\s*\(.*\)$', '', name)
+        name = TOURNAMENT_ALIASES.get((circuit, name), name)
         exact = [k for k in self.editions if k[0] == circuit and k[1] == name]
         prefix = [k for k in self.editions if k[0] == circuit and (k[1].startswith(name + ' ') or name.startswith(k[1] + ' '))]
         if when is None:

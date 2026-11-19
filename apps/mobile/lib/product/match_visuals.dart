@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'prediction_data.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
 
-const matchGreen = Color(0xff00e79a);
-const matchCyan = Color(0xff00d5ee);
-const matchGold = Color(0xffffc400);
-const matchMuted = Color(0xff9ca9b6);
-const matchSurface = Color(0xff12191f);
+const matchGreen = QfColors.green;
+const matchCyan = QfColors.cyan;
+const matchGold = QfColors.yellow;
+const matchMuted = QfColors.text2;
+const matchSurface = QfColors.surface;
 
 class MatchTeams extends StatelessWidget {
   const MatchTeams({super.key, required this.match, this.compact = false});
@@ -24,7 +26,7 @@ class MatchTeams extends StatelessWidget {
         Expanded(child: _team(names.first, matchGreen)),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 10),
-          child: Text('VS', style: TextStyle(color: matchMuted, fontSize: 12)),
+          child: Text('VS', style: TextStyle(fontFamily: qfMono, color: matchMuted, fontSize: 12)),
         ),
         Expanded(child: _team(names.last, matchCyan)),
       ],
@@ -41,23 +43,25 @@ class MatchTeams extends StatelessWidget {
         .toUpperCase();
     return Column(
       children: [
-        // Original monograms; club crests will come from verified match data.
         Container(
           width: compact ? 32 : 48,
           height: compact ? 36 : 52,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             gradient: LinearGradient(
               colors: [color.withValues(alpha: .3), matchSurface],
             ),
-            border: Border.all(color: color.withValues(alpha: .55)),
-            borderRadius: BorderRadius.circular(12),
+            shape: CutCornerBorder(
+              cut: compact ? 6 : 10,
+              side: BorderSide(color: color.withValues(alpha: .55)),
+            ),
           ),
           child: Text(
             initials,
             style: TextStyle(
               color: color,
-              fontFamily: 'Gilroy Bold',
+              fontFamily: qfDisplay,
+              fontWeight: FontWeight.w700,
               fontSize: compact ? 11 : 15,
             ),
           ),
@@ -67,7 +71,8 @@ class MatchTeams extends StatelessWidget {
           name,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Gilroy Bold',
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
             fontSize: compact ? 12 : 15,
           ),
         ),
@@ -90,9 +95,11 @@ class LockedVipMatchCard extends StatelessWidget {
     final teaser = match.teaser;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: matchGold.withValues(alpha: .35)),
+      decoration: ShapeDecoration(
+        shape: const CutCornerBorder(
+          cut: 12,
+          side: BorderSide(color: Color(0x59FCEE0A)),
+        ),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -110,7 +117,7 @@ class LockedVipMatchCard extends StatelessWidget {
               const _Badge('VIP', matchGold),
               Text(
                 match.league,
-                style: const TextStyle(fontSize: 10, color: matchMuted),
+                style: const TextStyle(fontFamily: qfMono, fontSize: 10, color: matchMuted),
               ),
             ],
           ),
@@ -119,10 +126,10 @@ class LockedVipMatchCard extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: matchGreen,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
+              shape: const CutCornerBorder(cut: 6),
+              shadows: [
                 BoxShadow(
                   color: matchGreen.withValues(alpha: .18),
                   blurRadius: 15,
@@ -137,7 +144,8 @@ class LockedVipMatchCard extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.black,
                 fontSize: 11,
-                fontFamily: 'Gilroy ExtraBold',
+                fontFamily: qfDisplay,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -153,16 +161,16 @@ class LockedVipMatchCard extends StatelessWidget {
           const Text(
             'Desbloquea el partido para ver todos sus mercados',
             textAlign: TextAlign.center,
-            style: TextStyle(color: matchGold, fontSize: 10),
+            style: TextStyle(fontFamily: qfMono, color: matchGold, fontSize: 10),
           ),
           const SizedBox(height: 12),
           DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
+            decoration: ShapeDecoration(
+              shape: const CutCornerBorder(cut: 8),
               gradient: const LinearGradient(
                 colors: [matchGold, Color(0xffff9c00)],
               ),
-              boxShadow: [
+              shadows: [
                 BoxShadow(
                   color: matchGold.withValues(alpha: .15),
                   blurRadius: 14,
@@ -192,7 +200,8 @@ class LockedVipMatchCard extends StatelessWidget {
                         'Desbloquear pronóstico VIP',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Gilroy ExtraBold',
+                          fontFamily: qfDisplay,
+                          fontWeight: FontWeight.w700,
                           fontSize: 12,
                         ),
                       ),
@@ -217,10 +226,12 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-    decoration: BoxDecoration(
+    decoration: ShapeDecoration(
       color: color.withValues(alpha: .15),
-      border: Border.all(color: color.withValues(alpha: .5)),
-      borderRadius: BorderRadius.circular(8),
+      shape: CutCornerBorder(
+        cut: 4,
+        side: BorderSide(color: color.withValues(alpha: .5)),
+      ),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
@@ -232,7 +243,8 @@ class _Badge extends StatelessWidget {
           style: TextStyle(
             color: color,
             fontSize: 10,
-            fontFamily: 'Gilroy Bold',
+            fontFamily: qfDisplay,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],

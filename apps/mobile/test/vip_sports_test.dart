@@ -5,7 +5,6 @@ import 'package:gobet/l10n/app_locale.dart';
 import 'package:gobet/product/live_api.dart';
 import 'package:gobet/product/live_vip.dart';
 import 'package:gobet/product/live_widgets.dart';
-import 'package:gobet/product/qf_theme.dart';
 import 'package:gobet/product/sports.dart';
 import 'package:gobet/product/sports_feed.dart';
 
@@ -86,16 +85,15 @@ void main() {
       ]),
       kTennis: SportFeed(ready: true, events: [ev(kTennis, [mk('t', null)])]),
     });
-    expect(find.text('ACIERTO REGISTRADO POR DEPORTE'), findsOneWidget);
+    expect(find.text('ACCESO VIP'), findsOneWidget);
     expect(find.descendant(of: card('futbol'), matching: find.text('78,1 %')), findsOneWidget);
     expect(find.descendant(of: card('futbol'), matching: find.text('89/114')), findsOneWidget);
     expect(find.descendant(of: card('nba'), matching: find.text('67 %')), findsOneWidget);
     expect(find.descendant(of: card('nba'), matching: find.text('2/3')), findsOneWidget);
     expect(find.descendant(of: card('tenis'), matching: find.text('—')), findsOneWidget);
-    expect(find.textContaining('NBA y tenis son abiertos para todos'), findsOneWidget);
-    expect(find.textContaining('fútbol, NBA y tenis'), findsNothing);
-    expect(find.text('NBA y tenis abiertos para todos'), findsOneWidget);
-    expect(find.text('NBA y tenis incluidos'), findsNothing);
+    expect(find.textContaining('picks de fútbol, NBA y tenis'), findsOneWidget);
+    expect(find.textContaining('TODOS LOS PRONÓSTICOS DE HOY'), findsOneWidget);
+    expect(find.text('Props de jugadores NBA'), findsWidgets);
     // Ventana: cuántos resueltos sostienen la cifra.
     expect(find.descendant(of: card('nba'), matching: find.text('Sobre los últimos 3 resueltos')), findsOneWidget);
     expect(find.descendant(of: card('tenis'), matching: find.textContaining('Sobre los últimos')), findsNothing);
@@ -109,20 +107,16 @@ void main() {
     expect(find.descendant(of: card('tenis'), matching: find.text('—')), findsOneWidget);
   });
 
-  testWidgets('una sola acción ámbar (Suscribirme) y el mejor precio con borde ámbar', (tester) async {
+  testWidgets('acción principal CTA y mejor precio', (tester) async {
     await pump(tester, const {});
-    final amber = tester
-        .widgetList<FilledButton>(find.byType(FilledButton))
-        .where((b) => b.style?.backgroundColor?.resolve(<WidgetState>{}) == QfColors.cta)
-        .toList();
-    expect(amber, hasLength(1));
-    expect(amber.single.key, const ValueKey('vip-subscribe'));
+    final button = find.byKey(const ValueKey('vip-subscribe'));
+    expect(button, findsOneWidget);
     final best = find.byKey(const ValueKey('vip-plan-best'));
     expect(best, findsOneWidget);
     expect(find.descendant(of: best, matching: find.text('★ MEJOR PRECIO')), findsOneWidget);
     // Precios del servidor, nunca escritos en la app.
-    expect(find.text('\$14,99'), findsOneWidget);
-    expect(find.text('\$53,99'), findsOneWidget);
+    expect(find.text(r'$14,99'), findsOneWidget);
+    expect(find.text(r'$53,99'), findsOneWidget);
     expect(find.text('≈ 9,00 USD/mes'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

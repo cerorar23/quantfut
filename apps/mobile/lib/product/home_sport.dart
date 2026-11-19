@@ -18,6 +18,7 @@ import 'sport_images.dart';
 import 'sport_screen_blocks.dart';
 import 'sports.dart';
 import 'sports_feed.dart';
+import 'sport_vip_notice.dart';
 import 'sports_quotes.dart';
 
 const _stripHeight = 136.0;
@@ -67,12 +68,14 @@ Widget sportAvatar(
       url: serverImageUrl(api, code == null ? null : images.nbaLogo(code)),
       name: name,
       size: size,
+      kind: QfAvatarKind.logo,
     );
   }
   return QfAvatar(
     url: serverImageUrl(api, images.tennisPhoto(name)?.path),
     name: name,
     size: size,
+    kind: QfAvatarKind.person,
     shape: AvatarShape.circle,
   );
 }
@@ -92,7 +95,8 @@ Widget eventAvatar(
     url: serverImageUrl(api, path),
     name: name,
     size: size,
-    shape: AvatarShape.circle,
+    kind: QfAvatarKind.logo,
+    shape: AvatarShape.contain,
   );
 }
 
@@ -210,7 +214,10 @@ class _HomeSportState extends State<HomeSport> {
     return DateTime(n.year, n.month, n.day);
   }
 
-  DateTime get _first => _start ?? _today;
+  DateTime get _yesterday => DateTime(_today.year, _today.month, _today.day - 1);
+
+  /// La tira arranca en AYER (vista de los pronósticos del día anterior); el selector puede moverla.
+  DateTime get _first => _start ?? _yesterday;
 
   @override
   void dispose() {
@@ -245,7 +252,7 @@ class _HomeSportState extends State<HomeSport> {
     final date = await showDatePicker(
       context: context,
       initialDate: _first,
-      firstDate: _today,
+      firstDate: _yesterday,
       lastDate: _today.add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return;
@@ -265,11 +272,10 @@ class _HomeSportState extends State<HomeSport> {
   @override
   Widget build(BuildContext context) {
     if (!widget.feed.ready) return _error(context);
-    final today = _today;
     final needle = search.trim().toLowerCase();
     final shown = [
       for (final e in widget.feed.events)
-        if (!e.start.toLocal().isBefore(today) && _matches(e, needle)) e,
+        if (!e.start.toLocal().isBefore(_yesterday) && _matches(e, needle)) e,
     ];
     final days = groupSportAgenda(shown);
     final counts = {for (final d in days) d.key: d.count};
@@ -302,7 +308,7 @@ class _HomeSportState extends State<HomeSport> {
         height: _stripHeight,
         child: DayStrip(
           start: _first,
-          active: _active ?? dateKey(_first),
+          active: _active ?? dateKey(_start ?? _today),
           counts: counts,
           onDay: (date) => _jump(date, counts, viewport),
           onPick: () => _pick(counts, viewport),
@@ -353,16 +359,6 @@ class _HomeSportState extends State<HomeSport> {
         SliverToBoxAdapter(child: _top(context, shown)),
         strip(),
         ...list(),
-        if (widget.sport == kTennis)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Text(
-                context.l10n.imageCredits,
-                style: const TextStyle(color: QfColors.muted, fontSize: 11),
-              ),
-            ),
-          ),
         tail,
       ];
     }
@@ -414,7 +410,7 @@ class _HomeSportState extends State<HomeSport> {
       widget.images,
       e,
       name,
-      size: 66,
+      size: 58,
     );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -427,6 +423,9 @@ class _HomeSportState extends State<HomeSport> {
               // NBA: visitante @ local.
               left: big(e, nba ? e.away : e.home),
               right: big(e, nba ? e.home : e.away),
+              homeName: nba ? e.away : e.home,
+              awayName: nba ? e.home : e.away,
+              meta: '${e.league} · ${localDate(DateFormat.MMMEd, e.start.toLocal())} ${localDate(DateFormat.Hm, e.start.toLocal())}',
               title: nba ? '${e.away} @ ${e.home}' : '${e.home} · ${e.away}',
               probability: realPercent(m.probability),
               pick: sportPickText(l10n, m),
@@ -516,7 +515,7 @@ class _HomeSportState extends State<HomeSport> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: QfColors.text,
-                fontFamily: 'Gilroy ExtraBold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
             ),
@@ -570,66 +569,108 @@ class _EventRow extends StatelessWidget {
     final finished = e.status == 'finished' && e.score != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: QfCard(
-        onTap: onOpen,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Text(
-                localDate(DateFormat.Hm, e.start.toLocal()),
-                style: const TextStyle(
-                  fontFamily: qfMono,
-                  fontSize: 13,
-                  color: QfColors.text,
+      child: Material(
+        color: QfColors.surface,
+        shape: const CutCornerBorder(cut: 8, side: BorderSide(color: QfColors.border)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    localDate(DateFormat.Hm, e.start.toLocal()),
+                    style: const TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: QfColors.muted,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  for (final name in sides)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      child: Row(
-                        children: [
-                          avatar(name),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              name,
+                Expanded(
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: avatar(sides[0]),
+                      ),
+                      Transform.translate(
+                        offset: const Offset(-6, 0),
+                        child: SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: avatar(sides[1]),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              nba ? '${sides[0]} @ ${sides[1]}' : '${sides[0]} – ${sides[1]}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: QfColors.text,
-                                fontFamily: 'Gilroy Bold',
+                                fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (finished)
+                  Text(
+                    e.score!,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 13,
+                      color: QfColors.text2,
+                    ),
+                  )
+                else if (m != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: QfColors.green.withValues(alpha: .4)),
+                      color: QfColors.green.withValues(alpha: .09),
+                    ),
+                    child: Text(
+                      realPercent(m.probability),
+                      style: const TextStyle(
+                        fontFamily: qfMono,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: QfColors.green,
                       ),
                     ),
-                ],
-              ),
+                  )
+                else if (e.featuredVip)
+                  const SportVipBadge()
+                else
+                  const Text(
+                    '—',
+                    style: TextStyle(
+                      fontFamily: qfMono,
+                      fontSize: 12,
+                      color: QfColors.muted,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 64,
-              child: Text(
-                finished ? e.score! : (m == null ? '—' : realPercent(m.probability)),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                style: TextStyle(
-                  fontFamily: qfMono,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 15,
-                  color: finished ? QfColors.text2 : QfColors.primary,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -667,7 +708,7 @@ class _PlayerCard extends StatelessWidget {
         child: Column(
           children: [
             QfAvatar(
-              url: serverImageUrl(api, nbaPlayerPhoto(market.playerId ?? '')),
+              url: serverImageUrl(api, nbaPlayerPhoto(market.photoId ?? '')),
               name: name,
               size: 56,
               shape: AvatarShape.circle,
@@ -680,7 +721,7 @@ class _PlayerCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: QfColors.text,
-                fontFamily: 'Gilroy Bold',
+                fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
             ),

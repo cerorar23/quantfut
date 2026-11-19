@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ordenar, wilson, rachas, beneficio, calibrar, desvio, resumir, porDeporte, porDia, createHistorialViews } from './historial-views.js';
+import { ordenar, wilson, rachas, beneficio, calibrar, neto, resumir, porDeporte, porDia, createHistorialViews } from './historial-views.js';
 
 const fila = (start, outcome, extra = {}) => ({ sport: 'futbol', home: 'A', away: 'B', start, text: 'Gana A', outcome, price: 1.5, prob: 0.7, score: '1 – 0', ...extra });
 const dia = start => start.slice(0, 10);
@@ -86,22 +86,20 @@ test('el beneficio nunca usa la cuota del modelo de NBA o tenis', () => {
   assert.ok(!html.includes('el beneficio en fútbol con 1 u'), 'sin cuota de casa no hay frase de beneficio');
 });
 
-test('desvio: acumula (real − prometido), la franja crece con la varianza y el signo es honesto', () => {
-  const rows = [fila('2026-10-26T01:00:00Z', 'win', { prob: 0.8 }), fila('2026-10-26T02:00:00Z', 'loss', { prob: 0.8 }), fila('2026-10-26T03:00:00Z', 'win', { prob: null })];
-  const d = desvio(rows);
-  assert.equal(d.n, 2);
-  assert.deepEqual(d.curva.map(v => Math.round(v * 100) / 100), [0, 0.2, -0.6]);
-  assert.ok(Math.abs(d.margen - 2 * Math.sqrt(2 * 0.8 * 0.2)) < 1e-9);
-  assert.ok(d.banda[2] > d.banda[1]);
-  assert.equal(d.estado, 'dentro');
-  const mal = desvio(Array.from({ length: 100 }, (_, i) => fila(`2026-10-${10 + Math.floor(i / 24)}T${String(i % 24).padStart(2, '0')}:00:00Z`, i < 60 ? 'win' : 'loss', { prob: 0.8 })));
-  assert.equal(mal.estado, 'debajo', 'si se acierta bastante menos de lo prometido, se dice');
-  assert.equal(desvio([]).n, 0);
+test('neto: suma 1 por acierto y resta 1 por fallo, con o sin probabilidad publicada', () => {
+  const rows = [fila('2026-10-26T03:00:00Z', 'win', { prob: null }), fila('2026-10-26T01:00:00Z', 'win', { prob: 0.8 }), fila('2026-10-26T02:00:00Z', 'loss', { prob: 0.8 })];
+  const d = neto(rows);
+  assert.equal(d.n, 3);
+  assert.deepEqual(d.curva, [0, 1, 0, 1]);
+  assert.equal(d.diferencia, 1);
+  assert.equal(neto(Array.from({ length: 10 }, (_, i) => fila(`2026-10-10T${String(i).padStart(2, '0')}:00:00Z`, i < 3 ? 'win' : 'loss'))).diferencia, -4, 'si hay más fallos que aciertos, sale en negativo');
+  assert.equal(neto([]).n, 0);
 });
 
-test('la gráfica grande mide aciertos frente a esperados, sin leyendas debajo ni encima', () => {
+test('la gráfica grande cuenta aciertos menos fallos y avisa de que no es dinero', () => {
   const html = views().historyView(muestra, false);
-  assert.ok(html.includes('Aciertos reales frente a esperados') && html.includes('cv-hist-band'));
+  assert.ok(html.includes('Aciertos menos fallos, acumulados') && html.includes('Cuenta resultados, no dinero'));
+  assert.ok(!html.includes('frente a esperados') && !html.includes('cv-hist-band'), 'la curva de reales frente a esperados ya no está');
   assert.ok(!html.includes('Cada pronóstico suma lo que salió'), 'sin la explicación sobre la gráfica');
   assert.ok(!html.includes('Hoy: ') && !html.includes('cv-hist-foot'), 'sin la frase «Hoy: … aciertos frente a los esperados»');
   assert.ok(!html.includes('Acertar lo prometido no es ganar dinero'));
@@ -163,7 +161,7 @@ test('los textos de partidos se escapan', () => {
 
 test('el HTML y los módulos están registrados con el mismo identificador de versión', () => {
   const ergo = readFileSync(new URL('./ergonomic-views.js', import.meta.url), 'utf8');
-  assert.match(ergo, /historial-views\.js\?v=hist-casa-20261105/);
+  assert.match(ergo, /historial-views\.js\?v=secciones-20261117/);
   const web = readFileSync(new URL('../src/qf/api/web.py', import.meta.url), 'utf8');
   assert.ok(web.includes('/historial-views.js'));
 });

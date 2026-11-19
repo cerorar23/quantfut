@@ -58,8 +58,12 @@ def _reglas_de_acceso_de_codigo(monkeypatch):
     monkeypatch.setattr(acceso_reglas, "_cargar", lambda: [acceso_reglas.HOY])
     monkeypatch.setattr(acceso_reglas, "_cargar_dias", lambda: acceso_reglas.DIAS_AGENDA_DEFECTO)
     acceso_reglas.invalidar_cache()
+    from qf.comercial import acceso_cupos       # db/116: sin Postgres valen los cupos de código (`DEFECTO`)
+    monkeypatch.setattr(acceso_cupos, "_cargar", lambda: {})
+    acceso_cupos.invalidar_cache()
     yield
     acceso_reglas.invalidar_cache()
+    acceso_cupos.invalidar_cache()
 
 
 @pytest.fixture(autouse=True)

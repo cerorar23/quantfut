@@ -6,6 +6,9 @@ import '../l10n/pick_labels.dart';
 import 'league_names.dart';
 import 'live_api.dart';
 import 'live_widgets.dart';
+import 'qf_shapes.dart';
+import 'qf_theme.dart';
+import 'sport_images.dart';
 
 DateTime? _kickoff(JsonMap pick) => dateValue(pick['kickoff_utc'])?.toLocal();
 
@@ -90,7 +93,7 @@ class HighProbabilityView extends StatelessWidget {
             l10n.picksTrainingReasons('${jsonMap(report)['motivos'] ?? ''}'),
           )
         else ...[
-          _TrustCard(history: jsonMap(report['historial'])),
+          _TrustCard(history: _monthHistory(jsonMap(report['historial']))),
           liveText(
             l10n.picksRangeHint(minPercent, maxPercent, freePercent),
             color: liveMuted,
@@ -139,6 +142,16 @@ class HighProbabilityView extends StatelessWidget {
   }
 }
 
+/// Bloque del mes en curso (`por_mes`, clave `AAAA-MM` por la fecha del partido en UTC); vacío si aún no hay resueltos.
+JsonMap _monthHistory(JsonMap history, {DateTime? now}) {
+  final t = (now ?? DateTime.now()).toUtc();
+  final key = '${t.year}-${t.month.toString().padLeft(2, '0')}';
+  for (final row in jsonRows(history['por_mes'])) {
+    if (row['mes'] == key) return row;
+  }
+  return const {};
+}
+
 /// Acierto real frente al prometido, con barra. Solo si ya hay pronósticos liquidados.
 class _TrustCard extends StatelessWidget {
   const _TrustCard({required this.history});
@@ -153,53 +166,72 @@ class _TrustCard extends StatelessWidget {
     final l10n = context.l10n;
     final hits = (history['aciertos'] as num?)?.toInt() ?? 0;
     final promised = history['acierto_prometido'];
-    return Container(
-      key: const ValueKey('high-trust'),
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: livePanel,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: liveGreen.withValues(alpha: .3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          liveText(l10n.picksTrustTitle, size: 12, color: liveMuted),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        key: const ValueKey('high-trust'),
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 10,
+          side: BorderSide(color: QfColors.green.withValues(alpha: .3)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                percentText(real, 1),
+                l10n.picksTrustMonthTitle.toUpperCase(),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Gilroy ExtraBold',
-                  fontSize: 28,
+                  color: QfColors.muted,
+                  fontFamily: qfDisplay,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  letterSpacing: 0.8,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: liveText(
-                  l10n.picksTrustDetail(hits, total),
-                  size: 12,
-                  color: liveMuted,
-                ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    percentText(real, 1),
+                    style: const TextStyle(
+                      color: QfColors.green,
+                      fontFamily: qfMono,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.picksTrustDetail(hits, total),
+                      style: const TextStyle(
+                        color: QfColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 10),
+              _Meter(value: real / 100, color: QfColors.green),
+              if (promised is num) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l10n.picksTrustPromised(percentText(promised, 1)),
+                  style: const TextStyle(
+                    color: QfColors.muted,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 8),
-          _Meter(value: real / 100, color: liveGreen),
-          if (promised is num) ...[
-            const SizedBox(height: 8),
-            liveText(
-              l10n.picksTrustPromised(percentText(promised, 1)),
-              size: 11,
-              color: liveMuted,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -214,10 +246,10 @@ class _Meter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(3),
+    borderRadius: BorderRadius.circular(2),
     child: Stack(
       children: [
-        Container(height: 6, color: const Color(0xff243447)),
+        Container(height: 6, color: const Color(0xff2A2D3A)),
         FractionallySizedBox(
           widthFactor: value.clamp(0, 1).toDouble(),
           child: Container(height: 6, color: color),
@@ -252,26 +284,27 @@ class PickTile extends StatelessWidget {
     final prob = pick['prob'];
     final price = decimalText(pick['ref_price'] ?? pick['price']);
     final free = pick['free'] == true;
+    final localName = '${pick['local'] ?? ''}';
+    final awayName = '${pick['visitante'] ?? ''}';
+
     return Semantics(
       container: true,
       button: true,
       label:
-          '${pick['local']} · ${pick['visitante']}. ${pickText(pick)}. ${l10n.pickProbability(realPercent(prob))}. @$price',
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: livePanel,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: best
-                ? liveGreen.withValues(alpha: .55)
-                : Colors.white.withValues(alpha: .08),
-          ),
-        ),
+          '$localName · $awayName. ${pickText(pick)}. ${l10n.pickProbability(realPercent(prob))}. @$price',
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
         child: Material(
-          type: MaterialType.transparency,
+          color: QfColors.surface,
+          shape: CutCornerBorder(
+            cut: 10,
+            side: BorderSide(
+              color: best ? QfColors.borderStrong : QfColors.border,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            customBorder: const CutCornerBorder(cut: 10),
             onTap: onOpen,
             child: ExcludeSemantics(
               child: Padding(
@@ -282,134 +315,161 @@ class PickTile extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: liveText(
+                          child: Text(
                             meta,
-                            size: 11,
-                            color: liveMuted,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: qfMono,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: QfColors.muted,
+                            ),
                           ),
                         ),
                         if (best) ...[
-                          _Chip(l10n.picksBestProb, liveGreen),
+                          _Chip(l10n.picksBestProb, QfColors.green),
                           const SizedBox(width: 6),
                         ],
                         _Chip(
                           free ? l10n.forecastFree : l10n.forecastUnlocked,
-                          free ? liveGreen : liveCyan,
+                          free ? QfColors.green : QfColors.cyan,
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(text: '${pick['local'] ?? ''}'),
-                          const TextSpan(
-                            text: '  vs  ',
-                            style: TextStyle(color: liveMuted, fontSize: 12),
-                          ),
-                          TextSpan(text: '${pick['visitante'] ?? ''}'),
-                        ],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Gilroy Bold',
-                        fontSize: 16,
-                        height: 1.2,
-                      ),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: liveGreen.withValues(alpha: .14),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.check_circle_outline,
-                                  size: 16,
-                                  color: liveGreen,
-                                ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    pickText(pick),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: liveGreen,
-                                      fontFamily: 'Gilroy Bold',
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: QfAvatar(
+                            name: localName,
+                            size: 36,
+                            kind: QfAvatarKind.logo,
+                          ),
+                        ),
+                        Transform.translate(
+                          offset: const Offset(-8, 0),
+                          child: SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: QfAvatar(
+                              name: awayName,
+                              size: 36,
+                              kind: QfAvatarKind.logo,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: liveGold.withValues(alpha: .15),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '@$price',
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(text: localName),
+                                const TextSpan(
+                                  text: '  vs  ',
+                                  style: TextStyle(
+                                    color: QfColors.muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                TextSpan(text: awayName),
+                              ],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: liveGold,
-                              fontFamily: 'Gilroy Bold',
+                              color: QfColors.text,
+                              fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
                               fontSize: 15,
+                              height: 1.2,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                pickText(pick),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: QfColors.cyan,
+                                  fontFamily: qfDisplay,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Text(
+                                    '@$price',
+                                    style: const TextStyle(
+                                      color: QfColors.yellow,
+                                      fontFamily: qfMono,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      l10n.pickOddsAtPublish(
+                                        pick['ref_book'] ??
+                                            pick['book'] ??
+                                            l10n.pickSourceNA,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: QfColors.muted,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          realPercent(prob),
+                          style: const TextStyle(
+                            color: QfColors.cyan,
+                            fontFamily: qfMono,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 26,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
                           child: _Meter(
                             value: prob is num ? prob.toDouble() : 0,
-                            color: liveGreen,
+                            color: QfColors.green,
                           ),
                         ),
                         const SizedBox(width: 10),
-                        liveText(realPercent(prob), size: 13, bold: true),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: liveText(
-                            l10n.pickOddsAtPublish(
-                              pick['ref_book'] ??
-                                  pick['book'] ??
-                                  l10n.pickSourceNA,
-                            ),
-                            size: 11,
-                            color: liveMuted,
-                          ),
-                        ),
-                        liveText(
+                        Text(
                           '${l10n.picksSeeAnalysis} ›',
-                          size: 12,
-                          color: liveCyan,
-                          bold: true,
+                          style: const TextStyle(
+                            color: QfColors.cyan,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -434,12 +494,19 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      color: color.withValues(alpha: .15),
-      borderRadius: BorderRadius.circular(99),
+      color: color.withValues(alpha: .12),
+      border: Border.all(color: color.withValues(alpha: .4)),
+      borderRadius: BorderRadius.circular(2),
     ),
     child: Text(
       label,
-      style: TextStyle(color: color, fontFamily: 'Gilroy Bold', fontSize: 10),
+      style: TextStyle(
+        color: color,
+        fontFamily: qfDisplay,
+        fontWeight: FontWeight.w700,
+        fontSize: 11,
+        letterSpacing: 0.6,
+      ),
     ),
   );
 }
@@ -472,140 +539,168 @@ class _LockedPicksGroupState extends State<LockedPicksGroup> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final time = DateFormat.Hm(AppLocale.instance.code);
-    return Container(
-      key: const ValueKey('high-locked-group'),
-      margin: const EdgeInsets.only(top: 6, bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xff0f1a28),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: liveGold.withValues(alpha: .4)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.lock_outline, color: liveGold, size: 26),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      liveText(
-                        l10n.picksLockedTitle(widget.picks.length),
-                        bold: true,
-                        size: 15,
-                      ),
-                      const SizedBox(height: 2),
-                      liveText(l10n.picksLockedHint, size: 12, color: liveMuted),
-                    ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 12),
+      child: Material(
+        key: const ValueKey('high-locked-group'),
+        color: QfColors.surface,
+        shape: CutCornerBorder(
+          cut: 10,
+          side: BorderSide(color: QfColors.yellow.withValues(alpha: .4)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.lock_outline, color: QfColors.yellow, size: 26),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.picksLockedTitle(widget.picks.length),
+                          style: const TextStyle(
+                            color: QfColors.text,
+                            fontFamily: qfDisplay,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.picksLockedHint,
+                          style: const TextStyle(
+                            color: QfColors.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            liveButton(l10n.vipAccessButton, widget.onVip),
-            InkWell(
-              key: const ValueKey('high-locked-toggle'),
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => setState(() => _open = !_open),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: liveText(
-                        _open ? l10n.picksLockedHide : l10n.picksLockedShow,
-                        size: 13,
-                        bold: true,
-                        color: liveCyan,
-                      ),
-                    ),
-                    Icon(
-                      _open ? Icons.expand_less : Icons.expand_more,
-                      color: liveCyan,
-                    ),
-                  ],
-                ),
+                ],
               ),
-            ),
-            if (_open)
-              for (final p in widget.picks)
-                Container(
-                  margin: const EdgeInsets.only(top: 6),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .04),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const SizedBox(height: 12),
+              liveButton(
+                l10n.vipAccessButton,
+                widget.onVip,
+                color: QfColors.yellow,
+              ),
+              InkWell(
+                key: const ValueKey('high-locked-toggle'),
+                onTap: () => setState(() => _open = !_open),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      const Icon(Icons.lock_outline, size: 16, color: liveMuted),
-                      const SizedBox(width: 8),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${p['local'] ?? ''} · ${p['visitante'] ?? ''}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: 'Gilroy Bold',
-                                fontSize: 13,
-                              ),
-                            ),
-                            liveText(
-                              [
-                                ?leagueName(p['league_id']),
-                                if (_kickoff(p) != null)
-                                  time.format(_kickoff(p)!),
-                              ].join(' · '),
-                              size: 11,
-                              color: liveMuted,
-                            ),
-                            const SizedBox(height: 4),
-                            const LockedBlur(),
-                          ],
+                        child: Text(
+                          _open ? l10n.picksLockedHide : l10n.picksLockedShow,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: QfColors.cyan,
+                          ),
                         ),
                       ),
-                      // La cuota también va difuminada: bloques, no el número, para que quitar el filtro no revele nada.
-                      if (p['cuota'] is num) ...[
-                        const SizedBox(width: 8),
-                        const LockedBlur(
-                          text: '@█.██',
-                          size: 17,
-                          blurKey: ValueKey('locked-quote'),
-                        ),
-                      ],
-                      if (widget.onUnlock != null) ...[
-                        const SizedBox(width: 8),
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: liveCyan,
-                            side: const BorderSide(color: liveCyan),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            minimumSize: const Size(0, 36),
-                          ),
-                          onPressed: () => widget.onUnlock!(p),
-                          child: Text(
-                            l10n.picksCoinsShort(widget.unlockCost ?? '—'),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
+                      Icon(
+                        _open ? Icons.expand_less : Icons.expand_more,
+                        color: QfColors.cyan,
+                      ),
                     ],
                   ),
                 ),
-          ],
+              ),
+              if (_open)
+                for (final p in widget.picks)
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .04),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lock_outline, size: 16, color: QfColors.muted),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${p['local'] ?? ''} · ${p['visitante'] ?? ''}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: 'Exo 2', fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: QfColors.text,
+                                ),
+                              ),
+                              Text(
+                                [
+                                  ?leagueName(p['league_id']),
+                                  if (_kickoff(p) != null)
+                                    time.format(_kickoff(p)!),
+                                ].join(' · '),
+                                style: const TextStyle(
+                                  fontFamily: qfMono,
+                                  fontSize: 11,
+                                  color: QfColors.muted,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const LockedBlur(),
+                            ],
+                          ),
+                        ),
+                        // La cuota también va difuminada: bloques, no el número, para que quitar el filtro no revele nada.
+                        if (p['cuota'] is num) ...[
+                          const SizedBox(width: 8),
+                          const LockedBlur(
+                            text: '@█.██',
+                            size: 17,
+                            blurKey: ValueKey('locked-quote'),
+                          ),
+                        ],
+                        if (widget.onUnlock != null) ...[
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: QfColors.cyan,
+                              side: const BorderSide(color: QfColors.cyan),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              minimumSize: const Size(0, 36),
+                              shape: const CutCornerBorder(cut: 6),
+                            ),
+                            onPressed: () => widget.onUnlock!(p),
+                            child: Text(
+                              l10n.picksCoinsShort(widget.unlockCost ?? '—'),
+                              style: const TextStyle(
+                                fontFamily: qfMono,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+            ],
+          ),
         ),
       ),
     );
