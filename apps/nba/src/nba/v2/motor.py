@@ -30,7 +30,7 @@ MERCADO = "equipo"
 PARAMETROS_PROPS = parametros.cargar_props()
 PARAMETROS_IMPACTO = parametros.cargar_impacto()
 VERSION_EQUIPO_JUGADORES = equipo_jugadores.version(PARAMETROS_IMPACTO)
-VERSION_PROPS = f"props-2.1;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento};cola=1e-10"
+VERSION_PROPS = f"props-2.2;{PARAMETROS_PROPS.version};k={PARAMETROS_PROPS.k_minutos};dec={PARAMETROS_PROPS.decaimiento};cola=1e-10"
 DIAS_MAXIMOS_SIN_JUGAR = 10                # más que la pausa del Juego de Estrellas: un equipo sin resultados por más tiempo es un hueco de datos
 DIAS_DE_GRACIA_INICIO = 21                 # pasadas tres semanas de temporada, un equipo sin ningún resultado también lo es
 HORAS_DE_AVISO_TRAS_EL_SALTO = 3           # pasado esto, un partido sin sello deja de repetirse en el informe

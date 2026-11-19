@@ -22,6 +22,9 @@ import evaluar_s4 as e4  # noqa: E402
 from nba.v2 import minutos, props  # noqa: E402
 
 K, DECAIMIENTO = 30.0, 0.97
+# Estadísticas con una alfa por nivel de rol (formato 2). Solo puntos: en rebotes, asistencias y triples no mejora la
+# log-verosimilitud hacia adelante y su alfa por nivel es inestable (docs/nba_props_alfa_por_nivel_20261119.md).
+ALFA_POR_NIVEL = ("puntos",)
 
 
 def main(carpeta: Path, salida: Path):
@@ -35,11 +38,13 @@ def main(carpeta: Path, salida: Path):
     res = minutos.ajustar_residuos(zip(mp, filas["m"]))
     tasa = props.tasa_por_minuto(filas["mh"], filas["sh"], prior[props.nivel(mp)], K, DECAIMIENTO)
     alfas = [props.estimar_alfa(tasa[:, s] * filas["m"], filas["y"][:, s]) for s in range(len(props.ESTADISTICAS))]
+    alfa_niv = {e: np.round(props.estimar_alfa_por_nivel(mp, tasa[:, s] * filas["m"], filas["y"][:, s]), 5).tolist()
+                for s, e in enumerate(props.ESTADISTICAS) if e in ALFA_POR_NIVEL}
     cajas, estados = e3b.leer_cajas(carpeta, por_pid)
     registros = e3b.registrar_candidatos(juegos, cajas, estados)
     p_estado, p_sin_parte = e3b.tablas_p_juega(juegos, registros, "9999")
     artefacto = {
-        "formato": 1, "entrenado": date.today().isoformat(), "datos_hasta": max(g["fecha"] for g in juegos),
+        "formato": 2, "alfa_por_nivel": alfa_niv, "entrenado": date.today().isoformat(), "datos_hasta": max(g["fecha"] for g in juegos),
         "filas_entrenamiento": int(len(mp)), "k_minutos": K, "decaimiento": DECAIMIENTO,
         "estadisticas": list(props.ESTADISTICAS), "bordes_rol": list(props.BORDES_ROL),
         "prior_por_nivel": prior.round(6).tolist(),

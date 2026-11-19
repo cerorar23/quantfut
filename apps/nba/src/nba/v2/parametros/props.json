@@ -5,6 +5,16 @@
   "rebotes": 0.01405,
   "triples": 0.07424
  },
+ "alfa_por_nivel": {
+  "puntos": [
+   0.71483,
+   0.33812,
+   0.2123,
+   0.14633,
+   0.10499,
+   0.07092
+  ]
+ },
  "bordes_rol": [
   10.0,
   16.0,
@@ -22,7 +32,7 @@
   "triples"
  ],
  "filas_entrenamiento": 112666,
- "formato": 1,
+ "formato": 2,
  "k_minutos": 30.0,
  "p_juega_estado": {
   "Available": 0.85188,

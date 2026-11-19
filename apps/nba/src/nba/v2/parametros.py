@@ -20,7 +20,7 @@ RUTA_PROPS = Path(__file__).parent / "parametros" / "props.json"
 class ParametrosProps:
     prior: np.ndarray                      # (niveles de rol, estadísticas)
     residuos: minutos.Residuos
-    alfa: tuple[float, ...]
+    alfa: tuple                            # por estadística: un número (formato 1) o una tupla por nivel de rol (formato 2)
     k_minutos: float
     decaimiento: float
     p_estado: dict
@@ -67,9 +67,15 @@ def cargar_props(ruta: Path = RUTA_PROPS) -> ParametrosProps:
     crudo = ruta.read_bytes().replace(b"\r\n", b"\n")      # la huella no depende de los finales de línea del sistema
     a = json.loads(crudo)
     r = a["residuos_minutos"]
+    # formato 2 (19-nov-2026): las estadísticas de `alfa_por_nivel` llevan una alfa por nivel de rol; el resto, la de `alfa`
+    por_nivel = a.get("alfa_por_nivel", {}) if a.get("formato", 1) >= 2 else {}
+    from . import props
+    if any(len(v) != len(props.BORDES_ROL) + 1 for v in por_nivel.values()):
+        raise ValueError("alfa_por_nivel no tiene un valor por nivel de rol")
+    alfa = tuple(tuple(float(x) for x in por_nivel[e]) if e in por_nivel else float(a["alfa"][e]) for e in a["estadisticas"])
     return ParametrosProps(
         prior=np.array(a["prior_por_nivel"]),
         residuos=minutos.Residuos(tuple(r["cortes"]), tuple(np.array(c) for c in r["cuantiles"])),
-        alfa=tuple(a["alfa"][e] for e in a["estadisticas"]), k_minutos=a["k_minutos"], decaimiento=a["decaimiento"],
+        alfa=alfa, k_minutos=a["k_minutos"], decaimiento=a["decaimiento"],
         p_estado=a["p_juega_estado"], p_sin_parte={int(k): v for k, v in a["p_juega_sin_parte_por_tramo"].items()},
         estadisticas=tuple(a["estadisticas"]), datos_hasta=a["datos_hasta"], version=hashlib.sha256(crudo).hexdigest()[:12])

@@ -1,6 +1,11 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 19-nov-2026 · Props NBA: alfa de puntos por nivel de rol (`fix/nba-props-alfa-por-nivel`, sin desplegar)
+- **Causa de la cola baja de puntos** (hallada en la fase 0 del parley de un solo partido): una sola sobredispersión para todos. La de puntos va de ≈ 0,70 (suplentes) a ≈ 0,07 (estrellas) y la global de 0,22 ensancha a los titulares. No eran los minutos: con minutos reales pasa lo mismo.
+- **Decisión: solo puntos.** La alfa por nivel mejora la log-verosimilitud de puntos +0,020 a +0,029 por fila en tres temporadas hacia adelante (IC lejos del 0) y lleva la cobertura del 80 % de 0,85–0,86 a 0,79–0,81. En rebotes, asistencias y triples no aporta y su alfa por nivel es inestable: se quedan con la global.
+- **Aislamiento:** el artefacto conserva todo lo del 2-nov y solo añade `alfa_por_nivel` de puntos (formato 2, `props-2.2`), para que el despliegue cambie una sola cosa. Detalle: `docs/nba_props_alfa_por_nivel_20261119.md`.
+
 ## 19-nov-2026 · Auditoría del parley: errores corregidos y parley por probabilidad en sombra (`fix/parley-auditoria-20261119`)
 - **Causa de tantos perdidos:** el diseño, no las probabilidades. Con cuota objetivo fija y p de mercado, el boleto acierta ≈ 1/cuota: 8 de 42 ganados, todos dentro de lo prometido (8,20 y 12,10: 0 de 20, esperado ≈ 2). El artefacto «aprobado» es `metodo: mercado` en las 15 categorías.
 - **Decisión del titular: corregir y rediseñar en sombra.** `parley_prob` elige primero la probabilidad (2/3/4 patas, p ≥ 0,60/0,45/0,33) en mercados que cumplen lo prometido. Se sella como otra estrategia (`parley_probabilidad`, ámbitos `sombra*`) y no se publica. Sustituye al v2 solo con 30 días que cumplan (`parley_v2_datos comparar`).
