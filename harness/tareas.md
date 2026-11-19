@@ -3410,7 +3410,7 @@ Detalle en `docs/parley_auditoria_20261119.md`.
 Plan: `apps/mobile/docs/PLAN_NOTIFICACIONES_PUSH_20261119.md` (según documentación oficial de FCM, Android y Apple).
 Hoy existe la tubería (tokens, bandeja, outbox, filtro por deporte) pero `enqueue()` no tiene llamadores y el texto es genérico.
 
-- [ ] Decisiones del titular (§9 del plan): catálogo de 7 tipos, tope 3/día, silencio 22-09, contenido del pick gratis, cuota en el aviso, recordatorio de monedas, provisional en iOS.
+- [x] Decisiones del titular (19-nov, §9 del plan): catálogo de 7 tipos aprobado, tope 5/día, silencio 22-09, pick gratis completo, sin cuota, recordatorio de monedas sí (con consentimiento), provisional en iOS sí.
 - [ ] P0 · Desplegar `db/115` + API F7c y validar entrega FCM real en Android.
 - [ ] P1 · Servidor: `kind`, textos en `mensajes.py`, canal/headers por tipo, presupuesto diario, silencio, agrupación, limpieza de tokens.
 - [ ] P2 · Productores al final de la publicación (sin reordenar el pipeline): pick gratis, escalera, parley, VIP.

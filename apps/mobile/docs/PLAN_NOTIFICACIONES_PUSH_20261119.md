@@ -1,6 +1,6 @@
 # Plan de notificaciones push (Android e iOS) — 19-nov-2026
 
-Estado: **propuesta, sin implementar**. Falta que el titular decida los puntos de la §9.
+Estado: **aprobado por el titular el 19-nov-2026 (ver §9), sin implementar**. Tope diario cambiado de 3 a 5.
 
 ## 1. Qué ya existe (verificado en `main`, 19-nov)
 
@@ -58,7 +58,7 @@ Fuentes: [FCM Flutter — recibir mensajes](https://firebase.google.com/docs/clo
 1. **Solo después del sello.** El aviso se encola al final de `daily.py` (después de predecir → seleccionar → sellar → publicar), sin reordenar nada. Si un aviso sale, el pronóstico ya está en la cadena de hashes. El aviso puede llevar la hora del sello.
 2. **Nada protegido en la pantalla de bloqueo.** Los pronósticos VIP nunca aparecen en el texto; solo «ya están sellados». El pick gratis sí puede ir completo (ya es público).
 3. **Probabilidad, no presión.** Se muestra la probabilidad del modelo, no frases tipo «banker», «seguro», «confía en el proceso». **Sin cuota en el aviso** (cambia y empuja a apostar). Los resultados se avisan igual si se gana que si se pierde.
-4. **Pocos y útiles.** Tope de **3 avisos de contenido al día** por usuario, horas de silencio, y agrupación en vez de ráfagas.
+4. **Pocos y útiles.** Tope de **5 avisos de contenido al día** por usuario, horas de silencio, y agrupación en vez de ráfagas.
 5. **Todo traducido a los 6 idiomas** en el mismo cambio (textos en `src/qf/api/mensajes.py` y nombres de canal en `res/values-*/strings.xml`).
 
 ## 4. Catálogo recomendado (7 tipos)
@@ -79,7 +79,7 @@ Fuera del cálculo del tope (pocos y transaccionales): `cuenta` — suscripción
 
 ## 5. Reglas de envío (servidor)
 
-- **Presupuesto diario**: máximo 3 avisos de contenido (tipos 1-6) por cuenta y día local. Prioridad si se pasa: `vip_listos` > `pick_gratis` > `escalera` > `parley` > `inicio_partido` > `resumen_resultados`. Lo que no cabe queda **solo en la bandeja**.
+- **Presupuesto diario**: máximo 5 avisos de contenido (tipos 1-7; `recordatorio_monedas` cuenta) por cuenta y día local. Prioridad si se pasa: `vip_listos` > `pick_gratis` > `escalera` > `parley` > `inicio_partido` > `resumen_resultados`. Lo que no cabe queda **solo en la bandeja**.
 - **Horas de silencio**: 22:00–09:00 hora local del dispositivo (configurable por el usuario). Un aviso que cae en silencio se retrasa a las 09:00 si su `expires_at` (inicio del partido) lo permite; si no, solo bandeja.
 - **Agrupar**: si en 10 min se sellan varios eventos para la misma cuenta, se envía uno («Pick gratis y parley de hoy listos»).
 - **Sin duplicados**: `event_key` estable (ya existe `UNIQUE(account_id,event_key)`); `tag` Android y `apns-collapse-id` = `kind:fecha` para que un reenvío reemplace al anterior.
@@ -136,11 +136,11 @@ Fuera del cálculo del tope (pocos y transaccionales): `cuenta` — suscripción
 | P5 | iOS real (APNs) | Mac + Apple Developer |
 | P6 | Medir 4 semanas: aperturas, bajas de permiso, desactivaciones por tipo; ajustar topes | P3 en tienda |
 
-## 9. Decisiones del titular
+## 9. Decisiones del titular (19-nov-2026)
 
-1. ¿Se aprueba el catálogo de la §4 (tipos activados por defecto: 1-4)?
-2. ¿Tope de 3 avisos de contenido al día y silencio 22:00–09:00?
-3. ¿El pick gratis lleva el pronóstico completo en el aviso (recomendado) o solo «ya está listo»?
-4. ¿Se muestra la cuota en el aviso? (Recomendado: no.)
-5. ¿Se incluye `recordatorio_monedas` (opcional y con consentimiento) o se deja fuera?
-6. iOS: ¿autorización provisional en el primer arranque?
+1. Catálogo de la §4 (7 tipos, 1-4 activos por defecto): **aprobado**.
+2. Tope diario: **5 avisos de contenido al día** (no 3). Silencio 22:00–09:00 hora local: se mantiene (no se objetó).
+3. Pick gratis: **completo en el aviso** (partido, mercado, probabilidad y hora del sello).
+4. Cuota en el aviso: **no**.
+5. `recordatorio_monedas`: **sí**, apagado por defecto y con consentimiento explícito (Apple 4.5.4).
+6. iOS: **autorización provisional** en el primer arranque; la completa se pide en contexto.
