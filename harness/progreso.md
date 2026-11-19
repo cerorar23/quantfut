@@ -7,6 +7,10 @@
 - **Errores:** el CHECK de ámbito impedía sellar `nba_dia` (37 fallos; las pruebas simulan la base, por eso ahora una prueba cruza el código con el SQL). La API ya no enseña el same-game ni la sombra, y la web cuenta solo `publicado`. El tenis ITF/UTR y los dobles quedan fuera porque no se pueden liquidar. Un aplazado pasa a nulo solo si se observó así ≥ 48 h después.
 - **Arnés:** en un worktree sin `.venv`, `harness_check.sh` cae en el alias `python3` de Windows y se cuelga; y el Python del `.venv` principal no puede crear temporales (PermissionError). Se corrió con el Python del sistema.
 - Detalle: `docs/parley_auditoria_20261119.md`.
+## 19-nov-2026 · Límite del ajuste de goles 0,020 en la línea de alta probabilidad (`quantfut-worker:d270094a`)
+
+- **Decisión clave:** el titular aprobó subirlo a 0,020 tras la medición (PR #514). Se aplicó con un límite PROPIO de la alta probabilidad (`MAX_RESIDUO_AJUSTE_ALTA`) y no cambiando la constante global: `ajuste_goles` también lo usan la escalera (y el parley), la primera mitad y las pruebas históricas, que no se midieron con 0,02. Subir lo no medido habría ampliado el cambio más allá de lo aprobado; el parámetro opcional `max_residuo` lo permite sin tocar esas rutas.
+- **Pendiente:** (1) verificar la primera selección real del 19-nov (09:00 UTC); (2) medir escalera, parley y primera mitad por separado antes de subirles el límite; (3) repetir la confirmación con producción cuando el incremento llegue a 300 partidos.
 
 ## 17-nov-2026 · Reto escalera compacto (solo vista, sin tocar datos)
 

@@ -232,7 +232,7 @@ def decidir(snap: pk.Snapshot, totales: list[dict], rho: float | None,
     if rho is not None and (habilitados or equipo or btts or handicap):
         linea = linea_pinnacle(totales)
         if linea is not None:
-            ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho)
+            ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho, max_residuo=ap.MAX_RESIDUO_AJUSTE_ALTA)
     if habilitados and "totals" not in excluir:
         cands += ap.candidatos_goles(ajuste, habilitados)
     # `elegir` aplica `excluir` a todo lo demás.
