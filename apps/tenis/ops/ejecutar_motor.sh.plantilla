@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# PLANTILLA de ~/tenis-isolated/ejecutar_motor.sh (VPS). Sustituir ETIQUETA por la de la imagen activa.
+# Este fichero es la UNICA fuente de verdad de la imagen: calendario_propline.sh, nacimientos_tml.sh y verificar_salud.sh la leen de aqui.
+# Cron: 15,45 * * * * /usr/bin/flock -n /tmp/tenis-motor.lock /home/qf/tenis-isolated/ejecutar_motor.sh >> /home/qf/.local/share/quantfut/tenis_motor.log 2>&1
+# Una pasada real del motor (`python -m tenis.motor`): imprime un resumen JSON y sale con 1 si no pudo. Los avisos salen por Telegram
+# (credenciales de ~/quantfut/.env, solo por entorno, nunca por argumento) y se deduplican entre pasadas con el estado del almacen.
+set -euo pipefail
+S=/home/qf/tenis-isolated
+IMAGEN=tenis-motor:ETIQUETA
+PASS=$(grep TENIS_DB_PASSWORD "$S/tenis-db/.env" | cut -d= -f2)
+export TG_BOT_TOKEN=$(grep '^TG_BOT_TOKEN=' /home/qf/quantfut/.env | cut -d= -f2-)
+export TG_ALERT_CHAT=$(grep '^TG_ALERT_CHAT=' /home/qf/quantfut/.env | cut -d= -f2-)
+docker run --rm --memory 5g --network tenis-db_tenis-interna \
+    -e PG_DSN="postgresql://tenis_admin:${PASS}@tenis-db:5432/tenis" \
+    -e TG_BOT_TOKEN -e TG_ALERT_CHAT -e TENIS_ESTADO_ALERTAS=/almacen/estado_alertas.json \
+    -v "$S/almacen_objetos":/almacen \
+    --entrypoint python "$IMAGEN" -m tenis.motor
