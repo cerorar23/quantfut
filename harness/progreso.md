@@ -1,6 +1,10 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 19-nov-2026 · Plan de notificaciones push de la app (`docs/plan-notificaciones-push`, sin código)
+- **Decisión clave:** la tubería FCM ya existe (tokens, bandeja, outbox, filtro por deporte) pero no emite nada; se propone un catálogo corto (7 tipos, 4 activos por defecto) con tope de 3 avisos de contenido al día y silencio 22-09 en vez de un aviso por pick, porque Android deja ver al usuario cuántos avisos manda cada app y revocar el permiso, y Apple 4.5.4 exige consentimiento para lo promocional.
+- **Por qué así:** los avisos se encolan solo después del sello (no se toca el orden del pipeline); el VIP nunca va en la pantalla de bloqueo; sin cuota ni frases de presión. La importancia de un canal Android no se puede cambiar tras crearlo: los 7 canales se definen antes de implementar.
+- **Titular (19-nov):** aprueba el catálogo; sube el tope a 5 avisos al día; pick gratis completo en el aviso; sin cuota; recordatorio de monedas con consentimiento; provisional en iOS. Pendiente: fase P0 (desplegar db/115 + API F7c).
 ## 19-nov-2026 · Auditoría del parley: errores corregidos y parley por probabilidad en sombra (`fix/parley-auditoria-20261119`)
 - **Causa de tantos perdidos:** el diseño, no las probabilidades. Con cuota objetivo fija y p de mercado, el boleto acierta ≈ 1/cuota: 8 de 42 ganados, todos dentro de lo prometido (8,20 y 12,10: 0 de 20, esperado ≈ 2). El artefacto «aprobado» es `metodo: mercado` en las 15 categorías.
 - **Decisión del titular: corregir y rediseñar en sombra.** `parley_prob` elige primero la probabilidad (2/3/4 patas, p ≥ 0,60/0,45/0,33) en mercados que cumplen lo prometido. Se sella como otra estrategia (`parley_probabilidad`, ámbitos `sombra*`) y no se publica. Sustituye al v2 solo con 30 días que cumplan (`parley_v2_datos comparar`).
