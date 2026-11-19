@@ -79,7 +79,7 @@ Fuera del cálculo del tope (pocos y transaccionales): `cuenta` — suscripción
 
 ## 5. Reglas de envío (servidor)
 
-- **Presupuesto diario**: máximo 5 avisos de contenido (tipos 1-7; `recordatorio_monedas` cuenta) por cuenta y día local. Prioridad si se pasa: `vip_listos` > `pick_gratis` > `escalera` > `parley` > `inicio_partido` > `resumen_resultados`. Lo que no cabe queda **solo en la bandeja**.
+- **Presupuesto diario**: máximo 5 avisos de contenido (tipos 1-7; `recordatorio_monedas` cuenta) por cuenta y día local. Prioridad si se pasa: `vip_listos` > `pick_gratis` > `escalera` > `parley` > `inicio_partido` > `resumen_resultados` > `recordatorio_monedas`. Lo que no cabe queda **solo en la bandeja**.
 - **Horas de silencio**: 22:00–09:00 hora local del dispositivo (configurable por el usuario). Un aviso que cae en silencio se retrasa a las 09:00 si su `expires_at` (inicio del partido) lo permite; si no, solo bandeja.
 - **Agrupar**: si en 10 min se sellan varios eventos para la misma cuenta, se envía uno («Pick gratis y parley de hoy listos»).
 - **Sin duplicados**: `event_key` estable (ya existe `UNIQUE(account_id,event_key)`); `tag` Android y `apns-collapse-id` = `kind:fecha` para que un reenvío reemplace al anterior.
