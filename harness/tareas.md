@@ -3401,6 +3401,6 @@ Detalle en `docs/parley_auditoria_20261119.md`.
 - [x] API `/parley`: solo la estrategia publicada y los ámbitos `diario` y `nba_dia`; la web cuenta solo `publicado`.
 - [x] Tenis no liquidable fuera (ITF, UTR, equipos, dobles); aplazado ≥ 48 h observado = nulo.
 - [x] `parley_prob` (2/3/4 patas, p ≥ 0,60/0,45/0,33) sellado en sombra tras el v2, diario y NBA.
-- [ ] Desplegar y pasar el cron del parley de `releases/parley-v2-20261106` a la imagen del worker de `main`.
+- [x] Desplegado el 19-nov 13:46 UTC (`quantfut-api:2f7ada81`, `quantfut-worker:c7b283a8`; el cron del parley usa la imagen de `main`, ver DEPLOYS.md). Pendiente: comprobar el primer `nba_dia`/`sombra_nba` y el primer `sombra` diario (20-nov).
 - [ ] Hacia el 20-dic-2026: `python -m qf.publish.parley_v2_datos comparar 30`. Si cada nivel de la sombra acierta lo prometido, proponer al titular sustituir el v2 (o dejar 8,20 y 12,10 como «lotería» VIP).
 - [ ] Revisar las 19 patas viejas sin fuente (ITF y NBA del 15-nov) cuando lleguen las alertas de 72 h. No anular a ciegas.

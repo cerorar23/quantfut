@@ -25,7 +25,7 @@ services:
   # credenciales del host, fuera del repo.
   api:
     build: .
-    image: quantfut-api:2132c644
+    image: quantfut-api:2f7ada81
     # tenis_net: llegar a tenis-db (obligatoria, ver CLAUDE.md). nba_api_red: llegar a nba-api; antes se conectaba
     # a mano con `docker network connect` y se perdía al recrear el contenedor (DEPLOYS.md, 9-nov).
     networks: [default, tenis_net, nba_api_red]
@@ -58,7 +58,7 @@ services:
 
   worker:
     build: .
-    image: quantfut-worker:d270094a
+    image: quantfut-worker:c7b283a8
     env_file: .env
     environment:
       # Registro público de la cadena (comprometer-revelar, 18-oct).
