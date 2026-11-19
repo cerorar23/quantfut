@@ -131,3 +131,28 @@ def test_bloquear_el_grupo_team_totals_excluye_los_dos_lados():
     assert ap.elegir([local, visitante], excluir={"team_totals"}) is None
     # El nombre exacto de un lado sigue valiendo, y no arrastra al otro.
     assert ap.elegir([local, visitante, doble], excluir={"team_totals_home"}) == visitante
+
+
+# --- Límite del ajuste de goles: 0,02 solo en la línea de alta probabilidad (medición del 18-nov-2026) ---------------------------
+# Caso real del 13-nov (Leganés–Burgos): 1X2 y línea 2,5 sin margen de Pinnacle con residuo 0,0139.
+LEGANES = ({"home": 0.3858, "draw": 0.3066, "away": 0.3076}, 2.5, 0.4123676260094794, -0.0347)
+
+
+def test_los_dos_limites_del_ajuste():
+    assert ap.MAX_RESIDUO_AJUSTE == 0.01 and ap.MAX_RESIDUO_AJUSTE_ALTA == 0.02
+
+
+def test_un_residuo_intermedio_solo_pasa_con_el_limite_de_alta_probabilidad():
+    p, linea, p_over, rho = LEGANES
+    assert ap.ajuste_goles(p, linea, p_over, rho) is None       # límite general: escalera, parley, primera mitad
+    aj = ap.ajuste_goles(p, linea, p_over, rho, max_residuo=ap.MAX_RESIDUO_AJUSTE_ALTA)
+    assert aj is not None and ap.MAX_RESIDUO_AJUSTE < aj["residuo"] <= ap.MAX_RESIDUO_AJUSTE_ALTA
+
+
+def test_el_limite_de_alta_probabilidad_no_se_cuela_en_rutas_no_medidas():
+    """Solo la línea de alta probabilidad lo usa; la escalera, el parley y la primera mitad no se midieron con 0,02."""
+    from pathlib import Path
+    src = Path(__file__).resolve().parents[1] / "src" / "qf"
+    usan = {str(f.relative_to(src)).replace("\\", "/") for f in src.rglob("*.py")
+            if "MAX_RESIDUO_AJUSTE_ALTA" in f.read_text(encoding="utf-8")}
+    assert usan == {"publish/alta_prob.py", "publish/alta_prob_datos.py", "publish/alta_prob_ext.py"}
