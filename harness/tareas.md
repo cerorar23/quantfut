@@ -3,6 +3,16 @@
 > Recortado el 2026-11-10: aquí solo quedan las secciones con alguna tarea abierta. El backlog completo, con lo cerrado, está en
 > `harness/archivo/tareas_hasta_20261110.md`. Al cerrar la última tarea de una sección, muévela allí.
 
+## 19-nov-2026 · Parley NBA de un solo partido con probabilidad conjunta (plan aprobado por el titular)
+
+Hoy todo same-game sale `solo_referencia`: `parley_v2.same_game` exige una conjunta validada y la cuota real del paquete.
+- [x] **Fase 0 — dependencia entre patas** (`docs/nba_sgp_f0_correlaciones_20261119.md`): estable y bien recogida por una cópula gaussiana; lift pequeño en patas de 75 %.
+- [ ] **Fase 1 — modelo conjunto** (local): cópula por tipo de par con contracción; patas sobre la misma variable de forma exacta; capa de minutos según |margen|; antes, corregir la cola baja de puntos (79–82 % frente a 75 %). Pruebas: con r = 0 debe salir el producto, debe reproducir las marginales y dar el mismo resultado bit a bit entre Windows y Linux.
+- [ ] **Fase 2 — validación hacia adelante** de combinaciones de 2 y 3 patas: cópula frente al producto (Brier, log-loss, fiabilidad). Si no gana con un IC que excluya el 0, se cierra sin publicar.
+- [ ] **Fase 3 — selector:** máxima P conjunta con cuota mínima del paquete y escalones por probabilidad. Se sella antes de publicar.
+- [ ] **Fase 4 — cuota del paquete:** comprobar si `propline_price_sgp` da un precio real de una casa. Si no, decide el titular (¿pronóstico sin cuota?).
+- [ ] **Fase 5 — seguimiento hacia adelante** de 3 a 4 semanas antes de quitar `solo_referencia`.
+
 ## 11-nov-2026 · Menú «Web y App» en `/control`: una sola configuración para web y Flutter (plan, rama `plan/menu-web-y-app`, nada implementado)
 
 **Objetivo (pedido del titular, 11-nov-2026):** que la web y la app se publiquen lo menos posible y que el servidor entregue la mayor

@@ -1,6 +1,12 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 19-nov-2026 · Parley NBA de un solo partido, fase 0: dependencia entre patas medida (`medicion/nba-sgp-correlaciones`, solo lectura)
+- **Decisión clave:** una cópula gaussiana sobre las marginales del motor v2 basta para la conjunta de patas de 75 %: reproduce el lift observado con error ≤ 0,02 y las correlaciones son estables en 2024-25, 2025-26 y 2026-27 (diferencias ≤ 0,03). Margen y total son independientes. Lo único no lineal es el efecto paliza en los minutos de los titulares, que va como capa aparte.
+- **Por qué importa poco y a la vez es necesario:** con patas de alta probabilidad el lift es pequeño (1,10 puntos+triples del mismo jugador, 1,05 puntos+rebotes, 1,02 prop+total, ≈ 1 entre compañeros y rivales). El 1,45–1,59 del 6-nov era con patas de ≈ 50 %. El modelo conjunto evita errores al multiplicar; no crea probabilidad.
+- **Hallazgo previo a la fase 1:** la cola baja de **puntos** está mal calibrada: P(más del cuantil 25 %) = 79–82 % en lugar de 75 %, en jugadores con ≥ 20 minutos esperados. Pesa más que cualquier correlación.
+- **Entorno:** la exportación se hace con `exportar_entrenamiento.sql` y `preparar_datos_entrenamiento.py`. Con el `.venv` principal, scipy necesita `TMP`/`TEMP` dentro del proyecto. Detalle: `docs/nba_sgp_f0_correlaciones_20261119.md`.
+
 ## 19-nov-2026 · Auditoría del parley: errores corregidos y parley por probabilidad en sombra (`fix/parley-auditoria-20261119`)
 - **Causa de tantos perdidos:** el diseño, no las probabilidades. Con cuota objetivo fija y p de mercado, el boleto acierta ≈ 1/cuota: 8 de 42 ganados, todos dentro de lo prometido (8,20 y 12,10: 0 de 20, esperado ≈ 2). El artefacto «aprobado» es `metodo: mercado` en las 15 categorías.
 - **Decisión del titular: corregir y rediseñar en sombra.** `parley_prob` elige primero la probabilidad (2/3/4 patas, p ≥ 0,60/0,45/0,33) en mercados que cumplen lo prometido. Se sella como otra estrategia (`parley_probabilidad`, ámbitos `sombra*`) y no se publica. Sustituye al v2 solo con 30 días que cumplan (`parley_v2_datos comparar`).
