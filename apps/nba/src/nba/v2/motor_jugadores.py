@@ -40,7 +40,7 @@ def pronosticar(pl: Plantilla, par: ParametrosProps) -> list[dict]:
             muestras = minutos.muestras_condicionadas([mp], par.residuos, N_MINUTOS)
             min_si_juega = [float(np.quantile(muestras, q)) for q in (0.1, 0.5, 0.9)]
             for s, nombre in enumerate(par.estadisticas):
-                pmf = props.pmf_mezcla_adaptativa(tasa[s:s + 1], muestras, par.alfa[s], props.TECHO[nombre])[0]
+                pmf = props.pmf_mezcla_adaptativa(tasa[s:s + 1], muestras, props.alfa_para(par.alfa[s], mp), props.TECHO[nombre])[0]
                 k = np.arange(len(pmf))
                 salida.append({
                     "jugador": j.id, "nombre": j.nombre, "lado": lado, "mercado": NOMBRES_MERCADO[nombre],

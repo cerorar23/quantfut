@@ -54,3 +54,33 @@ def test_prior_por_nivel_y_niveles_de_rol():
     me = np.array([5.0, 12.0, 35.0, 36.0])
     prior = props.prior_por_nivel(me, np.array([10.0, 20.0, 30.0, 30.0]), np.array([[1.0], [4.0], [24.0], [18.0]]))
     assert list(props.nivel(me)) == [0, 1, 5, 5] and prior[5, 0] == pytest.approx(42 / 60) and prior[1, 0] == pytest.approx(0.2)
+
+
+def test_alfa_por_nivel_recupera_la_sobredispersion_de_cada_rol():
+    # suplentes muy dispersos y titulares poco: una sola alfa global ensancha a los titulares y estrecha a los suplentes
+    rng = np.random.default_rng(1)
+    me = np.repeat([12.0, 31.0, 36.0], 30000)
+    verdad = np.repeat([0.6, 0.14, 0.07], 30000)
+    mu = np.repeat([4.0, 15.0, 22.0], 30000)
+    y = rng.negative_binomial(1 / verdad, (1 / verdad) / (1 / verdad + mu)).astype(float)
+    alfas = props.estimar_alfa_por_nivel(me, mu, y)
+    assert alfas.shape == (len(props.BORDES_ROL) + 1,)
+    assert alfas[1] == pytest.approx(0.6, abs=0.04) and alfas[4] == pytest.approx(0.14, abs=0.02) and alfas[5] == pytest.approx(0.07, abs=0.01)
+    glob = props.estimar_alfa(mu, y)
+    assert alfas[0] == pytest.approx(glob) and alfas[2] == pytest.approx(glob)          # niveles sin filas → la global
+
+
+def test_alfa_por_nivel_con_pocas_filas_usa_la_global():
+    rng = np.random.default_rng(2)
+    me = np.concatenate([np.full(5000, 31.0), np.full(50, 5.0)])
+    mu = np.full(5050, 10.0)
+    y = rng.poisson(mu).astype(float)
+    alfas = props.estimar_alfa_por_nivel(me, mu, y, minimo_filas=500)
+    assert alfas[0] == pytest.approx(props.estimar_alfa(mu, y))
+
+
+def test_alfa_para_acepta_un_numero_o_uno_por_nivel():
+    assert props.alfa_para(0.2, 33.0) == 0.2                                         # artefacto de formato 1
+    por_nivel = (0.6, 0.3, 0.19, 0.14, 0.1, 0.07)
+    assert props.alfa_para(por_nivel, 5.0) == 0.6 and props.alfa_para(por_nivel, 30.0) == 0.1
+    assert props.alfa_para(por_nivel, 40.0) == 0.07

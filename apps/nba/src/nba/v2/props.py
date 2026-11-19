@@ -49,6 +49,30 @@ def estimar_alfa(mu: np.ndarray, y: np.ndarray, minimo_mu: float = 0.5) -> float
     return float(max(0.001, np.mean(((y[sel] - mu[sel]) ** 2 - mu[sel]) / mu[sel] ** 2)))
 
 
+MIN_FILAS_NIVEL = 500
+
+
+def estimar_alfa_por_nivel(min_esperados, mu: np.ndarray, y: np.ndarray, minimo_filas: int = MIN_FILAS_NIVEL) -> np.ndarray:
+    """Sobredispersión por nivel de rol (los mismos niveles del prior). Una sola alfa ensancha a los titulares y estrecha a los
+    suplentes (medido 19-nov-2026 en puntos: 0,07 con ≥ 34 minutos esperados frente a 0,60 con < 10). Un nivel con menos de
+    `minimo_filas` filas usa la alfa global."""
+    niv = nivel(min_esperados)
+    glob = estimar_alfa(mu, y)
+    salida = np.full(len(BORDES_ROL) + 1, glob)
+    for i in range(len(salida)):
+        sel = niv == i
+        if (sel & (mu > 0.5)).sum() >= minimo_filas:
+            salida[i] = estimar_alfa(mu[sel], y[sel])
+    return salida
+
+
+def alfa_para(alfa, min_esperado: float) -> float:
+    """La alfa de un jugador: el artefacto trae un número por estadística (formato 1) o uno por nivel de rol (formato 2)."""
+    if np.ndim(alfa) == 0:
+        return float(alfa)
+    return float(np.asarray(alfa, float)[nivel([min_esperado])[0]])
+
+
 def pmf_mezcla(tasa: np.ndarray, muestras_min: np.ndarray, alfa: float, techo: int) -> np.ndarray:
     """tasa (R,), muestras_min (R, S) → pmf (R, techo+1) de la mezcla binomial negativa sobre las S muestras de minutos."""
     mu = np.maximum(tasa[:, None] * muestras_min, 1e-9)[:, :, None]            # (R, S, 1)
