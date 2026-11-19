@@ -1,6 +1,10 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 19-nov-2026 · Límite del ajuste de goles 0,020 en la línea de alta probabilidad (`quantfut-worker:d270094a`)
+
+- **Decisión clave:** el titular aprobó subirlo a 0,020 tras la medición (PR #514). Se aplicó con un límite PROPIO de la alta probabilidad (`MAX_RESIDUO_AJUSTE_ALTA`) y no cambiando la constante global: `ajuste_goles` también lo usan la escalera (y el parley), la primera mitad y las pruebas históricas, que no se midieron con 0,02. Subir lo no medido habría ampliado el cambio más allá de lo aprobado; el parámetro opcional `max_residuo` lo permite sin tocar esas rutas.
+- **Pendiente:** (1) verificar la primera selección real del 19-nov (09:00 UTC); (2) medir escalera, parley y primera mitad por separado antes de subirles el límite; (3) repetir la confirmación con producción cuando el incremento llegue a 300 partidos.
 ## 18-nov-2026 · Medición del límite del ajuste de goles: la regla permite subirlo a 0,020 (rama `medicion/residuo-ajuste-goles`, sin cambio de reglas)
 
 - **Hallazgo:** `MAX_RESIDUO_AJUSTE = 0,01` (5-oct, sin medición) deja sin candidatos de goles al ~34 % de los partidos (football-data 33,9 %, producción 36 %). La prueba histórica original aplicó ese mismo límite, así que validó los mercados de goles solo donde el ajuste encaja: sesgo de selección.
