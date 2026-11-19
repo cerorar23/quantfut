@@ -7,7 +7,7 @@
 
 Hoy todo same-game sale `solo_referencia`: `parley_v2.same_game` exige una conjunta validada y la cuota real del paquete.
 - [x] **Fase 0 — dependencia entre patas** (`docs/nba_sgp_f0_correlaciones_20261119.md`): estable y bien recogida por una cópula gaussiana; lift pequeño en patas de 75 %.
-- [ ] **Fase 1 — modelo conjunto** (local): cópula por tipo de par con contracción; patas sobre la misma variable de forma exacta; capa de minutos según |margen|; antes, corregir la cola baja de puntos (79–82 % frente a 75 %). Pruebas: con r = 0 debe salir el producto, debe reproducir las marginales y dar el mismo resultado bit a bit entre Windows y Linux.
+- [ ] **Fase 1 — modelo conjunto** (local): cópula por tipo de par con contracción; patas sobre la misma variable de forma exacta; capa de minutos según |margen|; la cola baja de puntos (79–82 % frente a 75 %) ya está corregida en el PR #522 (alfa por nivel de rol, falta desplegar). Pruebas: con r = 0 debe salir el producto, debe reproducir las marginales y dar el mismo resultado bit a bit entre Windows y Linux.
 - [ ] **Fase 2 — validación hacia adelante** de combinaciones de 2 y 3 patas: cópula frente al producto (Brier, log-loss, fiabilidad). Si no gana con un IC que excluya el 0, se cierra sin publicar.
 - [ ] **Fase 3 — selector:** máxima P conjunta con cuota mínima del paquete y escalones por probabilidad. Se sella antes de publicar.
 - [ ] **Fase 4 — cuota del paquete:** comprobar si `propline_price_sgp` da un precio real de una casa. Si no, decide el titular (¿pronóstico sin cuota?).
