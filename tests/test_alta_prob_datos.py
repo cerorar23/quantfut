@@ -722,3 +722,49 @@ def test_equipos_lee_la_misma_captura_del_proveedor(monkeypatch):
     assert "FROM odds_snapshots" in sql and "captured_at = %s" in sql
     assert "market IN ('team_totals_home', 'team_totals_away')" in sql
     assert params == ("m1", "propline", as_of)
+
+
+# --- Límite del ajuste de goles de la línea de alta probabilidad: 0,02 (medición del 18-nov-2026) --------------------------------
+# docs/medicion_residuo_ajuste_20261118.md: la calibración no empeora con el residuo y el criterio fijado de antemano acepta 0,02.
+# Solo la línea de alta probabilidad (normal y ampliada) usa ese límite; el resto de rutas sigue en `MAX_RESIDUO_AJUSTE` = 0,01.
+
+def _mercado_desajustado(lam, mu, empate_extra, linea=2.75):
+    """Como `_mercado_pinnacle` pero con el empate inflado: el 1X2 y la línea de goles ya no caben en una pareja de lambdas."""
+    m = score_matrix(lam, mu, RHO)
+    p = market_1x2(m)
+    p_over = totals_fair_over(m, linea)
+    d = p["draw"] + empate_extra
+    k = (1 - d) / (p["home"] + p["away"])
+    q = (p["home"] * k, d, p["away"] * k)
+    snap = _snap(tuple(1 / x for x in q))
+    filas = [{"bookmaker": "pinnacle", "selection": "over", "line": linea, "price": 1 / p_over},
+             {"bookmaker": "pinnacle", "selection": "under", "line": linea, "price": 1 / (1 - p_over)}]
+    return snap, filas
+
+
+def test_decidir_acepta_un_ajuste_con_residuo_entre_0_01_y_0_02():
+    snap, filas = _mercado_desajustado(1.25, 1.0, 0.02)          # residuo 0,0156
+    c, fit = ad.decidir(snap, filas, RHO, GOLES, set())
+    assert (c.market, c.selection, c.line) == ("totals", "under", 3.5)
+    assert ap.MAX_RESIDUO_AJUSTE < fit["residuo"] <= ap.MAX_RESIDUO_AJUSTE_ALTA
+
+
+def test_decidir_sigue_rechazando_un_ajuste_con_residuo_mayor_de_0_02():
+    snap, filas = _mercado_desajustado(1.25, 1.0, 0.03)          # residuo 0,0233
+    assert ad.decidir(snap, filas, RHO, GOLES, set()) is None
+
+
+def test_el_limite_de_alta_probabilidad_es_el_que_decide(monkeypatch):
+    snap, filas = _mercado_desajustado(1.25, 1.0, 0.02)
+    monkeypatch.setattr(ap, "MAX_RESIDUO_AJUSTE_ALTA", 0.01)
+    assert ad.decidir(snap, filas, RHO, GOLES, set()) is None
+
+
+def test_la_linea_ampliada_usa_el_mismo_limite(monkeypatch):
+    from qf.publish import alta_prob_ext as ex
+    snap, filas = _mercado_desajustado(1.25, 1.0, 0.02)
+    elegidos, ajuste = ex.candidatos(snap, filas, RHO, [], set())
+    assert ajuste is not None and {c.market for c in elegidos} >= {"totals"}
+    monkeypatch.setattr(ap, "MAX_RESIDUO_AJUSTE_ALTA", 0.01)
+    elegidos, ajuste = ex.candidatos(snap, filas, RHO, [], set())
+    assert ajuste is None and not any(c.market == "totals" for c in elegidos)

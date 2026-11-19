@@ -78,7 +78,7 @@ def candidatos(snap: pk.Snapshot, totales: list[dict], rho: float | None,
     if rho is not None:
         linea = ad.linea_pinnacle(totales)
         if linea is not None:
-            ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho)
+            ajuste = ap.ajuste_goles(p, linea[0], linea[1], rho, max_residuo=ap.MAX_RESIDUO_AJUSTE_ALTA)
     cands += ap.candidatos_goles(ajuste, ap.GOLES_EXT)
     cands += ap.candidatos_equipo(ajuste, ap.MERCADOS_EQUIPO_HABILITADOS)
     cands += ap.candidatos_btts(ajuste, ap.BTTS_EXT)
