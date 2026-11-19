@@ -67,3 +67,87 @@ es del titular; esta medición propone, no cambia nada.
 ## Reproducibilidad
 
 `python -m qf.eval.alta_prob_residuo --cache <carpeta de football-data> --json salida.json` (módulo nuevo, con pruebas en `tests/test_alta_prob_residuo.py`).
+
+---
+
+# Resultados (añadidos el 2026-11-18, después de ejecutar; el protocolo de arriba no se modificó)
+
+Conjunto: football-data, 14.216 partidos de 7 ligas (2019-2025), el mismo de la prueba original (sha256 `d5cbc3151164…`, 14.305 filas). Los 14.216
+ajustes convergen (0 sin convergencia, 0 con error). Datos: `medicion_residuo_ajuste_20261118_rho0347.json` (principal) y `…_rho0613.json`.
+
+## El residuo en football-data se parece al de producción
+
+| | mediana | p90 | p95 | partidos con residuo > 0,01 |
+|---|---|---|---|---|
+| football-data, rho −0,0347 | 0,0072 | 0,0166 | 0,0199 | 33,9 % |
+| producción (13-nov, 242 partidos) | 0,0080 | 0,0154 | 0,0174 | 36 % |
+
+La limitación de usar solo la línea 2,5 no cambia el orden de magnitud del residuo, así que la medición es trasladable.
+
+## Calibración por calidad del ajuste (candidatos de goles de 62-95 %, rho −0,0347)
+
+| Grupo (residuo) | candidatos | partidos | prometido | real | brecha ± SE (por partido) |
+|---|---|---|---|---|---|
+| A ≤ 0,010 (vigente) | 70.185 | 9.392 | 79,49 | 80,33 | +0,84 ± 0,17 |
+| B 0,010-0,015 | 25.424 | 2.792 | 79,87 | 81,03 | +1,15 ± 0,29 |
+| C 0,015-0,020 | 12.609 | 1.336 | 79,98 | 81,22 | +1,24 ± 0,43 |
+| D 0,020-0,030 | 6.005 | 634 | 79,97 | 80,82 | +0,85 ± 0,62 |
+| E > 0,030 | 572 | 62 | 80,43 | 80,59 | +0,17 ± 1,99 |
+
+**Todos los grupos aciertan algo MÁS de lo prometido**, y los de peor ajuste no son peores que el vigente. El déficit que temía el límite no aparece.
+
+## Criterio del protocolo, aplicado sin cambios
+
+| Límite | incremento (partidos) | brecha del incremento | vs. base (IC 95 %) | cond. 1 | cond. 2 | cond. 3 | ≥ 300 partidos | resultado |
+|---|---|---|---|---|---|---|---|---|
+| 0,015 | 2.792 | +1,15 ± 0,29 | +0,31 [−0,34; +0,94] | sí | sí | sí | sí | **acepta** |
+| 0,020 | 4.128 | +1,18 ± 0,24 | +0,34 [−0,26; +0,94] | sí | sí | sí | sí | **acepta** |
+| 0,030 | 4.762 | +1,14 ± 0,22 | +0,29 [−0,27; +0,81] | sí | **no** | sí | sí | rechaza |
+
+El 0,03 se rechaza por una sola celda: «más de 1,5 goles» en el tramo 0,67-0,72 (n = 1.061, brecha −3,38, SE 1,45). Con tantos mercados y tramos
+comparados, una celda aislada puede ser azar; pero el protocolo ya decía que todas las evaluables debían pasar, y no se reinterpreta a
+posteriori. **Límite propuesto por el criterio: 0,020.**
+
+## Sensibilidad a rho (−0,0613, el de la prueba original)
+
+Con ese rho el residuo es menor (mediana 0,0045; solo el 15,7 % supera 0,01) y los tres límites pasan (propuesto 0,03). Coincide en que subir a 0,020
+cumple en ambos; el criterio principal (rho activo) es el que decide.
+
+## Desgloses informativos (no deciden)
+
+- Por banda: en 0,62-0,80 las brechas de B, C y D son +1,16, +1,66 y +0,77; en 0,80-0,95, +1,14, +0,83 y +0,93. Ningún grupo con déficit en ninguna banda.
+- Incremento (0,01-0,02] por mercado: de −0,38 (más de 2,5, n = 349, SE 2,5) a +1,98 (visitante marca); ningún mercado con déficit mayor que su error.
+- Incremento (0,01-0,02] por liga: todas positivas, de +0,22 (Premier) a +2,31 (Serie A).
+- Partidos con candidato elegible por probabilidad (sin exigir cuota) en la línea del 80 %: 70,9 % con 0,01; 87,2 % con 0,015; **95,6 % con 0,02**;
+  99,6 % con 0,03. En la línea ampliada ya es 100 % (siempre hay 1X2 o doble oportunidad en rango; en producción la limita la cuota).
+
+## Confirmación fuera de muestra con producción (informativa)
+
+Partidos de producción jugados del 1 al 17-nov, con las cuotas de PropLine de la decisión de las 09:00 y la línea principal de Pinnacle de cada
+partido (258 con ajuste; 56 sin captura de Pinnacle):
+
+| Grupo | candidatos | partidos | brecha ± SE |
+|---|---|---|---|
+| A | 1.363 | 165 | +1,45 ± 1,29 |
+| B | 609 | 63 | −1,99 ± 2,27 |
+| C | 195 | 20 | +0,94 ± 4,19 |
+| D | 68 | 7 | +6,65 ± 4,37 |
+
+Incrementos de 63 a 90 partidos: por debajo del mínimo de 300 del protocolo, **no concluyen**. El grupo B queda 2 puntos por debajo de lo prometido, pero con
+un error de ±2,3, y entre 3 semanas de partidos con candidatos muy correlacionados. La diferencia con football-data (+1,15) es de unas 1,4 desviaciones: es
+compatible con azar. Hay que repetirlo cuando haya 300 partidos de incremento (a este ritmo, unos 2 meses).
+
+## Lo que esta medición no cubre
+
+- football-data solo trae la línea 2,5 y 7 ligas (2019-2025); producción usa la línea principal de cada partido y además MLS, Liga MX, Brasileirão, etc.
+- Mide calibración de la probabilidad, no el valor frente a la cuota ni el CLV.
+- No mide córners (no dependen del ajuste de goles).
+- Los candidatos de un mismo partido están correlacionados: por eso el error estándar es por partido; aun así, seis temporadas de ligas no son independientes del
+  régimen de goles de cada temporada.
+
+## Recomendación (la decisión de reglas del motor es del titular)
+
+1. Subir `MAX_RESIDUO_AJUSTE` de 0,010 a **0,020** es lo que el criterio fijado de antemano permite: unos 4.100 partidos (el 29 % de los 14.216) que hoy pierden sus candidatos de goles de 62-95 %,
+   sin deterioro de calibración medible. Es una constante en `alta_prob.py`; solo afecta a las selecciones futuras (lo sellado no se toca).
+2. Mantener la vigilancia en vivo por mercado (`alta_prob.control`), que ya pausa un mercado si su acierto real cae por debajo de lo prometido.
+3. Repetir la confirmación con producción cuando el incremento llegue a 300 partidos.

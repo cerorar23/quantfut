@@ -1,6 +1,14 @@
 > Recortado el 2026-11-10: aquí solo las decisiones desde el 1-nov-2026. El diario completo está en
 > `harness/archivo/progreso_hasta_20261110.md` (consúltalo con `grep` solo si necesitas historia anterior).
 
+## 18-nov-2026 · Medición del límite del ajuste de goles: la regla permite subirlo a 0,020 (rama `medicion/residuo-ajuste-goles`, sin cambio de reglas)
+
+- **Hallazgo:** `MAX_RESIDUO_AJUSTE = 0,01` (5-oct, sin medición) deja sin candidatos de goles al ~34 % de los partidos (football-data 33,9 %, producción 36 %). La prueba histórica original aplicó ese mismo límite, así que validó los mercados de goles solo donde el ajuste encaja: sesgo de selección.
+- **Método:** protocolo y criterio fijados y subidos ANTES de calcular (`docs/medicion_residuo_ajuste_20261118.md`, commit `9f7f1913`). 14.216 partidos de football-data (el mismo conjunto de la prueba original), errores por partido (los candidatos de un partido no son independientes), tres condiciones sobre el incremento de cada límite.
+- **Resultado:** la calibración NO empeora con el residuo: todos los grupos aciertan más de lo prometido (A +0,84, B +1,15, C +1,24, D +0,85 puntos). Por el criterio fijado, 0,015 y 0,020 se aceptan; 0,03 se rechaza por una sola celda (más de 1,5 goles, 0,67-0,72, −3,38 ± 1,45). **Propuesta: 0,020** (+4.128 partidos, el 29 %, recuperan candidatos). Con el rho de la prueba original (−0,0613) pasan los tres.
+- **Producción (1-17 nov), informativa:** incrementos de 63-90 partidos, por debajo del mínimo de 300; el grupo B queda en −1,99 ± 2,27. No contradice (≈1,4 desviaciones), pero tampoco confirma: repetir cuando haya 300 partidos de incremento (unos 2 meses).
+- **Decisión pendiente del titular:** cambiar la constante a 0,020 es una regla del motor; no se tocó. Solo afectaría a selecciones futuras. La vigilancia en vivo (`alta_prob.control`) se mantiene.
+
 ## 17-nov-2026 · Reto escalera compacto (solo vista, sin tocar datos)
 
 - Petición del titular: menos scroll en `/reto-escalera/` sin perder información. Cada escalón es ahora una fila desplegable (`<details>`): pronóstico, partido y cuota siempre visibles; probabilidad, casa y sello al abrir. El pendiente va abierto y el liquidado plegado; de cada reto se ven los 3 escalones más recientes y el resto bajo «Ver N escalones anteriores». Los retos sin escalón se agrupan en una sola tarjeta (con su barra y su regla).
